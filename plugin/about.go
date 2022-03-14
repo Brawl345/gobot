@@ -6,18 +6,24 @@ import (
 	"regexp"
 )
 
-func Register() *bot.Plugin {
-	return &bot.Plugin{
-		Name: "about",
-		Handlers: []bot.Handler{
-			{
-				Command: regexp.MustCompile(`^/about$`),
-				Handler: OnAbout,
-			},
-		},
-	}
+// TODO: Bot muss an Plugin rangehängt werden weil man DB im Init() braucht (keys laden!)
+type AboutPlugin struct {
+	*bot.Plugin
+	key string
 }
 
-func OnAbout(b *bot.Nextbot, c telebot.Context) error {
-	return c.Reply("About plugin")
+// oder bot hier als parameter? aber unten dann auch hmm
+func (plg *AboutPlugin) Init() {
+	plg.Plugin = bot.NewPlugin("about", []bot.Handler{
+		{
+			Command: regexp.MustCompile(`^/about$`),
+			Handler: plg.OnAbout,
+		},
+	})
+	plg.key = "geheim"
+}
+
+func (plg *AboutPlugin) OnAbout(c telebot.Context) error {
+	// TOOD: Context um Matches erweitern o.ä.?
+	return c.Send(plg.key)
 }

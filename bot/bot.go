@@ -10,7 +10,7 @@ import (
 type Nextbot struct {
 	*telebot.Bot
 	DB      *storage.DB
-	plugins []Plugin
+	plugins []IPlugin
 }
 
 func NewBot(token string, db *storage.DB) (*Nextbot, error) {
@@ -29,8 +29,9 @@ func NewBot(token string, db *storage.DB) (*Nextbot, error) {
 	}, nil
 }
 
-func (bot *Nextbot) RegisterPlugin(plugin *Plugin) {
-	bot.plugins = append(bot.plugins, *plugin)
+func (bot *Nextbot) RegisterPlugin(plugin IPlugin) {
+	plugin.Init()
+	bot.plugins = append(bot.plugins, plugin)
 }
 
 func (bot *Nextbot) isPluginDisabled(pluginName string) bool {
@@ -41,11 +42,11 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 	log.Printf("%s: %s", c.Chat().FirstName, c.Message().Text)
 
 	for _, plugin := range bot.plugins {
-		for _, handler := range plugin.Handlers {
+		for _, handler := range plugin.GetHandlers() {
 			if handler.Command.MatchString(c.Message().Text) {
-				log.Printf("Matched command %s by %s", handler.Command, plugin.Name)
-				if !bot.isPluginDisabled(plugin.Name) {
-					go handler.Handler(bot, c)
+				log.Printf("Matched command %s by %s", handler.Command, plugin.GetName())
+				if !bot.isPluginDisabled(plugin.GetName()) {
+					go handler.Handler(c)
 				}
 			}
 		}

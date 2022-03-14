@@ -41,7 +41,13 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	b.RegisterPlugin(plugin.Register())
+	plugins := []bot.IPlugin{
+		&plugin.AboutPlugin{},
+	}
+
+	for _, plg := range plugins {
+		b.RegisterPlugin(plg)
+	}
 
 	b.Handle(telebot.OnText, b.OnText)
 
