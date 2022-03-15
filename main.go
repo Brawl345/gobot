@@ -41,15 +41,26 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	plugins := []bot.IPlugin{
-		&plugin.AboutPlugin{},
+	p, err := bot.NewPlugin(b)
+	if err != nil {
+		log.Fatalln(err)
 	}
 
-	for _, plg := range plugins {
+	plugins := []bot.IPlugin{
+		&plugin.AboutPlugin{Plugin: p},
+		&plugin.EchoPlugin{Plugin: p},
+		&plugin.ManagerPlugin{Plugin: p},
+		&plugin.StatsPlugin{Plugin: p},
+	}
+
+	for i, plg := range plugins {
+		log.Printf("Registering plugin (%d/%d): %s", i+1, len(plugins), plg.GetName())
 		b.RegisterPlugin(plg)
 	}
 
 	b.Handle(telebot.OnText, b.OnText)
+	b.Handle(telebot.OnMedia, b.OnText)
+	// TODO: Handle more types (contact, location, venue, game, dice)
 
 	//b.Bot.Use(h.PrettyPrint())
 

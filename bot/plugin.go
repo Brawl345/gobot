@@ -1,11 +1,10 @@
 package bot
 
 import (
-	"gopkg.in/telebot.v3"
+	"errors"
 	"regexp"
 )
 
-// TODO: Kein Interface sondern struct...?
 type IPlugin interface {
 	GetName() string
 	GetHandlers() []Handler
@@ -13,33 +12,21 @@ type IPlugin interface {
 }
 
 type Handler struct {
-	Command *regexp.Regexp // or interface{}?
-	Handler telebot.HandlerFunc
+	Command *regexp.Regexp
+	Handler NextbotHandlerFunc
 }
 
 type Plugin struct {
-	name     string
-	handlers []Handler
+	Bot *Nextbot
 }
 
-func NewPlugin(name string, handlers []Handler) *Plugin {
-	if handlers == nil {
-		panic("handlers can not be nil")
+func (*Plugin) Init() {}
+
+func NewPlugin(bot *Nextbot) (*Plugin, error) {
+	if bot == nil {
+		return nil, errors.New("bot is nil")
 	}
 	return &Plugin{
-		name:     name,
-		handlers: handlers,
-	}
-}
-
-func (b *Plugin) GetName() string {
-	return b.name
-}
-
-func (b *Plugin) GetHandlers() []Handler {
-	return b.handlers
-}
-
-func (b *Plugin) Init() {
-	panic("Init() Method not implemented!")
+		Bot: bot,
+	}, nil
 }
