@@ -51,13 +51,7 @@ func (bot *Nextbot) RegisterPlugin(plugin IPlugin) {
 }
 
 func (bot *Nextbot) isPluginEnabled(pluginName string) bool {
-	for _, enabledPlugin := range bot.enabledPlugins {
-		if enabledPlugin == pluginName {
-			return true
-		}
-	}
-	log.Printf("Plugin %s is disabled globally", pluginName)
-	return false
+	return slices.Contains(bot.enabledPlugins, pluginName)
 }
 
 func (bot *Nextbot) DisablePlugin(pluginName string) error {
@@ -137,6 +131,8 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 						Matches: matches,
 					}
 					go handler.Handler(ctx)
+				} else {
+					log.Printf("Plugin %s is disabled globally", plugin.GetName())
 				}
 			}
 		}
