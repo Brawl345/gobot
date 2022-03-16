@@ -3,6 +3,7 @@ package plugin
 import (
 	"fmt"
 	"github.com/Brawl345/gobot/bot"
+	"gopkg.in/telebot.v3"
 	"regexp"
 )
 
@@ -24,5 +25,8 @@ func (plg *EchoPlugin) GetHandlers() []bot.Handler {
 }
 
 func (plg *EchoPlugin) OnEcho(c bot.NextbotContext) error {
-	return c.Send(c.Matches[1])
+	return c.Reply(c.Matches[1], &telebot.SendOptions{
+		AllowWithoutReply:     true,
+		DisableWebPagePreview: true,
+	})
 }

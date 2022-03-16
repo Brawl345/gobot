@@ -9,12 +9,12 @@ import (
 	"time"
 )
 
-// TODO: Disabled plugins für chat
 type Nextbot struct {
 	*telebot.Bot
-	DB             *storage.DB
-	plugins        []IPlugin
-	enabledPlugins []string
+	DB                     *storage.DB
+	plugins                []IPlugin
+	enabledPlugins         []string
+	disabledPluginsForChat map[int64][]string
 }
 
 func NewBot(token string, db *storage.DB) (*Nextbot, error) {
@@ -35,10 +35,16 @@ func NewBot(token string, db *storage.DB) (*Nextbot, error) {
 		return nil, err
 	}
 
+	disabledPluginsForChat, err := db.ChatsPlugins.GetAllDisabled()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Nextbot{
-		Bot:            bot,
-		DB:             db,
-		enabledPlugins: enabledPlugins,
+		Bot:                    bot,
+		DB:                     db,
+		enabledPlugins:         enabledPlugins,
+		disabledPluginsForChat: disabledPluginsForChat,
 	}, nil
 }
 
@@ -54,19 +60,42 @@ func (bot *Nextbot) isPluginEnabled(pluginName string) bool {
 	return slices.Contains(bot.enabledPlugins, pluginName)
 }
 
+func (bot *Nextbot) isPluginDisabledForChat(chat *telebot.Chat, pluginName string) bool {
+	disabledPlugins, exists := bot.disabledPluginsForChat[chat.ID]
+	if !exists {
+		return false
+	}
+	return slices.Contains(disabledPlugins, pluginName)
+}
+
 func (bot *Nextbot) DisablePlugin(pluginName string) error {
 	if !slices.Contains(bot.enabledPlugins, pluginName) {
-		return errors.New("✅ Das Plugin ist bereits deaktiviert")
+		return errors.New("✅ Das Plugin ist nicht aktiv")
+	}
+
+	err := bot.DB.Plugins.Disable(pluginName)
+	if err != nil {
+		return err
+	}
+	index := slices.Index(bot.enabledPlugins, pluginName)
+	bot.enabledPlugins = slices.Delete(bot.enabledPlugins, index, index+1)
+	return nil
+}
+
+func (bot *Nextbot) DisablePluginForChat(chat *telebot.Chat, pluginName string) error {
+	if bot.isPluginDisabledForChat(chat, pluginName) {
+		return errors.New("✅ Das Plugin ist für diesen Chat schon deaktiviert")
 	}
 
 	for _, plugin := range bot.plugins {
 		if plugin.GetName() == pluginName {
-			err := bot.DB.Plugins.Disable(pluginName)
+			err := bot.DB.ChatsPlugins.Disable(chat, pluginName)
 			if err != nil {
 				return err
 			}
-			index := slices.Index(bot.enabledPlugins, pluginName)
-			bot.enabledPlugins = slices.Delete(bot.enabledPlugins, index, index+1)
+
+			bot.disabledPluginsForChat[chat.ID] = append(bot.disabledPluginsForChat[chat.ID], pluginName)
+
 			return nil
 		}
 	}
@@ -91,14 +120,37 @@ func (bot *Nextbot) EnablePlugin(pluginName string) error {
 	return errors.New("❌ Plugin existiert nicht")
 }
 
+func (bot *Nextbot) EnablePluginForChat(chat *telebot.Chat, pluginName string) error {
+	if !bot.isPluginDisabledForChat(chat, pluginName) {
+		return errors.New("✅ Das Plugin ist für diesen Chat schon aktiv")
+	}
+
+	for _, plugin := range bot.plugins {
+		if plugin.GetName() == pluginName {
+			err := bot.DB.ChatsPlugins.Enable(chat, pluginName)
+			if err != nil {
+				return err
+			}
+
+			index := slices.Index(bot.disabledPluginsForChat[chat.ID], pluginName)
+			bot.disabledPluginsForChat[chat.ID] = slices.Delete(bot.disabledPluginsForChat[chat.ID],
+				index, index+1)
+
+			return nil
+		}
+	}
+	return errors.New("❌ Plugin existiert nicht")
+}
+
 func (bot *Nextbot) OnText(c telebot.Context) error {
 	log.Printf("%s: %s", c.Chat().FirstName, c.Message().Text)
 
 	var isAllowed bool
+	// TODO: Allow-Liste cachen?
 	if c.Message().Private() {
-		isAllowed, _ = bot.DB.Users.IsAllowed(c.Sender())
+		isAllowed = bot.DB.Users.IsAllowed(c.Sender())
 	} else {
-		isAllowed, _ = bot.DB.ChatsUsers.IsAllowed(c.Chat(), c.Sender())
+		isAllowed = bot.DB.ChatsUsers.IsAllowed(c.Chat(), c.Sender())
 	}
 
 	if !isAllowed {
@@ -123,15 +175,28 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 
 	for _, plugin := range bot.plugins {
 		for _, handler := range plugin.GetHandlers() {
+			if !c.Message().FromGroup() && handler.GroupOnly {
+				continue
+			}
+
 			matches := handler.Command.FindStringSubmatch(text)
 			if len(matches) > 0 {
 				log.Printf("Matched plugin %s: %s", plugin.GetName(), handler.Command)
 				if bot.isPluginEnabled(plugin.GetName()) {
-					ctx := NextbotContext{
+					if c.Message().FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.GetName()) {
+						log.Printf("Plugin %s is disabled for this chat", plugin.GetName())
+						continue
+					}
+
+					if handler.AdminOnly && !isAdmin(c.Sender()) {
+						log.Println("User is not an admin.")
+						continue
+					}
+
+					go handler.Handler(NextbotContext{
 						Context: c,
 						Matches: matches,
-					}
-					go handler.Handler(ctx)
+					})
 				} else {
 					log.Printf("Plugin %s is disabled globally", plugin.GetName())
 				}

@@ -14,10 +14,11 @@ var embeddedMigrations embed.FS
 
 type DB struct {
 	*sqlx.DB
-	Chats      ChatStorage
-	ChatsUsers ChatUserStorage
-	Plugins    PluginStorage
-	Users      UserStorage
+	Chats        ChatStorage
+	ChatsPlugins ChatPluginStorage
+	ChatsUsers   ChatUserStorage
+	Plugins      PluginStorage
+	Users        UserStorage
 }
 
 func Open(url string) (*DB, error) {
@@ -31,16 +32,25 @@ func Open(url string) (*DB, error) {
 	db.SetMaxOpenConns(100)
 	db.SetConnMaxIdleTime(10 * time.Minute)
 
+	chats := &Chats{db}
+	plugins := &Plugins{db}
+	users := &Users{db}
+
 	return &DB{
 		DB:    db,
-		Chats: &Chats{db},
+		Chats: chats,
+		ChatsPlugins: &ChatsPlugins{
+			Chats:   chats,
+			Plugins: plugins,
+			DB:      db,
+		},
 		ChatsUsers: &ChatsUsers{
-			Chats: &Chats{db},
-			Users: &Users{db},
+			Chats: chats,
+			Users: users,
 			DB:    db,
 		},
-		Plugins: &Plugins{db},
-		Users:   &Users{db},
+		Plugins: plugins,
+		Users:   users,
 	}, nil
 }
 

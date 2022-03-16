@@ -4,6 +4,7 @@ import "github.com/jmoiron/sqlx"
 
 type (
 	PluginStorage interface {
+		CreateTx(tx *sqlx.Tx, pluginName string) error
 		Disable(pluginName string) error
 		Enable(pluginName string) error
 		GetAllEnabled() ([]string, error)
@@ -18,6 +19,15 @@ type (
 		Enabled bool   `db:"enabled"`
 	}
 )
+
+func (db *Plugins) CreateTx(tx *sqlx.Tx, pluginName string) error {
+	const query = `INSERT INTO plugins 
+	(name, enabled) 
+	VALUES (?, false)
+    ON DUPLICATE KEY UPDATE name = name`
+	_, err := tx.Exec(query, pluginName)
+	return err
+}
 
 func (db *Plugins) Disable(pluginName string) error {
 	const query = `INSERT INTO plugins 

@@ -8,9 +8,11 @@ import (
 
 type (
 	UserStorage interface {
+		Allow(user *telebot.User) error
 		Create(user *telebot.User) error
-		CreateWithTx(tx *sqlx.Tx, user *telebot.User) error
-		IsAllowed(user *telebot.User) (bool, error)
+		CreateTx(tx *sqlx.Tx, user *telebot.User) error
+		Deny(user *telebot.User) error
+		IsAllowed(user *telebot.User) bool
 	}
 
 	Users struct {
@@ -25,6 +27,12 @@ type (
 		MsgCount  int64          `db:"msg_count"`
 	}
 )
+
+func (db *Users) Allow(user *telebot.User) error {
+	const query = `UPDATE users SET allowed = true WHERE id = ?`
+	_, err := db.Exec(query, user.ID)
+	return err
+}
 
 func (db *Users) Create(user *telebot.User) error {
 	const query = `INSERT INTO 
@@ -42,7 +50,7 @@ func (db *Users) Create(user *telebot.User) error {
 	return err
 }
 
-func (db *Users) CreateWithTx(tx *sqlx.Tx, user *telebot.User) error {
+func (db *Users) CreateTx(tx *sqlx.Tx, user *telebot.User) error {
 	const query = `INSERT INTO 
     users (id, first_name, last_name)
     VALUES (? ,?, ?)
@@ -58,14 +66,20 @@ func (db *Users) CreateWithTx(tx *sqlx.Tx, user *telebot.User) error {
 	return err
 }
 
-func (db *Users) IsAllowed(user *telebot.User) (bool, error) {
+func (db *Users) Deny(user *telebot.User) error {
+	const query = `UPDATE users SET allowed = false WHERE id = ?`
+	_, err := db.Exec(query, user.ID)
+	return err
+}
+
+func (db *Users) IsAllowed(user *telebot.User) bool {
 	if isAdmin(user) {
-		return true, nil
+		return true
 	}
 
 	const query = `SELECT users.allowed FROM users WHERE users.id = ?`
 
 	var isAllowed bool
-	err := db.Get(&isAllowed, query, user.ID)
-	return isAllowed, err
+	db.Get(&isAllowed, query, user.ID)
+	return isAllowed
 }

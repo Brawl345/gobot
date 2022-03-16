@@ -10,7 +10,7 @@ type (
 	ChatUserStorage interface {
 		Create(chat *telebot.Chat, user *telebot.User) error
 		GetAllUsersWithMsgCount(chat *telebot.Chat) ([]User, error)
-		IsAllowed(chat *telebot.Chat, user *telebot.User) (bool, error)
+		IsAllowed(chat *telebot.Chat, user *telebot.User) bool
 	}
 
 	ChatsUsers struct {
@@ -28,12 +28,12 @@ func (db *ChatsUsers) Create(chat *telebot.Chat, user *telebot.User) error {
 
 	defer tx.Rollback()
 
-	err = db.Chats.CreateWithTx(tx, chat)
+	err = db.Chats.CreateTx(tx, chat)
 	if err != nil {
 		return err
 	}
 
-	err = db.Users.CreateWithTx(tx, user)
+	err = db.Users.CreateTx(tx, user)
 	if err != nil {
 		return err
 	}
@@ -69,20 +69,17 @@ func (db *ChatsUsers) insertRelationship(tx *sqlx.Tx, chatId int64, userId int64
 	return err
 }
 
-func (db *ChatsUsers) IsAllowed(chat *telebot.Chat, user *telebot.User) (bool, error) {
+func (db *ChatsUsers) IsAllowed(chat *telebot.Chat, user *telebot.User) bool {
 	if isAdmin(user) {
-		return true, nil
+		return true
 	}
 
-	const query = `SELECT 1 FROM chats_users
-    JOIN chats ON chats_users.chat_id = chats.id
-    JOIN users ON chats_users.user_id = users.id
-WHERE chats_users.chat_id = ?
-  AND chats_users.user_id = ?
-  AND (chats.allowed = true
-           OR users.allowed = true)`
+	const query = `SELECT 1 FROM chats, users 
+	WHERE chats.id = ?
+	AND chats.allowed = true
+	OR (users.id = ? AND users.allowed = true);`
 
 	var isAllowed bool
-	err := db.Get(&isAllowed, query, chat.ID, user.ID)
-	return isAllowed, err
+	db.Get(&isAllowed, query, chat.ID, user.ID)
+	return isAllowed
 }

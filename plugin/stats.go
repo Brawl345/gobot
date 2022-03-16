@@ -20,21 +20,18 @@ func (*StatsPlugin) GetName() string {
 func (plg *StatsPlugin) GetHandlers() []bot.Handler {
 	return []bot.Handler{
 		{
-			Command: regexp.MustCompile(fmt.Sprintf(`^/stats(?:@%s)?$`, plg.Bot.Me.Username)),
-			Handler: plg.OnStats,
+			Command:   regexp.MustCompile(fmt.Sprintf(`^/stats(?:@%s)?$`, plg.Bot.Me.Username)),
+			Handler:   plg.OnStats,
+			GroupOnly: true,
 		},
 	}
 }
 
 func (plg *StatsPlugin) OnStats(c bot.NextbotContext) error {
-	if !c.Message().FromGroup() {
-		return nil
-	}
-
 	users, err := plg.Bot.DB.ChatsUsers.GetAllUsersWithMsgCount(c.Chat())
 	if err != nil {
 		log.Println(err)
-		return c.Send("❌ Fehler beim Abrufen der Statistiken.")
+		return c.Reply("❌ Fehler beim Abrufen der Statistiken.")
 	}
 
 	var sb strings.Builder
@@ -55,5 +52,5 @@ func (plg *StatsPlugin) OnStats(c bot.NextbotContext) error {
 	sb.WriteString("==============\n")
 	sb.WriteString(fmt.Sprintf("<b>TOTAL:</b> %s", utils.CommaFormat(totalCount)))
 
-	return c.Send(sb.String(), utils.DefaultSendOptions)
+	return c.Reply(sb.String(), utils.DefaultSendOptions)
 }

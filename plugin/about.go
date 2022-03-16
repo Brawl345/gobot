@@ -3,6 +3,7 @@ package plugin
 import (
 	"fmt"
 	"github.com/Brawl345/gobot/bot"
+	"github.com/Brawl345/gobot/utils"
 	"regexp"
 )
 
@@ -29,5 +30,6 @@ func (plg *AboutPlugin) Init() {
 }
 
 func (plg *AboutPlugin) OnAbout(c bot.NextbotContext) error {
-	return c.Send(plg.key)
+	// TODO: Debug stuff etc. (versioninfo package)
+	return c.Reply(plg.key, utils.DefaultSendOptions)
 }

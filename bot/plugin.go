@@ -12,8 +12,10 @@ type IPlugin interface {
 }
 
 type Handler struct {
-	Command *regexp.Regexp
-	Handler NextbotHandlerFunc
+	Command   *regexp.Regexp
+	Handler   NextbotHandlerFunc
+	AdminOnly bool
+	GroupOnly bool
 }
 
 type Plugin struct {

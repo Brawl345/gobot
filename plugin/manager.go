@@ -18,12 +18,24 @@ func (*ManagerPlugin) GetName() string {
 func (plg *ManagerPlugin) GetHandlers() []bot.Handler {
 	return []bot.Handler{
 		{
-			Command: regexp.MustCompile(fmt.Sprintf(`^/enable(?:@%s)? (.+)$`, plg.Bot.Me.Username)),
-			Handler: plg.OnEnable,
+			Command:   regexp.MustCompile(fmt.Sprintf(`^/enable(?:@%s)? (.+)$`, plg.Bot.Me.Username)),
+			Handler:   plg.OnEnable,
+			AdminOnly: true,
 		},
 		{
-			Command: regexp.MustCompile(fmt.Sprintf(`^/disable(?:@%s)? (.+)$`, plg.Bot.Me.Username)),
-			Handler: plg.OnDisable,
+			Command:   regexp.MustCompile(fmt.Sprintf(`^/disable(?:@%s)? (.+)$`, plg.Bot.Me.Username)),
+			Handler:   plg.OnDisable,
+			AdminOnly: true,
+		},
+		{
+			Command:   regexp.MustCompile(fmt.Sprintf(`^/enable_chat(?:@%s)? (.+)$`, plg.Bot.Me.Username)),
+			Handler:   plg.OnEnableInChat,
+			AdminOnly: true,
+		},
+		{
+			Command:   regexp.MustCompile(fmt.Sprintf(`^/disable_chat(?:@%s)? (.+)$`, plg.Bot.Me.Username)),
+			Handler:   plg.OnDisableInChat,
+			AdminOnly: true,
 		},
 	}
 }
@@ -33,21 +45,45 @@ func (plg *ManagerPlugin) OnEnable(c bot.NextbotContext) error {
 
 	err := plg.Bot.EnablePlugin(pluginName)
 	if err != nil {
-		return c.Send(err.Error(), utils.DefaultSendOptions)
+		return c.Reply(err.Error(), utils.DefaultSendOptions)
 	}
-	return c.Send("✅ Plugin wurde aktiviert", utils.DefaultSendOptions)
+	return c.Reply("✅ Plugin wurde aktiviert", utils.DefaultSendOptions)
+}
+
+func (plg *ManagerPlugin) OnEnableInChat(c bot.NextbotContext) error {
+	pluginName := c.Matches[1]
+
+	err := plg.Bot.EnablePluginForChat(c.Chat(), pluginName)
+	if err != nil {
+		return c.Reply(err.Error(), utils.DefaultSendOptions)
+	}
+	return c.Reply("✅ Plugin wurde für diesen Chat wieder aktiviert", utils.DefaultSendOptions)
 }
 
 func (plg *ManagerPlugin) OnDisable(c bot.NextbotContext) error {
 	pluginName := c.Matches[1]
 
 	if pluginName == "manager" {
-		return c.Send("❌ Manager kann nicht deaktiviert werden.")
+		return c.Reply("❌ Manager kann nicht deaktiviert werden.", utils.DefaultSendOptions)
 	}
 
 	err := plg.Bot.DisablePlugin(pluginName)
 	if err != nil {
-		return c.Send(err.Error(), utils.DefaultSendOptions)
+		return c.Reply(err.Error(), utils.DefaultSendOptions)
 	}
-	return c.Send("✅ Plugin wurde deaktiviert", utils.DefaultSendOptions)
+	return c.Reply("✅ Plugin wurde deaktiviert", utils.DefaultSendOptions)
+}
+
+func (plg *ManagerPlugin) OnDisableInChat(c bot.NextbotContext) error {
+	pluginName := c.Matches[1]
+
+	if pluginName == "manager" {
+		return c.Reply("❌ Manager kann nicht deaktiviert werden.", utils.DefaultSendOptions)
+	}
+
+	err := plg.Bot.DisablePluginForChat(c.Chat(), pluginName)
+	if err != nil {
+		return c.Reply(err.Error(), utils.DefaultSendOptions)
+	}
+	return c.Reply("✅ Plugin wurde für diesen Chat deaktiviert", utils.DefaultSendOptions)
 }
