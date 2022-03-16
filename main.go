@@ -8,9 +8,33 @@ import (
 	"gopkg.in/telebot.v3"
 	"log"
 	"os"
+	"runtime/debug"
+	"time"
 )
 
+func readVersionInfo() {
+	var (
+		Revision   = "unknown"
+		LastCommit time.Time
+	)
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return
+	}
+	for _, kv := range info.Settings {
+		switch kv.Key {
+		case "vcs.revision":
+			Revision = kv.Value
+		case "vcs.time":
+			LastCommit, _ = time.Parse(time.RFC3339, kv.Value)
+		}
+	}
+	log.Printf("Gobot-%s, %v", Revision, LastCommit)
+}
+
 func main() {
+	readVersionInfo()
+
 	db, err := storage.Open(os.Getenv("MYSQL_URL"))
 	if err != nil {
 		log.Fatal(err)

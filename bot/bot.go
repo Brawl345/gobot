@@ -92,16 +92,6 @@ func (bot *Nextbot) EnablePlugin(pluginName string) error {
 }
 
 func (bot *Nextbot) OnText(c telebot.Context) error {
-	var err error
-
-	if c.Message().Private() {
-		err = bot.DB.Users.Create(c.Sender())
-	} else {
-		err = bot.DB.ChatsUsers.Create(c.Chat(), c.Sender())
-	}
-	if err != nil {
-		return err
-	}
 	log.Printf("%s: %s", c.Chat().FirstName, c.Message().Text)
 
 	var isAllowed bool
@@ -113,6 +103,17 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 
 	if !isAllowed {
 		return nil
+	}
+
+	var err error
+
+	if c.Message().Private() {
+		err = bot.DB.Users.Create(c.Sender())
+	} else {
+		err = bot.DB.ChatsUsers.Create(c.Chat(), c.Sender())
+	}
+	if err != nil {
+		return err
 	}
 
 	text := c.Message().Caption
