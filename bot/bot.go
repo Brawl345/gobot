@@ -5,7 +5,6 @@ import (
 	"github.com/Brawl345/gobot/storage"
 	"golang.org/x/exp/slices"
 	"gopkg.in/telebot.v3"
-	"log"
 	"time"
 )
 
@@ -15,6 +14,7 @@ type Nextbot struct {
 	plugins                []IPlugin
 	enabledPlugins         []string
 	disabledPluginsForChat map[int64][]string
+	allowedChats           []int64
 }
 
 func NewBot(token string, db *storage.DB) (*Nextbot, error) {
@@ -40,11 +40,24 @@ func NewBot(token string, db *storage.DB) (*Nextbot, error) {
 		return nil, err
 	}
 
+	allowedUsers, err := db.Users.GetAllAllowed()
+	if err != nil {
+		return nil, err
+	}
+
+	allowedChats, err := db.Chats.GetAllAllowed()
+	if err != nil {
+		return nil, err
+	}
+
+	allowedChats = append(allowedChats, allowedUsers...)
+
 	return &Nextbot{
 		Bot:                    bot,
 		DB:                     db,
 		enabledPlugins:         enabledPlugins,
 		disabledPluginsForChat: disabledPluginsForChat,
+		allowedChats:           allowedChats,
 	}, nil
 }
 
@@ -142,67 +155,56 @@ func (bot *Nextbot) EnablePluginForChat(chat *telebot.Chat, pluginName string) e
 	return errors.New("❌ Plugin existiert nicht")
 }
 
-func (bot *Nextbot) OnText(c telebot.Context) error {
-	log.Printf("%s: %s", c.Chat().FirstName, c.Message().Text)
-
-	var isAllowed bool
-	// TODO: Allow-Liste cachen?
-	if c.Message().Private() {
-		isAllowed = bot.DB.Users.IsAllowed(c.Sender())
-	} else {
-		isAllowed = bot.DB.ChatsUsers.IsAllowed(c.Chat(), c.Sender())
+func (bot *Nextbot) IsUserAllowed(user *telebot.User) bool {
+	if isAdmin(user) {
+		return true
 	}
 
-	if !isAllowed {
-		return nil
-	}
+	return slices.Contains(bot.allowedChats, user.ID)
+}
 
-	var err error
+func (bot *Nextbot) IsChatAllowed(chat *telebot.Chat) bool {
+	return slices.Contains(bot.allowedChats, chat.ID)
+}
 
-	if c.Message().Private() {
-		err = bot.DB.Users.Create(c.Sender())
-	} else {
-		err = bot.DB.ChatsUsers.Create(c.Chat(), c.Sender())
-	}
+func (bot *Nextbot) AllowUser(user *telebot.User) error {
+	err := bot.DB.Users.Allow(user)
 	if err != nil {
 		return err
 	}
 
-	text := c.Message().Caption
-	if text == "" {
-		text = c.Message().Text
+	bot.allowedChats = append(bot.allowedChats, user.ID)
+	return nil
+}
+
+func (bot *Nextbot) DenyUser(user *telebot.User) error {
+	err := bot.DB.Users.Deny(user)
+	if err != nil {
+		return err
 	}
 
-	for _, plugin := range bot.plugins {
-		for _, handler := range plugin.GetHandlers() {
-			if !c.Message().FromGroup() && handler.GroupOnly {
-				continue
-			}
+	index := slices.Index(bot.allowedChats, user.ID)
+	bot.allowedChats = slices.Delete(bot.allowedChats, index, index+1)
+	return nil
+}
 
-			matches := handler.Command.FindStringSubmatch(text)
-			if len(matches) > 0 {
-				log.Printf("Matched plugin %s: %s", plugin.GetName(), handler.Command)
-				if bot.isPluginEnabled(plugin.GetName()) {
-					if c.Message().FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.GetName()) {
-						log.Printf("Plugin %s is disabled for this chat", plugin.GetName())
-						continue
-					}
-
-					if handler.AdminOnly && !isAdmin(c.Sender()) {
-						log.Println("User is not an admin.")
-						continue
-					}
-
-					go handler.Handler(NextbotContext{
-						Context: c,
-						Matches: matches,
-					})
-				} else {
-					log.Printf("Plugin %s is disabled globally", plugin.GetName())
-				}
-			}
-		}
+func (bot *Nextbot) AllowChat(chat *telebot.Chat) error {
+	err := bot.DB.Chats.Allow(chat)
+	if err != nil {
+		return err
 	}
 
+	bot.allowedChats = append(bot.allowedChats, chat.ID)
+	return nil
+}
+
+func (bot *Nextbot) DenyChat(chat *telebot.Chat) error {
+	err := bot.DB.Chats.Deny(chat)
+	if err != nil {
+		return err
+	}
+
+	index := slices.Index(bot.allowedChats, chat.ID)
+	bot.allowedChats = slices.Delete(bot.allowedChats, index, index+1)
 	return nil
 }

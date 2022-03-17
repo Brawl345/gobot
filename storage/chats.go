@@ -11,7 +11,7 @@ type (
 		Create(chat *telebot.Chat) error
 		CreateTx(tx *sqlx.Tx, chat *telebot.Chat) error
 		Deny(chat *telebot.Chat) error
-		IsAllowed(chat *telebot.Chat) bool
+		GetAllAllowed() ([]int64, error)
 	}
 
 	Chats struct {
@@ -49,10 +49,11 @@ func (db *Chats) Deny(chat *telebot.Chat) error {
 	return err
 }
 
-func (db *Chats) IsAllowed(chat *telebot.Chat) bool {
-	const query = `SELECT allowed FROM chats WHERE id = ?`
+func (db *Chats) GetAllAllowed() ([]int64, error) {
+	const query = `SELECT id FROM chats WHERE allowed = true`
 
-	var isAllowed bool
-	db.Get(&isAllowed, query, chat.ID)
-	return isAllowed
+	var allowed []int64
+	err := db.Select(&allowed, query)
+
+	return allowed, err
 }

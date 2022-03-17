@@ -40,14 +40,14 @@ func (plg *AllowPlugin) OnAllow(c bot.NextbotContext) error {
 			return c.Reply("🤖🤖🤖", utils.DefaultSendOptions)
 		}
 
-		isAllowed := plg.Bot.DB.Users.IsAllowed(c.Message().ReplyTo.Sender)
+		isAllowed := plg.Bot.IsUserAllowed(c.Message().ReplyTo.Sender)
 		if isAllowed {
 			return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot bereits überall benutzen.",
 				html.EscapeString(c.Message().ReplyTo.Sender.FirstName)),
 				utils.DefaultSendOptions)
 		}
 
-		err := plg.Bot.DB.Users.Allow(c.Message().ReplyTo.Sender)
+		err := plg.Bot.AllowUser(c.Message().ReplyTo.Sender)
 		if err != nil {
 			log.Println(err)
 			return c.Reply("❌ Fehler beim Erlauben des Nutzers.", utils.DefaultSendOptions)
@@ -57,13 +57,13 @@ func (plg *AllowPlugin) OnAllow(c bot.NextbotContext) error {
 			html.EscapeString(c.Message().ReplyTo.Sender.FirstName)),
 			utils.DefaultSendOptions)
 	} else { // Allow group
-		isAllowed := plg.Bot.DB.Chats.IsAllowed(c.Chat())
+		isAllowed := plg.Bot.IsChatAllowed(c.Chat())
 
 		if isAllowed {
 			return c.Reply("✅ Dieser Chat darf den Bot bereits nutzen.", utils.DefaultSendOptions)
 		}
 
-		err := plg.Bot.DB.Chats.Allow(c.Chat())
+		err := plg.Bot.AllowChat(c.Chat())
 		if err != nil {
 			log.Println(err)
 			return c.Reply("❌ Fehler beim Erlauben des Chats.", utils.DefaultSendOptions)
@@ -79,14 +79,14 @@ func (plg *AllowPlugin) OnDeny(c bot.NextbotContext) error {
 			return c.Reply("🤖🤖🤖", utils.DefaultSendOptions)
 		}
 
-		isAllowed := plg.Bot.DB.Users.IsAllowed(c.Message().ReplyTo.Sender)
+		isAllowed := plg.Bot.IsUserAllowed(c.Message().ReplyTo.Sender)
 		if !isAllowed {
 			return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot nicht überall benutzen.",
 				html.EscapeString(c.Message().ReplyTo.Sender.FirstName)),
 				utils.DefaultSendOptions)
 		}
 
-		err := plg.Bot.DB.Users.Deny(c.Message().ReplyTo.Sender)
+		err := plg.Bot.DenyUser(c.Message().ReplyTo.Sender)
 		if err != nil {
 			log.Println(err)
 			return c.Reply("❌ Fehler beim Verweigern des Nutzers.", utils.DefaultSendOptions)
@@ -96,13 +96,13 @@ func (plg *AllowPlugin) OnDeny(c bot.NextbotContext) error {
 			html.EscapeString(c.Message().ReplyTo.Sender.FirstName)),
 			utils.DefaultSendOptions)
 	} else { // Deny group
-		isAllowed := plg.Bot.DB.Chats.IsAllowed(c.Chat())
+		isAllowed := plg.Bot.IsChatAllowed(c.Chat())
 
 		if !isAllowed {
 			return c.Reply("✅ Dieser Chat darf den Bot nicht nutzen.", utils.DefaultSendOptions)
 		}
 
-		err := plg.Bot.DB.Chats.Deny(c.Chat())
+		err := plg.Bot.DenyChat(c.Chat())
 		if err != nil {
 			log.Println(err)
 			return c.Reply("❌ Fehler beim Verweigern des Chats.", utils.DefaultSendOptions)

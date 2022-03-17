@@ -12,7 +12,7 @@ type (
 		Create(user *telebot.User) error
 		CreateTx(tx *sqlx.Tx, user *telebot.User) error
 		Deny(user *telebot.User) error
-		IsAllowed(user *telebot.User) bool
+		GetAllAllowed() ([]int64, error)
 	}
 
 	Users struct {
@@ -72,14 +72,11 @@ func (db *Users) Deny(user *telebot.User) error {
 	return err
 }
 
-func (db *Users) IsAllowed(user *telebot.User) bool {
-	if isAdmin(user) {
-		return true
-	}
+func (db *Users) GetAllAllowed() ([]int64, error) {
+	const query = `SELECT id FROM users WHERE allowed = true`
 
-	const query = `SELECT users.allowed FROM users WHERE users.id = ?`
+	var allowed []int64
+	err := db.Select(&allowed, query)
 
-	var isAllowed bool
-	db.Get(&isAllowed, query, user.ID)
-	return isAllowed
+	return allowed, err
 }
