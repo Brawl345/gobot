@@ -178,6 +178,9 @@ func (bot *Nextbot) AllowUser(user *telebot.User) error {
 }
 
 func (bot *Nextbot) DenyUser(user *telebot.User) error {
+	if isAdmin(user) {
+		return errors.New("cannot deny admin")
+	}
 	err := bot.DB.Users.Deny(user)
 	if err != nil {
 		return err
