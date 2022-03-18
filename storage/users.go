@@ -23,6 +23,7 @@ type (
 		ID        int64          `db:"id"`
 		FirstName string         `db:"first_name"`
 		LastName  sql.NullString `db:"last_name"`
+		Username  sql.NullString `db:"username"`
 		Allowed   bool           `db:"allowed"`
 		MsgCount  int64          `db:"msg_count"`
 		InGroup   bool           `db:"in_group"`
@@ -44,32 +45,36 @@ func (db *Users) Allow(user *telebot.User) error {
 
 func (db *Users) Create(user *telebot.User) error {
 	const query = `INSERT INTO 
-    users (id, first_name, last_name)
-    VALUES (? ,?, ?)
-    ON DUPLICATE KEY UPDATE first_name = ?, last_name = ?`
+    users (id, first_name, last_name, username)
+    VALUES (? ,?, ?, ?)
+    ON DUPLICATE KEY UPDATE first_name = ?, last_name = ?, username = ?`
 	_, err := db.Exec(
 		query,
 		user.ID,
 		user.FirstName,
 		NewNullString(user.LastName),
+		NewNullString(user.Username),
 		user.FirstName,
 		NewNullString(user.LastName),
+		NewNullString(user.Username),
 	)
 	return err
 }
 
 func (db *Users) CreateTx(tx *sqlx.Tx, user *telebot.User) error {
 	const query = `INSERT INTO 
-    users (id, first_name, last_name)
-    VALUES (? ,?, ?)
-    ON DUPLICATE KEY UPDATE first_name = ?, last_name = ?`
+    users (id, first_name, last_name, username)
+    VALUES (? ,?, ?, ?)
+    ON DUPLICATE KEY UPDATE first_name = ?, last_name = ?, username = ?`
 	_, err := tx.Exec(
 		query,
 		user.ID,
 		user.FirstName,
 		NewNullString(user.LastName),
+		NewNullString(user.Username),
 		user.FirstName,
 		NewNullString(user.LastName),
+		NewNullString(user.Username),
 	)
 	return err
 }

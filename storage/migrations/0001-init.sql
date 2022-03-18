@@ -18,8 +18,10 @@ CREATE TABLE `users`
     `updated_at` DATETIME   NULL     DEFAULT NULL ON UPDATE current_timestamp(),
     `first_name` TINYTEXT   NOT NULL,
     `last_name`  TINYTEXT   NULL,
+    `username`   TINYTEXT   NULL,
     `allowed`    TINYINT(1) NOT NULL DEFAULT 0,
-    INDEX `allowed` (`allowed`)
+    INDEX `allowed` (`allowed`),
+    INDEX `username` (`username`)
 ) COLLATE = 'utf8mb4_general_ci'
   ENGINE = InnoDB;
 
