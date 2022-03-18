@@ -9,6 +9,7 @@ type IPlugin interface {
 	GetName() string
 	GetHandlers() []Handler
 	GetCallbackHandlers() []CallbackHandler
+	GetInlineHandlers() []InlineHandler
 	Init()
 }
 
@@ -25,6 +26,13 @@ type CallbackHandler struct {
 	AdminOnly bool
 }
 
+type InlineHandler struct {
+	Command             *regexp.Regexp
+	Handler             NextbotHandlerFunc
+	AdminOnly           bool
+	CanBeUsedByEveryone bool
+}
+
 type Plugin struct {
 	Bot *Nextbot
 }
@@ -33,6 +41,10 @@ func (*Plugin) Init() {}
 
 func (*Plugin) GetCallbackHandlers() []CallbackHandler {
 	return []CallbackHandler{}
+}
+
+func (*Plugin) GetInlineHandlers() []InlineHandler {
+	return []InlineHandler{}
 }
 
 func NewPlugin(bot *Nextbot) (*Plugin, error) {

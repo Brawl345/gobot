@@ -42,24 +42,27 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 			matches := handler.Command.FindStringSubmatch(text)
 			if len(matches) > 0 {
 				log.Printf("Matched plugin %s: %s", plugin.GetName(), handler.Command)
-				if bot.isPluginEnabled(plugin.GetName()) {
-					if c.Message().FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.GetName()) {
-						log.Printf("Plugin %s is disabled for this chat", plugin.GetName())
-						continue
-					}
 
-					if handler.AdminOnly && !isAdmin(c.Sender()) {
-						log.Println("User is not an admin.")
-						continue
-					}
-
-					go handler.Handler(NextbotContext{
-						Context: c,
-						Matches: matches,
-					})
-				} else {
+				if !bot.isPluginEnabled(plugin.GetName()) {
 					log.Printf("Plugin %s is disabled globally", plugin.GetName())
+					continue
 				}
+
+				if c.Message().FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.GetName()) {
+					log.Printf("Plugin %s is disabled for this chat", plugin.GetName())
+					continue
+				}
+
+				if handler.AdminOnly && !isAdmin(c.Sender()) {
+					log.Println("User is not an admin.")
+					continue
+				}
+
+				go handler.Handler(NextbotContext{
+					Context: c,
+					Matches: matches,
+				})
+
 			}
 		}
 	}
@@ -91,39 +94,98 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 			matches := handler.Command.FindStringSubmatch(c.Callback().Data)
 			if len(matches) > 0 {
 				log.Printf("Matched plugin %s: %s", plugin.GetName(), handler.Command)
-				if bot.isPluginEnabled(plugin.GetName()) {
-					if c.Message().FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.GetName()) {
-						log.Printf("Plugin %s is disabled for this chat", plugin.GetName())
-						return c.Respond(&telebot.CallbackResponse{
-							Text:      "Dieser Befehl ist nicht verfügbar.",
-							ShowAlert: true,
-						})
-					}
 
-					if handler.AdminOnly && !isAdmin(c.Sender()) {
-						log.Println("User is not an admin.")
-						return c.Respond(&telebot.CallbackResponse{
-							Text:      "Du bist kein Administrator.",
-							ShowAlert: true,
-						})
-					}
-
-					go handler.Handler(NextbotContext{
-						Context: c,
-						Matches: matches,
-					})
-				} else {
+				if !bot.isPluginEnabled(plugin.GetName()) {
 					log.Printf("Plugin %s is disabled globally", plugin.GetName())
 					return c.Respond(&telebot.CallbackResponse{
 						Text:      "Dieser Befehl ist nicht verfügbar.",
 						ShowAlert: true,
 					})
 				}
+
+				if c.Message().FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.GetName()) {
+					log.Printf("Plugin %s is disabled for this chat", plugin.GetName())
+					return c.Respond(&telebot.CallbackResponse{
+						Text:      "Dieser Befehl ist nicht verfügbar.",
+						ShowAlert: true,
+					})
+				}
+
+				if handler.AdminOnly && !isAdmin(c.Sender()) {
+					log.Println("User is not an admin.")
+					return c.Respond(&telebot.CallbackResponse{
+						Text:      "Du bist kein Bot-Administrator.",
+						ShowAlert: true,
+					})
+				}
+
+				go handler.Handler(NextbotContext{
+					Context: c,
+					Matches: matches,
+				})
+
 			}
 		}
 	}
 
 	return nil
+}
+
+func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
+	log.Println("InlineQuery:", c.Query().Text)
+
+	if c.Query().Text == "" {
+		return c.Answer(&telebot.QueryResponse{
+			CacheTime:  1,
+			IsPersonal: true,
+		})
+	}
+
+	for _, plugin := range bot.plugins {
+		for _, handler := range plugin.GetInlineHandlers() {
+			matches := handler.Command.FindStringSubmatch(c.Query().Text)
+			if len(matches) > 0 {
+				log.Printf("Matched plugin %s: %s", plugin.GetName(), handler.Command)
+				if !bot.isPluginEnabled(plugin.GetName()) {
+					log.Printf("Plugin %s is disabled globally", plugin.GetName())
+					return c.Answer(&telebot.QueryResponse{
+						CacheTime:  1,
+						IsPersonal: true,
+					})
+				}
+
+				if handler.AdminOnly && !isAdmin(c.Sender()) {
+					log.Println("User is not an admin.")
+					return c.Answer(&telebot.QueryResponse{
+						CacheTime:  1,
+						IsPersonal: true,
+					})
+				}
+
+				if !handler.CanBeUsedByEveryone {
+					isAllowed := bot.IsUserAllowed(c.Sender())
+					if !isAllowed {
+						return c.Answer(&telebot.QueryResponse{
+							CacheTime:  1,
+							IsPersonal: true,
+						})
+					}
+				}
+
+				go handler.Handler(NextbotContext{
+					Context: c,
+					Matches: matches,
+				})
+
+			}
+		}
+	}
+
+	return c.Answer(&telebot.QueryResponse{
+		CacheTime:  1,
+		IsPersonal: true,
+	})
+
 }
 
 func (bot *Nextbot) OnUserJoined(c telebot.Context) error {

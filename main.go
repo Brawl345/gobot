@@ -75,6 +75,7 @@ func main() {
 		&plugin.AllowPlugin{Plugin: p},
 		&plugin.CredsPlugin{Plugin: p},
 		&plugin.EchoPlugin{Plugin: p},
+		&plugin.IdPlugin{Plugin: p},
 		&plugin.ManagerPlugin{Plugin: p},
 		&plugin.StatsPlugin{Plugin: p},
 	}
@@ -94,7 +95,9 @@ func main() {
 	b.Handle(telebot.OnUserJoined, b.OnUserJoined)
 	b.Handle(telebot.OnUserLeft, b.OnUserLeft)
 	b.Handle(telebot.OnCallback, b.OnCallback)
+	b.Handle(telebot.OnQuery, b.OnInlineQuery)
 	// TODO: OnEdited extra handeln
+	// TODO: Handler für File & Location bspw.
 
 	//b.Bot.Use(h.PrettyPrint())
 

@@ -21,7 +21,7 @@ func NewBot(token string, db *storage.DB) (*Nextbot, error) {
 	bot, err := telebot.NewBot(telebot.Settings{
 		Token: token,
 		Poller: &telebot.LongPoller{
-			AllowedUpdates: []string{"message", "callback_query"}, // TODO: Inline Query
+			AllowedUpdates: []string{"message", "callback_query", "inline_query"},
 			Timeout:        10 * time.Second,
 		},
 	})
