@@ -31,7 +31,11 @@ func (plg *StatsPlugin) OnStats(c bot.NextbotContext) error {
 	users, err := plg.Bot.DB.ChatsUsers.GetAllUsersWithMsgCount(c.Chat())
 	if err != nil {
 		log.Println(err)
-		return c.Reply("❌ Fehler beim Abrufen der Statistiken.")
+		return c.Reply("❌ Fehler beim Abrufen der Statistiken.", utils.DefaultSendOptions)
+	}
+
+	if len(users) == 0 {
+		return c.Reply("<i>Es wurden noch keine Statistiken erstellt.</i>", utils.DefaultSendOptions)
 	}
 
 	var sb strings.Builder

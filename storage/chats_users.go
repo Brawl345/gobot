@@ -9,8 +9,10 @@ import (
 type (
 	ChatUserStorage interface {
 		Create(chat *telebot.Chat, user *telebot.User) error
+		CreateBatch(chat *telebot.Chat, users *[]telebot.User) error
 		GetAllUsersWithMsgCount(chat *telebot.Chat) ([]User, error)
 		IsAllowed(chat *telebot.Chat, user *telebot.User) bool
+		Leave(chat *telebot.Chat, user *telebot.User) error
 	}
 
 	ChatsUsers struct {
@@ -41,6 +43,46 @@ func (db *ChatsUsers) Create(chat *telebot.Chat, user *telebot.User) error {
 	err = db.insertRelationship(tx, chat.ID, user.ID)
 	if err != nil {
 		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (db *ChatsUsers) CreateBatch(chat *telebot.Chat, users *[]telebot.User) error {
+	const insertRelationshipQuery = `INSERT INTO 
+    chats_users (chat_id, user_id, msg_count, in_group) 
+    VALUES (?, ?, 0, true)
+    ON DUPLICATE KEY UPDATE chat_id = chat_id, in_group = true`
+
+	tx, err := db.BeginTxx(context.Background(), nil)
+
+	err = db.Chats.CreateTx(tx, chat)
+	if err != nil {
+		return err
+	}
+
+	defer tx.Rollback()
+
+	// creating a query for every user is inefficient,
+	// but idc
+	for _, user := range *users {
+		if user.IsBot {
+			continue
+		}
+
+		err = db.Users.CreateTx(tx, &user)
+		if err != nil {
+			return err
+		}
+
+		_, err := tx.Exec(insertRelationshipQuery, chat.ID, user.ID)
+		if err != nil {
+			return err
+		}
 	}
 
 	if err = tx.Commit(); err != nil {
@@ -82,4 +124,13 @@ func (db *ChatsUsers) IsAllowed(chat *telebot.Chat, user *telebot.User) bool {
 	var isAllowed bool
 	db.Get(&isAllowed, query, chat.ID, user.ID)
 	return isAllowed
+}
+
+func (db *ChatsUsers) Leave(chat *telebot.Chat, user *telebot.User) error {
+	const query = `UPDATE chats_users SET in_group = false
+	WHERE chat_id = ?
+	  AND user_id = ?`
+
+	_, err := db.Exec(query, chat.ID, user.ID)
+	return err
 }

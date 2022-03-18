@@ -66,3 +66,14 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 
 	return nil
 }
+
+func (bot *Nextbot) OnUserJoined(c telebot.Context) error {
+	return bot.DB.ChatsUsers.CreateBatch(c.Chat(), &c.Message().UsersJoined)
+}
+
+func (bot *Nextbot) OnUserLeft(c telebot.Context) error {
+	if c.Message().UserLeft.IsBot {
+		return nil
+	}
+	return bot.DB.ChatsUsers.Leave(c.Chat(), c.Message().UserLeft)
+}
