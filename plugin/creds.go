@@ -38,6 +38,16 @@ func (plg *CredsPlugin) GetHandlers() []bot.Handler {
 	}
 }
 
+func (plg *CredsPlugin) GetCallbackHandlers() []bot.CallbackHandler {
+	return []bot.CallbackHandler{
+		{
+			Command:   regexp.MustCompile(`^creds_hide$`),
+			Handler:   plg.OnHide,
+			AdminOnly: true,
+		},
+	}
+}
+
 func (plg *CredsPlugin) OnGet(c bot.NextbotContext) error {
 	if c.Message().FromGroup() {
 		return nil
@@ -69,7 +79,7 @@ func (plg *CredsPlugin) OnGet(c bot.NextbotContext) error {
 				{
 					{
 						Text: "Verbergen",
-						Data: "creds_delete",
+						Data: "creds_hide",
 					},
 				},
 			},
@@ -109,4 +119,9 @@ func (plg *CredsPlugin) OnDelete(c bot.NextbotContext) error {
 	}
 
 	return c.Reply("✅ Schlüssel gelöscht", utils.DefaultSendOptions)
+}
+
+func (plg *CredsPlugin) OnHide(c bot.NextbotContext) error {
+	plg.Bot.Delete(c.Callback().Message)
+	return c.Respond()
 }

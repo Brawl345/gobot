@@ -93,6 +93,7 @@ func main() {
 	b.Handle(telebot.OnDice, b.OnText)
 	b.Handle(telebot.OnUserJoined, b.OnUserJoined)
 	b.Handle(telebot.OnUserLeft, b.OnUserLeft)
+	b.Handle(telebot.OnCallback, b.OnCallback)
 	// TODO: OnEdited extra handeln
 
 	//b.Bot.Use(h.PrettyPrint())
