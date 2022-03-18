@@ -85,9 +85,14 @@ func main() {
 
 	b.Handle(telebot.OnText, b.OnText)
 	b.Handle(telebot.OnMedia, b.OnText)
+	b.Handle(telebot.OnContact, b.OnText)
+	b.Handle(telebot.OnLocation, b.OnText)
+	b.Handle(telebot.OnVenue, b.OnText)
+	b.Handle(telebot.OnGame, b.OnText)
+	b.Handle(telebot.OnDice, b.OnText)
 	b.Handle(telebot.OnUserJoined, b.OnUserJoined)
 	b.Handle(telebot.OnUserLeft, b.OnUserLeft)
-	// TODO: Handle more types + count msgs there (contact, location, venue, game, dice)
+	// TODO: OnEdited extra handeln
 
 	//b.Bot.Use(h.PrettyPrint())
 
