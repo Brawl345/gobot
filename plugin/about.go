@@ -49,7 +49,7 @@ func (plg *AboutPlugin) Init() {
 		}
 	}
 
-	text := fmt.Sprintf("<code>%s</code>\n<i>Built on %s</i>", Revision, LastCommit)
+	text := fmt.Sprintf("<code>%s</code>\n<i>Comitted on %s</i>", Revision, LastCommit)
 	if DirtyBuild {
 		text += " (dirty)"
 	}
