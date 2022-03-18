@@ -30,6 +30,13 @@ func NewBot(token string, db *storage.DB) (*Nextbot, error) {
 		return nil, err
 	}
 
+	// Calling "remove webook" even if no webhook is set
+	// so pending updates can be dropped
+	err = bot.RemoveWebhook(true)
+	if err != nil {
+		return nil, err
+	}
+
 	enabledPlugins, err := db.Plugins.GetAllEnabled()
 	if err != nil {
 		return nil, err

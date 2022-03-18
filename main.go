@@ -87,7 +87,7 @@ func main() {
 	b.Handle(telebot.OnMedia, b.OnText)
 	b.Handle(telebot.OnUserJoined, b.OnUserJoined)
 	b.Handle(telebot.OnUserLeft, b.OnUserLeft)
-	// TODO: Handle more types (contact, location, venue, game, dice)
+	// TODO: Handle more types + count msgs there (contact, location, venue, game, dice)
 
 	//b.Bot.Use(h.PrettyPrint())
 
