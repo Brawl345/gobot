@@ -25,8 +25,16 @@ type (
 		LastName  sql.NullString `db:"last_name"`
 		Allowed   bool           `db:"allowed"`
 		MsgCount  int64          `db:"msg_count"`
+		InGroup   bool           `db:"in_group"`
 	}
 )
+
+func (user *User) GetFullName() string {
+	if user.LastName.Valid {
+		return user.FirstName + " " + user.LastName.String
+	}
+	return user.FirstName
+}
 
 func (db *Users) Allow(user *telebot.User) error {
 	const query = `UPDATE users SET allowed = true WHERE id = ?`

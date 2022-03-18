@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/utils"
+	"html"
 	"log"
 	"regexp"
 	"strings"
@@ -40,21 +41,37 @@ func (plg *StatsPlugin) OnStats(c bot.NextbotContext) error {
 
 	var sb strings.Builder
 	totalCount := int64(0)
+	otherMsgs := int64(0)
 
 	for _, user := range users {
-		// TODO: Prozentangabe
-		// TODO: Nur Leute in der Gruppe + andere aussortieren
 		totalCount += user.MsgCount
-		sb.WriteString(
-			fmt.Sprintf("<b>%s:</b> %s\n",
-				user.FirstName,
-				utils.CommaFormat(user.MsgCount),
-			),
-		)
+		if !user.InGroup {
+			otherMsgs += user.MsgCount
+		}
+	}
+
+	for _, user := range users {
+		percentage := (float64(user.MsgCount) / float64(totalCount)) * 100
+		if user.InGroup && user.MsgCount > 0 {
+			sb.WriteString(
+				fmt.Sprintf("<b>%s:</b> %s <code>(%.2f %%)</code>\n",
+					html.EscapeString(user.GetFullName()),
+					utils.CommaFormat(user.MsgCount),
+					percentage,
+				),
+			)
+		}
 	}
 
 	sb.WriteString("==============\n")
-	sb.WriteString(fmt.Sprintf("<b>TOTAL:</b> %s", utils.CommaFormat(totalCount)))
+	if otherMsgs > 0 {
+		percentage := (float64(otherMsgs) / float64(totalCount)) * 100
+		sb.WriteString(fmt.Sprintf("<b>Andere Nutzer:</b> %s <code>(%.2f %%)</code>\n",
+			utils.CommaFormat(otherMsgs),
+			percentage),
+		)
+	}
+	sb.WriteString(fmt.Sprintf("<b>GESAMT:</b> %s", utils.CommaFormat(totalCount)))
 
 	return c.Reply(sb.String(), utils.DefaultSendOptions)
 }

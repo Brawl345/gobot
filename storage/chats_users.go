@@ -93,7 +93,7 @@ func (db *ChatsUsers) CreateBatch(chat *telebot.Chat, users *[]telebot.User) err
 }
 
 func (db *ChatsUsers) GetAllUsersWithMsgCount(chat *telebot.Chat) ([]User, error) {
-	const query = `SELECT u.first_name, u.last_name, msg_count FROM chats_users
+	const query = `SELECT u.first_name, u.last_name, msg_count, in_group FROM chats_users
 JOIN users u on u.id = chats_users.user_id
 WHERE chat_id = ?
 ORDER BY msg_count DESC`
