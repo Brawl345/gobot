@@ -73,6 +73,7 @@ func main() {
 	plugins := []bot.IPlugin{
 		&plugin.AboutPlugin{Plugin: p},
 		&plugin.AllowPlugin{Plugin: p},
+		&plugin.CredsPlugin{Plugin: p},
 		&plugin.EchoPlugin{Plugin: p},
 		&plugin.ManagerPlugin{Plugin: p},
 		&plugin.StatsPlugin{Plugin: p},

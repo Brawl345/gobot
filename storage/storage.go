@@ -16,6 +16,7 @@ type DB struct {
 	Chats        ChatStorage
 	ChatsPlugins ChatPluginStorage
 	ChatsUsers   ChatUserStorage
+	Credentials  CredentialStorage
 	Plugins      PluginStorage
 	Users        UserStorage
 }
@@ -48,8 +49,9 @@ func Open(url string) (*DB, error) {
 			Users: users,
 			DB:    db,
 		},
-		Plugins: plugins,
-		Users:   users,
+		Credentials: &Credentials{db},
+		Plugins:     plugins,
+		Users:       users,
 	}, nil
 }
 

@@ -65,3 +65,10 @@ CREATE TABLE `chats_plugins`
     CONSTRAINT `FK_chats_plugins_plugins` FOREIGN KEY (`plugin_name`) REFERENCES `andi_gobot`.`plugins` (`name`) ON UPDATE CASCADE ON DELETE CASCADE
 ) COLLATE = 'utf8mb4_general_ci'
   ENGINE = InnoDB;
+
+CREATE TABLE `credentials`
+(
+    `name` VARCHAR(50) NOT NULL PRIMARY KEY,
+    `value` VARCHAR(255) NOT NULL
+) COLLATE = 'utf8mb4_general_ci'
+  ENGINE = InnoDB;
