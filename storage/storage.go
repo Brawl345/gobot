@@ -1,7 +1,6 @@
 package storage
 
 import (
-	"database/sql"
 	"embed"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
@@ -57,14 +56,4 @@ func Open(url string) (*DB, error) {
 func (db *DB) Migrate() (int, error) {
 	migrations := &migrate.EmbedFileSystemMigrationSource{FileSystem: embeddedMigrations, Root: "migrations"}
 	return migrate.Exec(db.DB.DB, "mysql", migrations, migrate.Up)
-}
-
-func NewNullString(s string) sql.NullString {
-	if len(s) == 0 {
-		return sql.NullString{}
-	}
-	return sql.NullString{
-		String: s,
-		Valid:  true,
-	}
 }
