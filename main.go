@@ -97,7 +97,7 @@ func main() {
 	b.Handle(telebot.OnUserLeft, b.OnUserLeft)
 	b.Handle(telebot.OnCallback, b.OnCallback)
 	b.Handle(telebot.OnQuery, b.OnInlineQuery)
-	// TODO: OnEdited extra handeln
+	// TODO: OnEdited für prettyPrint
 
 	b.Start()
 }
