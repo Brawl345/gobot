@@ -3,13 +3,16 @@ package bot
 import (
 	"gopkg.in/telebot.v3"
 	"log"
+	"regexp"
 )
 
 func (bot *Nextbot) OnText(c telebot.Context) error {
-	log.Printf("%s: %s", c.Chat().FirstName, c.Message().Text)
+	msg := c.Message()
+
+	log.Printf("%s: %s", c.Chat().FirstName, msg.Text)
 
 	isAllowed := bot.IsUserAllowed(c.Sender())
-	if c.Message().FromGroup() && !isAllowed {
+	if msg.FromGroup() && !isAllowed {
 		isAllowed = bot.IsChatAllowed(c.Chat())
 	}
 
@@ -19,7 +22,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 
 	var err error
 
-	if c.Message().Private() {
+	if msg.Private() {
 		err = bot.DB.Users.Create(c.Sender())
 	} else {
 		err = bot.DB.ChatsUsers.Create(c.Chat(), c.Sender())
@@ -28,19 +31,39 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 		return err
 	}
 
-	text := c.Message().Caption
+	text := msg.Caption
 	if text == "" {
-		text = c.Message().Text
+		text = msg.Text
 	}
 
 	for _, plugin := range bot.plugins {
 		for _, handler := range plugin.GetHandlers() {
-			if !c.Message().FromGroup() && handler.GroupOnly {
+			if !msg.FromGroup() && handler.GroupOnly {
 				continue
 			}
 
-			matches := handler.Command.FindStringSubmatch(text)
-			if len(matches) > 0 {
+			var matched bool
+			var matches []string
+
+			switch command := handler.Command.(type) {
+			case *regexp.Regexp:
+				matches = command.FindStringSubmatch(text)
+				if len(matches) > 0 {
+					matched = true
+				}
+			case string:
+				switch {
+				// More to be added when needed
+				case msg.Document != nil:
+					matched = command == telebot.OnDocument
+				case msg.Photo != nil:
+					matched = command == telebot.OnPhoto
+				}
+			default:
+				panic("Unspported handler type!!")
+			}
+
+			if matched {
 				log.Printf("Matched plugin %s: %s", plugin.GetName(), handler.Command)
 
 				if !bot.isPluginEnabled(plugin.GetName()) {
@@ -48,7 +71,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 					continue
 				}
 
-				if c.Message().FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.GetName()) {
+				if msg.FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.GetName()) {
 					log.Printf("Plugin %s is disabled for this chat", plugin.GetName())
 					continue
 				}
@@ -71,14 +94,16 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 }
 
 func (bot *Nextbot) OnCallback(c telebot.Context) error {
-	log.Println("Callback:", c.Callback().Data)
+	msg := c.Message()
+	callback := c.Callback()
+	log.Println("Callback:", callback.Data)
 
-	if c.Callback().Data == "" {
+	if callback.Data == "" {
 		return c.Respond()
 	}
 
 	isAllowed := bot.IsUserAllowed(c.Sender())
-	if c.Message().FromGroup() && !isAllowed {
+	if msg.FromGroup() && !isAllowed {
 		isAllowed = bot.IsChatAllowed(c.Chat())
 	}
 
@@ -91,7 +116,7 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 
 	for _, plugin := range bot.plugins {
 		for _, handler := range plugin.GetCallbackHandlers() {
-			matches := handler.Command.FindStringSubmatch(c.Callback().Data)
+			matches := handler.Command.FindStringSubmatch(callback.Data)
 			if len(matches) > 0 {
 				log.Printf("Matched plugin %s: %s", plugin.GetName(), handler.Command)
 
@@ -103,7 +128,7 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 					})
 				}
 
-				if c.Message().FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.GetName()) {
+				if msg.FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.GetName()) {
 					log.Printf("Plugin %s is disabled for this chat", plugin.GetName())
 					return c.Respond(&telebot.CallbackResponse{
 						Text:      "Dieser Befehl ist nicht verfügbar.",
@@ -132,9 +157,10 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 }
 
 func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
-	log.Println("InlineQuery:", c.Query().Text)
+	inlineQuery := c.Query()
+	log.Println("InlineQuery:", inlineQuery.Text)
 
-	if c.Query().Text == "" {
+	if inlineQuery.Text == "" {
 		return c.Answer(&telebot.QueryResponse{
 			CacheTime:  1,
 			IsPersonal: true,
@@ -143,7 +169,7 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 
 	for _, plugin := range bot.plugins {
 		for _, handler := range plugin.GetInlineHandlers() {
-			matches := handler.Command.FindStringSubmatch(c.Query().Text)
+			matches := handler.Command.FindStringSubmatch(inlineQuery.Text)
 			if len(matches) > 0 {
 				log.Printf("Matched plugin %s: %s", plugin.GetName(), handler.Command)
 				if !bot.isPluginEnabled(plugin.GetName()) {

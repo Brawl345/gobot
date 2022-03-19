@@ -8,6 +8,7 @@ import (
 var DefaultSendOptions = &telebot.SendOptions{
 	AllowWithoutReply:     true,
 	DisableWebPagePreview: true,
+	DisableNotification:   true,
 	ParseMode:             telebot.ModeHTML,
 }
 
