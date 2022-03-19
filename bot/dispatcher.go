@@ -81,10 +81,15 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 					continue
 				}
 
-				go handler.Handler(NextbotContext{
-					Context: c,
-					Matches: matches,
-				})
+				go func() {
+					err := handler.Handler(NextbotContext{
+						Context: c,
+						Matches: matches,
+					})
+					if err != nil {
+						bot.OnError(err, c)
+					}
+				}()
 
 			}
 		}
@@ -144,10 +149,15 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 					})
 				}
 
-				go handler.Handler(NextbotContext{
-					Context: c,
-					Matches: matches,
-				})
+				go func() {
+					err := handler.Handler(NextbotContext{
+						Context: c,
+						Matches: matches,
+					})
+					if err != nil {
+						bot.OnError(err, c)
+					}
+				}()
 
 			}
 		}
@@ -198,10 +208,15 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 					}
 				}
 
-				go handler.Handler(NextbotContext{
-					Context: c,
-					Matches: matches,
-				})
+				go func() {
+					err := handler.Handler(NextbotContext{
+						Context: c,
+						Matches: matches,
+					})
+					if err != nil {
+						bot.OnError(err, c)
+					}
+				}()
 
 			}
 		}
