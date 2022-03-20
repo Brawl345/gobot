@@ -88,7 +88,7 @@ func (plg *IdPlugin) OnIdInline(c bot.NextbotContext) error {
 
 	return c.Answer(&telebot.QueryResponse{
 		Results:    telebot.Results{result},
-		CacheTime:  2,
+		CacheTime:  7200,
 		IsPersonal: true,
 	})
 }

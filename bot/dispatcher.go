@@ -35,6 +35,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 	}
 
 	for _, plugin := range bot.plugins {
+		plugin := plugin
 		for _, handler := range plugin.GetHandlers() {
 			handler := handler
 			if !msg.FromGroup() && handler.GroupOnly {
@@ -97,12 +98,6 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 	return nil
 }
 
-// NullRoute is a special route that just ignores the message
-// but will still fire middleware
-func (bot *Nextbot) NullRoute(c telebot.Context) error {
-	return nil
-}
-
 func (bot *Nextbot) OnCallback(c telebot.Context) error {
 	msg := c.Message()
 	callback := c.Callback()
@@ -126,6 +121,7 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 	for _, plugin := range bot.plugins {
 		plugin := plugin
 		for _, handler := range plugin.GetCallbackHandlers() {
+			handler := handler
 			matches := handler.Command.FindStringSubmatch(callback.Data)
 			if len(matches) > 0 {
 				log.Printf("Matched plugin %s: %s", plugin.GetName(), handler.Command)
@@ -173,7 +169,6 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 
 func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 	inlineQuery := c.Query()
-	log.Println("InlineQuery:", inlineQuery.Text)
 
 	if inlineQuery.Text == "" {
 		return c.Answer(&telebot.QueryResponse{
@@ -183,7 +178,9 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 	}
 
 	for _, plugin := range bot.plugins {
+		plugin := plugin
 		for _, handler := range plugin.GetInlineHandlers() {
+			handler := handler
 			matches := handler.Command.FindStringSubmatch(inlineQuery.Text)
 			if len(matches) > 0 {
 				log.Printf("Matched plugin %s: %s", plugin.GetName(), handler.Command)
@@ -243,4 +240,10 @@ func (bot *Nextbot) OnUserLeft(c telebot.Context) error {
 		return nil
 	}
 	return bot.DB.ChatsUsers.Leave(c.Chat(), c.Message().UserLeft)
+}
+
+// NullRoute is a special route that just ignores the message
+// but will still fire middleware
+func (bot *Nextbot) NullRoute(c telebot.Context) error {
+	return nil
 }

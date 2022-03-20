@@ -5,6 +5,7 @@ import (
 	"gopkg.in/telebot.v3"
 	"log"
 	"strings"
+	"time"
 )
 
 // https://twin.sh/articles/35/how-to-add-colors-to-your-console-terminal-output-in-go
@@ -14,11 +15,8 @@ var (
 	red    = "\033[31m"
 	green  = "\033[32m"
 	yellow = "\033[33m"
-	blue   = "\033[34m"
 	purple = "\033[35m"
 	cyan   = "\033[36m"
-	gray   = "\033[37m"
-	white  = "\033[97m"
 )
 
 func printUser(user *telebot.User) string {
@@ -588,6 +586,54 @@ func onCallback(callback *telebot.Callback) string {
 	return sb.String()
 }
 
+func onInlineQuery(query *telebot.Query) string {
+	var sb strings.Builder
+
+	// Time
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s[%v]%s",
+			cyan,
+			time.Now().Format("15:04:05"),
+			reset,
+		),
+	)
+
+	// Sender
+	if query.Sender != nil {
+		sb.WriteString(
+			fmt.Sprintf(
+				" %s",
+				printUser(query.Sender),
+			),
+		)
+	}
+
+	// Begin message
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s >>> %s%s(InlineQuery)%s ",
+			cyan,
+			reset,
+			green,
+			reset,
+		),
+	)
+
+	if query.Text != "" {
+		sb.WriteString(
+			fmt.Sprintf(
+				"%s%s%s",
+				purple,
+				query.Text,
+				reset,
+			),
+		)
+	}
+
+	return sb.String()
+}
+
 func PrintMessage(next telebot.HandlerFunc) telebot.HandlerFunc {
 	return func(c telebot.Context) error {
 
@@ -597,6 +643,9 @@ func PrintMessage(next telebot.HandlerFunc) telebot.HandlerFunc {
 		}
 		if c.Callback() != nil {
 			text = onCallback(c.Callback())
+		}
+		if c.Query() != nil {
+			text = onInlineQuery(c.Query())
 		}
 
 		log.Println(text)
