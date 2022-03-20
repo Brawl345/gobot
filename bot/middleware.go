@@ -168,9 +168,7 @@ func onMessage(msg *telebot.Message) string {
 	}
 
 	// Files, etc.
-
-	// Animation: https://core.telegram.org/bots/api#animation
-	if msg.Animation != nil {
+	if msg.Animation != nil { // Animation: https://core.telegram.org/bots/api#animation
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[GIF",
@@ -193,10 +191,7 @@ func onMessage(msg *telebot.Message) string {
 				reset,
 			),
 		)
-	}
-
-	// Audio: https://core.telegram.org/bots/api#audio
-	if msg.Audio != nil {
+	} else if msg.Audio != nil { // Audio: https://core.telegram.org/bots/api#audio
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[Audio",
@@ -231,10 +226,7 @@ func onMessage(msg *telebot.Message) string {
 				reset,
 			),
 		)
-	}
-
-	// Contact: https://core.telegram.org/bots/api#contact
-	if msg.Contact != nil {
+	} else if msg.Contact != nil { // Contact: https://core.telegram.org/bots/api#contact
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[Kontakt: '%s",
@@ -265,10 +257,7 @@ func onMessage(msg *telebot.Message) string {
 				reset,
 			),
 		)
-	}
-
-	// Dice: https://core.telegram.org/bots/api#dice
-	if msg.Dice != nil {
+	} else if msg.Dice != nil { // Dice: https://core.telegram.org/bots/api#dice
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[Zufallszahl: '%s' - '%d']%s ",
@@ -278,10 +267,7 @@ func onMessage(msg *telebot.Message) string {
 				reset,
 			),
 		)
-	}
-
-	// Document: https://core.telegram.org/bots/api#document
-	if msg.Document != nil {
+	} else if msg.Document != nil { // Document: https://core.telegram.org/bots/api#document
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[Datei",
@@ -304,10 +290,7 @@ func onMessage(msg *telebot.Message) string {
 				reset,
 			),
 		)
-	}
-
-	// Game: https://core.telegram.org/bots/api#game
-	if msg.Game != nil {
+	} else if msg.Game != nil { // Game: https://core.telegram.org/bots/api#game
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[Spiel: '%s' - '%s']%s ",
@@ -317,10 +300,7 @@ func onMessage(msg *telebot.Message) string {
 				reset,
 			),
 		)
-	}
-
-	// Location: https://core.telegram.org/bots/api#location
-	if msg.Location != nil && msg.Venue == nil {
+	} else if msg.Location != nil && msg.Venue == nil { // Location: https://core.telegram.org/bots/api#location
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[Standort: '%f' Länge - '%f' Breite]%s ",
@@ -330,10 +310,7 @@ func onMessage(msg *telebot.Message) string {
 				reset,
 			),
 		)
-	}
-
-	// Photo: https://core.telegram.org/bots/api#photosize
-	if msg.Photo != nil {
+	} else if msg.Photo != nil { // Photo: https://core.telegram.org/bots/api#photosize
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[Foto: %dx%d px]%s ",
@@ -343,10 +320,7 @@ func onMessage(msg *telebot.Message) string {
 				reset,
 			),
 		)
-	}
-
-	// Sticker: https://core.telegram.org/bots/api#sticker
-	if msg.Sticker != nil {
+	} else if msg.Sticker != nil { // Sticker: https://core.telegram.org/bots/api#sticker
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[",
@@ -376,10 +350,7 @@ func onMessage(msg *telebot.Message) string {
 				reset,
 			),
 		)
-	}
-
-	// Venue: https://core.telegram.org/bots/api#venue
-	if msg.Venue != nil {
+	} else if msg.Venue != nil { // Venue: https://core.telegram.org/bots/api#venue
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[Ort: '%s' in '%s', '%f' Länge, '%f' Breite]%s ",
@@ -391,10 +362,7 @@ func onMessage(msg *telebot.Message) string {
 				reset,
 			),
 		)
-	}
-
-	// Video: https://core.telegram.org/bots/api#video
-	if msg.Video != nil {
+	} else if msg.Video != nil { // Video: https://core.telegram.org/bots/api#video
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[Video: ",
@@ -430,10 +398,7 @@ func onMessage(msg *telebot.Message) string {
 				reset,
 			),
 		)
-	}
-
-	// Voice: https://core.telegram.org/bots/api#voice
-	if msg.Voice != nil {
+	} else if msg.Voice != nil { // Voice: https://core.telegram.org/bots/api#voice
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[Sprachnachricht: %d Sekunde",
@@ -452,10 +417,7 @@ func onMessage(msg *telebot.Message) string {
 				reset,
 			),
 		)
-	}
-
-	// Video Note: https://core.telegram.org/bots/api#videonote
-	if msg.VideoNote != nil {
+	} else if msg.VideoNote != nil { // Video Note: https://core.telegram.org/bots/api#videonote
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[Videonachricht: %d Sekunde",
