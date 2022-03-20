@@ -109,6 +109,7 @@ func main() {
 	b.Handle(telebot.OnNewGroupPhoto, b.NullRoute)
 	b.Handle(telebot.OnGroupPhotoDeleted, b.NullRoute)
 	b.Handle(telebot.OnGroupCreated, b.NullRoute)
+	// TODO: Handle edits for getFile replacement file? ein common pluginStruct?
 
 	b.Start()
 }
