@@ -9,8 +9,6 @@ import (
 func (bot *Nextbot) OnText(c telebot.Context) error {
 	msg := c.Message()
 
-	log.Printf("%s: %s", c.Chat().FirstName, msg.Text)
-
 	isAllowed := bot.IsUserAllowed(c.Sender())
 	if msg.FromGroup() && !isAllowed {
 		isAllowed = bot.IsChatAllowed(c.Chat())
@@ -54,10 +52,12 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 			case string:
 				switch {
 				// More to be added when needed
-				case msg.Document != nil:
-					matched = command == telebot.OnDocument
+				case msg.Animation != nil:
+					matched = command == telebot.OnAnimation
 				case msg.Photo != nil:
 					matched = command == telebot.OnPhoto
+				case msg.Document != nil:
+					matched = command == telebot.OnDocument
 				}
 			default:
 				panic("Unspported handler type!!")
@@ -95,6 +95,12 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 		}
 	}
 
+	return nil
+}
+
+// NullRoute is a special route that just ignores the message
+// but will still fire middleware
+func (bot *Nextbot) NullRoute(c telebot.Context) error {
 	return nil
 }
 

@@ -86,6 +86,11 @@ func main() {
 		b.RegisterPlugin(plg)
 	}
 
+	_, shouldPrintMsgs := os.LookupEnv("PRINT_MSGS")
+	if shouldPrintMsgs {
+		b.Use(bot.PrintMessage)
+	}
+
 	b.Handle(telebot.OnText, b.OnText)
 	b.Handle(telebot.OnMedia, b.OnText)
 	b.Handle(telebot.OnContact, b.OnText)
@@ -97,7 +102,13 @@ func main() {
 	b.Handle(telebot.OnUserLeft, b.OnUserLeft)
 	b.Handle(telebot.OnCallback, b.OnCallback)
 	b.Handle(telebot.OnQuery, b.OnInlineQuery)
-	// TODO: OnEdited für prettyPrint
+
+	b.Handle(telebot.OnEdited, b.NullRoute)
+	b.Handle(telebot.OnPinned, b.NullRoute)
+	b.Handle(telebot.OnNewGroupTitle, b.NullRoute)
+	b.Handle(telebot.OnNewGroupPhoto, b.NullRoute)
+	b.Handle(telebot.OnGroupPhotoDeleted, b.NullRoute)
+	b.Handle(telebot.OnGroupCreated, b.NullRoute)
 
 	b.Start()
 }
