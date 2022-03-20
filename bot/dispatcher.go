@@ -36,6 +36,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 
 	for _, plugin := range bot.plugins {
 		for _, handler := range plugin.GetHandlers() {
+			handler := handler
 			if !msg.FromGroup() && handler.GroupOnly {
 				continue
 			}
@@ -46,9 +47,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 			switch command := handler.Command.(type) {
 			case *regexp.Regexp:
 				matches = command.FindStringSubmatch(text)
-				if len(matches) > 0 {
-					matched = true
-				}
+				matched = len(matches) > 0
 			case string:
 				switch {
 				// More to be added when needed
@@ -107,7 +106,6 @@ func (bot *Nextbot) NullRoute(c telebot.Context) error {
 func (bot *Nextbot) OnCallback(c telebot.Context) error {
 	msg := c.Message()
 	callback := c.Callback()
-	log.Println("Callback:", callback.Data)
 
 	if callback.Data == "" {
 		return c.Respond()
@@ -126,6 +124,7 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 	}
 
 	for _, plugin := range bot.plugins {
+		plugin := plugin
 		for _, handler := range plugin.GetCallbackHandlers() {
 			matches := handler.Command.FindStringSubmatch(callback.Data)
 			if len(matches) > 0 {

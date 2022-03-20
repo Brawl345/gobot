@@ -529,12 +529,74 @@ func onMessage(msg *telebot.Message) string {
 	return sb.String()
 }
 
+func onCallback(callback *telebot.Callback) string {
+	var sb strings.Builder
+
+	// Time
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s[%v]",
+			cyan,
+			callback.Message.Time().Format("15:04:05"),
+		),
+	)
+
+	// Chat Title
+	if callback.Message.Chat.Title != "" {
+		sb.WriteString(
+			fmt.Sprintf(
+				" %s:",
+				callback.Message.Chat.Title,
+			),
+		)
+	}
+
+	sb.WriteString(reset)
+
+	// Sender
+	if callback.Sender != nil {
+		sb.WriteString(
+			fmt.Sprintf(
+				" %s",
+				printUser(callback.Sender),
+			),
+		)
+	}
+
+	// Begin message
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s >>> %s%s(CallbackQuery)%s ",
+			cyan,
+			reset,
+			green,
+			reset,
+		),
+	)
+
+	if callback.Data != "" {
+		sb.WriteString(
+			fmt.Sprintf(
+				"%s%s%s",
+				purple,
+				callback.Data,
+				reset,
+			),
+		)
+	}
+
+	return sb.String()
+}
+
 func PrintMessage(next telebot.HandlerFunc) telebot.HandlerFunc {
 	return func(c telebot.Context) error {
 
 		var text string
 		if c.Message() != nil {
 			text = onMessage(c.Message())
+		}
+		if c.Callback() != nil {
+			text = onCallback(c.Callback())
 		}
 
 		log.Println(text)
