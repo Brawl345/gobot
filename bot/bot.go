@@ -5,6 +5,10 @@ import (
 	"github.com/Brawl345/gobot/storage"
 	"golang.org/x/exp/slices"
 	"gopkg.in/telebot.v3"
+	"log"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -58,6 +62,23 @@ func NewBot(token string, db *storage.DB) (*Nextbot, error) {
 	}
 
 	allowedChats = append(allowedChats, allowedUsers...)
+
+	channel := make(chan os.Signal)
+	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(channel, os.Interrupt, syscall.SIGKILL)
+	signal.Notify(channel, os.Interrupt, syscall.SIGINT)
+	go func() {
+		<-channel
+		log.Println("Stopping...")
+		bot.Stop()
+		err := db.Close()
+		if err != nil {
+			log.Println(err)
+			os.Exit(1)
+			return
+		}
+		os.Exit(0)
+	}()
 
 	return &Nextbot{
 		Bot:                    bot,
