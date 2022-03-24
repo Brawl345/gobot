@@ -76,6 +76,7 @@ func main() {
 		&plugin.CredsPlugin{Plugin: p},
 		&plugin.DcryptPlugin{Plugin: p},
 		&plugin.EchoPlugin{Plugin: p},
+		&plugin.GetFilePlugin{Plugin: p},
 		&plugin.IdPlugin{Plugin: p},
 		&plugin.ManagerPlugin{Plugin: p},
 		&plugin.StatsPlugin{Plugin: p},

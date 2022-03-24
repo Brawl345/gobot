@@ -58,6 +58,12 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 					matched = command == telebot.OnPhoto
 				case msg.Document != nil:
 					matched = command == telebot.OnDocument
+				case msg.Sticker != nil:
+					matched = command == telebot.OnSticker
+				}
+
+				if !matched && msg.Media() != nil {
+					matched = command == telebot.OnMedia
 				}
 			default:
 				panic("Unspported handler type!!")
