@@ -38,8 +38,8 @@ func (*DcryptPlugin) GetName() string {
 	return "dcrypt"
 }
 
-func (plg *DcryptPlugin) GetHandlers() []bot.Handler {
-	return []bot.Handler{
+func (plg *DcryptPlugin) GetCommandHandlers() []bot.CommandHandler {
+	return []bot.CommandHandler{
 		{
 			Command: telebot.OnDocument,
 			Handler: plg.OnFile,

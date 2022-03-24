@@ -18,8 +18,8 @@ func (*CredsPlugin) GetName() string {
 	return "creds"
 }
 
-func (plg *CredsPlugin) GetHandlers() []bot.Handler {
-	return []bot.Handler{
+func (plg *CredsPlugin) GetCommandHandlers() []bot.CommandHandler {
+	return []bot.CommandHandler{
 		{
 			Command:   regexp.MustCompile(fmt.Sprintf(`^/creds(?:@%s)?$`, plg.Bot.Me.Username)),
 			Handler:   plg.OnGet,

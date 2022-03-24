@@ -15,8 +15,8 @@ func (*ManagerPlugin) GetName() string {
 	return "manager"
 }
 
-func (plg *ManagerPlugin) GetHandlers() []bot.Handler {
-	return []bot.Handler{
+func (plg *ManagerPlugin) GetCommandHandlers() []bot.CommandHandler {
+	return []bot.CommandHandler{
 		{
 			Command:   regexp.MustCompile(fmt.Sprintf(`^/enable(?:@%s)? (.+)$`, plg.Bot.Me.Username)),
 			Handler:   plg.OnEnable,

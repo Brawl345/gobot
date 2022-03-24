@@ -19,8 +19,8 @@ func (plg *IdPlugin) GetName() string {
 	return "id"
 }
 
-func (plg *IdPlugin) GetHandlers() []bot.Handler {
-	return []bot.Handler{
+func (plg *IdPlugin) GetCommandHandlers() []bot.CommandHandler {
+	return []bot.CommandHandler{
 		{
 			Command: regexp.MustCompile(fmt.Sprintf(`^/(?:(?:whoami)|(?:id))(?:@%s)?$`, plg.Bot.Me.Username)),
 			Handler: plg.OnId,

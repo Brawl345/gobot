@@ -39,7 +39,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 
 	for _, plugin := range bot.plugins {
 		plugin := plugin
-		for _, handler := range plugin.GetHandlers() {
+		for _, handler := range plugin.GetCommandHandlers() {
 			handler := handler
 
 			if isEdited && !handler.HandleEdits {

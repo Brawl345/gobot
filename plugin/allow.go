@@ -17,8 +17,8 @@ func (*AllowPlugin) GetName() string {
 	return "allow"
 }
 
-func (plg *AllowPlugin) GetHandlers() []bot.Handler {
-	return []bot.Handler{
+func (plg *AllowPlugin) GetCommandHandlers() []bot.CommandHandler {
+	return []bot.CommandHandler{
 		{
 			Command:   regexp.MustCompile(fmt.Sprintf(`^/allow(?:@%s)?$`, plg.Bot.Me.Username)),
 			Handler:   plg.OnAllow,

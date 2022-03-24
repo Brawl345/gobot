@@ -19,8 +19,8 @@ func (*GetFilePlugin) GetName() string {
 	return "getfile"
 }
 
-func (plg *GetFilePlugin) GetHandlers() []bot.Handler {
-	return []bot.Handler{
+func (plg *GetFilePlugin) GetCommandHandlers() []bot.CommandHandler {
+	return []bot.CommandHandler{
 		{
 			Command:     telebot.OnMedia,
 			Handler:     plg.OnMedia,

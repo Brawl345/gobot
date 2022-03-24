@@ -18,8 +18,8 @@ func (*StatsPlugin) GetName() string {
 	return "stats"
 }
 
-func (plg *StatsPlugin) GetHandlers() []bot.Handler {
-	return []bot.Handler{
+func (plg *StatsPlugin) GetCommandHandlers() []bot.CommandHandler {
+	return []bot.CommandHandler{
 		{
 			Command:   regexp.MustCompile(fmt.Sprintf(`^/stats(?:@%s)?$`, plg.Bot.Me.Username)),
 			Handler:   plg.OnStats,

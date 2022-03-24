@@ -15,8 +15,8 @@ func (*EchoPlugin) GetName() string {
 	return "echo"
 }
 
-func (plg *EchoPlugin) GetHandlers() []bot.Handler {
-	return []bot.Handler{
+func (plg *EchoPlugin) GetCommandHandlers() []bot.CommandHandler {
+	return []bot.CommandHandler{
 		{
 			Command: regexp.MustCompile(fmt.Sprintf(`^/e(?:cho)?(?:@%s)? (.+)$`, plg.Bot.Me.Username)),
 			Handler: plg.OnEcho,

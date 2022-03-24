@@ -7,13 +7,13 @@ import (
 
 type IPlugin interface {
 	GetName() string
-	GetHandlers() []Handler
+	GetCommandHandlers() []CommandHandler
 	GetCallbackHandlers() []CallbackHandler
 	GetInlineHandlers() []InlineHandler
 	Init()
 }
 
-type Handler struct {
+type CommandHandler struct {
 	Command     any
 	Handler     NextbotHandlerFunc
 	AdminOnly   bool
