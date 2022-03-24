@@ -93,6 +93,7 @@ func main() {
 	}
 
 	b.Handle(telebot.OnText, b.OnText)
+	b.Handle(telebot.OnEdited, b.OnText)
 	b.Handle(telebot.OnMedia, b.OnText)
 	b.Handle(telebot.OnContact, b.OnText)
 	b.Handle(telebot.OnLocation, b.OnText)
@@ -104,13 +105,11 @@ func main() {
 	b.Handle(telebot.OnCallback, b.OnCallback)
 	b.Handle(telebot.OnQuery, b.OnInlineQuery)
 
-	b.Handle(telebot.OnEdited, b.NullRoute)
 	b.Handle(telebot.OnPinned, b.NullRoute)
 	b.Handle(telebot.OnNewGroupTitle, b.NullRoute)
 	b.Handle(telebot.OnNewGroupPhoto, b.NullRoute)
 	b.Handle(telebot.OnGroupPhotoDeleted, b.NullRoute)
 	b.Handle(telebot.OnGroupCreated, b.NullRoute)
-	// TODO: Handle edits for getFile replacement file? ein common pluginStruct?
 
 	b.Start()
 }

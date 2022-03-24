@@ -8,6 +8,7 @@ import (
 
 func (bot *Nextbot) OnText(c telebot.Context) error {
 	msg := c.Message()
+	isEdited := msg.LastEdit != 0
 
 	isAllowed := bot.IsUserAllowed(c.Sender())
 	if msg.FromGroup() && !isAllowed {
@@ -20,13 +21,15 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 
 	var err error
 
-	if msg.Private() {
-		err = bot.DB.Users.Create(c.Sender())
-	} else {
-		err = bot.DB.ChatsUsers.Create(c.Chat(), c.Sender())
-	}
-	if err != nil {
-		return err
+	if !isEdited {
+		if msg.Private() {
+			err = bot.DB.Users.Create(c.Sender())
+		} else {
+			err = bot.DB.ChatsUsers.Create(c.Chat(), c.Sender())
+		}
+		if err != nil {
+			return err
+		}
 	}
 
 	text := msg.Caption
@@ -38,6 +41,11 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 		plugin := plugin
 		for _, handler := range plugin.GetHandlers() {
 			handler := handler
+
+			if isEdited && !handler.HandleEdits {
+				continue
+			}
+
 			if !msg.FromGroup() && handler.GroupOnly {
 				continue
 			}

@@ -22,12 +22,14 @@ func (*GetFilePlugin) GetName() string {
 func (plg *GetFilePlugin) GetHandlers() []bot.Handler {
 	return []bot.Handler{
 		{
-			Command: telebot.OnMedia,
-			Handler: plg.OnMedia,
+			Command:     telebot.OnMedia,
+			Handler:     plg.OnMedia,
+			HandleEdits: true,
 		},
 		{ // telebots Message.Media does not include Stickers :(
-			Command: telebot.OnSticker,
-			Handler: plg.OnMedia,
+			Command:     telebot.OnSticker,
+			Handler:     plg.OnMedia,
+			HandleEdits: true,
 		},
 	}
 }

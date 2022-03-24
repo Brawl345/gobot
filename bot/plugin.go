@@ -14,10 +14,11 @@ type IPlugin interface {
 }
 
 type Handler struct {
-	Command   any
-	Handler   NextbotHandlerFunc
-	AdminOnly bool
-	GroupOnly bool
+	Command     any
+	Handler     NextbotHandlerFunc
+	AdminOnly   bool
+	GroupOnly   bool
+	HandleEdits bool
 }
 
 type CallbackHandler struct {
