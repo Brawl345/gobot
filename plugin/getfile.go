@@ -13,6 +13,15 @@ import (
 
 type GetFilePlugin struct {
 	*bot.Plugin
+	dir string
+}
+
+func (plg *GetFilePlugin) Init() {
+	key, err := plg.Bot.DB.Credentials.GetKey("getfile_dir")
+	if err != nil {
+		key = "tmp"
+	}
+	plg.dir = key
 }
 
 func (*GetFilePlugin) GetName() string {
@@ -64,7 +73,7 @@ func (plg *GetFilePlugin) OnMedia(c bot.NextbotContext) error {
 		return nil
 	}
 
-	savePath := filepath.Join("tmp", subFolder)
+	savePath := filepath.Join(plg.dir, subFolder)
 	os.MkdirAll(savePath, 0660)
 
 	file := &telebot.File{FileID: fileID}
