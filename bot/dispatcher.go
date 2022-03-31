@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 	"regexp"
 )
@@ -89,7 +90,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 					continue
 				}
 
-				if handler.AdminOnly && !isAdmin(c.Sender()) {
+				if handler.AdminOnly && !utils.IsAdmin(c.Sender()) {
 					log.Print("User is not an admin.")
 					continue
 				}
@@ -159,7 +160,7 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 					})
 				}
 
-				if handler.AdminOnly && !isAdmin(c.Sender()) {
+				if handler.AdminOnly && !utils.IsAdmin(c.Sender()) {
 					log.Print("User is not an admin.")
 					return c.Respond(&telebot.CallbackResponse{
 						Text:      "Du bist kein Bot-Administrator.",
@@ -213,7 +214,7 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 					})
 				}
 
-				if handler.AdminOnly && !isAdmin(c.Sender()) {
+				if handler.AdminOnly && !utils.IsAdmin(c.Sender()) {
 					log.Print("User is not an admin.")
 					return c.Answer(&telebot.QueryResponse{
 						CacheTime:  1,

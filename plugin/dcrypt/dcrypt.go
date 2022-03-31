@@ -57,7 +57,7 @@ func (plg *Plugin) OnFile(c bot.NextbotContext) error {
 
 	c.Notify(telebot.UploadingDocument)
 
-	if c.Message().Document.FileSize > bot.MaxFilesizeDownload {
+	if c.Message().Document.FileSize > utils.MaxFilesizeDownload {
 		return c.Reply("❌ DLC-Container ist größer als 20 MB.", utils.DefaultSendOptions)
 	}
 
@@ -68,10 +68,10 @@ func (plg *Plugin) OnFile(c bot.NextbotContext) error {
 	}
 	defer file.Close()
 
-	resp, err := bot.MultiPartFormRequest(
+	resp, err := utils.MultiPartFormRequest(
 		"https://dcrypt.it/decrypt/upload",
-		[]bot.MultiPartParam{},
-		[]bot.MultiPartFile{
+		[]utils.MultiPartParam{},
+		[]utils.MultiPartFile{
 			{
 				FieldName: "dlcfile",
 				FileName:  "dlc.dlc",

@@ -1,9 +1,16 @@
 package utils
 
 import (
+	"bytes"
 	"gopkg.in/telebot.v3"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"os"
 	"strconv"
 )
+
+const MaxFilesizeDownload = int(20e6)
 
 var DefaultSendOptions = &telebot.SendOptions{
 	AllowWithoutReply:     true,
@@ -12,28 +19,55 @@ var DefaultSendOptions = &telebot.SendOptions{
 	ParseMode:             telebot.ModeHTML,
 }
 
-// CommaFormat https://stackoverflow.com/a/31046325/3146627
-func CommaFormat(n int64) string {
-	in := strconv.FormatInt(n, 10)
-	numOfDigits := len(in)
-	if n < 0 {
-		numOfDigits--
+type (
+	MultiPartParam struct {
+		Name  string
+		Value string
 	}
-	numOfCommas := (numOfDigits - 1) / 3
+	MultiPartFile struct {
+		FieldName string
+		FileName  string
+		Content   io.Reader
+	}
+)
 
-	out := make([]byte, len(in)+numOfCommas)
-	if n < 0 {
-		in, out[0] = in[1:], '-'
+func IsAdmin(user *telebot.User) bool {
+	adminId, _ := strconv.ParseInt(os.Getenv("ADMIN_ID"), 10, 64)
+	return adminId == user.ID
+}
+
+func MultiPartFormRequest(url string, params []MultiPartParam, files []MultiPartFile) (*http.Response, error) {
+	var b bytes.Buffer
+	writer := multipart.NewWriter(&b)
+	defer writer.Close()
+
+	for _, param := range params {
+		err := writer.WriteField(param.Name, param.Value)
+		if err != nil {
+			return nil, err
+		}
 	}
 
-	for i, j, k := len(in)-1, len(out)-1, 0; ; i, j = i-1, j-1 {
-		out[j] = in[i]
-		if i == 0 {
-			return string(out)
+	for _, file := range files {
+		fw, err := writer.CreateFormFile(file.FieldName, file.FileName)
+		if err != nil {
+			return nil, err
 		}
-		if k++; k == 3 {
-			j, k = j-1, 0
-			out[j] = '.'
+		_, err = io.Copy(fw, file.Content)
+		if err != nil {
+			return nil, err
 		}
 	}
+
+	writer.Close()
+
+	req, err := http.NewRequest("POST", url, &b)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Content-Type", writer.FormDataContentType())
+
+	client := &http.Client{}
+	return client.Do(req)
 }

@@ -3,6 +3,7 @@ package getfile
 import (
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 	"io"
 	"os"
@@ -63,7 +64,7 @@ func (plg *Plugin) OnMedia(c bot.NextbotContext) error {
 		subFolder = c.Message().Sticker.MediaType()
 	}
 
-	if fileSize > bot.MaxFilesizeDownload {
+	if fileSize > utils.MaxFilesizeDownload {
 		log.Warn().Msgf("File is too big: %d", fileSize)
 		return nil
 	}

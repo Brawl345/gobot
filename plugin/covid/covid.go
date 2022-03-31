@@ -110,7 +110,7 @@ func (plg *Plugin) OnCountry(c bot.NextbotContext) error {
 
 	var sb strings.Builder
 	if result.CountryInfo.Flag.Valid {
-		sb.WriteString(bot.EmbedImage(result.CountryInfo.Flag.String))
+		sb.WriteString(utils.EmbedImage(result.CountryInfo.Flag.String))
 	}
 
 	sb.WriteString(

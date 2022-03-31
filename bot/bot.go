@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/storage"
+	"github.com/Brawl345/gobot/utils"
 	"golang.org/x/exp/slices"
 	"gopkg.in/telebot.v3"
 	"os"
@@ -186,7 +187,7 @@ func (bot *Nextbot) EnablePluginForChat(chat *telebot.Chat, pluginName string) e
 }
 
 func (bot *Nextbot) IsUserAllowed(user *telebot.User) bool {
-	if isAdmin(user) {
+	if utils.IsAdmin(user) {
 		return true
 	}
 
@@ -208,7 +209,7 @@ func (bot *Nextbot) AllowUser(user *telebot.User) error {
 }
 
 func (bot *Nextbot) DenyUser(user *telebot.User) error {
-	if isAdmin(user) {
+	if utils.IsAdmin(user) {
 		return errors.New("cannot deny admin")
 	}
 	err := bot.DB.Users.Deny(user)
