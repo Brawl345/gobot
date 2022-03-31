@@ -2,6 +2,7 @@ package covid
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
@@ -11,8 +12,10 @@ import (
 	"html"
 	"io"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strings"
+	"time"
 )
 
 var log = logger.NewLogger("covid")
@@ -25,6 +28,7 @@ type (
 	}
 
 	countryResult struct {
+		Message     null.String `json:"message"`
 		Updated     null.Int    `json:"updated"`
 		Country     null.String `json:"country"`
 		CountryInfo struct {
@@ -51,7 +55,23 @@ type (
 		RecoveredPerOneMillion null.Float  `json:"recoveredPerOneMillion"`
 		CriticalPerOneMillion  null.Float  `json:"criticalPerOneMillion"`
 	}
+
+	vaccineResult struct {
+		Message  null.String `json:"message"`
+		Country  null.String `json:"country"`
+		Timeline []struct {
+			Total           int64  `json:"total"`
+			Daily           int64  `json:"daily"`
+			TotalPerHundred int64  `json:"totalPerHundred"`
+			DailyPerMillion int64  `json:"dailyPerMillion"`
+			Date            string `json:"date"`
+		} `json:"timeline"`
+	}
 )
+
+func (result *countryResult) UpdatedParsed() time.Time {
+	return time.Unix(result.Updated.Int64/1000, 0)
+}
 
 func (*Plugin) GetName() string {
 	return "covid"
@@ -69,13 +89,51 @@ func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
 	}
 }
 
+func getVaccineData(country string) (vaccineResult, error) {
+	resp, err := http.Get(
+		fmt.Sprintf(
+			"%s/vaccine/coverage/countries/%s?lastdays=1&fullData=true",
+			BaseUrl, url.PathEscape(country),
+		),
+	)
+
+	if err != nil {
+		return vaccineResult{}, err
+	}
+
+	if resp.StatusCode == 404 {
+		return vaccineResult{}, errors.New("country not found or has no cases")
+	}
+
+	if resp.StatusCode != 200 {
+		return vaccineResult{}, errors.New("unexpected status code")
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return vaccineResult{}, err
+	}
+
+	var result vaccineResult
+	if err := json.Unmarshal(body, &result); err != nil {
+		return vaccineResult{}, err
+	}
+
+	if result.Message.Valid {
+		return vaccineResult{}, errors.New(result.Message.String)
+	}
+
+	return result, nil
+}
+
 func (plg *Plugin) OnCountry(c bot.NextbotContext) error {
 	c.Notify(telebot.Typing)
 
 	resp, err := http.Get(
 		fmt.Sprintf(
 			"%s/countries/%s?strict=false&allowNull=true",
-			BaseUrl, c.Matches[1],
+			BaseUrl, url.PathEscape(c.Matches[1]),
 		),
 	)
 	if err != nil {
@@ -106,6 +164,11 @@ func (plg *Plugin) OnCountry(c bot.NextbotContext) error {
 	if err := json.Unmarshal(body, &result); err != nil {
 		log.Err(err).Msg("Failed to unmarshal response body")
 		return c.Reply("❌ Bei der Anfrage ist ein Fehler aufgetreten.", utils.DefaultSendOptions)
+	}
+
+	if result.Message.Valid {
+		log.Error().Str("message", result.Message.String).Msg("Error message found in data")
+		return c.Reply(fmt.Sprintf("❌ %s", result.Message.String), utils.DefaultSendOptions)
 	}
 
 	var sb strings.Builder
@@ -160,8 +223,32 @@ func (plg *Plugin) OnCountry(c bot.NextbotContext) error {
 		),
 	)
 
-	// TODO: Vaccines (mit goroutine und text editieren...?)
-	// TODO: Updated datum
+	c.Notify(telebot.Typing)
+	vaccine, err := getVaccineData(result.Country.String)
+	if err != nil {
+		log.Err(err).Msg("Error while getting vaccine data")
+	} else {
+		sb.WriteString(
+			fmt.Sprintf(
+				"<b>Impfungen:</b> %s",
+				utils.CommaFormat(vaccine.Timeline[0].Total),
+			),
+		)
+		vaccineDate, err := time.Parse("1/2/06", vaccine.Timeline[0].Date)
+		if err != nil {
+			log.Err(err).Msg("Failed to parse date")
+		} else {
+			sb.WriteString(fmt.Sprintf(" (vom %s)", vaccineDate.Format("02.01.2006")))
+		}
+		sb.WriteString("\n")
+	}
+
+	sb.WriteString(
+		fmt.Sprintf(
+			"\n<i>Zuletzt aktualisiert: %s Uhr</i>",
+			result.UpdatedParsed().Format("02.01.2006, 15:04:05"),
+		),
+	)
 
 	return c.Reply(sb.String(), &telebot.SendOptions{
 		AllowWithoutReply: true,
