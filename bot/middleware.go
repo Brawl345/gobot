@@ -3,7 +3,6 @@ package bot
 import (
 	"fmt"
 	"gopkg.in/telebot.v3"
-	"log"
 	"strings"
 	"time"
 )
@@ -648,7 +647,16 @@ func PrintMessage(next telebot.HandlerFunc) telebot.HandlerFunc {
 			text = onInlineQuery(c.Query())
 		}
 
-		log.Println(text)
+		println(text)
 		return next(c)
+	}
+}
+
+func OnError(err error, c telebot.Context) {
+	if err != telebot.ErrTrueResult {
+		log.Err(err).
+			Int64("chat_id", c.Sender().ID).
+			Str("text", c.Text()).
+			Send()
 	}
 }

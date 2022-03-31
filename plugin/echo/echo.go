@@ -1,4 +1,4 @@
-package plugin
+package echo
 
 import (
 	"fmt"
@@ -7,15 +7,15 @@ import (
 	"regexp"
 )
 
-type EchoPlugin struct {
+type Plugin struct {
 	*bot.Plugin
 }
 
-func (*EchoPlugin) GetName() string {
+func (*Plugin) GetName() string {
 	return "echo"
 }
 
-func (plg *EchoPlugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command: regexp.MustCompile(fmt.Sprintf(`^/e(?:cho)?(?:@%s)? (.+)$`, plg.Bot.Me.Username)),
@@ -24,7 +24,7 @@ func (plg *EchoPlugin) GetCommandHandlers() []bot.CommandHandler {
 	}
 }
 
-func (plg *EchoPlugin) OnEcho(c bot.NextbotContext) error {
+func (plg *Plugin) OnEcho(c bot.NextbotContext) error {
 	return c.Reply(c.Matches[1], &telebot.SendOptions{
 		AllowWithoutReply:     true,
 		DisableWebPagePreview: true,

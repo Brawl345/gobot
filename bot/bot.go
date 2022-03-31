@@ -2,15 +2,17 @@ package bot
 
 import (
 	"errors"
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/storage"
 	"golang.org/x/exp/slices"
 	"gopkg.in/telebot.v3"
-	"log"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 )
+
+var log = logger.NewLogger("bot")
 
 type Nextbot struct {
 	*telebot.Bot
@@ -69,11 +71,11 @@ func NewBot(token string, db *storage.DB) (*Nextbot, error) {
 	signal.Notify(channel, os.Interrupt, syscall.SIGINT)
 	go func() {
 		<-channel
-		log.Println("Stopping...")
+		log.Info().Msg("Stopping...")
 		bot.Stop()
 		err := db.Close()
 		if err != nil {
-			log.Println(err)
+			log.Err(err).Send()
 			os.Exit(1)
 			return
 		}

@@ -1,24 +1,27 @@
-package plugin
+package about
 
 import (
 	"fmt"
 	"github.com/Brawl345/gobot/bot"
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/utils"
 	"regexp"
 	"runtime/debug"
 	"time"
 )
 
-type AboutPlugin struct {
+var log = logger.NewLogger("about")
+
+type Plugin struct {
 	*bot.Plugin
 	text string
 }
 
-func (*AboutPlugin) GetName() string {
+func (*Plugin) GetName() string {
 	return "about"
 }
 
-func (plg *AboutPlugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command: regexp.MustCompile(fmt.Sprintf(`^/about|start(?:@%s)?$`, plg.Bot.Me.Username)),
@@ -27,7 +30,7 @@ func (plg *AboutPlugin) GetCommandHandlers() []bot.CommandHandler {
 	}
 }
 
-func (plg *AboutPlugin) Init() {
+func (plg *Plugin) Init() {
 	var (
 		Revision   = "unknown"
 		LastCommit time.Time
@@ -35,6 +38,7 @@ func (plg *AboutPlugin) Init() {
 	)
 	buildInfo, ok := debug.ReadBuildInfo()
 	if !ok {
+		log.Error().Msg("Failed to read build info")
 		return
 	}
 
@@ -57,6 +61,6 @@ func (plg *AboutPlugin) Init() {
 	plg.text = text
 }
 
-func (plg *AboutPlugin) OnAbout(c bot.NextbotContext) error {
+func (plg *Plugin) OnAbout(c bot.NextbotContext) error {
 	return c.Reply("Gobot "+plg.text, utils.DefaultSendOptions)
 }

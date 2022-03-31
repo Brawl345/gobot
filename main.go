@@ -2,15 +2,26 @@ package main
 
 import (
 	"github.com/Brawl345/gobot/bot"
-	"github.com/Brawl345/gobot/plugin"
+	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/plugin/about"
+	"github.com/Brawl345/gobot/plugin/allow"
+	"github.com/Brawl345/gobot/plugin/covid"
+	"github.com/Brawl345/gobot/plugin/creds"
+	"github.com/Brawl345/gobot/plugin/dcrypt"
+	"github.com/Brawl345/gobot/plugin/echo"
+	"github.com/Brawl345/gobot/plugin/getfile"
+	"github.com/Brawl345/gobot/plugin/id"
+	"github.com/Brawl345/gobot/plugin/manager"
+	"github.com/Brawl345/gobot/plugin/stats"
 	"github.com/Brawl345/gobot/storage"
 	_ "github.com/joho/godotenv/autoload"
 	"gopkg.in/telebot.v3"
-	"log"
 	"os"
 	"runtime/debug"
 	"time"
 )
+
+var log = logger.NewLogger("main")
 
 func readVersionInfo() {
 	var (
@@ -29,7 +40,7 @@ func readVersionInfo() {
 			LastCommit, _ = time.Parse(time.RFC3339, kv.Value)
 		}
 	}
-	log.Printf("Gobot-%s, %v", Revision, LastCommit)
+	log.Info().Msgf("Gobot-%s, %v", Revision, LastCommit)
 }
 
 func main() {
@@ -37,53 +48,54 @@ func main() {
 
 	db, err := storage.Open(os.Getenv("MYSQL_URL"))
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Send()
 	}
 
 	if err := db.Ping(); err != nil {
-		log.Fatal(err)
+		log.Fatal().Err(err).Send()
 	}
 
-	log.Println("Database connection established")
+	log.Info().Msg("Database connection established")
 
 	n, err := db.Migrate()
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal().Err(err).Send()
 	}
 	if n > 0 {
-		log.Printf("Applied %d migration(s)", n)
+		log.Info().Msgf("Applied %d migration(s)", n)
 	}
 
 	b, err := bot.NewBot(os.Getenv("BOT_TOKEN"), db)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal().Err(err).Send()
 	}
 
-	log.Printf("Logged in as @%s (%d)", b.Me.Username, b.Me.ID)
+	log.Info().Str("component", "core").Msgf("Logged in as @%s (%d)", b.Me.Username, b.Me.ID)
 
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal().Err(err).Send()
 	}
 
 	p, err := bot.NewPlugin(b)
 	if err != nil {
-		log.Fatalln(err)
+		log.Fatal().Err(err).Send()
 	}
 
 	plugins := []bot.IPlugin{
-		&plugin.AboutPlugin{Plugin: p},
-		&plugin.AllowPlugin{Plugin: p},
-		&plugin.CredsPlugin{Plugin: p},
-		&plugin.DcryptPlugin{Plugin: p},
-		&plugin.EchoPlugin{Plugin: p},
-		&plugin.GetFilePlugin{Plugin: p},
-		&plugin.IdPlugin{Plugin: p},
-		&plugin.ManagerPlugin{Plugin: p},
-		&plugin.StatsPlugin{Plugin: p},
+		&about.Plugin{Plugin: p},
+		&allow.Plugin{Plugin: p},
+		&covid.Plugin{Plugin: p},
+		&creds.Plugin{Plugin: p},
+		&dcrypt.Plugin{Plugin: p},
+		&echo.Plugin{Plugin: p},
+		&getfile.Plugin{Plugin: p},
+		&id.Plugin{Plugin: p},
+		&manager.Plugin{Plugin: p},
+		&stats.Plugin{Plugin: p},
 	}
 
 	for i, plg := range plugins {
-		log.Printf("Registering plugin (%d/%d): %s", i+1, len(plugins), plg.GetName())
+		log.Info().Msgf("Registering plugin (%d/%d): %s", i+1, len(plugins), plg.GetName())
 		b.RegisterPlugin(plg)
 	}
 
@@ -110,6 +122,8 @@ func main() {
 	b.Handle(telebot.OnNewGroupPhoto, b.NullRoute)
 	b.Handle(telebot.OnGroupPhotoDeleted, b.NullRoute)
 	b.Handle(telebot.OnGroupCreated, b.NullRoute)
+
+	b.OnError = bot.OnError
 
 	b.Start()
 }

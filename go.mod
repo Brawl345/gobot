@@ -6,8 +6,10 @@ require (
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/jmoiron/sqlx v1.3.4
 	github.com/joho/godotenv v1.4.0
+	github.com/rs/zerolog v1.26.1
 	github.com/rubenv/sql-migrate v1.1.1
 	golang.org/x/exp v0.0.0-20220314205449-43aec2f8a4e7
+	gopkg.in/guregu/null.v4 v4.0.0
 	gopkg.in/telebot.v3 v3.0.0
 )
 

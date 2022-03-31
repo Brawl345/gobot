@@ -1,22 +1,24 @@
-package plugin
+package getfile
 
 import (
 	"github.com/Brawl345/gobot/bot"
+	"github.com/Brawl345/gobot/logger"
 	"gopkg.in/telebot.v3"
 	"io"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
 )
 
-type GetFilePlugin struct {
+var log = logger.NewLogger("getfile")
+
+type Plugin struct {
 	*bot.Plugin
 	dir string
 }
 
-func (plg *GetFilePlugin) Init() {
+func (plg *Plugin) Init() {
 	key, err := plg.Bot.DB.Credentials.GetKey("getfile_dir")
 	if err != nil {
 		key = "tmp"
@@ -24,11 +26,11 @@ func (plg *GetFilePlugin) Init() {
 	plg.dir = key
 }
 
-func (*GetFilePlugin) GetName() string {
+func (*Plugin) GetName() string {
 	return "getfile"
 }
 
-func (plg *GetFilePlugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command:     telebot.OnMedia,
@@ -43,7 +45,7 @@ func (plg *GetFilePlugin) GetCommandHandlers() []bot.CommandHandler {
 	}
 }
 
-func (plg *GetFilePlugin) OnMedia(c bot.NextbotContext) error {
+func (plg *Plugin) OnMedia(c bot.NextbotContext) error {
 	var fileID string
 	var uniqueID string
 	var subFolder string
@@ -62,19 +64,23 @@ func (plg *GetFilePlugin) OnMedia(c bot.NextbotContext) error {
 	}
 
 	if fileSize > bot.MaxFilesizeDownload {
-		log.Println("File is too big to download")
+		log.Warn().Msgf("File is too big: %d", fileSize)
 		return nil
 	}
 
 	exists, _ := plg.Bot.DB.Files.Exists(uniqueID)
 
 	if exists {
-		log.Println("File was already downloaded")
+		log.Info().Msgf("File already exists: %s", uniqueID)
 		return nil
 	}
 
 	savePath := filepath.Join(plg.dir, subFolder)
-	os.MkdirAll(savePath, 0660)
+	err := os.MkdirAll(savePath, 0660)
+	if err != nil {
+		log.Error().Msgf("Could not create directory: %s", savePath)
+		return nil
+	}
 
 	file := &telebot.File{FileID: fileID}
 	reader, err := plg.Bot.File(file)
@@ -121,7 +127,7 @@ func (plg *GetFilePlugin) OnMedia(c bot.NextbotContext) error {
 	if err != nil {
 		return err
 	}
-	log.Println("Saved as", filepath.Join(savePath, fileName))
+	log.Info().Msgf("Saved as: %s", filepath.Join(savePath, fileName))
 
 	err = plg.Bot.DB.Files.Create(uniqueID, fileName, subFolder)
 	if err != nil {

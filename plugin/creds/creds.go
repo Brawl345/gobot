@@ -1,24 +1,26 @@
-package plugin
+package creds
 
 import (
 	"fmt"
 	"github.com/Brawl345/gobot/bot"
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
-	"log"
 	"regexp"
 	"strings"
 )
 
-type CredsPlugin struct {
+var log = logger.NewLogger("creds")
+
+type Plugin struct {
 	*bot.Plugin
 }
 
-func (*CredsPlugin) GetName() string {
+func (*Plugin) GetName() string {
 	return "creds"
 }
 
-func (plg *CredsPlugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command:   regexp.MustCompile(fmt.Sprintf(`^/creds(?:@%s)?$`, plg.Bot.Me.Username)),
@@ -38,7 +40,7 @@ func (plg *CredsPlugin) GetCommandHandlers() []bot.CommandHandler {
 	}
 }
 
-func (plg *CredsPlugin) GetCallbackHandlers() []bot.CallbackHandler {
+func (plg *Plugin) GetCallbackHandlers() []bot.CallbackHandler {
 	return []bot.CallbackHandler{
 		{
 			Command:   regexp.MustCompile(`^creds_hide$`),
@@ -48,7 +50,7 @@ func (plg *CredsPlugin) GetCallbackHandlers() []bot.CallbackHandler {
 	}
 }
 
-func (plg *CredsPlugin) OnGet(c bot.NextbotContext) error {
+func (plg *Plugin) OnGet(c bot.NextbotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
@@ -56,7 +58,7 @@ func (plg *CredsPlugin) OnGet(c bot.NextbotContext) error {
 	creds, err := plg.Bot.DB.Credentials.GetAllCredentials()
 
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Send()
 		return c.Reply("❌ Fehler beim Abrufen der Schlüssel", utils.DefaultSendOptions)
 	}
 
@@ -88,7 +90,7 @@ func (plg *CredsPlugin) OnGet(c bot.NextbotContext) error {
 
 }
 
-func (plg *CredsPlugin) OnAdd(c bot.NextbotContext) error {
+func (plg *Plugin) OnAdd(c bot.NextbotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
@@ -98,14 +100,14 @@ func (plg *CredsPlugin) OnAdd(c bot.NextbotContext) error {
 
 	err := plg.Bot.DB.Credentials.SetKey(key, value)
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Str("key", key).Send()
 		return c.Reply("❌ Fehler beim Speichern des Schlüssels", utils.DefaultSendOptions)
 	}
 
 	return c.Reply("✅ Schlüssel gespeichert", utils.DefaultSendOptions)
 }
 
-func (plg *CredsPlugin) OnDelete(c bot.NextbotContext) error {
+func (plg *Plugin) OnDelete(c bot.NextbotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
@@ -114,14 +116,17 @@ func (plg *CredsPlugin) OnDelete(c bot.NextbotContext) error {
 	err := plg.Bot.DB.Credentials.DeleteKey(key)
 
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Str("key", key).Send()
 		return c.Reply(err.Error())
 	}
 
 	return c.Reply("✅ Schlüssel gelöscht", utils.DefaultSendOptions)
 }
 
-func (plg *CredsPlugin) OnHide(c bot.NextbotContext) error {
-	plg.Bot.Delete(c.Callback().Message)
+func (plg *Plugin) OnHide(c bot.NextbotContext) error {
+	err := plg.Bot.Delete(c.Callback().Message)
+	if err != nil {
+		log.Err(err).Send()
+	}
 	return c.Respond()
 }

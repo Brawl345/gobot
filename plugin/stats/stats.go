@@ -1,24 +1,26 @@
-package plugin
+package stats
 
 import (
 	"fmt"
 	"github.com/Brawl345/gobot/bot"
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/utils"
 	"html"
-	"log"
 	"regexp"
 	"strings"
 )
 
-type StatsPlugin struct {
+var log = logger.NewLogger("stats")
+
+type Plugin struct {
 	*bot.Plugin
 }
 
-func (*StatsPlugin) GetName() string {
+func (*Plugin) GetName() string {
 	return "stats"
 }
 
-func (plg *StatsPlugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command:   regexp.MustCompile(fmt.Sprintf(`^/stats(?:@%s)?$`, plg.Bot.Me.Username)),
@@ -28,10 +30,10 @@ func (plg *StatsPlugin) GetCommandHandlers() []bot.CommandHandler {
 	}
 }
 
-func (plg *StatsPlugin) OnStats(c bot.NextbotContext) error {
+func (plg *Plugin) OnStats(c bot.NextbotContext) error {
 	users, err := plg.Bot.DB.ChatsUsers.GetAllUsersWithMsgCount(c.Chat())
 	if err != nil {
-		log.Println(err)
+		log.Err(err).Int64("chat_id", c.Chat().ID).Msg("Failed to get statistics")
 		return c.Reply("❌ Fehler beim Abrufen der Statistiken.", utils.DefaultSendOptions)
 	}
 

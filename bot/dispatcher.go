@@ -2,7 +2,6 @@ package bot
 
 import (
 	"gopkg.in/telebot.v3"
-	"log"
 	"regexp"
 )
 
@@ -91,7 +90,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 				}
 
 				if handler.AdminOnly && !isAdmin(c.Sender()) {
-					log.Println("User is not an admin.")
+					log.Print("User is not an admin.")
 					continue
 				}
 
@@ -101,7 +100,11 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 						Matches: matches,
 					})
 					if err != nil {
-						bot.OnError(err, c)
+						log.Err(err).
+							Int64("chat_id", c.Sender().ID).
+							Str("text", c.Text()).
+							Str("component", plugin.GetName()).
+							Send()
 					}
 				}()
 
@@ -157,7 +160,7 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 				}
 
 				if handler.AdminOnly && !isAdmin(c.Sender()) {
-					log.Println("User is not an admin.")
+					log.Print("User is not an admin.")
 					return c.Respond(&telebot.CallbackResponse{
 						Text:      "Du bist kein Bot-Administrator.",
 						ShowAlert: true,
@@ -170,7 +173,11 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 						Matches: matches,
 					})
 					if err != nil {
-						bot.OnError(err, c)
+						log.Err(err).
+							Int64("chat_id", c.Sender().ID).
+							Str("text", c.Text()).
+							Str("component", plugin.GetName()).
+							Send()
 					}
 				}()
 
@@ -207,7 +214,7 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 				}
 
 				if handler.AdminOnly && !isAdmin(c.Sender()) {
-					log.Println("User is not an admin.")
+					log.Print("User is not an admin.")
 					return c.Answer(&telebot.QueryResponse{
 						CacheTime:  1,
 						IsPersonal: true,
@@ -230,7 +237,11 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 						Matches: matches,
 					})
 					if err != nil {
-						bot.OnError(err, c)
+						log.Err(err).
+							Int64("chat_id", c.Sender().ID).
+							Str("text", c.Text()).
+							Str("component", plugin.GetName()).
+							Send()
 					}
 				}()
 
@@ -258,6 +269,6 @@ func (bot *Nextbot) OnUserLeft(c telebot.Context) error {
 
 // NullRoute is a special route that just ignores the message
 // but will still fire middleware
-func (bot *Nextbot) NullRoute(c telebot.Context) error {
+func (bot *Nextbot) NullRoute(_ telebot.Context) error {
 	return nil
 }

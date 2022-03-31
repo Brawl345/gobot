@@ -1,23 +1,25 @@
-package plugin
+package allow
 
 import (
 	"fmt"
 	"github.com/Brawl345/gobot/bot"
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/utils"
 	"html"
-	"log"
 	"regexp"
 )
 
-type AllowPlugin struct {
+var log = logger.NewLogger("allow")
+
+type Plugin struct {
 	*bot.Plugin
 }
 
-func (*AllowPlugin) GetName() string {
+func (*Plugin) GetName() string {
 	return "allow"
 }
 
-func (plg *AllowPlugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command:   regexp.MustCompile(fmt.Sprintf(`^/allow(?:@%s)?$`, plg.Bot.Me.Username)),
@@ -34,7 +36,7 @@ func (plg *AllowPlugin) GetCommandHandlers() []bot.CommandHandler {
 	}
 }
 
-func (plg *AllowPlugin) OnAllow(c bot.NextbotContext) error {
+func (plg *Plugin) OnAllow(c bot.NextbotContext) error {
 	if c.Message().IsReply() { // Allow user
 		if c.Message().ReplyTo.Sender.IsBot {
 			return c.Reply("🤖🤖🤖", utils.DefaultSendOptions)
@@ -49,7 +51,9 @@ func (plg *AllowPlugin) OnAllow(c bot.NextbotContext) error {
 
 		err := plg.Bot.AllowUser(c.Message().ReplyTo.Sender)
 		if err != nil {
-			log.Println(err)
+			log.Err(err).
+				Int64("chat_id", c.Message().ReplyTo.Sender.ID).
+				Msg("Failed to allow user")
 			return c.Reply("❌ Fehler beim Erlauben des Nutzers.", utils.DefaultSendOptions)
 		}
 
@@ -65,7 +69,9 @@ func (plg *AllowPlugin) OnAllow(c bot.NextbotContext) error {
 
 		err := plg.Bot.AllowChat(c.Chat())
 		if err != nil {
-			log.Println(err)
+			log.Err(err).
+				Int64("chat_id", c.Message().ReplyTo.Sender.ID).
+				Msg("Failed to allow chat")
 			return c.Reply("❌ Fehler beim Erlauben des Chats.", utils.DefaultSendOptions)
 		}
 
@@ -73,7 +79,7 @@ func (plg *AllowPlugin) OnAllow(c bot.NextbotContext) error {
 	}
 }
 
-func (plg *AllowPlugin) OnDeny(c bot.NextbotContext) error {
+func (plg *Plugin) OnDeny(c bot.NextbotContext) error {
 	if c.Message().IsReply() { // Deny user
 		if c.Message().ReplyTo.Sender.IsBot {
 			return c.Reply("🤖🤖🤖", utils.DefaultSendOptions)
@@ -88,7 +94,9 @@ func (plg *AllowPlugin) OnDeny(c bot.NextbotContext) error {
 
 		err := plg.Bot.DenyUser(c.Message().ReplyTo.Sender)
 		if err != nil {
-			log.Println(err)
+			log.Err(err).
+				Int64("chat_id", c.Message().ReplyTo.Sender.ID).
+				Msg("Failed to deny user")
 			return c.Reply("❌ Fehler beim Verweigern des Nutzers.", utils.DefaultSendOptions)
 		}
 
@@ -104,7 +112,9 @@ func (plg *AllowPlugin) OnDeny(c bot.NextbotContext) error {
 
 		err := plg.Bot.DenyChat(c.Chat())
 		if err != nil {
-			log.Println(err)
+			log.Err(err).
+				Int64("chat_id", c.Message().ReplyTo.Sender.ID).
+				Msg("Failed to deny chat")
 			return c.Reply("❌ Fehler beim Verweigern des Chats.", utils.DefaultSendOptions)
 		}
 

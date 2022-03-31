@@ -1,4 +1,4 @@
-package plugin
+package id
 
 import (
 	"fmt"
@@ -11,15 +11,15 @@ import (
 	"strings"
 )
 
-type IdPlugin struct {
+type Plugin struct {
 	*bot.Plugin
 }
 
-func (plg *IdPlugin) GetName() string {
+func (plg *Plugin) GetName() string {
 	return "id"
 }
 
-func (plg *IdPlugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command: regexp.MustCompile(fmt.Sprintf(`^/(?:(?:whoami)|(?:id))(?:@%s)?$`, plg.Bot.Me.Username)),
@@ -28,7 +28,7 @@ func (plg *IdPlugin) GetCommandHandlers() []bot.CommandHandler {
 	}
 }
 
-func (plg *IdPlugin) GetInlineHandlers() []bot.InlineHandler {
+func (plg *Plugin) GetInlineHandlers() []bot.InlineHandler {
 	return []bot.InlineHandler{
 		{
 			Command:             regexp.MustCompile("^(?:whoami|id)$"),
@@ -38,7 +38,7 @@ func (plg *IdPlugin) GetInlineHandlers() []bot.InlineHandler {
 	}
 }
 
-func (plg *IdPlugin) OnId(c bot.NextbotContext) error {
+func (plg *Plugin) OnId(c bot.NextbotContext) error {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("Du bist <b>%s", html.EscapeString(c.Sender().FirstName)))
@@ -62,7 +62,7 @@ func (plg *IdPlugin) OnId(c bot.NextbotContext) error {
 	return c.Reply(sb.String(), utils.DefaultSendOptions)
 }
 
-func (plg *IdPlugin) OnIdInline(c bot.NextbotContext) error {
+func (plg *Plugin) OnIdInline(c bot.NextbotContext) error {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("<b>%s", html.EscapeString(c.Sender().FirstName)))
