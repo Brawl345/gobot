@@ -227,7 +227,7 @@ func (plg *Plugin) OnCountry(c bot.NextbotContext) error {
 	vaccine, err := getVaccineData(result.Country.String)
 	if err != nil {
 		log.Err(err).Msg("Error while getting vaccine data")
-	} else {
+	} else if len(vaccine.Timeline) > 0 {
 		sb.WriteString(
 			fmt.Sprintf(
 				"<b>Impfungen:</b> %s",
