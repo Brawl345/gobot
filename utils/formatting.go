@@ -1,13 +1,20 @@
 package utils
 
 import (
+	"golang.org/x/exp/constraints"
+	"math"
 	"strconv"
 	"strings"
 )
 
-// CommaFormat https://stackoverflow.com/a/31046325/3146627
-func CommaFormat(n int64) string {
-	in := strconv.FormatInt(n, 10)
+func RoundAndFormatThousand(n float64) string {
+	return FormatThousand(int64(math.Round(n)))
+}
+
+func FormatThousand[T constraints.Integer](n T) string {
+	// TODO: Replace with https://stackoverflow.com/a/46811454/3146627
+	// 	when https://youtrack.jetbrains.com/issue/GO-5841 is fixed
+	in := strconv.FormatInt(int64(n), 10)
 	numOfDigits := len(in)
 	if n < 0 {
 		numOfDigits--

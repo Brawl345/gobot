@@ -1,39 +1,37 @@
 package covid
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
+	"html"
+	"net/url"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/guregu/null.v4"
 	"gopkg.in/telebot.v3"
-	"html"
-	"io"
-	"net/http"
-	"net/url"
-	"regexp"
-	"strings"
-	"time"
 )
 
 var log = logger.NewLogger("covid")
 
-const BaseUrl = "https://disease.sh/v3/covid-19"
+const (
+	BaseUrl       = "https://disease.sh/v3/covid-19"
+	MyCountry     = "Germany" // Country that will definitely be shown in the top list
+	TopListPlaces = 10
+)
 
 type (
 	Plugin struct {
 		*bot.Plugin
 	}
 
-	countryResult struct {
-		Message     null.String `json:"message"`
-		Updated     null.Int    `json:"updated"`
-		Country     null.String `json:"country"`
-		CountryInfo struct {
-			Flag null.String `json:"flag"`
-		} `json:"countryInfo"`
+	Result struct {
+		Message                null.String `json:"message"`
+		Updated                null.Int    `json:"updated"`
 		Cases                  null.Int    `json:"cases"`
 		TodayCases             null.Int    `json:"todayCases"`
 		Deaths                 null.Int    `json:"deaths"`
@@ -43,17 +41,31 @@ type (
 		Active                 null.Int    `json:"active"`
 		Critical               null.Int    `json:"critical"`
 		CasesPerOneMillion     null.Int    `json:"casesPerOneMillion"`
-		DeathsPerOneMillion    null.Int    `json:"deathsPerOneMillion"`
 		Tests                  null.Int    `json:"tests"`
-		TestsPerOneMillion     null.Int    `json:"testsPerOneMillion"`
+		TestsPerOneMillion     null.Float  `json:"testsPerOneMillion"`
 		Population             null.Int    `json:"population"`
-		Continent              null.String `json:"continent"`
 		OneCasePerPeople       null.Int    `json:"oneCasePerPeople"`
 		OneDeathPerPeople      null.Int    `json:"oneDeathPerPeople"`
 		OneTestPerPeople       null.Int    `json:"oneTestPerPeople"`
 		ActivePerOneMillion    null.Float  `json:"activePerOneMillion"`
 		RecoveredPerOneMillion null.Float  `json:"recoveredPerOneMillion"`
 		CriticalPerOneMillion  null.Float  `json:"criticalPerOneMillion"`
+	}
+
+	allResult struct {
+		*Result
+		AffectedCountries   int        `json:"affectedCountries"`
+		DeathsPerOneMillion null.Float `json:"deathsPerOneMillion"`
+	}
+
+	countryResult struct {
+		*Result
+		Country     null.String `json:"country"`
+		CountryInfo struct {
+			Flag null.String `json:"flag"`
+		} `json:"countryInfo"`
+		Continent           null.String `json:"continent"`
+		DeathsPerOneMillion null.Int    `json:"deathsPerOneMillion"`
 	}
 
 	vaccineResult struct {
@@ -69,7 +81,18 @@ type (
 	}
 )
 
-func (result *countryResult) UpdatedParsed() time.Time {
+func (countryResult *countryResult) GetRankingText(place int) string {
+	return fmt.Sprintf(
+		"%d. <b>%s:</b> %s Gesamt (+ %s); %s aktiv\n",
+		place,
+		countryResult.Country.String,
+		utils.FormatThousand(countryResult.Cases.Int64),
+		utils.FormatThousand(countryResult.TodayCases.Int64),
+		utils.FormatThousand(countryResult.Active.Int64),
+	)
+}
+
+func (result *Result) UpdatedParsed() time.Time {
 	return time.Unix(result.Updated.Int64/1000, 0)
 }
 
@@ -80,6 +103,10 @@ func (*Plugin) GetName() string {
 func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
+			Command: regexp.MustCompile(fmt.Sprintf(`^/covid(?:@%s)?$`, plg.Bot.Me.Username)),
+			Handler: plg.OnRun,
+		},
+		{
 			Command: regexp.MustCompile(fmt.Sprintf(`^/covid(?:@%s)?[ _]([A-z ]+)(?:@%s)?$`,
 				plg.Bot.Me.Username,
 				plg.Bot.Me.Username),
@@ -89,80 +116,34 @@ func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
 	}
 }
 
-func getVaccineData(country string) (vaccineResult, error) {
-	resp, err := http.Get(
-		fmt.Sprintf(
-			"%s/vaccine/coverage/countries/%s?lastdays=1&fullData=true",
-			BaseUrl, url.PathEscape(country),
-		),
-	)
-
-	if err != nil {
-		return vaccineResult{}, err
-	}
-
-	if resp.StatusCode == 404 {
-		return vaccineResult{}, errors.New("country not found or has no cases")
-	}
-
-	if resp.StatusCode != 200 {
-		return vaccineResult{}, errors.New("unexpected status code")
-	}
-
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return vaccineResult{}, err
-	}
-
-	var result vaccineResult
-	if err := json.Unmarshal(body, &result); err != nil {
-		return vaccineResult{}, err
-	}
-
-	if result.Message.Valid {
-		return vaccineResult{}, errors.New(result.Message.String)
-	}
-
-	return result, nil
-}
-
 func (plg *Plugin) OnCountry(c bot.NextbotContext) error {
 	c.Notify(telebot.Typing)
 
-	resp, err := http.Get(
+	var httpError *utils.HttpError
+	var result countryResult
+
+	err := utils.GetRequest(
 		fmt.Sprintf(
 			"%s/countries/%s?strict=false&allowNull=true",
 			BaseUrl, url.PathEscape(c.Matches[1]),
 		),
+		&result,
 	)
+
 	if err != nil {
-		log.Err(err).Send()
-		return c.Reply("❌ Bei der Anfrage ist ein Fehler aufgetreten.", utils.DefaultSendOptions)
-	}
+		if errors.As(err, &httpError) {
+			if httpError.StatusCode == 404 {
+				return c.Reply("❌ Das gesuchte Land existiert nicht oder hat keine COVID-Fälle gemeldet.\n"+
+					"Bitte darauf achten das Land in <b>Englisch</b> anzugeben!",
+					utils.DefaultSendOptions,
+				)
+			} else {
+				log.Error().Int("status_code", httpError.StatusCode).Msg("Unexpected status code")
+			}
+		} else {
+			log.Err(err).Send()
+		}
 
-	if resp.StatusCode == 404 {
-		return c.Reply("❌ Das gesuchte Land existiert nicht oder hat keine COVID-Fälle gemeldet.\n"+
-			"Bitte darauf achten das Land in <b>Englisch</b> anzugeben!",
-			utils.DefaultSendOptions,
-		)
-	}
-
-	if resp.StatusCode != 200 {
-		log.Error().Int("status_code", resp.StatusCode).Msg("Unexpected status code")
-		return c.Reply("❌ Bei der Anfrage ist ein Fehler aufgetreten.", utils.DefaultSendOptions)
-	}
-
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Err(err).Msg("Failed to read response body")
-		return c.Reply("❌ Bei der Anfrage ist ein Fehler aufgetreten.", utils.DefaultSendOptions)
-	}
-
-	var result countryResult
-	if err := json.Unmarshal(body, &result); err != nil {
-		log.Err(err).Msg("Failed to unmarshal response body")
 		return c.Reply("❌ Bei der Anfrage ist ein Fehler aufgetreten.", utils.DefaultSendOptions)
 	}
 
@@ -186,52 +167,60 @@ func (plg *Plugin) OnCountry(c bot.NextbotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Gesamt:</b> %s (+ %s) (%s pro Mio.)\n",
-			utils.CommaFormat(result.Cases.Int64),
-			utils.CommaFormat(result.TodayCases.Int64),
-			utils.CommaFormat(result.CasesPerOneMillion.Int64),
+			utils.FormatThousand(result.Cases.Int64),
+			utils.FormatThousand(result.TodayCases.Int64),
+			utils.FormatThousand(result.CasesPerOneMillion.Int64),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Aktiv:</b> %s\n",
-			utils.CommaFormat(result.Active.Int64),
+			utils.FormatThousand(result.Active.Int64),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Kritisch:</b> %s\n",
-			utils.CommaFormat(result.Critical.Int64),
+			utils.FormatThousand(result.Critical.Int64),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Genesen:</b> %s (+ %s)\n",
-			utils.CommaFormat(result.Recovered.Int64),
-			utils.CommaFormat(result.TodayRecovered.Int64),
+			utils.FormatThousand(result.Recovered.Int64),
+			utils.FormatThousand(result.TodayRecovered.Int64),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Todesfälle:</b> %s (+ %s) (%s pro Mio.)\n",
-			utils.CommaFormat(result.Deaths.Int64),
-			utils.CommaFormat(result.TodayDeaths.Int64),
-			utils.CommaFormat(result.DeathsPerOneMillion.Int64),
+			utils.FormatThousand(result.Deaths.Int64),
+			utils.FormatThousand(result.TodayDeaths.Int64),
+			utils.FormatThousand(result.DeathsPerOneMillion.Int64),
 		),
 	)
 
 	c.Notify(telebot.Typing)
-	vaccine, err := getVaccineData(result.Country.String)
+	var vaccine vaccineResult
+	err = utils.GetRequest(
+		fmt.Sprintf(
+			"%s/vaccine/coverage/countries/%s?lastdays=1&fullData=true",
+			BaseUrl, url.PathEscape(result.Country.String),
+		),
+		&vaccine,
+	)
+
 	if err != nil {
 		log.Err(err).Msg("Error while getting vaccine data")
 	} else if len(vaccine.Timeline) > 0 {
 		sb.WriteString(
 			fmt.Sprintf(
 				"<b>Impfungen:</b> %s",
-				utils.CommaFormat(vaccine.Timeline[0].Total),
+				utils.FormatThousand(vaccine.Timeline[0].Total),
 			),
 		)
 		vaccineDate, err := time.Parse("1/2/06", vaccine.Timeline[0].Date)
@@ -255,4 +244,136 @@ func (plg *Plugin) OnCountry(c bot.NextbotContext) error {
 		ParseMode:         telebot.ModeHTML,
 	})
 
+}
+
+func (plg *Plugin) OnRun(c bot.NextbotContext) error {
+	c.Notify(telebot.Typing)
+
+	resultCh := make(chan allResult)
+	allCountriesCh := make(chan []countryResult)
+	hasErrorCh := make(chan bool)
+
+	go func() {
+		var countryResults []countryResult
+		err := utils.GetRequest(
+			fmt.Sprintf(
+				"%s/countries?sort=cases&allowNull=true",
+				BaseUrl,
+			),
+			&countryResults,
+		)
+		if err != nil {
+			log.Err(err).Str("on", "countries").Send()
+			close(allCountriesCh)
+			return
+		}
+		allCountriesCh <- countryResults
+	}()
+
+	go func() {
+		var all allResult
+		err := utils.GetRequest(
+			fmt.Sprintf(
+				"%s/all?allowNull=true",
+				BaseUrl,
+			),
+			&all,
+		)
+		if err != nil {
+			log.Err(err).Str("on", "all").Send()
+			hasErrorCh <- true
+			close(resultCh)
+			return
+		}
+		resultCh <- all
+		close(hasErrorCh)
+	}()
+
+	result, allCountries, hasError := <-resultCh, <-allCountriesCh, <-hasErrorCh
+
+	if hasError {
+		return c.Reply("❌ Bei der Anfrage ist ein Fehler aufgetreten.", utils.DefaultSendOptions)
+	}
+
+	var sb strings.Builder
+
+	sb.WriteString(
+		fmt.Sprintf(
+			"<b>COVID-19-Fälle weltweit (%d Länder):</b>\n",
+			result.AffectedCountries,
+		),
+	)
+
+	sb.WriteString(
+		fmt.Sprintf(
+			"<b>Gesamt:</b> %s (+ %s) (%s pro Million)\n",
+			utils.FormatThousand(result.Cases.Int64),
+			utils.FormatThousand(result.TodayCases.Int64),
+			utils.FormatThousand(result.CasesPerOneMillion.Int64),
+		),
+	)
+
+	sb.WriteString(
+		fmt.Sprintf(
+			"<b>Aktiv:</b> %s (%s pro Million)\n",
+			utils.FormatThousand(result.Active.Int64),
+			utils.RoundAndFormatThousand(result.ActivePerOneMillion.Float64),
+		),
+	)
+
+	sb.WriteString(
+		fmt.Sprintf(
+			"<b>Genesen:</b> %s\n",
+			utils.FormatThousand(result.Recovered.Int64),
+		),
+	)
+
+	sb.WriteString(
+		fmt.Sprintf(
+			"<b>Todesfälle:</b> %s (+ %s) (%s pro Million)\n\n",
+			utils.FormatThousand(result.Deaths.Int64),
+			utils.FormatThousand(result.TodayDeaths.Int64),
+			utils.RoundAndFormatThousand(result.DeathsPerOneMillion.Float64),
+		),
+	)
+
+	myCountryIndex := 0
+
+	for i, country := range allCountries {
+		if country.Country.String == MyCountry {
+			myCountryIndex = i
+			break
+		}
+	}
+
+	if myCountryIndex < TopListPlaces { // My country is in the top list
+		for i := 0; i < TopListPlaces; i++ {
+			country := allCountries[i]
+			sb.WriteString(country.GetRankingText(i + 1))
+		}
+	} else { // My country is not in the toplist - post the whole toplist and append my country + the one after that
+		for i := 0; i < TopListPlaces; i++ {
+			country := allCountries[i]
+			sb.WriteString(country.GetRankingText(i + 1))
+		}
+
+		if myCountryIndex != TopListPlaces {
+			sb.WriteString("...\n")
+		}
+
+		sb.WriteString(allCountries[myCountryIndex].GetRankingText(myCountryIndex + 1))
+		sb.WriteString(allCountries[myCountryIndex+1].GetRankingText(myCountryIndex + 2))
+	}
+
+	sb.WriteString(
+		fmt.Sprintf(
+			"\n<i>Zuletzt aktualisiert: %s Uhr</i>",
+			result.UpdatedParsed().Format("02.01.2006, 15:04:05"),
+		),
+	)
+
+	return c.Reply(sb.String(), &telebot.SendOptions{
+		AllowWithoutReply: true,
+		ParseMode:         telebot.ModeHTML,
+	})
 }

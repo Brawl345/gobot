@@ -2,6 +2,7 @@ package utils
 
 import (
 	"bytes"
+	"encoding/json"
 	"gopkg.in/telebot.v3"
 	"io"
 	"mime/multipart"
@@ -34,6 +35,34 @@ type (
 func IsAdmin(user *telebot.User) bool {
 	adminId, _ := strconv.ParseInt(os.Getenv("ADMIN_ID"), 10, 64)
 	return adminId == user.ID
+}
+
+func GetRequest(url string, result any) error {
+	resp, err := http.Get(url)
+
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return &HttpError{
+			StatusCode: resp.StatusCode,
+			Status:     resp.Status,
+		}
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		return err
+	}
+
+	if err := json.Unmarshal(body, result); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func MultiPartFormRequest(url string, params []MultiPartParam, files []MultiPartFile) (*http.Response, error) {

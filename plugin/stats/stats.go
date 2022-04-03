@@ -58,7 +58,7 @@ func (plg *Plugin) OnStats(c bot.NextbotContext) error {
 			sb.WriteString(
 				fmt.Sprintf("<b>%s:</b> %s <code>(%.2f %%)</code>\n",
 					html.EscapeString(user.GetFullName()),
-					utils.CommaFormat(user.MsgCount),
+					utils.FormatThousand(user.MsgCount),
 					percentage,
 				),
 			)
@@ -69,11 +69,11 @@ func (plg *Plugin) OnStats(c bot.NextbotContext) error {
 	if otherMsgs > 0 {
 		percentage := (float64(otherMsgs) / float64(totalCount)) * 100
 		sb.WriteString(fmt.Sprintf("<b>Andere Nutzer:</b> %s <code>(%.2f %%)</code>\n",
-			utils.CommaFormat(otherMsgs),
+			utils.FormatThousand(otherMsgs),
 			percentage),
 		)
 	}
-	sb.WriteString(fmt.Sprintf("<b>GESAMT:</b> %s", utils.CommaFormat(totalCount)))
+	sb.WriteString(fmt.Sprintf("<b>GESAMT:</b> %s", utils.FormatThousand(totalCount)))
 
 	return c.Reply(sb.String(), utils.DefaultSendOptions)
 }

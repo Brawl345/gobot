@@ -73,7 +73,7 @@ func NewBot(token string, db *storage.DB) (*Nextbot, error) {
 	go func() {
 		<-channel
 		log.Info().Msg("Stopping...")
-		bot.Stop()
+		//bot.Stop()
 		err := db.Close()
 		if err != nil {
 			log.Err(err).Send()
