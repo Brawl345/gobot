@@ -2,9 +2,10 @@ package echo
 
 import (
 	"fmt"
+	"regexp"
+
 	"github.com/Brawl345/gobot/bot"
 	"gopkg.in/telebot.v3"
-	"regexp"
 )
 
 type Plugin struct {

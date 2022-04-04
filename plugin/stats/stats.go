@@ -2,12 +2,13 @@ package stats
 
 import (
 	"fmt"
-	"github.com/Brawl345/gobot/bot"
-	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/utils"
 	"html"
 	"regexp"
 	"strings"
+
+	"github.com/Brawl345/gobot/bot"
+	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/utils"
 )
 
 var log = logger.NewLogger("stats")

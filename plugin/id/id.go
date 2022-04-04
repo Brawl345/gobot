@@ -2,13 +2,14 @@ package id
 
 import (
 	"fmt"
-	"github.com/Brawl345/gobot/bot"
-	"github.com/Brawl345/gobot/utils"
-	"gopkg.in/telebot.v3"
 	"html"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/Brawl345/gobot/bot"
+	"github.com/Brawl345/gobot/utils"
+	"gopkg.in/telebot.v3"
 )
 
 type Plugin struct {

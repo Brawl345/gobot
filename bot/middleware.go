@@ -2,9 +2,10 @@ package bot
 
 import (
 	"fmt"
-	"gopkg.in/telebot.v3"
 	"strings"
 	"time"
+
+	"gopkg.in/telebot.v3"
 )
 
 // https://twin.sh/articles/35/how-to-add-colors-to-your-console-terminal-output-in-go

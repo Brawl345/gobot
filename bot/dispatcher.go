@@ -1,9 +1,10 @@
 package bot
 
 import (
+	"regexp"
+
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
-	"regexp"
 )
 
 func (bot *Nextbot) OnText(c telebot.Context) error {

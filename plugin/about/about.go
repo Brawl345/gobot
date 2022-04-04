@@ -2,12 +2,13 @@ package about
 
 import (
 	"fmt"
-	"github.com/Brawl345/gobot/bot"
-	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/utils"
 	"regexp"
 	"runtime/debug"
 	"time"
+
+	"github.com/Brawl345/gobot/bot"
+	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/utils"
 )
 
 var log = logger.NewLogger("about")

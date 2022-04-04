@@ -4,13 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"regexp"
+	"strings"
+
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
-	"io"
-	"regexp"
-	"strings"
 )
 
 var log = logger.NewLogger("dcrypt")

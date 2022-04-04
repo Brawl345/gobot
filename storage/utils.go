@@ -2,9 +2,10 @@ package storage
 
 import (
 	"database/sql"
-	"gopkg.in/telebot.v3"
 	"os"
 	"strconv"
+
+	"gopkg.in/telebot.v3"
 )
 
 func isAdmin(user *telebot.User) bool {

@@ -3,12 +3,13 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
-	"gopkg.in/telebot.v3"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"strconv"
+
+	"gopkg.in/telebot.v3"
 )
 
 const MaxFilesizeDownload = int(20e6)

@@ -27,7 +27,8 @@ To use a webhook, set the webhook-related variables. If you don't, long-polling 
 Example with [Hookdeck](https://hookdeck.com/):
 
 1. Copy your `https://events.hookdeck.com/e/...` URL to `WEBHOOK_URL` variable
-2. Choose a webhook port (e.g. `41320`) - be careful, no error will be shown if the port is already in use (limitation of telebot)!
+2. Choose a webhook port (e.g. `41320`) - be careful, no error will be shown if the port is already in use (limitation
+   of telebot)!
 3. Use the Hookdeck CLI: `hookdeck listen 41320 [SOURCE]`
 
 ### More options

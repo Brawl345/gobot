@@ -2,15 +2,16 @@ package bot
 
 import (
 	"errors"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/storage"
 	"github.com/Brawl345/gobot/utils"
 	"golang.org/x/exp/slices"
 	"gopkg.in/telebot.v3"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
 )
 
 var log = logger.NewLogger("bot")

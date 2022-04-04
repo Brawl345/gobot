@@ -2,10 +2,11 @@ package manager
 
 import (
 	"fmt"
+	"regexp"
+
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/utils"
-	"regexp"
 )
 
 var log = logger.NewLogger("manager")

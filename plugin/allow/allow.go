@@ -2,11 +2,12 @@ package allow
 
 import (
 	"fmt"
+	"html"
+	"regexp"
+
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/utils"
-	"html"
-	"regexp"
 )
 
 var log = logger.NewLogger("allow")

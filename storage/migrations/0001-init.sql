@@ -68,7 +68,7 @@ CREATE TABLE `chats_plugins`
 
 CREATE TABLE `credentials`
 (
-    `name` VARCHAR(50) NOT NULL PRIMARY KEY,
+    `name`  VARCHAR(50)  NOT NULL PRIMARY KEY,
     `value` VARCHAR(255) NOT NULL
 ) COLLATE = 'utf8mb4_general_ci'
   ENGINE = InnoDB;

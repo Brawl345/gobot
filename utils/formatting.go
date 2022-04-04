@@ -1,10 +1,11 @@
 package utils
 
 import (
-	"golang.org/x/exp/constraints"
 	"math"
 	"strconv"
 	"strings"
+
+	"golang.org/x/exp/constraints"
 )
 
 func RoundAndFormatThousand(n float64) string {

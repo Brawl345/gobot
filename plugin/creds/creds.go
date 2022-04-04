@@ -2,12 +2,13 @@ package creds
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
+
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
-	"regexp"
-	"strings"
 )
 
 var log = logger.NewLogger("creds")

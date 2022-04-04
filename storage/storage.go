@@ -2,10 +2,11 @@ package storage
 
 import (
 	"embed"
+	"time"
+
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	migrate "github.com/rubenv/sql-migrate"
-	"time"
 )
 
 //go:embed migrations/*

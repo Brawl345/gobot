@@ -1,6 +1,10 @@
 package main
 
 import (
+	"os"
+	"runtime/debug"
+	"time"
+
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin/about"
@@ -16,9 +20,6 @@ import (
 	"github.com/Brawl345/gobot/storage"
 	_ "github.com/joho/godotenv/autoload"
 	"gopkg.in/telebot.v3"
-	"os"
-	"runtime/debug"
-	"time"
 )
 
 var log = logger.NewLogger("main")

@@ -1,15 +1,16 @@
 package getfile
 
 import (
-	"github.com/Brawl345/gobot/bot"
-	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/utils"
-	"gopkg.in/telebot.v3"
 	"io"
 	"os"
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/Brawl345/gobot/bot"
+	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/utils"
+	"gopkg.in/telebot.v3"
 )
 
 var log = logger.NewLogger("getfile")
