@@ -65,7 +65,9 @@ func main() {
 		log.Info().Msgf("Applied %d migration(s)", n)
 	}
 
-	b, err := bot.NewBot(os.Getenv("BOT_TOKEN"), db)
+	poller := bot.NewPoller(os.Getenv("WEBHOOK_PORT"), os.Getenv("WEBHOOK_URL"))
+
+	b, err := bot.NewBot(os.Getenv("BOT_TOKEN"), db, poller)
 	if err != nil {
 		log.Fatal().Err(err).Send()
 	}

@@ -24,13 +24,37 @@ type Nextbot struct {
 	allowedChats           []int64
 }
 
-func NewBot(token string, db *storage.DB) (*Nextbot, error) {
-	bot, err := telebot.NewBot(telebot.Settings{
-		Token: token,
-		Poller: &telebot.LongPoller{
-			AllowedUpdates: []string{"message", "edited_message", "callback_query", "inline_query"},
+func NewPoller(webhookPort, webhookUrl string) telebot.Poller {
+	allowedUpdates := []string{"message", "edited_message", "callback_query", "inline_query"}
+
+	if webhookPort == "" && webhookUrl == "" {
+		log.Debug().Msg("Using long polling")
+		return &telebot.LongPoller{
+			AllowedUpdates: allowedUpdates,
 			Timeout:        10 * time.Second,
+		}
+	}
+
+	log.Debug().
+		Str("port", webhookPort).
+		Str("webhook_url", webhookUrl).
+		Msg("Using webhook")
+
+	return &telebot.Webhook{
+		Listen:         ":" + webhookPort,
+		AllowedUpdates: allowedUpdates,
+		MaxConnections: 50,
+		DropUpdates:    true,
+		Endpoint: &telebot.WebhookEndpoint{
+			PublicURL: webhookUrl,
 		},
+	}
+}
+
+func NewBot(token string, db *storage.DB, poller telebot.Poller) (*Nextbot, error) {
+	bot, err := telebot.NewBot(telebot.Settings{
+		Token:  token,
+		Poller: poller,
 	})
 
 	if err != nil {
