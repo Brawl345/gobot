@@ -47,12 +47,8 @@ func readVersionInfo() {
 func main() {
 	readVersionInfo()
 
-	db, err := storage.Open(os.Getenv("MYSQL_URL"))
+	db, err := storage.Connect()
 	if err != nil {
-		log.Fatal().Err(err).Send()
-	}
-
-	if err := db.Ping(); err != nil {
 		log.Fatal().Err(err).Send()
 	}
 

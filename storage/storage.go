@@ -2,6 +2,9 @@ package storage
 
 import (
 	"embed"
+	"fmt"
+	"os"
+	"strings"
 	"time"
 
 	_ "github.com/go-sql-driver/mysql"
@@ -23,36 +26,51 @@ type DB struct {
 	Users        UserStorage
 }
 
-func Open(url string) (*DB, error) {
-	db, err := sqlx.Open("mysql", url)
-	db = db.Unsafe()
+func Connect() (*DB, error) {
+	host := strings.TrimSpace(os.Getenv("MYSQL_HOST"))
+	port := strings.TrimSpace(os.Getenv("MYSQL_PORT"))
+	user := strings.TrimSpace(os.Getenv("MYSQL_USER"))
+	password := strings.TrimSpace(os.Getenv("MYSQL_PASSWORD"))
+	db := strings.TrimSpace(os.Getenv("MYSQL_DB"))
+
+	connectionString := fmt.Sprintf(
+		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		user,
+		password,
+		host,
+		port,
+		db,
+	)
+
+	conn, err := sqlx.Connect("mysql", connectionString)
 	if err != nil {
 		return nil, err
 	}
 
-	db.SetMaxIdleConns(100)
-	db.SetMaxOpenConns(100)
-	db.SetConnMaxIdleTime(10 * time.Minute)
+	conn = conn.Unsafe()
+	conn.SetMaxIdleConns(100)
+	conn.SetMaxOpenConns(100)
+	conn.SetConnMaxIdleTime(10 * time.Minute)
 
-	chats := &Chats{db}
-	plugins := &Plugins{db}
-	users := &Users{db}
+	chats := &Chats{conn}
+	plugins := &Plugins{conn}
+	users := &Users{conn}
 
 	return &DB{
-		DB:    db,
+		DB:    conn,
 		Chats: chats,
 		ChatsPlugins: &ChatsPlugins{
 			Chats:   chats,
 			Plugins: plugins,
-			DB:      db,
+			DB:      conn,
 		},
 		ChatsUsers: &ChatsUsers{
 			Chats: chats,
 			Users: users,
-			DB:    db,
+			DB:    conn,
 		},
-		Credentials: &Credentials{db},
-		Files:       &Files{db},
+		Credentials: &Credentials{conn},
+		Files:       &Files{conn},
 		Plugins:     plugins,
 		Users:       users,
 	}, nil
