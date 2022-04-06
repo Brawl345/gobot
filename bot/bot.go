@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -25,34 +26,42 @@ type Nextbot struct {
 	allowedChats           []int64
 }
 
-func NewPoller(webhookPort, webhookUrl string) telebot.Poller {
+func New() (*Nextbot, error) {
+	db, err := storage.New()
+	if err != nil {
+		return nil, err
+	}
+
 	allowedUpdates := []string{"message", "edited_message", "callback_query", "inline_query"}
 
-	if webhookPort == "" && webhookUrl == "" {
+	token := strings.TrimSpace(os.Getenv("BOT_TOKEN"))
+	webhookPort := strings.TrimSpace(os.Getenv("WEBHOOK_PORT"))
+	webhookURL := strings.TrimSpace(os.Getenv("WEBHOOK_URL"))
+
+	var poller telebot.Poller
+	if webhookPort == "" || webhookURL == "" {
 		log.Debug().Msg("Using long polling")
-		return &telebot.LongPoller{
+		poller = &telebot.LongPoller{
 			AllowedUpdates: allowedUpdates,
 			Timeout:        10 * time.Second,
 		}
+	} else {
+		log.Debug().
+			Str("port", webhookPort).
+			Str("webhook_url", webhookURL).
+			Msg("Using webhook")
+
+		poller = &telebot.Webhook{
+			Listen:         ":" + webhookPort,
+			AllowedUpdates: allowedUpdates,
+			MaxConnections: 50,
+			DropUpdates:    true,
+			Endpoint: &telebot.WebhookEndpoint{
+				PublicURL: webhookURL,
+			},
+		}
 	}
 
-	log.Debug().
-		Str("port", webhookPort).
-		Str("webhook_url", webhookUrl).
-		Msg("Using webhook")
-
-	return &telebot.Webhook{
-		Listen:         ":" + webhookPort,
-		AllowedUpdates: allowedUpdates,
-		MaxConnections: 50,
-		DropUpdates:    true,
-		Endpoint: &telebot.WebhookEndpoint{
-			PublicURL: webhookUrl,
-		},
-	}
-}
-
-func NewBot(token string, db *storage.DB, poller telebot.Poller) (*Nextbot, error) {
 	bot, err := telebot.NewBot(telebot.Settings{
 		Token:  token,
 		Poller: poller,

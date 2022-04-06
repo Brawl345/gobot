@@ -17,7 +17,6 @@ import (
 	"github.com/Brawl345/gobot/plugin/id"
 	"github.com/Brawl345/gobot/plugin/manager"
 	"github.com/Brawl345/gobot/plugin/stats"
-	"github.com/Brawl345/gobot/storage"
 	_ "github.com/joho/godotenv/autoload"
 	"gopkg.in/telebot.v3"
 )
@@ -47,33 +46,12 @@ func readVersionInfo() {
 func main() {
 	readVersionInfo()
 
-	db, err := storage.Connect()
+	b, err := bot.New()
 	if err != nil {
 		log.Fatal().Err(err).Send()
 	}
 
-	log.Info().Msg("Database connection established")
-
-	n, err := db.Migrate()
-	if err != nil {
-		log.Fatal().Err(err).Send()
-	}
-	if n > 0 {
-		log.Info().Msgf("Applied %d migration(s)", n)
-	}
-
-	poller := bot.NewPoller(os.Getenv("WEBHOOK_PORT"), os.Getenv("WEBHOOK_URL"))
-
-	b, err := bot.NewBot(os.Getenv("BOT_TOKEN"), db, poller)
-	if err != nil {
-		log.Fatal().Err(err).Send()
-	}
-
-	log.Info().Str("component", "core").Msgf("Logged in as @%s (%d)", b.Me.Username, b.Me.ID)
-
-	if err != nil {
-		log.Fatal().Err(err).Send()
-	}
+	log.Info().Msgf("Logged in as @%s (%d)", b.Me.Username, b.Me.ID)
 
 	p, err := bot.NewPlugin(b)
 	if err != nil {

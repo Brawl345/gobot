@@ -26,7 +26,7 @@ type DB struct {
 	Users        UserStorage
 }
 
-func Connect() (*DB, error) {
+func New() (*DB, error) {
 	host := strings.TrimSpace(os.Getenv("MYSQL_HOST"))
 	port := strings.TrimSpace(os.Getenv("MYSQL_PORT"))
 	user := strings.TrimSpace(os.Getenv("MYSQL_USER"))
@@ -43,6 +43,12 @@ func Connect() (*DB, error) {
 	)
 
 	conn, err := sqlx.Connect("mysql", connectionString)
+	if err != nil {
+		return nil, err
+	}
+
+	migrationSource := &migrate.EmbedFileSystemMigrationSource{FileSystem: embeddedMigrations, Root: "migrations"}
+	_, err = migrate.Exec(conn.DB, "mysql", migrationSource, migrate.Up)
 	if err != nil {
 		return nil, err
 	}
@@ -74,9 +80,4 @@ func Connect() (*DB, error) {
 		Plugins:     plugins,
 		Users:       users,
 	}, nil
-}
-
-func (db *DB) Migrate() (int, error) {
-	migrations := &migrate.EmbedFileSystemMigrationSource{FileSystem: embeddedMigrations, Root: "migrations"}
-	return migrate.Exec(db.DB.DB, "mysql", migrations, migrate.Up)
 }
