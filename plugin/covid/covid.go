@@ -81,6 +81,10 @@ type (
 	}
 )
 
+func New(base *bot.Plugin) *Plugin {
+	return &Plugin{base}
+}
+
 func (countryResult *countryResult) GetRankingText(place int) string {
 	return fmt.Sprintf(
 		"%d. <b>%s:</b> %s Gesamt (+ %s); %s aktiv\n",

@@ -33,8 +33,11 @@ type (
 	}
 )
 
-func (plg *Plugin) Init() {
-	plg.textRegex = regexp.MustCompile("(?s)<textarea>(.+)</textarea>")
+func New(base *bot.Plugin) *Plugin {
+	return &Plugin{
+		Plugin:    base,
+		textRegex: regexp.MustCompile("(?s)<textarea>(.+)</textarea>"),
+	}
 }
 
 func (*Plugin) Name() string {

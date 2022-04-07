@@ -61,22 +61,20 @@ func main() {
 	}
 
 	plugins := []bot.IPlugin{
-		&about.Plugin{Plugin: plg},
-		&allow.Plugin{Plugin: plg},
-		&covid.Plugin{Plugin: plg},
-		&creds.Plugin{Plugin: plg},
-		&dcrypt.Plugin{Plugin: plg},
-		&echo.Plugin{Plugin: plg},
-		&getfile.Plugin{Plugin: plg},
-		&id.Plugin{Plugin: plg},
-		&manager.Plugin{Plugin: plg},
-		&stats.Plugin{Plugin: plg},
+		about.New(plg),
+		allow.New(plg),
+		covid.New(plg),
+		creds.New(plg),
+		dcrypt.New(plg),
+		echo.New(plg),
+		getfile.New(plg),
+		id.New(plg),
+		manager.New(plg),
+		stats.New(plg),
 	}
 
-	for i, plg := range plugins {
-		log.Info().Msgf("Registering plugin (%d/%d): %s", i+1, len(plugins), plg.Name())
-		b.RegisterPlugin(plg)
-	}
+	log.Info().Msg("Registering plugins")
+	b.RegisterPlugins(plugins)
 
 	_, shouldPrintMsgs := os.LookupEnv("PRINT_MSGS")
 	if shouldPrintMsgs {

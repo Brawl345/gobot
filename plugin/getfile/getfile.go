@@ -20,12 +20,15 @@ type Plugin struct {
 	dir string
 }
 
-func (plg *Plugin) Init() {
-	key, err := plg.Bot.DB.Credentials.GetKey("getfile_dir")
+func New(base *bot.Plugin) *Plugin {
+	dir, err := base.Bot.DB.Credentials.GetKey("getfile_dir")
 	if err != nil {
-		key = "tmp"
+		dir = "tmp"
 	}
-	plg.dir = key
+	return &Plugin{
+		Plugin: base,
+		dir:    dir,
+	}
 }
 
 func (*Plugin) Name() string {

@@ -15,6 +15,10 @@ type Plugin struct {
 	*bot.Plugin
 }
 
+func New(base *bot.Plugin) *Plugin {
+	return &Plugin{base}
+}
+
 func (*Plugin) Name() string {
 	return "manager"
 }

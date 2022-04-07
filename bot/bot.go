@@ -31,7 +31,6 @@ type (
 		CommandHandlers() []CommandHandler
 		CallbackHandlers() []CallbackHandler
 		InlineHandlers() []InlineHandler
-		Init()
 	}
 
 	CommandHandler struct {
@@ -139,12 +138,8 @@ func New() (*Nextbot, error) {
 	}, nil
 }
 
-func (bot *Nextbot) RegisterPlugin(plugin IPlugin) {
-	if plugin == nil {
-		panic("plugin is nil")
-	}
-	plugin.Init()
-	bot.plugins = append(bot.plugins, plugin)
+func (bot *Nextbot) RegisterPlugins(plugins []IPlugin) {
+	bot.plugins = plugins
 }
 
 func (bot *Nextbot) isPluginEnabled(pluginName string) bool {

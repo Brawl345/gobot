@@ -8,8 +8,6 @@ type Plugin struct {
 	Bot *Nextbot
 }
 
-func (*Plugin) Init() {}
-
 func (*Plugin) CallbackHandlers() []CallbackHandler {
 	return []CallbackHandler{}
 }
