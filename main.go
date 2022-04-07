@@ -2,7 +2,9 @@ package main
 
 import (
 	"os"
+	"os/signal"
 	"runtime/debug"
+	"syscall"
 	"time"
 
 	"github.com/Brawl345/gobot/bot"
@@ -101,6 +103,23 @@ func main() {
 	b.Handle(telebot.OnGroupCreated, b.NullRoute)
 
 	b.OnError = bot.OnError
+
+	channel := make(chan os.Signal)
+	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(channel, os.Interrupt, syscall.SIGKILL)
+	signal.Notify(channel, os.Interrupt, syscall.SIGINT)
+	go func() {
+		<-channel
+		log.Info().Msg("Stopping...")
+		//b.Stop()
+		err := b.DB.Close()
+		if err != nil {
+			log.Err(err).Send()
+			os.Exit(1)
+			return
+		}
+		os.Exit(0)
+	}()
 
 	b.Start()
 }

@@ -3,9 +3,7 @@ package bot
 import (
 	"errors"
 	"os"
-	"os/signal"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
@@ -99,23 +97,6 @@ func New() (*Nextbot, error) {
 	}
 
 	allowedChats = append(allowedChats, allowedUsers...)
-
-	channel := make(chan os.Signal)
-	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
-	signal.Notify(channel, os.Interrupt, syscall.SIGKILL)
-	signal.Notify(channel, os.Interrupt, syscall.SIGINT)
-	go func() {
-		<-channel
-		log.Info().Msg("Stopping...")
-		//bot.Stop()
-		err := db.Close()
-		if err != nil {
-			log.Err(err).Send()
-			os.Exit(1)
-			return
-		}
-		os.Exit(0)
-	}()
 
 	return &Nextbot{
 		Bot:                    bot,
