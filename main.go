@@ -55,22 +55,22 @@ func main() {
 
 	log.Info().Msgf("Logged in as @%s (%d)", b.Me.Username, b.Me.ID)
 
-	p, err := bot.NewPlugin(b)
+	plg, err := bot.NewBasePlugin(b)
 	if err != nil {
 		log.Fatal().Err(err).Send()
 	}
 
 	plugins := []bot.IPlugin{
-		&about.Plugin{Plugin: p},
-		&allow.Plugin{Plugin: p},
-		&covid.Plugin{Plugin: p},
-		&creds.Plugin{Plugin: p},
-		&dcrypt.Plugin{Plugin: p},
-		&echo.Plugin{Plugin: p},
-		&getfile.Plugin{Plugin: p},
-		&id.Plugin{Plugin: p},
-		&manager.Plugin{Plugin: p},
-		&stats.Plugin{Plugin: p},
+		&about.Plugin{Plugin: plg},
+		&allow.Plugin{Plugin: plg},
+		&covid.Plugin{Plugin: plg},
+		&creds.Plugin{Plugin: plg},
+		&dcrypt.Plugin{Plugin: plg},
+		&echo.Plugin{Plugin: plg},
+		&getfile.Plugin{Plugin: plg},
+		&id.Plugin{Plugin: plg},
+		&manager.Plugin{Plugin: plg},
+		&stats.Plugin{Plugin: plg},
 	}
 
 	for i, plg := range plugins {

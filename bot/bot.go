@@ -3,6 +3,7 @@ package bot
 import (
 	"errors"
 	"os"
+	"regexp"
 	"strings"
 	"time"
 
@@ -15,14 +16,45 @@ import (
 
 var log = logger.NewLogger("bot")
 
-type Nextbot struct {
-	*telebot.Bot
-	DB                     *storage.DB
-	plugins                []IPlugin
-	enabledPlugins         []string
-	disabledPluginsForChat map[int64][]string
-	allowedChats           []int64
-}
+type (
+	Nextbot struct {
+		*telebot.Bot
+		DB                     *storage.DB
+		plugins                []IPlugin
+		enabledPlugins         []string
+		disabledPluginsForChat map[int64][]string
+		allowedChats           []int64
+	}
+
+	IPlugin interface {
+		GetName() string
+		GetCommandHandlers() []CommandHandler
+		GetCallbackHandlers() []CallbackHandler
+		GetInlineHandlers() []InlineHandler
+		Init()
+	}
+
+	CommandHandler struct {
+		Command     any
+		Handler     NextbotHandlerFunc
+		AdminOnly   bool
+		GroupOnly   bool
+		HandleEdits bool
+	}
+
+	CallbackHandler struct {
+		Command   *regexp.Regexp
+		Handler   NextbotHandlerFunc
+		AdminOnly bool
+	}
+
+	InlineHandler struct {
+		Command             *regexp.Regexp
+		Handler             NextbotHandlerFunc
+		AdminOnly           bool
+		CanBeUsedByEveryone bool
+	}
+)
 
 func New() (*Nextbot, error) {
 	db, err := storage.New()
