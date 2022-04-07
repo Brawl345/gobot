@@ -14,43 +14,40 @@ import (
 var log = logger.NewLogger("creds")
 
 type Plugin struct {
-	*bot.Plugin
+	bot *bot.Nextbot
 }
 
-func New(base *bot.Plugin) *Plugin {
-	return &Plugin{base}
+func New(bot *bot.Nextbot) *Plugin {
+	return &Plugin{
+		bot: bot,
+	}
 }
 
 func (*Plugin) Name() string {
 	return "creds"
 }
 
-func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
-	return []bot.CommandHandler{
-		{
-			Command:   regexp.MustCompile(fmt.Sprintf(`^/creds(?:@%s)?$`, plg.Bot.Me.Username)),
-			Handler:   plg.OnGet,
-			AdminOnly: true,
+func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
+	return []bot.Handler{
+		&bot.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/creds(?:@%s)?$`, botInfo.Username)),
+			HandlerFunc: plg.OnGet,
+			AdminOnly:   true,
 		},
-		{
-			Command:   regexp.MustCompile(fmt.Sprintf(`^/creds_add(?:@%s)? ([^\s]+) (.+)$`, plg.Bot.Me.Username)),
-			Handler:   plg.OnAdd,
-			AdminOnly: true,
+		&bot.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/creds_add(?:@%s)? ([^\s]+) (.+)$`, botInfo.Username)),
+			HandlerFunc: plg.OnAdd,
+			AdminOnly:   true,
 		},
-		{
-			Command:   regexp.MustCompile(fmt.Sprintf(`^/creds_del(?:@%s)? ([^\s]+)$`, plg.Bot.Me.Username)),
-			Handler:   plg.OnDelete,
-			AdminOnly: true,
+		&bot.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/creds_del(?:@%s)? ([^\s]+)$`, botInfo.Username)),
+			HandlerFunc: plg.OnDelete,
+			AdminOnly:   true,
 		},
-	}
-}
-
-func (plg *Plugin) CallbackHandlers() []bot.CallbackHandler {
-	return []bot.CallbackHandler{
-		{
-			Command:   regexp.MustCompile(`^creds_hide$`),
-			Handler:   plg.OnHide,
-			AdminOnly: true,
+		&bot.CallbackHandler{
+			HandlerFunc: plg.OnHide,
+			Trigger:     regexp.MustCompile(`^creds_hide$`),
+			AdminOnly:   true,
 		},
 	}
 }
@@ -60,7 +57,7 @@ func (plg *Plugin) OnGet(c bot.NextbotContext) error {
 		return nil
 	}
 
-	creds, err := plg.Bot.DB.Credentials.GetAllCredentials()
+	creds, err := plg.bot.DB.Credentials.GetAllCredentials()
 
 	if err != nil {
 		log.Err(err).Send()
@@ -103,7 +100,7 @@ func (plg *Plugin) OnAdd(c bot.NextbotContext) error {
 	key := c.Matches[1]
 	value := c.Matches[2]
 
-	err := plg.Bot.DB.Credentials.SetKey(key, value)
+	err := plg.bot.DB.Credentials.SetKey(key, value)
 	if err != nil {
 		log.Err(err).Str("key", key).Send()
 		return c.Reply("❌ Fehler beim Speichern des Schlüssels", utils.DefaultSendOptions)
@@ -118,7 +115,7 @@ func (plg *Plugin) OnDelete(c bot.NextbotContext) error {
 	}
 
 	key := c.Matches[1]
-	err := plg.Bot.DB.Credentials.DeleteKey(key)
+	err := plg.bot.DB.Credentials.DeleteKey(key)
 
 	if err != nil {
 		log.Err(err).Str("key", key).Send()
@@ -129,7 +126,7 @@ func (plg *Plugin) OnDelete(c bot.NextbotContext) error {
 }
 
 func (plg *Plugin) OnHide(c bot.NextbotContext) error {
-	err := plg.Bot.Delete(c.Callback().Message)
+	err := plg.bot.Delete(c.Callback().Message)
 	if err != nil {
 		log.Err(err).Send()
 	}

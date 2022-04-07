@@ -12,38 +12,30 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type Plugin struct {
-	*bot.Plugin
-}
+type Plugin struct{}
 
-func New(base *bot.Plugin) *Plugin {
-	return &Plugin{base}
+func New() *Plugin {
+	return &Plugin{}
 }
 
 func (plg *Plugin) Name() string {
 	return "id"
 }
 
-func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
-	return []bot.CommandHandler{
-		{
-			Command: regexp.MustCompile(fmt.Sprintf(`^/(?:(?:whoami)|(?:id))(?:@%s)?$`, plg.Bot.Me.Username)),
-			Handler: plg.OnId,
+func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
+	return []bot.Handler{
+		&bot.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/(?:(?:whoami)|(?:id))(?:@%s)?$`, botInfo.Username)),
+			HandlerFunc: onId,
 		},
-	}
-}
-
-func (plg *Plugin) InlineHandlers() []bot.InlineHandler {
-	return []bot.InlineHandler{
-		{
-			Command:             regexp.MustCompile("^(?:whoami|id)$"),
-			Handler:             plg.OnIdInline,
+		&bot.InlineHandler{
+			HandlerFunc:         onIdInline,
+			Trigger:             regexp.MustCompile("^(?:whoami|id)$"),
 			CanBeUsedByEveryone: true,
 		},
 	}
 }
-
-func (plg *Plugin) OnId(c bot.NextbotContext) error {
+func onId(c bot.NextbotContext) error {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("Du bist <b>%s", html.EscapeString(c.Sender().FirstName)))
@@ -67,7 +59,7 @@ func (plg *Plugin) OnId(c bot.NextbotContext) error {
 	return c.Reply(sb.String(), utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnIdInline(c bot.NextbotContext) error {
+func onIdInline(c bot.NextbotContext) error {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("<b>%s", html.EscapeString(c.Sender().FirstName)))

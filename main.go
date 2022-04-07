@@ -55,25 +55,38 @@ func main() {
 
 	log.Info().Msgf("Logged in as @%s (%d)", b.Me.Username, b.Me.ID)
 
-	plg, err := bot.NewBasePlugin(b)
-	if err != nil {
-		log.Fatal().Err(err).Send()
+	//plg, err := bot.NewBasePlugin(b)
+	//if err != nil {
+	//	log.Fatal().Err(err).Send()
+	//}
+
+	//plugins := []bot.IPlugin{
+	//	about.New(plg),
+	//	allow.New(plg),
+	//	covid.New(plg),
+	//	creds.New(plg),
+	//	dcrypt.New(plg),
+	//	echo.New(plg),
+	//	getfile.New(plg),
+	//	id.New(plg),
+	//	manager.New(plg),
+	//	stats.New(plg),
+	//}
+
+	plugins := []bot.Plugin{
+		about.New(),
+		allow.New(b),
+		covid.New(),
+		creds.New(b),
+		dcrypt.New(b.Bot),
+		echo.New(),
+		getfile.New(b),
+		id.New(),
+		manager.New(b),
+		stats.New(b),
 	}
 
-	plugins := []bot.IPlugin{
-		about.New(plg),
-		allow.New(plg),
-		covid.New(plg),
-		creds.New(plg),
-		dcrypt.New(plg),
-		echo.New(plg),
-		getfile.New(plg),
-		id.New(plg),
-		manager.New(plg),
-		stats.New(plg),
-	}
-
-	log.Info().Msg("Registering plugins")
+	log.Info().Msgf("Registering %d plugins", len(plugins))
 	b.RegisterPlugins(plugins)
 
 	_, shouldPrintMsgs := os.LookupEnv("PRINT_MSGS")

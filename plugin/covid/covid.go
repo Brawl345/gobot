@@ -25,9 +25,7 @@ const (
 )
 
 type (
-	Plugin struct {
-		*bot.Plugin
-	}
+	Plugin struct{}
 
 	Result struct {
 		Message                null.String `json:"message"`
@@ -81,8 +79,8 @@ type (
 	}
 )
 
-func New(base *bot.Plugin) *Plugin {
-	return &Plugin{base}
+func New() *Plugin {
+	return &Plugin{}
 }
 
 func (countryResult *countryResult) GetRankingText(place int) string {
@@ -104,23 +102,23 @@ func (*Plugin) Name() string {
 	return "covid"
 }
 
-func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
-	return []bot.CommandHandler{
-		{
-			Command: regexp.MustCompile(fmt.Sprintf(`^/covid(?:@%s)?$`, plg.Bot.Me.Username)),
-			Handler: plg.OnRun,
+func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
+	return []bot.Handler{
+		&bot.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/covid(?:@%s)?$`, botInfo.Username)),
+			HandlerFunc: OnRun,
 		},
-		{
-			Command: regexp.MustCompile(fmt.Sprintf(`^/covid(?:@%s)?[ _]([A-z ]+)(?:@%s)?$`,
-				plg.Bot.Me.Username,
-				plg.Bot.Me.Username),
+		&bot.CommandHandler{
+			Trigger: regexp.MustCompile(fmt.Sprintf(`^/covid(?:@%s)?[ _]([A-z ]+)(?:@%s)?$`,
+				botInfo.Username,
+				botInfo.Username),
 			),
-			Handler: plg.OnCountry,
+			HandlerFunc: OnCountry,
 		},
 	}
 }
 
-func (plg *Plugin) OnCountry(c bot.NextbotContext) error {
+func OnCountry(c bot.NextbotContext) error {
 	c.Notify(telebot.Typing)
 
 	var httpError *utils.HttpError
@@ -250,7 +248,7 @@ func (plg *Plugin) OnCountry(c bot.NextbotContext) error {
 
 }
 
-func (plg *Plugin) OnRun(c bot.NextbotContext) error {
+func OnRun(c bot.NextbotContext) error {
 	c.Notify(telebot.Typing)
 
 	resultCh := make(chan allResult)

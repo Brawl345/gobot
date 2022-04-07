@@ -8,14 +8,14 @@ import (
 
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/utils"
+	"gopkg.in/telebot.v3"
 )
 
 type Plugin struct {
-	*bot.Plugin
 	text string
 }
 
-func New(base *bot.Plugin) *Plugin {
+func New() *Plugin {
 	var (
 		Revision   = "unknown"
 		LastCommit time.Time
@@ -43,8 +43,7 @@ func New(base *bot.Plugin) *Plugin {
 	}
 
 	return &Plugin{
-		Plugin: base,
-		text:   text,
+		text: text,
 	}
 }
 
@@ -52,11 +51,11 @@ func (*Plugin) Name() string {
 	return "about"
 }
 
-func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
-	return []bot.CommandHandler{
-		{
-			Command: regexp.MustCompile(fmt.Sprintf(`^/about|start(?:@%s)?$`, plg.Bot.Me.Username)),
-			Handler: plg.OnAbout,
+func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
+	return []bot.Handler{
+		&bot.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/about|start(?:@%s)?$`, botInfo.Username)),
+			HandlerFunc: plg.OnAbout,
 		},
 	}
 }

@@ -8,28 +8,26 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type Plugin struct {
-	*bot.Plugin
-}
+type Plugin struct{}
 
-func New(base *bot.Plugin) *Plugin {
-	return &Plugin{base}
+func New() *Plugin {
+	return &Plugin{}
 }
 
 func (*Plugin) Name() string {
 	return "echo"
 }
 
-func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
-	return []bot.CommandHandler{
-		{
-			Command: regexp.MustCompile(fmt.Sprintf(`^/e(?:cho)?(?:@%s)? (.+)$`, plg.Bot.Me.Username)),
-			Handler: plg.OnEcho,
+func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
+	return []bot.Handler{
+		&bot.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/e(?:cho)?(?:@%s)? (.+)$`, botInfo.Username)),
+			HandlerFunc: onEcho,
 		},
 	}
 }
 
-func (plg *Plugin) OnEcho(c bot.NextbotContext) error {
+func onEcho(c bot.NextbotContext) error {
 	return c.Reply(c.Matches[1], &telebot.SendOptions{
 		AllowWithoutReply:     true,
 		DisableWebPagePreview: true,

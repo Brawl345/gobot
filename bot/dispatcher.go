@@ -40,8 +40,13 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 
 	for _, plugin := range bot.plugins {
 		plugin := plugin
-		for _, handler := range plugin.CommandHandlers() {
-			handler := handler
+		for _, h := range plugin.Handlers(bot.Me) {
+			h := h
+
+			handler, ok := h.(*CommandHandler)
+			if !ok {
+				continue
+			}
 
 			if isEdited && !handler.HandleEdits {
 				continue
@@ -54,7 +59,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 			var matched bool
 			var matches []string
 
-			switch command := handler.Command.(type) {
+			switch command := handler.Command().(type) {
 			case *regexp.Regexp:
 				matches = command.FindStringSubmatch(text)
 				matched = len(matches) > 0
@@ -75,11 +80,11 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 					matched = command == telebot.OnMedia
 				}
 			default:
-				panic("Unspported handler type!!")
+				panic("Unspported BaseHandler type!!")
 			}
 
 			if matched {
-				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Command)
+				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Trigger)
 
 				if !bot.isPluginEnabled(plugin.Name()) {
 					log.Printf("Plugin %s is disabled globally", plugin.Name())
@@ -97,7 +102,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 				}
 
 				go func() {
-					err := handler.Handler(NextbotContext{
+					err := handler.Run(NextbotContext{
 						Context: c,
 						Matches: matches,
 					})
@@ -139,11 +144,22 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 
 	for _, plugin := range bot.plugins {
 		plugin := plugin
-		for _, handler := range plugin.CallbackHandlers() {
-			handler := handler
-			matches := handler.Command.FindStringSubmatch(callback.Data)
+		for _, h := range plugin.Handlers(bot.Me) {
+			h := h
+
+			handler, ok := h.(*CallbackHandler)
+			if !ok {
+				continue
+			}
+
+			command, ok := handler.Command().(*regexp.Regexp)
+			if !ok {
+				panic("Unsupported callback BaseHandler type!! Must be regexp.Regexp!")
+			}
+
+			matches := command.FindStringSubmatch(callback.Data)
 			if len(matches) > 0 {
-				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Command)
+				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Trigger)
 
 				if !bot.isPluginEnabled(plugin.Name()) {
 					log.Printf("Plugin %s is disabled globally", plugin.Name())
@@ -170,7 +186,7 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 				}
 
 				go func() {
-					err := handler.Handler(NextbotContext{
+					err := handler.Run(NextbotContext{
 						Context: c,
 						Matches: matches,
 					})
@@ -202,11 +218,21 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 
 	for _, plugin := range bot.plugins {
 		plugin := plugin
-		for _, handler := range plugin.InlineHandlers() {
-			handler := handler
-			matches := handler.Command.FindStringSubmatch(inlineQuery.Text)
+		for _, h := range plugin.Handlers(bot.Me) {
+			h := h
+			handler, ok := h.(*InlineHandler)
+			if !ok {
+				continue
+			}
+
+			command, ok := handler.Command().(*regexp.Regexp)
+			if !ok {
+				panic("Unsupported callback BaseHandler type!! Must be regexp.Regexp!")
+			}
+
+			matches := command.FindStringSubmatch(inlineQuery.Text)
 			if len(matches) > 0 {
-				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Command)
+				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Trigger)
 				if !bot.isPluginEnabled(plugin.Name()) {
 					log.Printf("Plugin %s is disabled globally", plugin.Name())
 					return c.Answer(&telebot.QueryResponse{
@@ -234,7 +260,7 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 				}
 
 				go func() {
-					err := handler.Handler(NextbotContext{
+					err := handler.Run(NextbotContext{
 						Context: c,
 						Matches: matches,
 					})

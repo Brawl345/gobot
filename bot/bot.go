@@ -3,7 +3,6 @@ package bot
 import (
 	"errors"
 	"os"
-	"regexp"
 	"strings"
 	"time"
 
@@ -20,38 +19,20 @@ type (
 	Nextbot struct {
 		*telebot.Bot
 		DB                     *storage.DB
-		plugins                []IPlugin
+		plugins                []Plugin
 		enabledPlugins         []string
 		disabledPluginsForChat map[int64][]string
 		allowedChats           []int64
 	}
 
-	IPlugin interface {
+	Plugin interface {
 		Name() string
-		CommandHandlers() []CommandHandler
-		CallbackHandlers() []CallbackHandler
-		InlineHandlers() []InlineHandler
+		Handlers(botInfo *telebot.User) []Handler
 	}
 
-	CommandHandler struct {
-		Command     any
-		Handler     NextbotHandlerFunc
-		AdminOnly   bool
-		GroupOnly   bool
-		HandleEdits bool
-	}
-
-	CallbackHandler struct {
-		Command   *regexp.Regexp
-		Handler   NextbotHandlerFunc
-		AdminOnly bool
-	}
-
-	InlineHandler struct {
-		Command             *regexp.Regexp
-		Handler             NextbotHandlerFunc
-		AdminOnly           bool
-		CanBeUsedByEveryone bool
+	Handler interface {
+		Command() any
+		Run(c NextbotContext) error
 	}
 )
 
@@ -138,7 +119,7 @@ func New() (*Nextbot, error) {
 	}, nil
 }
 
-func (bot *Nextbot) RegisterPlugins(plugins []IPlugin) {
+func (bot *Nextbot) RegisterPlugins(plugins []Plugin) {
 	bot.plugins = plugins
 }
 

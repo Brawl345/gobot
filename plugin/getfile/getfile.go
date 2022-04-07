@@ -16,18 +16,18 @@ import (
 var log = logger.NewLogger("getfile")
 
 type Plugin struct {
-	*bot.Plugin
+	bot *bot.Nextbot
 	dir string
 }
 
-func New(base *bot.Plugin) *Plugin {
-	dir, err := base.Bot.DB.Credentials.GetKey("getfile_dir")
+func New(bot *bot.Nextbot) *Plugin {
+	dir, err := bot.DB.Credentials.GetKey("getfile_dir")
 	if err != nil {
 		dir = "tmp"
 	}
 	return &Plugin{
-		Plugin: base,
-		dir:    dir,
+		bot: bot,
+		dir: dir,
 	}
 }
 
@@ -35,16 +35,16 @@ func (*Plugin) Name() string {
 	return "getfile"
 }
 
-func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
-	return []bot.CommandHandler{
-		{
-			Command:     telebot.OnMedia,
-			Handler:     plg.OnMedia,
+func (plg *Plugin) Handlers(*telebot.User) []bot.Handler {
+	return []bot.Handler{
+		&bot.CommandHandler{
+			Trigger:     telebot.OnMedia,
+			HandlerFunc: plg.OnMedia,
 			HandleEdits: true,
 		},
-		{ // telebots Message.Media does not include Stickers :(
-			Command:     telebot.OnSticker,
-			Handler:     plg.OnMedia,
+		&bot.CommandHandler{ // telebots Message.Media does not include Stickers :(
+			Trigger:     telebot.OnSticker,
+			HandlerFunc: plg.OnMedia,
 			HandleEdits: true,
 		},
 	}
@@ -73,7 +73,7 @@ func (plg *Plugin) OnMedia(c bot.NextbotContext) error {
 		return nil
 	}
 
-	exists, _ := plg.Bot.DB.Files.Exists(uniqueID)
+	exists, _ := plg.bot.DB.Files.Exists(uniqueID)
 
 	if exists {
 		log.Info().Msgf("File already exists: %s", uniqueID)
@@ -88,7 +88,7 @@ func (plg *Plugin) OnMedia(c bot.NextbotContext) error {
 	}
 
 	file := &telebot.File{FileID: fileID}
-	reader, err := plg.Bot.File(file)
+	reader, err := plg.bot.File(file)
 	if err != nil {
 		return err
 	}
@@ -134,7 +134,7 @@ func (plg *Plugin) OnMedia(c bot.NextbotContext) error {
 	}
 	log.Info().Msgf("Saved as: %s", filepath.Join(savePath, fileName))
 
-	err = plg.Bot.DB.Files.Create(uniqueID, fileName, subFolder)
+	err = plg.bot.DB.Files.Create(uniqueID, fileName, subFolder)
 	if err != nil {
 		return err
 	}

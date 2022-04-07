@@ -15,11 +15,11 @@ import (
 )
 
 var log = logger.NewLogger("dcrypt")
+var textRegex = regexp.MustCompile("(?s)<textarea>(.+)</textarea>")
 
 type (
 	Plugin struct {
-		*bot.Plugin
-		textRegex *regexp.Regexp
+		bot *telebot.Bot
 	}
 
 	Response struct {
@@ -33,10 +33,9 @@ type (
 	}
 )
 
-func New(base *bot.Plugin) *Plugin {
+func New(bot *telebot.Bot) *Plugin {
 	return &Plugin{
-		Plugin:    base,
-		textRegex: regexp.MustCompile("(?s)<textarea>(.+)</textarea>"),
+		bot: bot,
 	}
 }
 
@@ -44,11 +43,11 @@ func (*Plugin) Name() string {
 	return "dcrypt"
 }
 
-func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
-	return []bot.CommandHandler{
-		{
-			Command: telebot.OnDocument,
-			Handler: plg.OnFile,
+func (plg *Plugin) Handlers(*telebot.User) []bot.Handler {
+	return []bot.Handler{
+		&bot.CommandHandler{
+			Trigger:     telebot.OnDocument,
+			HandlerFunc: plg.OnFile,
 		},
 	}
 }
@@ -65,7 +64,7 @@ func (plg *Plugin) OnFile(c bot.NextbotContext) error {
 		return c.Reply("❌ DLC-Container ist größer als 20 MB.", utils.DefaultSendOptions)
 	}
 
-	file, err := plg.Bot.File(&telebot.File{FileID: c.Message().Document.FileID})
+	file, err := plg.bot.File(&telebot.File{FileID: c.Message().Document.FileID})
 	if err != nil {
 		log.Err(err).Msg("Failed to download file")
 		return c.Reply("❌ Konnte Datei nicht von Telegram herunterladen.", utils.DefaultSendOptions)
@@ -109,7 +108,7 @@ func (plg *Plugin) OnFile(c bot.NextbotContext) error {
 		return c.Reply("❌ Konnte Antwort von dcrypt.it nicht lesen.", utils.DefaultSendOptions)
 	}
 
-	matches := plg.textRegex.FindStringSubmatch(string(body))
+	matches := textRegex.FindStringSubmatch(string(body))
 	if matches == nil {
 		return c.Reply("❌ Konnte Antwort von dcrypt.it nicht lesen.", utils.DefaultSendOptions)
 	}
