@@ -27,10 +27,10 @@ type (
 	}
 
 	IPlugin interface {
-		GetName() string
-		GetCommandHandlers() []CommandHandler
-		GetCallbackHandlers() []CallbackHandler
-		GetInlineHandlers() []InlineHandler
+		Name() string
+		CommandHandlers() []CommandHandler
+		CallbackHandlers() []CallbackHandler
+		InlineHandlers() []InlineHandler
 		Init()
 	}
 
@@ -179,7 +179,7 @@ func (bot *Nextbot) DisablePluginForChat(chat *telebot.Chat, pluginName string) 
 	}
 
 	for _, plugin := range bot.plugins {
-		if plugin.GetName() == pluginName {
+		if plugin.Name() == pluginName {
 			err := bot.DB.ChatsPlugins.Disable(chat, pluginName)
 			if err != nil {
 				return err
@@ -199,7 +199,7 @@ func (bot *Nextbot) EnablePlugin(pluginName string) error {
 	}
 
 	for _, plugin := range bot.plugins {
-		if plugin.GetName() == pluginName {
+		if plugin.Name() == pluginName {
 			err := bot.DB.Plugins.Enable(pluginName)
 			if err != nil {
 				return err
@@ -217,7 +217,7 @@ func (bot *Nextbot) EnablePluginForChat(chat *telebot.Chat, pluginName string) e
 	}
 
 	for _, plugin := range bot.plugins {
-		if plugin.GetName() == pluginName {
+		if plugin.Name() == pluginName {
 			err := bot.DB.ChatsPlugins.Enable(chat, pluginName)
 			if err != nil {
 				return err

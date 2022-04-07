@@ -28,11 +28,11 @@ func (plg *Plugin) Init() {
 	plg.dir = key
 }
 
-func (*Plugin) GetName() string {
+func (*Plugin) Name() string {
 	return "getfile"
 }
 
-func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command:     telebot.OnMedia,

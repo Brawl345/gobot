@@ -96,11 +96,11 @@ func (result *Result) UpdatedParsed() time.Time {
 	return time.Unix(result.Updated.Int64/1000, 0)
 }
 
-func (*Plugin) GetName() string {
+func (*Plugin) Name() string {
 	return "covid"
 }
 
-func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command: regexp.MustCompile(fmt.Sprintf(`^/covid(?:@%s)?$`, plg.Bot.Me.Username)),

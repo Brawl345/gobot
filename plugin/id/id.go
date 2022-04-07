@@ -16,11 +16,11 @@ type Plugin struct {
 	*bot.Plugin
 }
 
-func (plg *Plugin) GetName() string {
+func (plg *Plugin) Name() string {
 	return "id"
 }
 
-func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command: regexp.MustCompile(fmt.Sprintf(`^/(?:(?:whoami)|(?:id))(?:@%s)?$`, plg.Bot.Me.Username)),
@@ -29,7 +29,7 @@ func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
 	}
 }
 
-func (plg *Plugin) GetInlineHandlers() []bot.InlineHandler {
+func (plg *Plugin) InlineHandlers() []bot.InlineHandler {
 	return []bot.InlineHandler{
 		{
 			Command:             regexp.MustCompile("^(?:whoami|id)$"),

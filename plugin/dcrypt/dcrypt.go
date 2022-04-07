@@ -37,11 +37,11 @@ func (plg *Plugin) Init() {
 	plg.textRegex = regexp.MustCompile("(?s)<textarea>(.+)</textarea>")
 }
 
-func (*Plugin) GetName() string {
+func (*Plugin) Name() string {
 	return "dcrypt"
 }
 
-func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command: telebot.OnDocument,

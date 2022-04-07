@@ -17,11 +17,11 @@ type Plugin struct {
 	*bot.Plugin
 }
 
-func (*Plugin) GetName() string {
+func (*Plugin) Name() string {
 	return "creds"
 }
 
-func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command:   regexp.MustCompile(fmt.Sprintf(`^/creds(?:@%s)?$`, plg.Bot.Me.Username)),
@@ -41,7 +41,7 @@ func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
 	}
 }
 
-func (plg *Plugin) GetCallbackHandlers() []bot.CallbackHandler {
+func (plg *Plugin) CallbackHandlers() []bot.CallbackHandler {
 	return []bot.CallbackHandler{
 		{
 			Command:   regexp.MustCompile(`^creds_hide$`),

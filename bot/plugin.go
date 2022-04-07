@@ -10,11 +10,11 @@ type Plugin struct {
 
 func (*Plugin) Init() {}
 
-func (*Plugin) GetCallbackHandlers() []CallbackHandler {
+func (*Plugin) CallbackHandlers() []CallbackHandler {
 	return []CallbackHandler{}
 }
 
-func (*Plugin) GetInlineHandlers() []InlineHandler {
+func (*Plugin) InlineHandlers() []InlineHandler {
 	return []InlineHandler{}
 }
 

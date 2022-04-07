@@ -15,11 +15,11 @@ type Plugin struct {
 	*bot.Plugin
 }
 
-func (*Plugin) GetName() string {
+func (*Plugin) Name() string {
 	return "manager"
 }
 
-func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command:   regexp.MustCompile(fmt.Sprintf(`^/enable(?:@%s)? (.+)$`, plg.Bot.Me.Username)),

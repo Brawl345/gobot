@@ -40,7 +40,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 
 	for _, plugin := range bot.plugins {
 		plugin := plugin
-		for _, handler := range plugin.GetCommandHandlers() {
+		for _, handler := range plugin.CommandHandlers() {
 			handler := handler
 
 			if isEdited && !handler.HandleEdits {
@@ -79,15 +79,15 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 			}
 
 			if matched {
-				log.Printf("Matched plugin %s: %s", plugin.GetName(), handler.Command)
+				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Command)
 
-				if !bot.isPluginEnabled(plugin.GetName()) {
-					log.Printf("Plugin %s is disabled globally", plugin.GetName())
+				if !bot.isPluginEnabled(plugin.Name()) {
+					log.Printf("Plugin %s is disabled globally", plugin.Name())
 					continue
 				}
 
-				if msg.FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.GetName()) {
-					log.Printf("Plugin %s is disabled for this chat", plugin.GetName())
+				if msg.FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.Name()) {
+					log.Printf("Plugin %s is disabled for this chat", plugin.Name())
 					continue
 				}
 
@@ -105,7 +105,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 						log.Err(err).
 							Int64("chat_id", c.Sender().ID).
 							Str("text", c.Text()).
-							Str("component", plugin.GetName()).
+							Str("component", plugin.Name()).
 							Send()
 					}
 				}()
@@ -139,22 +139,22 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 
 	for _, plugin := range bot.plugins {
 		plugin := plugin
-		for _, handler := range plugin.GetCallbackHandlers() {
+		for _, handler := range plugin.CallbackHandlers() {
 			handler := handler
 			matches := handler.Command.FindStringSubmatch(callback.Data)
 			if len(matches) > 0 {
-				log.Printf("Matched plugin %s: %s", plugin.GetName(), handler.Command)
+				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Command)
 
-				if !bot.isPluginEnabled(plugin.GetName()) {
-					log.Printf("Plugin %s is disabled globally", plugin.GetName())
+				if !bot.isPluginEnabled(plugin.Name()) {
+					log.Printf("Plugin %s is disabled globally", plugin.Name())
 					return c.Respond(&telebot.CallbackResponse{
 						Text:      "Dieser Befehl ist nicht verfügbar.",
 						ShowAlert: true,
 					})
 				}
 
-				if msg.FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.GetName()) {
-					log.Printf("Plugin %s is disabled for this chat", plugin.GetName())
+				if msg.FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.Name()) {
+					log.Printf("Plugin %s is disabled for this chat", plugin.Name())
 					return c.Respond(&telebot.CallbackResponse{
 						Text:      "Dieser Befehl ist nicht verfügbar.",
 						ShowAlert: true,
@@ -178,7 +178,7 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 						log.Err(err).
 							Int64("chat_id", c.Sender().ID).
 							Str("text", c.Text()).
-							Str("component", plugin.GetName()).
+							Str("component", plugin.Name()).
 							Send()
 					}
 				}()
@@ -202,13 +202,13 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 
 	for _, plugin := range bot.plugins {
 		plugin := plugin
-		for _, handler := range plugin.GetInlineHandlers() {
+		for _, handler := range plugin.InlineHandlers() {
 			handler := handler
 			matches := handler.Command.FindStringSubmatch(inlineQuery.Text)
 			if len(matches) > 0 {
-				log.Printf("Matched plugin %s: %s", plugin.GetName(), handler.Command)
-				if !bot.isPluginEnabled(plugin.GetName()) {
-					log.Printf("Plugin %s is disabled globally", plugin.GetName())
+				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Command)
+				if !bot.isPluginEnabled(plugin.Name()) {
+					log.Printf("Plugin %s is disabled globally", plugin.Name())
 					return c.Answer(&telebot.QueryResponse{
 						CacheTime:  1,
 						IsPersonal: true,
@@ -242,7 +242,7 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 						log.Err(err).
 							Int64("chat_id", c.Sender().ID).
 							Str("text", c.Text()).
-							Str("component", plugin.GetName()).
+							Str("component", plugin.Name()).
 							Send()
 					}
 				}()

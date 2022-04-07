@@ -74,7 +74,7 @@ func main() {
 	}
 
 	for i, plg := range plugins {
-		log.Info().Msgf("Registering plugin (%d/%d): %s", i+1, len(plugins), plg.GetName())
+		log.Info().Msgf("Registering plugin (%d/%d): %s", i+1, len(plugins), plg.Name())
 		b.RegisterPlugin(plg)
 	}
 

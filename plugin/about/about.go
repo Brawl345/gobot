@@ -18,11 +18,11 @@ type Plugin struct {
 	text string
 }
 
-func (*Plugin) GetName() string {
+func (*Plugin) Name() string {
 	return "about"
 }
 
-func (plg *Plugin) GetCommandHandlers() []bot.CommandHandler {
+func (plg *Plugin) CommandHandlers() []bot.CommandHandler {
 	return []bot.CommandHandler{
 		{
 			Command: regexp.MustCompile(fmt.Sprintf(`^/about|start(?:@%s)?$`, plg.Bot.Me.Username)),
