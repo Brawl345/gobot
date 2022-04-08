@@ -1,54 +1,25 @@
-package storage
+package sql
 
 import (
-	"database/sql"
-
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
 
-type (
-	UserService interface {
-		Allow(user *telebot.User) error
-		Create(user *telebot.User) error
-		CreateTx(tx *sqlx.Tx, user *telebot.User) error
-		Deny(user *telebot.User) error
-		GetAllAllowed() ([]int64, error)
-	}
-
-	Users struct {
-		*sqlx.DB
-	}
-
-	User struct {
-		ID        int64          `db:"id"`
-		FirstName string         `db:"first_name"`
-		LastName  sql.NullString `db:"last_name"`
-		Username  sql.NullString `db:"username"`
-		Allowed   bool           `db:"allowed"`
-		MsgCount  int64          `db:"msg_count"`
-		InGroup   bool           `db:"in_group"`
-	}
-)
-
-func NewUserService(db *sqlx.DB) *Users {
-	return &Users{db}
+type UserService struct {
+	*sqlx.DB
 }
 
-func (user *User) GetFullName() string {
-	if user.LastName.Valid {
-		return user.FirstName + " " + user.LastName.String
-	}
-	return user.FirstName
+func NewUserService(db *sqlx.DB) *UserService {
+	return &UserService{db}
 }
 
-func (db *Users) Allow(user *telebot.User) error {
+func (db *UserService) Allow(user *telebot.User) error {
 	const query = `UPDATE users SET allowed = true WHERE id = ?`
 	_, err := db.Exec(query, user.ID)
 	return err
 }
 
-func (db *Users) Create(user *telebot.User) error {
+func (db *UserService) Create(user *telebot.User) error {
 	const query = `INSERT INTO 
     users (id, first_name, last_name, username)
     VALUES (? ,?, ?, ?)
@@ -66,7 +37,7 @@ func (db *Users) Create(user *telebot.User) error {
 	return err
 }
 
-func (db *Users) CreateTx(tx *sqlx.Tx, user *telebot.User) error {
+func (db *UserService) CreateTx(tx *sqlx.Tx, user *telebot.User) error {
 	const query = `INSERT INTO 
     users (id, first_name, last_name, username)
     VALUES (? ,?, ?, ?)
@@ -84,13 +55,13 @@ func (db *Users) CreateTx(tx *sqlx.Tx, user *telebot.User) error {
 	return err
 }
 
-func (db *Users) Deny(user *telebot.User) error {
+func (db *UserService) Deny(user *telebot.User) error {
 	const query = `UPDATE users SET allowed = false WHERE id = ?`
 	_, err := db.Exec(query, user.ID)
 	return err
 }
 
-func (db *Users) GetAllAllowed() ([]int64, error) {
+func (db *UserService) GetAllAllowed() ([]int64, error) {
 	const query = `SELECT id FROM users WHERE allowed = true`
 
 	var allowed []int64

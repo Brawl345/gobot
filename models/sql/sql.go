@@ -1,6 +1,7 @@
-package storage
+package sql
 
 import (
+	"database/sql"
 	"embed"
 	"fmt"
 	"os"
@@ -48,4 +49,14 @@ func New() (*sqlx.DB, error) {
 	db.SetConnMaxIdleTime(10 * time.Minute)
 
 	return db, nil
+}
+
+func NewNullString(s string) sql.NullString {
+	if len(s) == 0 {
+		return sql.NullString{}
+	}
+	return sql.NullString{
+		String: s,
+		Valid:  true,
+	}
 }

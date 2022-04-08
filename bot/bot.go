@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/models/sql"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/plugin/about"
 	"github.com/Brawl345/gobot/plugin/allow"
@@ -17,7 +18,6 @@ import (
 	"github.com/Brawl345/gobot/plugin/id"
 	"github.com/Brawl345/gobot/plugin/manager"
 	"github.com/Brawl345/gobot/plugin/stats"
-	"github.com/Brawl345/gobot/storage"
 	"gopkg.in/telebot.v3"
 )
 
@@ -30,7 +30,7 @@ type (
 )
 
 func New() (*Nextbot, error) {
-	db, err := storage.New()
+	db, err := sql.New()
 	if err != nil {
 		return nil, err
 	}
@@ -49,13 +49,13 @@ func New() (*Nextbot, error) {
 		return nil, err
 	}
 
-	chatService := storage.NewChatService(db)
-	credentialService := storage.NewCredentialService(db)
-	fileService := storage.NewFileService(db)
-	pluginService := storage.NewPluginService(db)
-	userService := storage.NewUserService(db)
-	chatsPluginsService := storage.NewChatsPluginsService(db, chatService, pluginService)
-	chatsUsersService := storage.NewChatsUsersService(db, chatService, userService)
+	chatService := sql.NewChatService(db)
+	credentialService := sql.NewCredentialService(db)
+	fileService := sql.NewFileService(db)
+	pluginService := sql.NewPluginService(db)
+	userService := sql.NewUserService(db)
+	chatsPluginsService := sql.NewChatsPluginsService(db, chatService, pluginService)
+	chatsUsersService := sql.NewChatsUsersService(db, chatService, userService)
 
 	allowService, err := NewAllowService(chatService, userService)
 	if err != nil {

@@ -3,18 +3,18 @@ package bot
 import (
 	"regexp"
 
+	"github.com/Brawl345/gobot/models"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/plugin/allow"
-	"github.com/Brawl345/gobot/storage"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 )
 
 type Dispatcher struct {
 	allowService      allow.Service
-	chatsUsersService storage.ChatsUsersService
+	chatsUsersService models.ChatsUsersService
 	managerService    *managerService
-	userService       storage.UserService
+	userService       models.UserService
 }
 
 func (d *Dispatcher) OnText(c telebot.Context) error {

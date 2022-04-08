@@ -8,8 +8,8 @@ import (
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/models"
 	"github.com/Brawl345/gobot/plugin"
-	"github.com/Brawl345/gobot/storage"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 )
@@ -17,11 +17,11 @@ import (
 var log = logger.NewLogger("getfile")
 
 type Plugin struct {
-	fileService storage.FileService
+	fileService models.FileService
 	dir         string
 }
 
-func New(credentialService storage.CredentialService, fileService storage.FileService) *Plugin {
+func New(credentialService models.CredentialService, fileService models.FileService) *Plugin {
 	dir, err := credentialService.GetKey("getfile_dir")
 	if err != nil {
 		dir = "tmp"

@@ -3,23 +3,23 @@ package bot
 import (
 	"errors"
 
+	"github.com/Brawl345/gobot/models"
 	"github.com/Brawl345/gobot/plugin"
-	"github.com/Brawl345/gobot/storage"
 	"golang.org/x/exp/slices"
 	"gopkg.in/telebot.v3"
 )
 
 type managerService struct {
-	chatsPluginsService    storage.ChatsPluginsService
-	pluginService          storage.PluginService
+	chatsPluginsService    models.ChatsPluginsService
+	pluginService          models.PluginService
 	plugins                []plugin.Plugin
 	enabledPlugins         []string
 	disabledPluginsForChat map[int64][]string
 }
 
 func NewManagerService(
-	chatsPluginsService storage.ChatsPluginsService,
-	pluginService storage.PluginService,
+	chatsPluginsService models.ChatsPluginsService,
+	pluginService models.PluginService,
 ) (*managerService, error) {
 
 	enabledPlugins, err := pluginService.GetAllEnabled()

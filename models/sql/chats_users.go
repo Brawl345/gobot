@@ -1,37 +1,29 @@
-package storage
+package sql
 
 import (
 	"context"
 
+	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/utils"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
 
-type (
-	ChatsUsersService interface {
-		Create(chat *telebot.Chat, user *telebot.User) error
-		CreateBatch(chat *telebot.Chat, users *[]telebot.User) error
-		GetAllUsersWithMsgCount(chat *telebot.Chat) ([]User, error)
-		IsAllowed(chat *telebot.Chat, user *telebot.User) bool
-		Leave(chat *telebot.Chat, user *telebot.User) error
-	}
+type ChatsUsersService struct {
+	Chats models.ChatService
+	Users models.UserService
+	*sqlx.DB
+}
 
-	ChatsUsers struct {
-		Chats ChatService
-		Users UserService
-		*sqlx.DB
-	}
-)
-
-func NewChatsUsersService(db *sqlx.DB, chatService ChatService, userService UserService) *ChatsUsers {
-	return &ChatsUsers{
+func NewChatsUsersService(db *sqlx.DB, chatService models.ChatService, userService models.UserService) *ChatsUsersService {
+	return &ChatsUsersService{
 		Chats: chatService,
 		Users: userService,
 		DB:    db,
 	}
 }
 
-func (db *ChatsUsers) Create(chat *telebot.Chat, user *telebot.User) error {
+func (db *ChatsUsersService) Create(chat *telebot.Chat, user *telebot.User) error {
 	tx, err := db.BeginTxx(context.Background(), nil)
 	if err != nil {
 		return err
@@ -61,7 +53,7 @@ func (db *ChatsUsers) Create(chat *telebot.Chat, user *telebot.User) error {
 	return nil
 }
 
-func (db *ChatsUsers) CreateBatch(chat *telebot.Chat, users *[]telebot.User) error {
+func (db *ChatsUsersService) CreateBatch(chat *telebot.Chat, users *[]telebot.User) error {
 	const insertRelationshipQuery = `INSERT INTO 
     chats_users (chat_id, user_id, msg_count, in_group) 
     VALUES (?, ?, 0, true)
@@ -101,17 +93,17 @@ func (db *ChatsUsers) CreateBatch(chat *telebot.Chat, users *[]telebot.User) err
 	return nil
 }
 
-func (db *ChatsUsers) GetAllUsersWithMsgCount(chat *telebot.Chat) ([]User, error) {
+func (db *ChatsUsersService) GetAllUsersWithMsgCount(chat *telebot.Chat) ([]models.User, error) {
 	const query = `SELECT u.first_name, u.last_name, msg_count, in_group FROM chats_users
 JOIN users u on u.id = chats_users.user_id
 WHERE chat_id = ?
 ORDER BY msg_count DESC`
-	var users []User
+	var users []models.User
 	err := db.Select(&users, query, chat.ID)
 	return users, err
 }
 
-func (db *ChatsUsers) insertRelationship(tx *sqlx.Tx, chatId int64, userId int64) error {
+func (db *ChatsUsersService) insertRelationship(tx *sqlx.Tx, chatId int64, userId int64) error {
 	const query = `INSERT INTO 
     chats_users (chat_id, user_id, in_group) 
     VALUES (?, ?, true)
@@ -120,8 +112,8 @@ func (db *ChatsUsers) insertRelationship(tx *sqlx.Tx, chatId int64, userId int64
 	return err
 }
 
-func (db *ChatsUsers) IsAllowed(chat *telebot.Chat, user *telebot.User) bool {
-	if isAdmin(user) {
+func (db *ChatsUsersService) IsAllowed(chat *telebot.Chat, user *telebot.User) bool {
+	if utils.IsAdmin(user) {
 		return true
 	}
 
@@ -138,7 +130,7 @@ func (db *ChatsUsers) IsAllowed(chat *telebot.Chat, user *telebot.User) bool {
 	return isAllowed
 }
 
-func (db *ChatsUsers) Leave(chat *telebot.Chat, user *telebot.User) error {
+func (db *ChatsUsersService) Leave(chat *telebot.Chat, user *telebot.User) error {
 	const query = `UPDATE chats_users SET in_group = false
 	WHERE chat_id = ?
 	  AND user_id = ?`

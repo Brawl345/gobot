@@ -1,30 +1,19 @@
-package storage
+package sql
 
-import "github.com/jmoiron/sqlx"
-
-type (
-	PluginService interface {
-		CreateTx(tx *sqlx.Tx, pluginName string) error
-		Disable(pluginName string) error
-		Enable(pluginName string) error
-		GetAllEnabled() ([]string, error)
-	}
-
-	Plugins struct {
-		*sqlx.DB
-	}
-
-	Plugin struct {
-		Name    string `db:"name"`
-		Enabled bool   `db:"enabled"`
-	}
+import (
+	"github.com/Brawl345/gobot/models"
+	"github.com/jmoiron/sqlx"
 )
 
-func NewPluginService(db *sqlx.DB) *Plugins {
-	return &Plugins{db}
+type PluginService struct {
+	*sqlx.DB
 }
 
-func (db *Plugins) CreateTx(tx *sqlx.Tx, pluginName string) error {
+func NewPluginService(db *sqlx.DB) *PluginService {
+	return &PluginService{db}
+}
+
+func (db *PluginService) CreateTx(tx *sqlx.Tx, pluginName string) error {
 	const query = `INSERT INTO plugins 
 	(name, enabled) 
 	VALUES (?, false)
@@ -33,7 +22,7 @@ func (db *Plugins) CreateTx(tx *sqlx.Tx, pluginName string) error {
 	return err
 }
 
-func (db *Plugins) Disable(pluginName string) error {
+func (db *PluginService) Disable(pluginName string) error {
 	const query = `INSERT INTO plugins 
 	(name, enabled) 
 	VALUES (?, false)
@@ -42,17 +31,17 @@ func (db *Plugins) Disable(pluginName string) error {
 	return err
 }
 
-func (db *Plugins) Enable(pluginName string) error {
+func (db *PluginService) Enable(pluginName string) error {
 	const query = `INSERT INTO plugins (name) VALUES (?) ON DUPLICATE KEY UPDATE enabled = true`
 	_, err := db.Exec(query, pluginName)
 	return err
 }
 
-func (db *Plugins) GetAllEnabled() ([]string, error) {
+func (db *PluginService) GetAllEnabled() ([]string, error) {
 	const query = `SELECT name, enabled FROM plugins WHERE enabled = 1`
 
 	var enabledPlugins []string
-	var plugins []Plugin
+	var plugins []models.Plugin
 	err := db.Select(&plugins, query)
 
 	for _, plugin := range plugins {

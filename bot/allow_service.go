@@ -3,7 +3,7 @@ package bot
 import (
 	"errors"
 
-	"github.com/Brawl345/gobot/storage"
+	"github.com/Brawl345/gobot/models"
 	"github.com/Brawl345/gobot/utils"
 	"golang.org/x/exp/slices"
 	"gopkg.in/telebot.v3"
@@ -11,11 +11,11 @@ import (
 
 type allowService struct {
 	allowedChats []int64
-	chatService  storage.ChatService
-	userService  storage.UserService
+	chatService  models.ChatService
+	userService  models.UserService
 }
 
-func NewAllowService(chatService storage.ChatService, userService storage.UserService) (*allowService, error) {
+func NewAllowService(chatService models.ChatService, userService models.UserService) (*allowService, error) {
 	allowedUsers, err := userService.GetAllAllowed()
 	if err != nil {
 		return nil, err

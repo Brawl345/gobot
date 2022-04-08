@@ -1,35 +1,25 @@
-package storage
+package sql
 
 import (
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
 
-type (
-	ChatService interface {
-		Allow(chat *telebot.Chat) error
-		Create(chat *telebot.Chat) error
-		CreateTx(tx *sqlx.Tx, chat *telebot.Chat) error
-		Deny(chat *telebot.Chat) error
-		GetAllAllowed() ([]int64, error)
-	}
-
-	Chats struct {
-		*sqlx.DB
-	}
-)
-
-func NewChatService(db *sqlx.DB) *Chats {
-	return &Chats{db}
+type ChatService struct {
+	*sqlx.DB
 }
 
-func (db *Chats) Allow(chat *telebot.Chat) error {
+func NewChatService(db *sqlx.DB) *ChatService {
+	return &ChatService{db}
+}
+
+func (db *ChatService) Allow(chat *telebot.Chat) error {
 	const query = `UPDATE chats SET allowed = true WHERE id = ?`
 	_, err := db.Exec(query, chat.ID)
 	return err
 }
 
-func (db *Chats) Create(chat *telebot.Chat) error {
+func (db *ChatService) Create(chat *telebot.Chat) error {
 	const query = `INSERT INTO 
     chats (id, title)
     VALUES (? ,?)
@@ -38,7 +28,7 @@ func (db *Chats) Create(chat *telebot.Chat) error {
 	return err
 }
 
-func (db *Chats) CreateTx(tx *sqlx.Tx, chat *telebot.Chat) error {
+func (db *ChatService) CreateTx(tx *sqlx.Tx, chat *telebot.Chat) error {
 	const query = `INSERT INTO 
     chats (id, title)
     VALUES (? ,?)
@@ -47,13 +37,13 @@ func (db *Chats) CreateTx(tx *sqlx.Tx, chat *telebot.Chat) error {
 	return err
 }
 
-func (db *Chats) Deny(chat *telebot.Chat) error {
+func (db *ChatService) Deny(chat *telebot.Chat) error {
 	const query = `UPDATE chats SET allowed = false WHERE id = ?`
 	_, err := db.Exec(query, chat.ID)
 	return err
 }
 
-func (db *Chats) GetAllAllowed() ([]int64, error) {
+func (db *ChatService) GetAllAllowed() ([]int64, error) {
 	const query = `SELECT id FROM chats WHERE allowed = true`
 
 	var allowed []int64
