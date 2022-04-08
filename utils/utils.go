@@ -3,11 +3,14 @@ package utils
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"mime/multipart"
 	"net/http"
 	"os"
+	"runtime/debug"
 	"strconv"
+	"time"
 
 	"gopkg.in/telebot.v3"
 )
@@ -26,12 +29,51 @@ type (
 		Name  string
 		Value string
 	}
+
 	MultiPartFile struct {
 		FieldName string
 		FileName  string
 		Content   io.Reader
 	}
+
+	VersionInfo struct {
+		GoVersion  string
+		GoOS       string
+		GoArch     string
+		Revision   string
+		LastCommit time.Time
+		DirtyBuild bool
+	}
 )
+
+func ReadVersionInfo() (VersionInfo, error) {
+	buildInfo, ok := debug.ReadBuildInfo()
+
+	if !ok {
+		return VersionInfo{}, errors.New("could not read build info")
+	}
+
+	versionInfo := VersionInfo{
+		GoVersion: buildInfo.GoVersion,
+	}
+
+	for _, kv := range buildInfo.Settings {
+		switch kv.Key {
+		case "GOOS":
+			versionInfo.GoOS = kv.Value
+		case "GOARCH":
+			versionInfo.GoArch = kv.Value
+		case "vcs.revision":
+			versionInfo.Revision = kv.Value
+		case "vcs.time":
+			versionInfo.LastCommit, _ = time.Parse(time.RFC3339, kv.Value)
+		case "vcs.modified":
+			versionInfo.DirtyBuild = kv.Value == "true"
+		}
+	}
+
+	return versionInfo, nil
+}
 
 func IsAdmin(user *telebot.User) bool {
 	adminId, _ := strconv.ParseInt(os.Getenv("ADMIN_ID"), 10, 64)

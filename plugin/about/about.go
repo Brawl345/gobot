@@ -3,8 +3,7 @@ package about
 import (
 	"fmt"
 	"regexp"
-	"runtime/debug"
-	"time"
+	"strings"
 
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
@@ -12,38 +11,50 @@ import (
 )
 
 type Plugin struct {
-	text string
+	aboutText string
 }
 
 func New() *Plugin {
-	var (
-		Revision   = "unknown"
-		LastCommit time.Time
-		DirtyBuild = true
-	)
-	buildInfo, ok := debug.ReadBuildInfo()
-
-	text := "Gobot"
-	if ok {
-		for _, kv := range buildInfo.Settings {
-			switch kv.Key {
-			case "vcs.revision":
-				Revision = kv.Value
-			case "vcs.time":
-				LastCommit, _ = time.Parse(time.RFC3339, kv.Value)
-			case "vcs.modified":
-				DirtyBuild = kv.Value == "true"
-			}
-		}
-
-		text = fmt.Sprintf("<code>%s</code>\n<i>Comitted on %s</i>", Revision, LastCommit)
-		if DirtyBuild {
-			text += " (dirty)"
+	versionInfo, err := utils.ReadVersionInfo()
+	if err != nil {
+		return &Plugin{
+			aboutText: "Gobot",
 		}
 	}
 
+	var sb strings.Builder
+
+	sb.WriteString("<b>Gobot</b>\n")
+
+	sb.WriteString(
+		fmt.Sprintf(
+			"<code>%s</code>\n",
+			versionInfo.Revision,
+		),
+	)
+
+	sb.WriteString(
+		fmt.Sprintf(
+			"<i>Comitted: %s</i>",
+			versionInfo.LastCommit,
+		),
+	)
+
+	if versionInfo.DirtyBuild {
+		sb.WriteString(" (dirty)")
+	}
+
+	sb.WriteString(
+		fmt.Sprintf(
+			"\nKompiliert mit <code>%s</code> auf <code>%s</code>, <code>%s</code>",
+			versionInfo.GoVersion,
+			versionInfo.GoOS,
+			versionInfo.GoArch,
+		),
+	)
+
 	return &Plugin{
-		text: text,
+		aboutText: sb.String(),
 	}
 }
 
@@ -61,5 +72,5 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 }
 
 func (plg *Plugin) OnAbout(c plugin.NextbotContext) error {
-	return c.Reply("Gobot "+plg.text, utils.DefaultSendOptions)
+	return c.Reply(plg.aboutText, utils.DefaultSendOptions)
 }

@@ -3,39 +3,23 @@ package main
 import (
 	"os"
 	"os/signal"
-	"runtime/debug"
 	"syscall"
-	"time"
 
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/utils"
 	_ "github.com/joho/godotenv/autoload"
 )
 
 var log = logger.NewLogger("main")
 
-func readVersionInfo() {
-	var (
-		Revision   = "unknown"
-		LastCommit time.Time
-	)
-	info, ok := debug.ReadBuildInfo()
-	if !ok {
-		return
-	}
-	for _, kv := range info.Settings {
-		switch kv.Key {
-		case "vcs.revision":
-			Revision = kv.Value
-		case "vcs.time":
-			LastCommit, _ = time.Parse(time.RFC3339, kv.Value)
-		}
-	}
-	log.Info().Msgf("Gobot-%s, %v", Revision, LastCommit)
-}
-
 func main() {
-	readVersionInfo()
+	versionInfo, err := utils.ReadVersionInfo()
+	if err != nil {
+		log.Err(err).Send()
+	} else {
+		log.Info().Msgf("Gobot-%s, %v", versionInfo.Revision, versionInfo.LastCommit)
+	}
 
 	b, err := bot.New()
 	if err != nil {
