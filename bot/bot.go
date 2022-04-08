@@ -1,36 +1,31 @@
 package bot
 
 import (
-	"errors"
 	"os"
 	"strings"
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
+	"github.com/Brawl345/gobot/plugin/about"
+	"github.com/Brawl345/gobot/plugin/allow"
+	"github.com/Brawl345/gobot/plugin/covid"
+	"github.com/Brawl345/gobot/plugin/creds"
+	"github.com/Brawl345/gobot/plugin/dcrypt"
+	"github.com/Brawl345/gobot/plugin/echo"
+	"github.com/Brawl345/gobot/plugin/getfile"
+	"github.com/Brawl345/gobot/plugin/id"
+	"github.com/Brawl345/gobot/plugin/manager"
+	"github.com/Brawl345/gobot/plugin/stats"
 	"github.com/Brawl345/gobot/storage"
-	"github.com/Brawl345/gobot/utils"
-	"golang.org/x/exp/slices"
 	"gopkg.in/telebot.v3"
 )
 
 var log = logger.NewLogger("bot")
 
 type (
-	// TODO: Temporary - services should not be here!
 	Nextbot struct {
-		*telebot.Bot
-		chatService            storage.ChatService
-		ChatsUsersService      storage.ChatsUsersService
-		chatsPluginsService    storage.ChatsPluginsService
-		CredentialService      storage.CredentialService
-		FileService            storage.FileService
-		pluginService          storage.PluginService
-		userService            storage.UserService
-		plugins                []plugin.Plugin
-		enabledPlugins         []string
-		disabledPluginsForChat map[int64][]string
-		allowedChats           []int64
+		Telebot *telebot.Bot
 	}
 )
 
@@ -40,241 +35,124 @@ func New() (*Nextbot, error) {
 		return nil, err
 	}
 
-	allowedUpdates := []string{"message", "edited_message", "callback_query", "inline_query"}
-
-	token := strings.TrimSpace(os.Getenv("BOT_TOKEN"))
-	webhookPort := strings.TrimSpace(os.Getenv("WEBHOOK_PORT"))
-	webhookURL := strings.TrimSpace(os.Getenv("WEBHOOK_URL"))
-
-	var poller telebot.Poller
-	if webhookPort == "" || webhookURL == "" {
-		log.Debug().Msg("Using long polling")
-		poller = &telebot.LongPoller{
-			AllowedUpdates: allowedUpdates,
-			Timeout:        10 * time.Second,
-		}
-	} else {
-		log.Debug().
-			Str("port", webhookPort).
-			Str("webhook_url", webhookURL).
-			Msg("Using webhook")
-
-		poller = &telebot.Webhook{
-			Listen:         ":" + webhookPort,
-			AllowedUpdates: allowedUpdates,
-			MaxConnections: 50,
-			DropUpdates:    true,
-			Endpoint: &telebot.WebhookEndpoint{
-				PublicURL: webhookURL,
-			},
-		}
-	}
-
 	bot, err := telebot.NewBot(telebot.Settings{
-		Token:  token,
-		Poller: poller,
+		Token:  strings.TrimSpace(os.Getenv("BOT_TOKEN")),
+		Poller: GetPoller(),
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
-	// Calling "remove webook" even if no webhook is set
-	// so pending updates can be dropped
+	// Calling "remove webook" even if no webhook is set so pending updates can be dropped
 	err = bot.RemoveWebhook(true)
 	if err != nil {
 		return nil, err
 	}
 
-	pluginService := storage.NewPluginService(db)
 	chatService := storage.NewChatService(db)
-	chatsPluginsService := storage.NewChatsPluginsService(db, chatService, pluginService)
-	userService := storage.NewUserService(db)
-	chatsUsersService := storage.NewChatsUsersService(db, chatService, userService)
-
 	credentialService := storage.NewCredentialService(db)
 	fileService := storage.NewFileService(db)
+	pluginService := storage.NewPluginService(db)
+	userService := storage.NewUserService(db)
+	chatsPluginsService := storage.NewChatsPluginsService(db, chatService, pluginService)
+	chatsUsersService := storage.NewChatsUsersService(db, chatService, userService)
 
-	enabledPlugins, err := pluginService.GetAllEnabled()
+	allowService, err := NewAllowService(chatService, userService)
 	if err != nil {
 		return nil, err
 	}
 
-	disabledPluginsForChat, err := chatsPluginsService.GetAllDisabled()
+	managerService, err := NewManagerService(chatsPluginsService, pluginService)
 	if err != nil {
 		return nil, err
 	}
 
-	allowedUsers, err := userService.GetAllAllowed()
+	plugins := []plugin.Plugin{
+		about.New(),
+		allow.New(allowService),
+		covid.New(),
+		creds.New(credentialService),
+		dcrypt.New(),
+		echo.New(),
+		getfile.New(credentialService, fileService),
+		id.New(),
+		manager.New(managerService),
+		stats.New(chatsUsersService),
+	}
+	managerService.SetPlugins(plugins)
+
+	log.Info().Msgf("Loaded %d plugins", len(plugins))
+
 	if err != nil {
 		return nil, err
 	}
 
-	allowedChats, err := userService.GetAllAllowed()
-	if err != nil {
-		return nil, err
+	b := &Nextbot{
+		Telebot: bot,
 	}
 
-	allowedChats = append(allowedChats, allowedUsers...)
-
-	return &Nextbot{
-		Bot:                    bot,
-		chatService:            chatService,
-		ChatsUsersService:      chatsUsersService,
-		pluginService:          pluginService,
-		chatsPluginsService:    chatsPluginsService,
-		userService:            userService,
-		CredentialService:      credentialService,
-		FileService:            fileService,
-		enabledPlugins:         enabledPlugins,
-		disabledPluginsForChat: disabledPluginsForChat,
-		allowedChats:           allowedChats,
-	}, nil
-}
-
-func (bot *Nextbot) RegisterPlugins(plugins []plugin.Plugin) {
-	bot.plugins = plugins
-}
-
-func (bot *Nextbot) isPluginEnabled(pluginName string) bool {
-	return slices.Contains(bot.enabledPlugins, pluginName)
-}
-
-func (bot *Nextbot) isPluginDisabledForChat(chat *telebot.Chat, pluginName string) bool {
-	disabledPlugins, exists := bot.disabledPluginsForChat[chat.ID]
-	if !exists {
-		return false
-	}
-	return slices.Contains(disabledPlugins, pluginName)
-}
-
-func (bot *Nextbot) DisablePlugin(pluginName string) error {
-	if !slices.Contains(bot.enabledPlugins, pluginName) {
-		return errors.New("✅ Das Plugin ist nicht aktiv")
+	d := &Dispatcher{
+		allowService:      allowService,
+		chatsUsersService: chatsUsersService,
+		managerService:    managerService,
+		userService:       userService,
 	}
 
-	err := bot.pluginService.Disable(pluginName)
-	if err != nil {
-		return err
+	_, shouldPrintMsgs := os.LookupEnv("PRINT_MSGS")
+	if shouldPrintMsgs {
+		b.Telebot.Use(PrintMessage)
 	}
-	index := slices.Index(bot.enabledPlugins, pluginName)
-	bot.enabledPlugins = slices.Delete(bot.enabledPlugins, index, index+1)
-	return nil
+
+	b.Telebot.Handle(telebot.OnText, d.OnText)
+	b.Telebot.Handle(telebot.OnEdited, d.OnText)
+	b.Telebot.Handle(telebot.OnMedia, d.OnText)
+	b.Telebot.Handle(telebot.OnContact, d.OnText)
+	b.Telebot.Handle(telebot.OnLocation, d.OnText)
+	b.Telebot.Handle(telebot.OnVenue, d.OnText)
+	b.Telebot.Handle(telebot.OnGame, d.OnText)
+	b.Telebot.Handle(telebot.OnDice, d.OnText)
+	b.Telebot.Handle(telebot.OnUserJoined, d.OnUserJoined)
+	b.Telebot.Handle(telebot.OnUserLeft, d.OnUserLeft)
+	b.Telebot.Handle(telebot.OnCallback, d.OnCallback)
+	b.Telebot.Handle(telebot.OnQuery, d.OnInlineQuery)
+
+	b.Telebot.Handle(telebot.OnPinned, d.NullRoute)
+	b.Telebot.Handle(telebot.OnNewGroupTitle, d.NullRoute)
+	b.Telebot.Handle(telebot.OnNewGroupPhoto, d.NullRoute)
+	b.Telebot.Handle(telebot.OnGroupPhotoDeleted, d.NullRoute)
+	b.Telebot.Handle(telebot.OnGroupCreated, d.NullRoute)
+
+	b.Telebot.OnError = OnError
+
+	return b, nil
 }
 
-func (bot *Nextbot) DisablePluginForChat(chat *telebot.Chat, pluginName string) error {
-	if bot.isPluginDisabledForChat(chat, pluginName) {
-		return errors.New("✅ Das Plugin ist für diesen Chat schon deaktiviert")
-	}
+func GetPoller() telebot.Poller {
+	allowedUpdates := []string{"message", "edited_message", "callback_query", "inline_query"}
 
-	for _, plg := range bot.plugins {
-		if plg.Name() == pluginName {
-			err := bot.chatsPluginsService.Disable(chat, pluginName)
-			if err != nil {
-				return err
-			}
+	webhookPort := strings.TrimSpace(os.Getenv("WEBHOOK_PORT"))
+	webhookURL := strings.TrimSpace(os.Getenv("WEBHOOK_URL"))
 
-			bot.disabledPluginsForChat[chat.ID] = append(bot.disabledPluginsForChat[chat.ID], pluginName)
-
-			return nil
+	if webhookPort == "" || webhookURL == "" {
+		log.Debug().Msg("Using long polling")
+		return &telebot.LongPoller{
+			AllowedUpdates: allowedUpdates,
+			Timeout:        10 * time.Second,
 		}
 	}
-	return errors.New("❌ Plugin existiert nicht")
-}
 
-func (bot *Nextbot) EnablePlugin(pluginName string) error {
-	if slices.Contains(bot.enabledPlugins, pluginName) {
-		return errors.New("✅ Das Plugin ist bereits aktiv")
+	log.Debug().
+		Str("port", webhookPort).
+		Str("webhook_url", webhookURL).
+		Msg("Using webhook")
+
+	return &telebot.Webhook{
+		Listen:         ":" + webhookPort,
+		AllowedUpdates: allowedUpdates,
+		MaxConnections: 50,
+		DropUpdates:    true,
+		Endpoint: &telebot.WebhookEndpoint{
+			PublicURL: webhookURL,
+		},
 	}
-
-	for _, plg := range bot.plugins {
-		if plg.Name() == pluginName {
-			err := bot.pluginService.Enable(pluginName)
-			if err != nil {
-				return err
-			}
-			bot.enabledPlugins = append(bot.enabledPlugins, pluginName)
-			return nil
-		}
-	}
-	return errors.New("❌ Plugin existiert nicht")
-}
-
-func (bot *Nextbot) EnablePluginForChat(chat *telebot.Chat, pluginName string) error {
-	if !bot.isPluginDisabledForChat(chat, pluginName) {
-		return errors.New("✅ Das Plugin ist für diesen Chat schon aktiv")
-	}
-
-	for _, plg := range bot.plugins {
-		if plg.Name() == pluginName {
-			err := bot.chatsPluginsService.Enable(chat, pluginName)
-			if err != nil {
-				return err
-			}
-
-			index := slices.Index(bot.disabledPluginsForChat[chat.ID], pluginName)
-			bot.disabledPluginsForChat[chat.ID] = slices.Delete(bot.disabledPluginsForChat[chat.ID],
-				index, index+1)
-
-			return nil
-		}
-	}
-	return errors.New("❌ Plugin existiert nicht")
-}
-
-func (bot *Nextbot) IsUserAllowed(user *telebot.User) bool {
-	if utils.IsAdmin(user) {
-		return true
-	}
-
-	return slices.Contains(bot.allowedChats, user.ID)
-}
-
-func (bot *Nextbot) IsChatAllowed(chat *telebot.Chat) bool {
-	return slices.Contains(bot.allowedChats, chat.ID)
-}
-
-func (bot *Nextbot) AllowUser(user *telebot.User) error {
-	err := bot.userService.Allow(user)
-	if err != nil {
-		return err
-	}
-
-	bot.allowedChats = append(bot.allowedChats, user.ID)
-	return nil
-}
-
-func (bot *Nextbot) DenyUser(user *telebot.User) error {
-	if utils.IsAdmin(user) {
-		return errors.New("cannot deny admin")
-	}
-	err := bot.userService.Deny(user)
-	if err != nil {
-		return err
-	}
-
-	index := slices.Index(bot.allowedChats, user.ID)
-	bot.allowedChats = slices.Delete(bot.allowedChats, index, index+1)
-	return nil
-}
-
-func (bot *Nextbot) AllowChat(chat *telebot.Chat) error {
-	err := bot.chatService.Allow(chat)
-	if err != nil {
-		return err
-	}
-
-	bot.allowedChats = append(bot.allowedChats, chat.ID)
-	return nil
-}
-
-func (bot *Nextbot) DenyChat(chat *telebot.Chat) error {
-	err := bot.chatService.Deny(chat)
-	if err != nil {
-		return err
-	}
-
-	index := slices.Index(bot.allowedChats, chat.ID)
-	bot.allowedChats = slices.Delete(bot.allowedChats, index, index+1)
-	return nil
 }

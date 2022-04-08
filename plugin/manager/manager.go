@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
@@ -13,13 +12,22 @@ import (
 
 var log = logger.NewLogger("manager")
 
-type Plugin struct {
-	bot *bot.Nextbot
-}
+type (
+	Plugin struct {
+		managerService Service
+	}
 
-func New(bot *bot.Nextbot) *Plugin {
+	Service interface {
+		EnablePlugin(name string) error
+		EnablePluginForChat(chat *telebot.Chat, name string) error
+		DisablePlugin(name string) error
+		DisablePluginForChat(chat *telebot.Chat, name string) error
+	}
+)
+
+func New(service Service) *Plugin {
 	return &Plugin{
-		bot: bot,
+		managerService: service,
 	}
 }
 
@@ -55,7 +63,7 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 func (plg *Plugin) OnEnable(c plugin.NextbotContext) error {
 	pluginName := c.Matches[1]
 
-	err := plg.bot.EnablePlugin(pluginName)
+	err := plg.managerService.EnablePlugin(pluginName)
 	if err != nil {
 		log.Err(err).
 			Str("plugin", pluginName).
@@ -68,7 +76,7 @@ func (plg *Plugin) OnEnable(c plugin.NextbotContext) error {
 func (plg *Plugin) OnEnableInChat(c plugin.NextbotContext) error {
 	pluginName := c.Matches[1]
 
-	err := plg.bot.EnablePluginForChat(c.Chat(), pluginName)
+	err := plg.managerService.EnablePluginForChat(c.Chat(), pluginName)
 	if err != nil {
 		log.Err(err).
 			Str("plugin", pluginName).
@@ -86,7 +94,7 @@ func (plg *Plugin) OnDisable(c plugin.NextbotContext) error {
 		return c.Reply("❌ Manager kann nicht deaktiviert werden.", utils.DefaultSendOptions)
 	}
 
-	err := plg.bot.DisablePlugin(pluginName)
+	err := plg.managerService.DisablePlugin(pluginName)
 	if err != nil {
 		log.Err(err).
 			Str("plugin", pluginName).
@@ -103,7 +111,7 @@ func (plg *Plugin) OnDisableInChat(c plugin.NextbotContext) error {
 		return c.Reply("❌ Manager kann nicht deaktiviert werden.", utils.DefaultSendOptions)
 	}
 
-	err := plg.bot.DisablePluginForChat(c.Chat(), pluginName)
+	err := plg.managerService.DisablePluginForChat(c.Chat(), pluginName)
 	if err != nil {
 		log.Err(err).
 			Str("plugin", pluginName).

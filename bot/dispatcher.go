@@ -3,18 +3,27 @@ package bot
 import (
 	"regexp"
 
+	// TODO
 	plugin2 "github.com/Brawl345/gobot/plugin"
+	"github.com/Brawl345/gobot/storage"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 )
 
-func (bot *Nextbot) OnText(c telebot.Context) error {
+type Dispatcher struct {
+	allowService      *allowService
+	chatsUsersService storage.ChatsUsersService
+	managerService    *managerService
+	userService       storage.UserService
+}
+
+func (d *Dispatcher) OnText(c telebot.Context) error {
 	msg := c.Message()
 	isEdited := msg.LastEdit != 0
 
-	isAllowed := bot.IsUserAllowed(c.Sender())
+	isAllowed := d.allowService.IsUserAllowed(c.Sender())
 	if msg.FromGroup() && !isAllowed {
-		isAllowed = bot.IsChatAllowed(c.Chat())
+		isAllowed = d.allowService.IsChatAllowed(c.Chat())
 	}
 
 	if !isAllowed {
@@ -25,9 +34,9 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 
 	if !isEdited {
 		if msg.Private() {
-			err = bot.userService.Create(c.Sender())
+			err = d.userService.Create(c.Sender())
 		} else {
-			err = bot.ChatsUsersService.Create(c.Chat(), c.Sender())
+			err = d.chatsUsersService.Create(c.Chat(), c.Sender())
 		}
 		if err != nil {
 			return err
@@ -39,9 +48,9 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 		text = msg.Text
 	}
 
-	for _, plugin := range bot.plugins {
+	for _, plugin := range d.managerService.plugins {
 		plugin := plugin
-		for _, h := range plugin.Handlers(bot.Me) {
+		for _, h := range plugin.Handlers(c.Bot().Me) {
 			h := h
 
 			handler, ok := h.(*plugin2.CommandHandler)
@@ -87,12 +96,12 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 			if matched {
 				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Trigger)
 
-				if !bot.isPluginEnabled(plugin.Name()) {
+				if !d.managerService.isPluginEnabled(plugin.Name()) {
 					log.Printf("Plugin %s is disabled globally", plugin.Name())
 					continue
 				}
 
-				if msg.FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.Name()) {
+				if msg.FromGroup() && d.managerService.isPluginDisabledForChat(c.Chat(), plugin.Name()) {
 					log.Printf("Plugin %s is disabled for this chat", plugin.Name())
 					continue
 				}
@@ -123,7 +132,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 	return nil
 }
 
-func (bot *Nextbot) OnCallback(c telebot.Context) error {
+func (d *Dispatcher) OnCallback(c telebot.Context) error {
 	msg := c.Message()
 	callback := c.Callback()
 
@@ -131,9 +140,9 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 		return c.Respond()
 	}
 
-	isAllowed := bot.IsUserAllowed(c.Sender())
+	isAllowed := d.allowService.IsUserAllowed(c.Sender())
 	if msg.FromGroup() && !isAllowed {
-		isAllowed = bot.IsChatAllowed(c.Chat())
+		isAllowed = d.allowService.IsChatAllowed(c.Chat())
 	}
 
 	if !isAllowed {
@@ -143,9 +152,9 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 		})
 	}
 
-	for _, plugin := range bot.plugins {
+	for _, plugin := range d.managerService.plugins {
 		plugin := plugin
-		for _, h := range plugin.Handlers(bot.Me) {
+		for _, h := range plugin.Handlers(c.Bot().Me) {
 			h := h
 
 			handler, ok := h.(*plugin2.CallbackHandler)
@@ -162,7 +171,7 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 			if len(matches) > 0 {
 				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Trigger)
 
-				if !bot.isPluginEnabled(plugin.Name()) {
+				if !d.managerService.isPluginEnabled(plugin.Name()) {
 					log.Printf("Plugin %s is disabled globally", plugin.Name())
 					return c.Respond(&telebot.CallbackResponse{
 						Text:      "Dieser Befehl ist nicht verfügbar.",
@@ -170,7 +179,7 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 					})
 				}
 
-				if msg.FromGroup() && bot.isPluginDisabledForChat(c.Chat(), plugin.Name()) {
+				if msg.FromGroup() && d.managerService.isPluginDisabledForChat(c.Chat(), plugin.Name()) {
 					log.Printf("Plugin %s is disabled for this chat", plugin.Name())
 					return c.Respond(&telebot.CallbackResponse{
 						Text:      "Dieser Befehl ist nicht verfügbar.",
@@ -207,7 +216,7 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 	return nil
 }
 
-func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
+func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 	inlineQuery := c.Query()
 
 	if inlineQuery.Text == "" {
@@ -217,9 +226,9 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 		})
 	}
 
-	for _, plugin := range bot.plugins {
+	for _, plugin := range d.managerService.plugins {
 		plugin := plugin
-		for _, h := range plugin.Handlers(bot.Me) {
+		for _, h := range plugin.Handlers(c.Bot().Me) {
 			h := h
 			handler, ok := h.(*plugin2.InlineHandler)
 			if !ok {
@@ -234,7 +243,7 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 			matches := command.FindStringSubmatch(inlineQuery.Text)
 			if len(matches) > 0 {
 				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Trigger)
-				if !bot.isPluginEnabled(plugin.Name()) {
+				if !d.managerService.isPluginEnabled(plugin.Name()) {
 					log.Printf("Plugin %s is disabled globally", plugin.Name())
 					return c.Answer(&telebot.QueryResponse{
 						CacheTime:  1,
@@ -251,7 +260,7 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 				}
 
 				if !handler.CanBeUsedByEveryone {
-					isAllowed := bot.IsUserAllowed(c.Sender())
+					isAllowed := d.allowService.IsUserAllowed(c.Sender())
 					if !isAllowed {
 						return c.Answer(&telebot.QueryResponse{
 							CacheTime:  1,
@@ -285,19 +294,19 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 
 }
 
-func (bot *Nextbot) OnUserJoined(c telebot.Context) error {
-	return bot.ChatsUsersService.CreateBatch(c.Chat(), &c.Message().UsersJoined)
+func (d *Dispatcher) OnUserJoined(c telebot.Context) error {
+	return d.chatsUsersService.CreateBatch(c.Chat(), &c.Message().UsersJoined)
 }
 
-func (bot *Nextbot) OnUserLeft(c telebot.Context) error {
+func (d *Dispatcher) OnUserLeft(c telebot.Context) error {
 	if c.Message().UserLeft.IsBot {
 		return nil
 	}
-	return bot.ChatsUsersService.Leave(c.Chat(), c.Message().UserLeft)
+	return d.chatsUsersService.Leave(c.Chat(), c.Message().UserLeft)
 }
 
 // NullRoute is a special route that just ignores the message
 // but will still fire middleware
-func (bot *Nextbot) NullRoute(_ telebot.Context) error {
+func (d *Dispatcher) NullRoute(_ telebot.Context) error {
 	return nil
 }
