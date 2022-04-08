@@ -3,8 +3,7 @@ package bot
 import (
 	"regexp"
 
-	// TODO
-	plugin2 "github.com/Brawl345/gobot/plugin"
+	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/storage"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
@@ -48,12 +47,12 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 		text = msg.Text
 	}
 
-	for _, plugin := range d.managerService.plugins {
-		plugin := plugin
-		for _, h := range plugin.Handlers(c.Bot().Me) {
+	for _, plg := range d.managerService.plugins {
+		plg := plg
+		for _, h := range plg.Handlers(c.Bot().Me) {
 			h := h
 
-			handler, ok := h.(*plugin2.CommandHandler)
+			handler, ok := h.(*plugin.CommandHandler)
 			if !ok {
 				continue
 			}
@@ -94,15 +93,15 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 			}
 
 			if matched {
-				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Trigger)
+				log.Printf("Matched plugin %s: %s", plg.Name(), handler.Trigger)
 
-				if !d.managerService.isPluginEnabled(plugin.Name()) {
-					log.Printf("Plugin %s is disabled globally", plugin.Name())
+				if !d.managerService.isPluginEnabled(plg.Name()) {
+					log.Printf("Plugin %s is disabled globally", plg.Name())
 					continue
 				}
 
-				if msg.FromGroup() && d.managerService.isPluginDisabledForChat(c.Chat(), plugin.Name()) {
-					log.Printf("Plugin %s is disabled for this chat", plugin.Name())
+				if msg.FromGroup() && d.managerService.isPluginDisabledForChat(c.Chat(), plg.Name()) {
+					log.Printf("Plugin %s is disabled for this chat", plg.Name())
 					continue
 				}
 
@@ -112,7 +111,7 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 				}
 
 				go func() {
-					err := handler.Run(plugin2.NextbotContext{
+					err := handler.Run(plugin.NextbotContext{
 						Context: c,
 						Matches: matches,
 					})
@@ -120,7 +119,7 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 						log.Err(err).
 							Int64("chat_id", c.Sender().ID).
 							Str("text", c.Text()).
-							Str("component", plugin.Name()).
+							Str("component", plg.Name()).
 							Send()
 					}
 				}()
@@ -152,12 +151,12 @@ func (d *Dispatcher) OnCallback(c telebot.Context) error {
 		})
 	}
 
-	for _, plugin := range d.managerService.plugins {
-		plugin := plugin
-		for _, h := range plugin.Handlers(c.Bot().Me) {
+	for _, plg := range d.managerService.plugins {
+		plg := plg
+		for _, h := range plg.Handlers(c.Bot().Me) {
 			h := h
 
-			handler, ok := h.(*plugin2.CallbackHandler)
+			handler, ok := h.(*plugin.CallbackHandler)
 			if !ok {
 				continue
 			}
@@ -169,18 +168,18 @@ func (d *Dispatcher) OnCallback(c telebot.Context) error {
 
 			matches := command.FindStringSubmatch(callback.Data)
 			if len(matches) > 0 {
-				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Trigger)
+				log.Printf("Matched plugin %s: %s", plg.Name(), handler.Trigger)
 
-				if !d.managerService.isPluginEnabled(plugin.Name()) {
-					log.Printf("Plugin %s is disabled globally", plugin.Name())
+				if !d.managerService.isPluginEnabled(plg.Name()) {
+					log.Printf("Plugin %s is disabled globally", plg.Name())
 					return c.Respond(&telebot.CallbackResponse{
 						Text:      "Dieser Befehl ist nicht verfügbar.",
 						ShowAlert: true,
 					})
 				}
 
-				if msg.FromGroup() && d.managerService.isPluginDisabledForChat(c.Chat(), plugin.Name()) {
-					log.Printf("Plugin %s is disabled for this chat", plugin.Name())
+				if msg.FromGroup() && d.managerService.isPluginDisabledForChat(c.Chat(), plg.Name()) {
+					log.Printf("Plugin %s is disabled for this chat", plg.Name())
 					return c.Respond(&telebot.CallbackResponse{
 						Text:      "Dieser Befehl ist nicht verfügbar.",
 						ShowAlert: true,
@@ -196,7 +195,7 @@ func (d *Dispatcher) OnCallback(c telebot.Context) error {
 				}
 
 				go func() {
-					err := handler.Run(plugin2.NextbotContext{
+					err := handler.Run(plugin.NextbotContext{
 						Context: c,
 						Matches: matches,
 					})
@@ -204,7 +203,7 @@ func (d *Dispatcher) OnCallback(c telebot.Context) error {
 						log.Err(err).
 							Int64("chat_id", c.Sender().ID).
 							Str("text", c.Text()).
-							Str("component", plugin.Name()).
+							Str("component", plg.Name()).
 							Send()
 					}
 				}()
@@ -226,11 +225,11 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 		})
 	}
 
-	for _, plugin := range d.managerService.plugins {
-		plugin := plugin
-		for _, h := range plugin.Handlers(c.Bot().Me) {
+	for _, plg := range d.managerService.plugins {
+		plg := plg
+		for _, h := range plg.Handlers(c.Bot().Me) {
 			h := h
-			handler, ok := h.(*plugin2.InlineHandler)
+			handler, ok := h.(*plugin.InlineHandler)
 			if !ok {
 				continue
 			}
@@ -242,9 +241,9 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 
 			matches := command.FindStringSubmatch(inlineQuery.Text)
 			if len(matches) > 0 {
-				log.Printf("Matched plugin %s: %s", plugin.Name(), handler.Trigger)
-				if !d.managerService.isPluginEnabled(plugin.Name()) {
-					log.Printf("Plugin %s is disabled globally", plugin.Name())
+				log.Printf("Matched plugin %s: %s", plg.Name(), handler.Trigger)
+				if !d.managerService.isPluginEnabled(plg.Name()) {
+					log.Printf("Plugin %s is disabled globally", plg.Name())
 					return c.Answer(&telebot.QueryResponse{
 						CacheTime:  1,
 						IsPersonal: true,
@@ -270,7 +269,7 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 				}
 
 				go func() {
-					err := handler.Run(plugin2.NextbotContext{
+					err := handler.Run(plugin.NextbotContext{
 						Context: c,
 						Matches: matches,
 					})
@@ -278,7 +277,7 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 						log.Err(err).
 							Int64("chat_id", c.Sender().ID).
 							Str("text", c.Text()).
-							Str("component", plugin.Name()).
+							Str("component", plg.Name()).
 							Send()
 					}
 				}()
