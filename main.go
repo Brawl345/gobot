@@ -9,6 +9,7 @@ import (
 
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/plugin/about"
 	"github.com/Brawl345/gobot/plugin/allow"
 	"github.com/Brawl345/gobot/plugin/covid"
@@ -55,7 +56,7 @@ func main() {
 
 	log.Info().Msgf("Logged in as @%s (%d)", b.Me.Username, b.Me.ID)
 
-	plugins := []bot.Plugin{
+	plugins := []plugin.Plugin{
 		about.New(),
 		allow.New(b),
 		covid.New(),

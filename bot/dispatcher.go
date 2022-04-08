@@ -3,6 +3,7 @@ package bot
 import (
 	"regexp"
 
+	plugin2 "github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 )
@@ -43,7 +44,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 		for _, h := range plugin.Handlers(bot.Me) {
 			h := h
 
-			handler, ok := h.(*CommandHandler)
+			handler, ok := h.(*plugin2.CommandHandler)
 			if !ok {
 				continue
 			}
@@ -102,7 +103,7 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 				}
 
 				go func() {
-					err := handler.Run(NextbotContext{
+					err := handler.Run(plugin2.NextbotContext{
 						Context: c,
 						Matches: matches,
 					})
@@ -147,7 +148,7 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 		for _, h := range plugin.Handlers(bot.Me) {
 			h := h
 
-			handler, ok := h.(*CallbackHandler)
+			handler, ok := h.(*plugin2.CallbackHandler)
 			if !ok {
 				continue
 			}
@@ -186,7 +187,7 @@ func (bot *Nextbot) OnCallback(c telebot.Context) error {
 				}
 
 				go func() {
-					err := handler.Run(NextbotContext{
+					err := handler.Run(plugin2.NextbotContext{
 						Context: c,
 						Matches: matches,
 					})
@@ -220,7 +221,7 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 		plugin := plugin
 		for _, h := range plugin.Handlers(bot.Me) {
 			h := h
-			handler, ok := h.(*InlineHandler)
+			handler, ok := h.(*plugin2.InlineHandler)
 			if !ok {
 				continue
 			}
@@ -260,7 +261,7 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 				}
 
 				go func() {
-					err := handler.Run(NextbotContext{
+					err := handler.Run(plugin2.NextbotContext{
 						Context: c,
 						Matches: matches,
 					})

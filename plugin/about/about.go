@@ -6,7 +6,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/Brawl345/gobot/bot"
+	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 )
@@ -51,15 +51,15 @@ func (*Plugin) Name() string {
 	return "about"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
-	return []bot.Handler{
-		&bot.CommandHandler{
+func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+	return []plugin.Handler{
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/about|start(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: plg.OnAbout,
 		},
 	}
 }
 
-func (plg *Plugin) OnAbout(c bot.NextbotContext) error {
+func (plg *Plugin) OnAbout(c plugin.NextbotContext) error {
 	return c.Reply("Gobot "+plg.text, utils.DefaultSendOptions)
 }

@@ -6,6 +6,7 @@ import (
 
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 )
@@ -26,24 +27,24 @@ func (*Plugin) Name() string {
 	return "manager"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
-	return []bot.Handler{
-		&bot.CommandHandler{
+func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+	return []plugin.Handler{
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/enable(?:@%s)? (.+)$`, botInfo.Username)),
 			HandlerFunc: plg.OnEnable,
 			AdminOnly:   true,
 		},
-		&bot.CommandHandler{
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/disable(?:@%s)? (.+)$`, botInfo.Username)),
 			HandlerFunc: plg.OnDisable,
 			AdminOnly:   true,
 		},
-		&bot.CommandHandler{
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/enable_chat(?:@%s)? (.+)$`, botInfo.Username)),
 			HandlerFunc: plg.OnEnableInChat,
 			AdminOnly:   true,
 		},
-		&bot.CommandHandler{
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/disable_chat(?:@%s)? (.+)$`, botInfo.Username)),
 			HandlerFunc: plg.OnDisableInChat,
 			AdminOnly:   true,
@@ -51,7 +52,7 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
 	}
 }
 
-func (plg *Plugin) OnEnable(c bot.NextbotContext) error {
+func (plg *Plugin) OnEnable(c plugin.NextbotContext) error {
 	pluginName := c.Matches[1]
 
 	err := plg.bot.EnablePlugin(pluginName)
@@ -64,7 +65,7 @@ func (plg *Plugin) OnEnable(c bot.NextbotContext) error {
 	return c.Reply("✅ Plugin wurde aktiviert", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnEnableInChat(c bot.NextbotContext) error {
+func (plg *Plugin) OnEnableInChat(c plugin.NextbotContext) error {
 	pluginName := c.Matches[1]
 
 	err := plg.bot.EnablePluginForChat(c.Chat(), pluginName)
@@ -78,7 +79,7 @@ func (plg *Plugin) OnEnableInChat(c bot.NextbotContext) error {
 	return c.Reply("✅ Plugin wurde für diesen Chat wieder aktiviert", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnDisable(c bot.NextbotContext) error {
+func (plg *Plugin) OnDisable(c plugin.NextbotContext) error {
 	pluginName := c.Matches[1]
 
 	if pluginName == "manager" {
@@ -95,7 +96,7 @@ func (plg *Plugin) OnDisable(c bot.NextbotContext) error {
 	return c.Reply("✅ Plugin wurde deaktiviert", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnDisableInChat(c bot.NextbotContext) error {
+func (plg *Plugin) OnDisableInChat(c plugin.NextbotContext) error {
 	pluginName := c.Matches[1]
 
 	if pluginName == "manager" {

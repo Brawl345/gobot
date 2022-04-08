@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/storage"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
@@ -29,9 +29,9 @@ func (*Plugin) Name() string {
 	return "stats"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
-	return []bot.Handler{
-		&bot.CommandHandler{
+func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+	return []plugin.Handler{
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/stats(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: plg.OnStats,
 			GroupOnly:   true,
@@ -39,7 +39,7 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
 	}
 }
 
-func (plg *Plugin) OnStats(c bot.NextbotContext) error {
+func (plg *Plugin) OnStats(c plugin.NextbotContext) error {
 	users, err := plg.chatsUsersService.GetAllUsersWithMsgCount(c.Chat())
 	if err != nil {
 		log.Err(err).Int64("chat_id", c.Chat().ID).Msg("Failed to get statistics")

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/Brawl345/gobot/bot"
+	"github.com/Brawl345/gobot/plugin"
 	"gopkg.in/telebot.v3"
 )
 
@@ -18,16 +18,16 @@ func (*Plugin) Name() string {
 	return "echo"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
-	return []bot.Handler{
-		&bot.CommandHandler{
+func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+	return []plugin.Handler{
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/e(?:cho)?(?:@%s)? (.+)$`, botInfo.Username)),
 			HandlerFunc: onEcho,
 		},
 	}
 }
 
-func onEcho(c bot.NextbotContext) error {
+func onEcho(c plugin.NextbotContext) error {
 	return c.Reply(c.Matches[1], &telebot.SendOptions{
 		AllowWithoutReply:     true,
 		DisableWebPagePreview: true,

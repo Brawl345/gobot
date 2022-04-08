@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/storage"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
@@ -36,14 +36,14 @@ func (*Plugin) Name() string {
 	return "getfile"
 }
 
-func (plg *Plugin) Handlers(*telebot.User) []bot.Handler {
-	return []bot.Handler{
-		&bot.CommandHandler{
+func (plg *Plugin) Handlers(*telebot.User) []plugin.Handler {
+	return []plugin.Handler{
+		&plugin.CommandHandler{
 			Trigger:     telebot.OnMedia,
 			HandlerFunc: plg.OnMedia,
 			HandleEdits: true,
 		},
-		&bot.CommandHandler{ // telebots Message.Media does not include Stickers :(
+		&plugin.CommandHandler{ // telebots Message.Media does not include Stickers :(
 			Trigger:     telebot.OnSticker,
 			HandlerFunc: plg.OnMedia,
 			HandleEdits: true,
@@ -51,7 +51,7 @@ func (plg *Plugin) Handlers(*telebot.User) []bot.Handler {
 	}
 }
 
-func (plg *Plugin) OnMedia(c bot.NextbotContext) error {
+func (plg *Plugin) OnMedia(c plugin.NextbotContext) error {
 	var fileID string
 	var uniqueID string
 	var subFolder string

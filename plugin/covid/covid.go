@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/guregu/null.v4"
 	"gopkg.in/telebot.v3"
@@ -102,13 +102,13 @@ func (*Plugin) Name() string {
 	return "covid"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
-	return []bot.Handler{
-		&bot.CommandHandler{
+func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+	return []plugin.Handler{
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/covid(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: OnRun,
 		},
-		&bot.CommandHandler{
+		&plugin.CommandHandler{
 			Trigger: regexp.MustCompile(fmt.Sprintf(`^/covid(?:@%s)?[ _]([A-z ]+)(?:@%s)?$`,
 				botInfo.Username,
 				botInfo.Username),
@@ -118,7 +118,7 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
 	}
 }
 
-func OnCountry(c bot.NextbotContext) error {
+func OnCountry(c plugin.NextbotContext) error {
 	c.Notify(telebot.Typing)
 
 	var httpError *utils.HttpError
@@ -248,7 +248,7 @@ func OnCountry(c bot.NextbotContext) error {
 
 }
 
-func OnRun(c bot.NextbotContext) error {
+func OnRun(c plugin.NextbotContext) error {
 	c.Notify(telebot.Typing)
 
 	resultCh := make(chan allResult)

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/storage"
 	"github.com/Brawl345/gobot/utils"
 	"golang.org/x/exp/slices"
@@ -26,20 +27,10 @@ type (
 		FileService            storage.FileService
 		pluginService          storage.PluginService
 		userService            storage.UserService
-		plugins                []Plugin
+		plugins                []plugin.Plugin
 		enabledPlugins         []string
 		disabledPluginsForChat map[int64][]string
 		allowedChats           []int64
-	}
-
-	Plugin interface {
-		Name() string
-		Handlers(botInfo *telebot.User) []Handler
-	}
-
-	Handler interface {
-		Command() any
-		Run(c NextbotContext) error
 	}
 )
 
@@ -141,7 +132,7 @@ func New() (*Nextbot, error) {
 	}, nil
 }
 
-func (bot *Nextbot) RegisterPlugins(plugins []Plugin) {
+func (bot *Nextbot) RegisterPlugins(plugins []plugin.Plugin) {
 	bot.plugins = plugins
 }
 
@@ -176,8 +167,8 @@ func (bot *Nextbot) DisablePluginForChat(chat *telebot.Chat, pluginName string) 
 		return errors.New("✅ Das Plugin ist für diesen Chat schon deaktiviert")
 	}
 
-	for _, plugin := range bot.plugins {
-		if plugin.Name() == pluginName {
+	for _, plg := range bot.plugins {
+		if plg.Name() == pluginName {
 			err := bot.chatsPluginsService.Disable(chat, pluginName)
 			if err != nil {
 				return err
@@ -196,8 +187,8 @@ func (bot *Nextbot) EnablePlugin(pluginName string) error {
 		return errors.New("✅ Das Plugin ist bereits aktiv")
 	}
 
-	for _, plugin := range bot.plugins {
-		if plugin.Name() == pluginName {
+	for _, plg := range bot.plugins {
+		if plg.Name() == pluginName {
 			err := bot.pluginService.Enable(pluginName)
 			if err != nil {
 				return err
@@ -214,8 +205,8 @@ func (bot *Nextbot) EnablePluginForChat(chat *telebot.Chat, pluginName string) e
 		return errors.New("✅ Das Plugin ist für diesen Chat schon aktiv")
 	}
 
-	for _, plugin := range bot.plugins {
-		if plugin.Name() == pluginName {
+	for _, plg := range bot.plugins {
+		if plg.Name() == pluginName {
 			err := bot.chatsPluginsService.Enable(chat, pluginName)
 			if err != nil {
 				return err

@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/storage"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
@@ -28,24 +28,24 @@ func (*Plugin) Name() string {
 	return "creds"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
-	return []bot.Handler{
-		&bot.CommandHandler{
+func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+	return []plugin.Handler{
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/creds(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: plg.OnGet,
 			AdminOnly:   true,
 		},
-		&bot.CommandHandler{
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/creds_add(?:@%s)? ([^\s]+) (.+)$`, botInfo.Username)),
 			HandlerFunc: plg.OnAdd,
 			AdminOnly:   true,
 		},
-		&bot.CommandHandler{
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/creds_del(?:@%s)? ([^\s]+)$`, botInfo.Username)),
 			HandlerFunc: plg.OnDelete,
 			AdminOnly:   true,
 		},
-		&bot.CallbackHandler{
+		&plugin.CallbackHandler{
 			HandlerFunc: plg.OnHide,
 			Trigger:     regexp.MustCompile(`^creds_hide$`),
 			AdminOnly:   true,
@@ -53,7 +53,7 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
 	}
 }
 
-func (plg *Plugin) OnGet(c bot.NextbotContext) error {
+func (plg *Plugin) OnGet(c plugin.NextbotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
@@ -93,7 +93,7 @@ func (plg *Plugin) OnGet(c bot.NextbotContext) error {
 
 }
 
-func (plg *Plugin) OnAdd(c bot.NextbotContext) error {
+func (plg *Plugin) OnAdd(c plugin.NextbotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
@@ -110,7 +110,7 @@ func (plg *Plugin) OnAdd(c bot.NextbotContext) error {
 	return c.Reply("✅ Schlüssel gespeichert", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnDelete(c bot.NextbotContext) error {
+func (plg *Plugin) OnDelete(c plugin.NextbotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
@@ -126,7 +126,7 @@ func (plg *Plugin) OnDelete(c bot.NextbotContext) error {
 	return c.Reply("✅ Schlüssel gelöscht", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnHide(c bot.NextbotContext) error {
+func (plg *Plugin) OnHide(c plugin.NextbotContext) error {
 	err := c.Bot().Delete(c.Callback().Message)
 	if err != nil {
 		log.Err(err).Send()

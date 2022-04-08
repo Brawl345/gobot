@@ -1,8 +1,29 @@
-package bot
+package plugin
 
-import "regexp"
+import (
+	"regexp"
+
+	"gopkg.in/telebot.v3"
+)
 
 type (
+	Plugin interface {
+		Name() string
+		Handlers(botInfo *telebot.User) []Handler
+	}
+
+	Handler interface {
+		Command() any
+		Run(c NextbotContext) error
+	}
+
+	NextbotContext struct {
+		telebot.Context
+		Matches []string // Regex matches
+	}
+
+	NextbotHandlerFunc func(c NextbotContext) error
+
 	CommandHandler struct {
 		Trigger     any
 		HandlerFunc NextbotHandlerFunc

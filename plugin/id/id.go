@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/Brawl345/gobot/bot"
+	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 )
@@ -22,20 +22,20 @@ func (plg *Plugin) Name() string {
 	return "id"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
-	return []bot.Handler{
-		&bot.CommandHandler{
+func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+	return []plugin.Handler{
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/(?:(?:whoami)|(?:id))(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: onId,
 		},
-		&bot.InlineHandler{
+		&plugin.InlineHandler{
 			HandlerFunc:         onIdInline,
 			Trigger:             regexp.MustCompile("^(?:whoami|id)$"),
 			CanBeUsedByEveryone: true,
 		},
 	}
 }
-func onId(c bot.NextbotContext) error {
+func onId(c plugin.NextbotContext) error {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("Du bist <b>%s", html.EscapeString(c.Sender().FirstName)))
@@ -59,7 +59,7 @@ func onId(c bot.NextbotContext) error {
 	return c.Reply(sb.String(), utils.DefaultSendOptions)
 }
 
-func onIdInline(c bot.NextbotContext) error {
+func onIdInline(c plugin.NextbotContext) error {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("<b>%s", html.EscapeString(c.Sender().FirstName)))

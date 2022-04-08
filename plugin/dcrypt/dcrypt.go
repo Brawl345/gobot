@@ -8,8 +8,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 )
@@ -39,16 +39,16 @@ func (*Plugin) Name() string {
 	return "dcrypt"
 }
 
-func (plg *Plugin) Handlers(*telebot.User) []bot.Handler {
-	return []bot.Handler{
-		&bot.CommandHandler{
+func (plg *Plugin) Handlers(*telebot.User) []plugin.Handler {
+	return []plugin.Handler{
+		&plugin.CommandHandler{
 			Trigger:     telebot.OnDocument,
 			HandlerFunc: plg.OnFile,
 		},
 	}
 }
 
-func (plg *Plugin) OnFile(c bot.NextbotContext) error {
+func (plg *Plugin) OnFile(c plugin.NextbotContext) error {
 	if c.Message().Document.MIME != "text/plain" ||
 		!strings.HasSuffix(c.Message().Document.FileName, ".dlc") {
 		return nil
