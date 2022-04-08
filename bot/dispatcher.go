@@ -4,13 +4,14 @@ import (
 	"regexp"
 
 	"github.com/Brawl345/gobot/plugin"
+	"github.com/Brawl345/gobot/plugin/allow"
 	"github.com/Brawl345/gobot/storage"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 )
 
 type Dispatcher struct {
-	allowService      *allowService
+	allowService      allow.Service
 	chatsUsersService storage.ChatsUsersService
 	managerService    *managerService
 	userService       storage.UserService
