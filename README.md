@@ -34,3 +34,5 @@ Example with [Hookdeck](https://hookdeck.com/):
 ### More options
 
 Set the env variable `PRINT_MSGS` to some value (like `true`) to print all messages the bot receives to the terminal.
+
+Set `DEBUG` to some value (like `true`) to enable debug logs.

@@ -16,6 +16,13 @@ func NewLogger(component string) zerolog.Logger {
 }
 
 func init() {
+	zerolog.SetGlobalLevel(zerolog.InfoLevel)
+
+	_, debug := os.LookupEnv("DEBUG")
+	if debug {
+		zerolog.SetGlobalLevel(zerolog.DebugLevel)
+	}
+
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(zerolog.ConsoleWriter{
 		Out:        os.Stderr,
