@@ -24,9 +24,9 @@ func (bot *Nextbot) OnText(c telebot.Context) error {
 
 	if !isEdited {
 		if msg.Private() {
-			err = bot.DB.Users.Create(c.Sender())
+			err = bot.userService.Create(c.Sender())
 		} else {
-			err = bot.DB.ChatsUsers.Create(c.Chat(), c.Sender())
+			err = bot.ChatsUsersService.Create(c.Chat(), c.Sender())
 		}
 		if err != nil {
 			return err
@@ -285,14 +285,14 @@ func (bot *Nextbot) OnInlineQuery(c telebot.Context) error {
 }
 
 func (bot *Nextbot) OnUserJoined(c telebot.Context) error {
-	return bot.DB.ChatsUsers.CreateBatch(c.Chat(), &c.Message().UsersJoined)
+	return bot.ChatsUsersService.CreateBatch(c.Chat(), &c.Message().UsersJoined)
 }
 
 func (bot *Nextbot) OnUserLeft(c telebot.Context) error {
 	if c.Message().UserLeft.IsBot {
 		return nil
 	}
-	return bot.DB.ChatsUsers.Leave(c.Chat(), c.Message().UserLeft)
+	return bot.ChatsUsersService.Leave(c.Chat(), c.Message().UserLeft)
 }
 
 // NullRoute is a special route that just ignores the message

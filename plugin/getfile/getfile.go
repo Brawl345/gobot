@@ -9,6 +9,7 @@ import (
 
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/storage"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 )
@@ -16,18 +17,18 @@ import (
 var log = logger.NewLogger("getfile")
 
 type Plugin struct {
-	bot *bot.Nextbot
-	dir string
+	fileService storage.FileService
+	dir         string
 }
 
-func New(bot *bot.Nextbot) *Plugin {
-	dir, err := bot.DB.Credentials.GetKey("getfile_dir")
+func New(credentialService storage.CredentialService, fileService storage.FileService) *Plugin {
+	dir, err := credentialService.GetKey("getfile_dir")
 	if err != nil {
 		dir = "tmp"
 	}
 	return &Plugin{
-		bot: bot,
-		dir: dir,
+		fileService: fileService,
+		dir:         dir,
 	}
 }
 
@@ -73,7 +74,7 @@ func (plg *Plugin) OnMedia(c bot.NextbotContext) error {
 		return nil
 	}
 
-	exists, _ := plg.bot.DB.Files.Exists(uniqueID)
+	exists, _ := plg.fileService.Exists(uniqueID)
 
 	if exists {
 		log.Info().Msgf("File already exists: %s", uniqueID)
@@ -88,7 +89,7 @@ func (plg *Plugin) OnMedia(c bot.NextbotContext) error {
 	}
 
 	file := &telebot.File{FileID: fileID}
-	reader, err := plg.bot.File(file)
+	reader, err := c.Bot().File(file)
 	if err != nil {
 		return err
 	}
@@ -134,7 +135,7 @@ func (plg *Plugin) OnMedia(c bot.NextbotContext) error {
 	}
 	log.Info().Msgf("Saved as: %s", filepath.Join(savePath, fileName))
 
-	err = plg.bot.DB.Files.Create(uniqueID, fileName, subFolder)
+	err = plg.fileService.Create(uniqueID, fileName, subFolder)
 	if err != nil {
 		return err
 	}

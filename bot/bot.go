@@ -16,9 +16,16 @@ import (
 var log = logger.NewLogger("bot")
 
 type (
+	// TODO: Temporary - services should not be here!
 	Nextbot struct {
 		*telebot.Bot
-		DB                     *storage.DB
+		chatService            storage.ChatService
+		ChatsUsersService      storage.ChatsUsersService
+		chatsPluginsService    storage.ChatsPluginsService
+		CredentialService      storage.CredentialService
+		FileService            storage.FileService
+		pluginService          storage.PluginService
+		userService            storage.UserService
 		plugins                []Plugin
 		enabledPlugins         []string
 		disabledPluginsForChat map[int64][]string
@@ -88,22 +95,31 @@ func New() (*Nextbot, error) {
 		return nil, err
 	}
 
-	enabledPlugins, err := db.Plugins.GetAllEnabled()
+	pluginService := storage.NewPluginService(db)
+	chatService := storage.NewChatService(db)
+	chatsPluginsService := storage.NewChatsPluginsService(db, chatService, pluginService)
+	userService := storage.NewUserService(db)
+	chatsUsersService := storage.NewChatsUsersService(db, chatService, userService)
+
+	credentialService := storage.NewCredentialService(db)
+	fileService := storage.NewFileService(db)
+
+	enabledPlugins, err := pluginService.GetAllEnabled()
 	if err != nil {
 		return nil, err
 	}
 
-	disabledPluginsForChat, err := db.ChatsPlugins.GetAllDisabled()
+	disabledPluginsForChat, err := chatsPluginsService.GetAllDisabled()
 	if err != nil {
 		return nil, err
 	}
 
-	allowedUsers, err := db.Users.GetAllAllowed()
+	allowedUsers, err := userService.GetAllAllowed()
 	if err != nil {
 		return nil, err
 	}
 
-	allowedChats, err := db.Chats.GetAllAllowed()
+	allowedChats, err := userService.GetAllAllowed()
 	if err != nil {
 		return nil, err
 	}
@@ -112,7 +128,13 @@ func New() (*Nextbot, error) {
 
 	return &Nextbot{
 		Bot:                    bot,
-		DB:                     db,
+		chatService:            chatService,
+		ChatsUsersService:      chatsUsersService,
+		pluginService:          pluginService,
+		chatsPluginsService:    chatsPluginsService,
+		userService:            userService,
+		CredentialService:      credentialService,
+		FileService:            fileService,
 		enabledPlugins:         enabledPlugins,
 		disabledPluginsForChat: disabledPluginsForChat,
 		allowedChats:           allowedChats,
@@ -140,7 +162,7 @@ func (bot *Nextbot) DisablePlugin(pluginName string) error {
 		return errors.New("✅ Das Plugin ist nicht aktiv")
 	}
 
-	err := bot.DB.Plugins.Disable(pluginName)
+	err := bot.pluginService.Disable(pluginName)
 	if err != nil {
 		return err
 	}
@@ -156,7 +178,7 @@ func (bot *Nextbot) DisablePluginForChat(chat *telebot.Chat, pluginName string) 
 
 	for _, plugin := range bot.plugins {
 		if plugin.Name() == pluginName {
-			err := bot.DB.ChatsPlugins.Disable(chat, pluginName)
+			err := bot.chatsPluginsService.Disable(chat, pluginName)
 			if err != nil {
 				return err
 			}
@@ -176,7 +198,7 @@ func (bot *Nextbot) EnablePlugin(pluginName string) error {
 
 	for _, plugin := range bot.plugins {
 		if plugin.Name() == pluginName {
-			err := bot.DB.Plugins.Enable(pluginName)
+			err := bot.pluginService.Enable(pluginName)
 			if err != nil {
 				return err
 			}
@@ -194,7 +216,7 @@ func (bot *Nextbot) EnablePluginForChat(chat *telebot.Chat, pluginName string) e
 
 	for _, plugin := range bot.plugins {
 		if plugin.Name() == pluginName {
-			err := bot.DB.ChatsPlugins.Enable(chat, pluginName)
+			err := bot.chatsPluginsService.Enable(chat, pluginName)
 			if err != nil {
 				return err
 			}
@@ -222,7 +244,7 @@ func (bot *Nextbot) IsChatAllowed(chat *telebot.Chat) bool {
 }
 
 func (bot *Nextbot) AllowUser(user *telebot.User) error {
-	err := bot.DB.Users.Allow(user)
+	err := bot.userService.Allow(user)
 	if err != nil {
 		return err
 	}
@@ -235,7 +257,7 @@ func (bot *Nextbot) DenyUser(user *telebot.User) error {
 	if utils.IsAdmin(user) {
 		return errors.New("cannot deny admin")
 	}
-	err := bot.DB.Users.Deny(user)
+	err := bot.userService.Deny(user)
 	if err != nil {
 		return err
 	}
@@ -246,7 +268,7 @@ func (bot *Nextbot) DenyUser(user *telebot.User) error {
 }
 
 func (bot *Nextbot) AllowChat(chat *telebot.Chat) error {
-	err := bot.DB.Chats.Allow(chat)
+	err := bot.chatService.Allow(chat)
 	if err != nil {
 		return err
 	}
@@ -256,7 +278,7 @@ func (bot *Nextbot) AllowChat(chat *telebot.Chat) error {
 }
 
 func (bot *Nextbot) DenyChat(chat *telebot.Chat) error {
-	err := bot.DB.Chats.Deny(chat)
+	err := bot.chatService.Deny(chat)
 	if err != nil {
 		return err
 	}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/storage"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 )
@@ -15,12 +16,12 @@ import (
 var log = logger.NewLogger("stats")
 
 type Plugin struct {
-	bot *bot.Nextbot
+	chatsUsersService storage.ChatsUsersService
 }
 
-func New(bot *bot.Nextbot) *Plugin {
+func New(chatsUsersService storage.ChatsUsersService) *Plugin {
 	return &Plugin{
-		bot: bot,
+		chatsUsersService: chatsUsersService,
 	}
 }
 
@@ -39,7 +40,7 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []bot.Handler {
 }
 
 func (plg *Plugin) OnStats(c bot.NextbotContext) error {
-	users, err := plg.bot.DB.ChatsUsers.GetAllUsersWithMsgCount(c.Chat())
+	users, err := plg.chatsUsersService.GetAllUsersWithMsgCount(c.Chat())
 	if err != nil {
 		log.Err(err).Int64("chat_id", c.Chat().ID).Msg("Failed to get statistics")
 		return c.Reply("❌ Fehler beim Abrufen der Statistiken.", utils.DefaultSendOptions)

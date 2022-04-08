@@ -18,9 +18,7 @@ var log = logger.NewLogger("dcrypt")
 var textRegex = regexp.MustCompile("(?s)<textarea>(.+)</textarea>")
 
 type (
-	Plugin struct {
-		bot *telebot.Bot
-	}
+	Plugin struct{}
 
 	Response struct {
 		FormErrors struct {
@@ -33,10 +31,8 @@ type (
 	}
 )
 
-func New(bot *telebot.Bot) *Plugin {
-	return &Plugin{
-		bot: bot,
-	}
+func New() *Plugin {
+	return &Plugin{}
 }
 
 func (*Plugin) Name() string {
@@ -64,7 +60,7 @@ func (plg *Plugin) OnFile(c bot.NextbotContext) error {
 		return c.Reply("❌ DLC-Container ist größer als 20 MB.", utils.DefaultSendOptions)
 	}
 
-	file, err := plg.bot.File(&telebot.File{FileID: c.Message().Document.FileID})
+	file, err := c.Bot().File(&telebot.File{FileID: c.Message().Document.FileID})
 	if err != nil {
 		log.Err(err).Msg("Failed to download file")
 		return c.Reply("❌ Konnte Datei nicht von Telegram herunterladen.", utils.DefaultSendOptions)

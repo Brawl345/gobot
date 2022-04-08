@@ -3,7 +3,7 @@ package storage
 import "github.com/jmoiron/sqlx"
 
 type (
-	PluginStorage interface {
+	PluginService interface {
 		CreateTx(tx *sqlx.Tx, pluginName string) error
 		Disable(pluginName string) error
 		Enable(pluginName string) error
@@ -19,6 +19,10 @@ type (
 		Enabled bool   `db:"enabled"`
 	}
 )
+
+func NewPluginService(db *sqlx.DB) *Plugins {
+	return &Plugins{db}
+}
 
 func (db *Plugins) CreateTx(tx *sqlx.Tx, pluginName string) error {
 	const query = `INSERT INTO plugins 

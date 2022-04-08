@@ -8,7 +8,7 @@ import (
 )
 
 type (
-	UserStorage interface {
+	UserService interface {
 		Allow(user *telebot.User) error
 		Create(user *telebot.User) error
 		CreateTx(tx *sqlx.Tx, user *telebot.User) error
@@ -30,6 +30,10 @@ type (
 		InGroup   bool           `db:"in_group"`
 	}
 )
+
+func NewUserService(db *sqlx.DB) *Users {
+	return &Users{db}
+}
 
 func (user *User) GetFullName() string {
 	if user.LastName.Valid {

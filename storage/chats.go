@@ -6,7 +6,7 @@ import (
 )
 
 type (
-	ChatStorage interface {
+	ChatService interface {
 		Allow(chat *telebot.Chat) error
 		Create(chat *telebot.Chat) error
 		CreateTx(tx *sqlx.Tx, chat *telebot.Chat) error
@@ -18,6 +18,10 @@ type (
 		*sqlx.DB
 	}
 )
+
+func NewChatService(db *sqlx.DB) *Chats {
+	return &Chats{db}
+}
 
 func (db *Chats) Allow(chat *telebot.Chat) error {
 	const query = `UPDATE chats SET allowed = true WHERE id = ?`

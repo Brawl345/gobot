@@ -3,7 +3,7 @@ package storage
 import "github.com/jmoiron/sqlx"
 
 type (
-	FileStorage interface {
+	FileService interface {
 		Create(uniqueID, fileName, mediaType string) error
 		Exists(uniqueID string) (bool, error)
 	}
@@ -12,6 +12,10 @@ type (
 		*sqlx.DB
 	}
 )
+
+func NewFileService(db *sqlx.DB) *Files {
+	return &Files{db}
+}
 
 func (db *Files) Create(uniqueID, fileName, mediaType string) error {
 	const query = `INSERT INTO files (id, file_name, type) VALUES (?, ?, ?)`

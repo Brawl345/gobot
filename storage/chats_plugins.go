@@ -8,18 +8,26 @@ import (
 )
 
 type (
-	ChatPluginStorage interface {
+	ChatsPluginsService interface {
 		Disable(chat *telebot.Chat, pluginName string) error
 		Enable(chat *telebot.Chat, pluginName string) error
 		GetAllDisabled() (map[int64][]string, error)
 	}
 
 	ChatsPlugins struct {
-		Chats   ChatStorage
-		Plugins PluginStorage
+		Chats   ChatService
+		Plugins PluginService
 		*sqlx.DB
 	}
 )
+
+func NewChatsPluginsService(db *sqlx.DB, chatService ChatService, pluginService PluginService) *ChatsPlugins {
+	return &ChatsPlugins{
+		Chats:   chatService,
+		Plugins: pluginService,
+		DB:      db,
+	}
+}
 
 func (db *ChatsPlugins) Disable(chat *telebot.Chat, pluginName string) error {
 	tx, err := db.BeginTxx(context.Background(), nil)

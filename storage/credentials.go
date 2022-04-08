@@ -7,7 +7,7 @@ import (
 )
 
 type (
-	CredentialStorage interface {
+	CredentialService interface {
 		GetAllCredentials() ([]Credential, error)
 		GetKey(name string) (string, error)
 		SetKey(name, value string) error
@@ -23,6 +23,10 @@ type (
 		Value string `db:"value"`
 	}
 )
+
+func NewCredentialService(db *sqlx.DB) *Credentials {
+	return &Credentials{db}
+}
 
 func (db *Credentials) GetAllCredentials() ([]Credential, error) {
 	const query = `SELECT name, value FROM credentials ORDER BY name DESC`

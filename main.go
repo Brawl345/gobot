@@ -55,35 +55,17 @@ func main() {
 
 	log.Info().Msgf("Logged in as @%s (%d)", b.Me.Username, b.Me.ID)
 
-	//plg, err := bot.NewBasePlugin(b)
-	//if err != nil {
-	//	log.Fatal().Err(err).Send()
-	//}
-
-	//plugins := []bot.IPlugin{
-	//	about.New(plg),
-	//	allow.New(plg),
-	//	covid.New(plg),
-	//	creds.New(plg),
-	//	dcrypt.New(plg),
-	//	echo.New(plg),
-	//	getfile.New(plg),
-	//	id.New(plg),
-	//	manager.New(plg),
-	//	stats.New(plg),
-	//}
-
 	plugins := []bot.Plugin{
 		about.New(),
 		allow.New(b),
 		covid.New(),
-		creds.New(b),
-		dcrypt.New(b.Bot),
+		creds.New(b.CredentialService),
+		dcrypt.New(),
 		echo.New(),
-		getfile.New(b),
+		getfile.New(b.CredentialService, b.FileService),
 		id.New(),
 		manager.New(b),
-		stats.New(b),
+		stats.New(b.ChatsUsersService),
 	}
 
 	log.Info().Msgf("Registering %d plugins", len(plugins))
@@ -123,12 +105,6 @@ func main() {
 		<-channel
 		log.Info().Msg("Stopping...")
 		//b.Stop()
-		err := b.DB.Close()
-		if err != nil {
-			log.Err(err).Send()
-			os.Exit(1)
-			return
-		}
 		os.Exit(0)
 	}()
 

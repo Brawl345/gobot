@@ -8,7 +8,7 @@ import (
 )
 
 type (
-	ChatUserStorage interface {
+	ChatsUsersService interface {
 		Create(chat *telebot.Chat, user *telebot.User) error
 		CreateBatch(chat *telebot.Chat, users *[]telebot.User) error
 		GetAllUsersWithMsgCount(chat *telebot.Chat) ([]User, error)
@@ -17,11 +17,19 @@ type (
 	}
 
 	ChatsUsers struct {
-		Chats ChatStorage
-		Users UserStorage
+		Chats ChatService
+		Users UserService
 		*sqlx.DB
 	}
 )
+
+func NewChatsUsersService(db *sqlx.DB, chatService ChatService, userService UserService) *ChatsUsers {
+	return &ChatsUsers{
+		Chats: chatService,
+		Users: userService,
+		DB:    db,
+	}
+}
 
 func (db *ChatsUsers) Create(chat *telebot.Chat, user *telebot.User) error {
 	tx, err := db.BeginTxx(context.Background(), nil)
@@ -123,7 +131,10 @@ func (db *ChatsUsers) IsAllowed(chat *telebot.Chat, user *telebot.User) bool {
 	OR (users.id = ? AND users.allowed = true);`
 
 	var isAllowed bool
-	db.Get(&isAllowed, query, chat.ID, user.ID)
+	err := db.Get(&isAllowed, query, chat.ID, user.ID)
+	if err != nil {
+		return false
+	}
 	return isAllowed
 }
 

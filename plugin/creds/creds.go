@@ -7,6 +7,7 @@ import (
 
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/storage"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 )
@@ -14,12 +15,12 @@ import (
 var log = logger.NewLogger("creds")
 
 type Plugin struct {
-	bot *bot.Nextbot
+	credentialService storage.CredentialService
 }
 
-func New(bot *bot.Nextbot) *Plugin {
+func New(credentialService storage.CredentialService) *Plugin {
 	return &Plugin{
-		bot: bot,
+		credentialService: credentialService,
 	}
 }
 
@@ -57,7 +58,7 @@ func (plg *Plugin) OnGet(c bot.NextbotContext) error {
 		return nil
 	}
 
-	creds, err := plg.bot.DB.Credentials.GetAllCredentials()
+	creds, err := plg.credentialService.GetAllCredentials()
 
 	if err != nil {
 		log.Err(err).Send()
@@ -100,7 +101,7 @@ func (plg *Plugin) OnAdd(c bot.NextbotContext) error {
 	key := c.Matches[1]
 	value := c.Matches[2]
 
-	err := plg.bot.DB.Credentials.SetKey(key, value)
+	err := plg.credentialService.SetKey(key, value)
 	if err != nil {
 		log.Err(err).Str("key", key).Send()
 		return c.Reply("❌ Fehler beim Speichern des Schlüssels", utils.DefaultSendOptions)
@@ -115,7 +116,7 @@ func (plg *Plugin) OnDelete(c bot.NextbotContext) error {
 	}
 
 	key := c.Matches[1]
-	err := plg.bot.DB.Credentials.DeleteKey(key)
+	err := plg.credentialService.DeleteKey(key)
 
 	if err != nil {
 		log.Err(err).Str("key", key).Send()
@@ -126,7 +127,7 @@ func (plg *Plugin) OnDelete(c bot.NextbotContext) error {
 }
 
 func (plg *Plugin) OnHide(c bot.NextbotContext) error {
-	err := plg.bot.Delete(c.Callback().Message)
+	err := c.Bot().Delete(c.Callback().Message)
 	if err != nil {
 		log.Err(err).Send()
 	}
