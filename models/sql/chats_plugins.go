@@ -9,7 +9,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type ChatsPluginsService struct {
+type chatsPluginsService struct {
 	Chats   models.ChatService
 	Plugins models.PluginService
 	*sqlx.DB
@@ -21,15 +21,15 @@ func NewChatsPluginsService(
 	db *sqlx.DB,
 	chatService models.ChatService,
 	pluginService models.PluginService,
-) *ChatsPluginsService {
-	return &ChatsPluginsService{
+) *chatsPluginsService {
+	return &chatsPluginsService{
 		Chats:   chatService,
 		Plugins: pluginService,
 		DB:      db,
 	}
 }
 
-func (db *ChatsPluginsService) Disable(chat *telebot.Chat, pluginName string) error {
+func (db *chatsPluginsService) Disable(chat *telebot.Chat, pluginName string) error {
 	tx, err := db.BeginTxx(context.Background(), nil)
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func (db *ChatsPluginsService) Disable(chat *telebot.Chat, pluginName string) er
 	return nil
 }
 
-func (db *ChatsPluginsService) Enable(chat *telebot.Chat, pluginName string) error {
+func (db *chatsPluginsService) Enable(chat *telebot.Chat, pluginName string) error {
 	tx, err := db.BeginTxx(context.Background(), nil)
 	if err != nil {
 		return err
@@ -89,7 +89,7 @@ func (db *ChatsPluginsService) Enable(chat *telebot.Chat, pluginName string) err
 	return nil
 }
 
-func (db *ChatsPluginsService) insertRelationship(tx *sqlx.Tx, chat *telebot.Chat, pluginName string, enabled bool) error {
+func (db *chatsPluginsService) insertRelationship(tx *sqlx.Tx, chat *telebot.Chat, pluginName string, enabled bool) error {
 	const query = `INSERT INTO 
     chats_plugins (chat_id, plugin_name, enabled) 
     VALUES (?, ?, ?)
@@ -98,7 +98,7 @@ func (db *ChatsPluginsService) insertRelationship(tx *sqlx.Tx, chat *telebot.Cha
 	return err
 }
 
-func (db *ChatsPluginsService) GetAllDisabled() (map[int64][]string, error) {
+func (db *chatsPluginsService) GetAllDisabled() (map[int64][]string, error) {
 	const query = `SELECT chat_id, plugin_name FROM chats_plugins WHERE enabled = false`
 
 	rows, _ := db.Queryx(query)

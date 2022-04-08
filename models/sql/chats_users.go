@@ -9,21 +9,21 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-type ChatsUsersService struct {
+type chatsUsersService struct {
 	Chats models.ChatService
 	Users models.UserService
 	*sqlx.DB
 }
 
-func NewChatsUsersService(db *sqlx.DB, chatService models.ChatService, userService models.UserService) *ChatsUsersService {
-	return &ChatsUsersService{
+func NewChatsUsersService(db *sqlx.DB, chatService models.ChatService, userService models.UserService) *chatsUsersService {
+	return &chatsUsersService{
 		Chats: chatService,
 		Users: userService,
 		DB:    db,
 	}
 }
 
-func (db *ChatsUsersService) Create(chat *telebot.Chat, user *telebot.User) error {
+func (db *chatsUsersService) Create(chat *telebot.Chat, user *telebot.User) error {
 	tx, err := db.BeginTxx(context.Background(), nil)
 	if err != nil {
 		return err
@@ -53,7 +53,7 @@ func (db *ChatsUsersService) Create(chat *telebot.Chat, user *telebot.User) erro
 	return nil
 }
 
-func (db *ChatsUsersService) CreateBatch(chat *telebot.Chat, users *[]telebot.User) error {
+func (db *chatsUsersService) CreateBatch(chat *telebot.Chat, users *[]telebot.User) error {
 	const insertRelationshipQuery = `INSERT INTO 
     chats_users (chat_id, user_id, msg_count, in_group) 
     VALUES (?, ?, 0, true)
@@ -93,7 +93,7 @@ func (db *ChatsUsersService) CreateBatch(chat *telebot.Chat, users *[]telebot.Us
 	return nil
 }
 
-func (db *ChatsUsersService) GetAllUsersWithMsgCount(chat *telebot.Chat) ([]models.User, error) {
+func (db *chatsUsersService) GetAllUsersWithMsgCount(chat *telebot.Chat) ([]models.User, error) {
 	const query = `SELECT u.first_name, u.last_name, msg_count, in_group FROM chats_users
 JOIN users u on u.id = chats_users.user_id
 WHERE chat_id = ?
@@ -103,7 +103,7 @@ ORDER BY msg_count DESC`
 	return users, err
 }
 
-func (db *ChatsUsersService) insertRelationship(tx *sqlx.Tx, chatId int64, userId int64) error {
+func (db *chatsUsersService) insertRelationship(tx *sqlx.Tx, chatId int64, userId int64) error {
 	const query = `INSERT INTO 
     chats_users (chat_id, user_id, in_group) 
     VALUES (?, ?, true)
@@ -112,7 +112,7 @@ func (db *ChatsUsersService) insertRelationship(tx *sqlx.Tx, chatId int64, userI
 	return err
 }
 
-func (db *ChatsUsersService) IsAllowed(chat *telebot.Chat, user *telebot.User) bool {
+func (db *chatsUsersService) IsAllowed(chat *telebot.Chat, user *telebot.User) bool {
 	if utils.IsAdmin(user) {
 		return true
 	}
@@ -130,7 +130,7 @@ func (db *ChatsUsersService) IsAllowed(chat *telebot.Chat, user *telebot.User) b
 	return isAllowed
 }
 
-func (db *ChatsUsersService) Leave(chat *telebot.Chat, user *telebot.User) error {
+func (db *chatsUsersService) Leave(chat *telebot.Chat, user *telebot.User) error {
 	const query = `UPDATE chats_users SET in_group = false
 	WHERE chat_id = ?
 	  AND user_id = ?`

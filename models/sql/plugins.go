@@ -5,15 +5,15 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type PluginService struct {
+type pluginService struct {
 	*sqlx.DB
 }
 
-func NewPluginService(db *sqlx.DB) *PluginService {
-	return &PluginService{db}
+func NewPluginService(db *sqlx.DB) *pluginService {
+	return &pluginService{db}
 }
 
-func (db *PluginService) CreateTx(tx *sqlx.Tx, pluginName string) error {
+func (db *pluginService) CreateTx(tx *sqlx.Tx, pluginName string) error {
 	const query = `INSERT INTO plugins 
 	(name, enabled) 
 	VALUES (?, false)
@@ -22,7 +22,7 @@ func (db *PluginService) CreateTx(tx *sqlx.Tx, pluginName string) error {
 	return err
 }
 
-func (db *PluginService) Disable(pluginName string) error {
+func (db *pluginService) Disable(pluginName string) error {
 	const query = `INSERT INTO plugins 
 	(name, enabled) 
 	VALUES (?, false)
@@ -31,13 +31,13 @@ func (db *PluginService) Disable(pluginName string) error {
 	return err
 }
 
-func (db *PluginService) Enable(pluginName string) error {
+func (db *pluginService) Enable(pluginName string) error {
 	const query = `INSERT INTO plugins (name) VALUES (?) ON DUPLICATE KEY UPDATE enabled = true`
 	_, err := db.Exec(query, pluginName)
 	return err
 }
 
-func (db *PluginService) GetAllEnabled() ([]string, error) {
+func (db *pluginService) GetAllEnabled() ([]string, error) {
 	const query = `SELECT name, enabled FROM plugins WHERE enabled = 1`
 
 	var enabledPlugins []string
