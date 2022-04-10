@@ -22,19 +22,46 @@ var log = logger.NewLogger("twitter")
 
 type (
 	Plugin struct {
-		bearerToken string
+		bearerToken    string
+		consumerKey    string
+		consumerSecret string
+		accessToken    string
+		accessSecret   string
 	}
 )
 
 func New(credentialsService models.CredentialService) *Plugin {
 	bearerToken, err := credentialsService.GetKey("twitter_bearer_token")
-
 	if err != nil {
 		log.Warn().Msg("twitter_bearer_token not found")
 	}
 
+	consumerKey, err := credentialsService.GetKey("twitter_consumer_key")
+	if err != nil {
+		log.Warn().Msg("twitter_consumer_key not found")
+	}
+
+	consumerSecret, err := credentialsService.GetKey("twitter_consumer_secret")
+	if err != nil {
+		log.Warn().Msg("twitter_consumer_secret not found")
+	}
+
+	accessToken, err := credentialsService.GetKey("twitter_access_token_key")
+	if err != nil {
+		log.Warn().Msg("twitter_access_token_key not found")
+	}
+
+	accessSecret, err := credentialsService.GetKey("twitter_access_token_secret")
+	if err != nil {
+		log.Warn().Msg("twitter_access_token_secret not found")
+	}
+
 	return &Plugin{
-		bearerToken: bearerToken,
+		bearerToken:    bearerToken,
+		consumerKey:    consumerKey,
+		consumerSecret: consumerSecret,
+		accessToken:    accessToken,
+		accessSecret:   accessSecret,
 	}
 }
 
@@ -131,7 +158,7 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 	// https://developer.twitter.com/en/docs/twitter-api/data-dictionary/object-model/media
 	q.Set(
 		"media.fields",
-		"alt_text,public_metrics,type,url",
+		"alt_text,media_key,public_metrics,type,url",
 	)
 
 	// https://developer.twitter.com/en/docs/twitter-api/data-dictionary/object-model/poll
@@ -190,7 +217,7 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 		return c.Reply("❌ Bei der Anfrage ist ein Fehler aufgetreten.", utils.DefaultSendOptions)
 	}
 
-	log.Debug().Interface("response", response).Send()
+	log.Debug().Str("url", requestUrl.String()).Interface("response", response).Send()
 
 	sendOptions := &telebot.SendOptions{
 		AllowWithoutReply:     true,
@@ -199,10 +226,13 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 		ParseMode:             telebot.ModeHTML,
 	}
 	var sb strings.Builder
+	timezone := utils.GermanTimezone()
 
+	// Tweet author
 	author := response.Includes.User(response.Tweet.AuthorID)
 	sb.WriteString(fmt.Sprintf("%s\n", author.String()))
 
+	// Text
 	if response.Tweet.Text != "" && !(response.Tweet.Withheld.InGermany() && response.Tweet.Withheld.Scope == "tweet") {
 		tweet := response.Tweet.Text
 		for _, entityURL := range response.Tweet.Entities.URLs {
@@ -213,19 +243,22 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 			}
 		}
 
-		sb.WriteString(
-			fmt.Sprintf(
-				"%s\n",
-				html.EscapeString(tweet),
-			),
-		)
+		if tweet != "" { // Do not insert a blank line when there is only a media attachment without text
+			sb.WriteString(
+				fmt.Sprintf(
+					"%s\n",
+					html.EscapeString(tweet),
+				),
+			)
+		}
 	}
 
+	// Withheld info
 	if response.Tweet.Withheld.InGermany() {
 		sb.WriteString(fmt.Sprintf("%s\n", response.Tweet.Withheld.String()))
 	}
 
-	timezone := utils.GermanTimezone()
+	// Poll
 	if len(response.Includes.Polls) > 0 {
 		poll := response.Includes.Polls[0]
 		totalVotes := poll.TotalVotes()
@@ -275,30 +308,21 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 
 	}
 
+	// Created + Metrics (RT, Quotes, Likes)
 	sb.WriteString(
 		fmt.Sprintf(
 			"📅 %s",
 			response.Tweet.CreatedAt.In(timezone).Format("02.01.2006, 15:04:05 Uhr"),
 		),
 	)
-
 	sb.WriteString(response.Tweet.PublicMetrics.String())
 
-	images := make([]Media, 0, len(response.Includes.Media))
-	var video Media
-	if len(response.Includes.Media) > 0 {
-		for _, media := range response.Includes.Media {
-			if media.Type == "photo" {
-				images = append(images, media)
-			} else if media.Type == "video" {
-				video = media
-			}
-		}
-	}
-
+	// Quote
 	quote := response.Quote()
 	if quote != nil {
 		sb.WriteString("\n\n")
+
+		// Quote author
 		quoteAuthor := response.Includes.User(quote.AuthorID)
 		sb.WriteString(
 			fmt.Sprintf(
@@ -307,6 +331,7 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 			),
 		)
 
+		// Quote text
 		if quote.Text != "" && !(quote.Withheld.InGermany() && quote.Withheld.Scope == "tweet") {
 			tweet := quote.Text
 			for _, entityURL := range quote.Entities.URLs {
@@ -320,33 +345,47 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 					html.EscapeString(tweet),
 				),
 			)
+		}
 
-			if quote.Withheld.InGermany() {
-				sb.WriteString(fmt.Sprintf("%s\n", quote.Withheld.String()))
-			}
+		// Quote withheld info
+		if quote.Withheld.InGermany() {
+			sb.WriteString(fmt.Sprintf("%s\n", quote.Withheld.String()))
+		}
 
-			if len(quote.Attachments.PollIDs) > 0 {
-				sb.WriteString(
-					fmt.Sprintf(
-						"📊 <i>Dieser Tweet enthält eine Umfrage - <a href=\"https://twitter.com/%s/status/%s\">rufe ihn im Browser auf</a>, um sie anzuzeigen</i>\n",
-						quoteAuthor.Username,
-						quote.ID,
-					),
-				)
-			}
-
+		// Quote poll (only link since the object isn't returned)
+		if len(quote.Attachments.PollIDs) > 0 {
 			sb.WriteString(
 				fmt.Sprintf(
-					"📅 %s",
-					quote.CreatedAt.In(timezone).Format("02.01.2006, 15:04:05 Uhr"),
+					"📊 <i>Dieser Tweet enthält eine Umfrage - <a href=\"https://twitter.com/%s/status/%s\">rufe ihn im Browser auf</a>, um sie anzuzeigen</i>\n",
+					quoteAuthor.Username,
+					quote.ID,
 				),
 			)
-
-			sb.WriteString(quote.PublicMetrics.String())
-
 		}
+
+		// Quote created at + metrics (RT, Quotes, Likes)
+		sb.WriteString(
+			fmt.Sprintf(
+				"📅 %s",
+				quote.CreatedAt.In(timezone).Format("02.01.2006, 15:04:05 Uhr"),
+			),
+		)
+		sb.WriteString(quote.PublicMetrics.String())
+
 	}
 
+	// Media
+	images := make([]Media, 0, len(response.Includes.Media))
+	var video Media
+	if len(response.Includes.Media) > 0 {
+		for _, media := range response.Includes.Media {
+			if media.Type == "photo" {
+				images = append(images, media)
+			} else if media.Type == "video" || media.Type == "animated_gif" {
+				video = media
+			}
+		}
+	}
 	if len(images) == 1 { // One picture = send as preview
 		sendOptions.DisableWebPagePreview = false
 		return c.Reply(
@@ -360,21 +399,134 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 		return err
 	}
 
-	// TODO: contact 1.1 API
-	if video.Url != "" {
-		// TODO
+	// Send video as seperate message
+	if video.MediaKey != "" {
+		c.Notify(telebot.UploadingVideo)
+
+		// Need to contact 1.1 API since v2 API doesn't return direct URL to video
+		//	See: https://twitterdevfeedback.uservoice.com/forums/930250-/suggestions/41291761-
+		method := "GET"
+		api11Url := fmt.Sprintf("https://api.twitter.com/1.1/statuses/show.json?id=%s&include_entities=true&trim_user=true&tweet_mode=extended",
+			response.Tweet.ID)
+
+		auth := OAuth1{
+			ConsumerKey:    plg.consumerKey,
+			ConsumerSecret: plg.consumerSecret,
+			AccessToken:    plg.accessToken,
+			AccessSecret:   plg.accessSecret,
+		}
+
+		authHeader := auth.BuildOAuth1Header(method, api11Url, map[string]string{
+			"id":               response.Tweet.ID,
+			"include_entities": "true",
+			"trim_user":        "true",
+			"tweet_mode":       "extended",
+		})
+
+		var videoResponse Response11
+		err := utils.GetRequestWithHeader(
+			api11Url,
+			map[string]string{"Authorization": authHeader},
+			&videoResponse,
+		)
+		if err != nil {
+			log.Err(err).Str("url", api11Url).Msg("Error while contacting v1.1 API")
+			return nil
+		}
+
+		log.Debug().Str("url", api11Url).Interface("videoResponse", videoResponse).Send()
+
+		videoUrl := videoResponse.ExtendedEntities.Media[0].HighestResolution()
+		if videoUrl == "" {
+			log.Error().Str("url", api11Url).Msg("No video URL found")
+		}
+
+		plural := ""
+		if video.PublicMetrics.ViewCount != 1 {
+			plural = "e"
+		}
+		caption := fmt.Sprintf(
+			"%s (%s Aufruf%s)",
+			videoUrl,
+			utils.FormatThousand(video.PublicMetrics.ViewCount),
+			plural,
+		)
+		err = c.Reply(
+			&telebot.Video{
+				File:      telebot.FromURL(videoUrl),
+				Caption:   caption,
+				Streaming: true,
+			},
+			telebot.Silent,
+			telebot.AllowWithoutReply,
+		)
+
+		if err != nil {
+			// Sending failed -send video manually
+			log.Err(err).Str("url", videoUrl).Msg("Error while sending video through telegram; downloading")
+			msg, err := c.Bot().Reply(c.Message(),
+				fmt.Sprintf(
+					"<i>🕒 <a href=\"%s\">Video</a> wird heruntergeladen und gesendet...</i>",
+					videoUrl,
+				),
+				utils.DefaultSendOptions,
+			)
+			if err != nil {
+				// This would be very awkward
+				log.Err(err).Msg("Could not send initial 'download video' message")
+			}
+
+			c.Notify(telebot.UploadingVideo)
+
+			resp, err := http.Get(videoUrl)
+			log.Info().Str("url", videoUrl).Msg("Downloading video")
+			if err != nil {
+				// Downloading failed - send the video URL as text
+				log.Err(err).Str("url", videoUrl).Msg("Error while downloading video")
+				err := c.Reply(videoUrl, telebot.Silent, telebot.AllowWithoutReply)
+				if err != nil {
+					log.Err(err).Str("url", videoUrl).Msg("Error while replying with video link")
+				}
+				_ = c.Bot().Delete(msg)
+				return nil
+			}
+
+			defer resp.Body.Close()
+
+			err = c.Reply(
+				&telebot.Video{
+					File:      telebot.FromReader(resp.Body),
+					Caption:   caption,
+					Streaming: true,
+				},
+				telebot.Silent,
+			)
+			if err != nil {
+				// Last resort: Send video URL as text
+				log.Err(err).Str("url", videoUrl).Msg("Error while replying with downloaded video")
+				err := c.Reply(videoUrl, telebot.Silent, telebot.AllowWithoutReply)
+				if err != nil {
+					log.Err(err).Str("url", videoUrl).Msg("Error while replying with video link")
+				}
+			}
+			_ = c.Bot().Delete(msg)
+		}
+
+		return nil
 	}
 
-	if len(images) > 1 { // Multiple pictures = send as album
+	// Send images (> 1) as seperate message (album)
+	if len(images) > 1 {
 		c.Notify(telebot.UploadingPhoto)
 		album := make([]telebot.Inputtable, 0, len(images))
 		for _, image := range images {
 			album = append(album, &telebot.Photo{File: telebot.FromURL(image.Url)})
 		}
+
 		err := c.SendAlbum(album, telebot.Silent)
 		if err != nil {
+			// Group send failed - sending images manually as seperate messages
 			log.Err(err).Msg("Error while sending album")
-			// Group send failed - sending images manually
 			for _, image := range images {
 				c.Notify(telebot.UploadingPhoto)
 
@@ -382,10 +534,10 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 					resp, err := http.Get(image.Url)
 					log.Info().Str("url", image.Url).Msg("Downloading image")
 					if err != nil {
-						log.Err(err).Str("url", image.Url).Send()
+						log.Err(err).Str("url", image.Url).Msg("Error while downloading image")
 						err := c.Reply(image.Url, telebot.Silent, telebot.AllowWithoutReply)
 						if err != nil {
-							log.Err(err).Str("url", image.Url).Msg("Error while sending image link")
+							log.Err(err).Str("url", image.Url).Msg("Error while replying with image link")
 						}
 						return
 					}
@@ -395,7 +547,7 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 					err = c.Reply(&telebot.Photo{File: telebot.FromReader(resp.Body)}, telebot.Silent)
 					if err != nil {
 						// Last resort: Send image URL as text
-						log.Err(err).Str("url", image.Url).Send()
+						log.Err(err).Str("url", image.Url).Msg("Error while replying with downloaded image")
 						err := c.Reply(image.Url, telebot.Silent, telebot.AllowWithoutReply)
 						if err != nil {
 							log.Err(err).Str("url", image.Url).Msg("Error while sending image link")

@@ -116,7 +116,7 @@ func GetRequest(url string, result any) error {
 	return nil
 }
 
-func GetRequestWithHeaders(url string, headers map[string]string, result any) error {
+func GetRequestWithHeader(url string, headers map[string]string, result any) error {
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {

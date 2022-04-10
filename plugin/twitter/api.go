@@ -95,6 +95,24 @@ type (
 		DisplayUrl  string `json:"display_url"`
 	}
 
+	Response11 struct {
+		ExtendedEntities struct {
+			Media []Media11 `json:"media"`
+		} `json:"extended_entities"`
+	}
+
+	Media11 struct {
+		VideoInfo VideoInfo `json:"video_info"`
+	}
+
+	VideoInfo struct {
+		Variants []struct {
+			Bitrate     int    `json:"bitrate"`
+			ContentType string `json:"content_type"`
+			Url         string `json:"url"`
+		} `json:"variants"`
+	}
+
 	Error struct {
 		Errors []struct {
 			Parameters map[string][]string `json:"parameters"`
@@ -250,4 +268,18 @@ func (p *PublicMetrics) String() string {
 	}
 
 	return sb.String()
+}
+
+// HighestResolution returns the URL of the video with the highest bitrate/resolution
+func (m *Media11) HighestResolution() string {
+	var bitrate int
+	var index int
+	for i, variant := range m.VideoInfo.Variants {
+		if variant.Bitrate > bitrate {
+			bitrate = variant.Bitrate
+			index = i
+		}
+	}
+
+	return m.VideoInfo.Variants[index].Url
 }
