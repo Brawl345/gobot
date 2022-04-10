@@ -112,7 +112,7 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 				}
 
 				go func() {
-					err := handler.Run(plugin.NextbotContext{
+					err := handler.Run(plugin.GobotContext{
 						Context: c,
 						Matches: matches,
 					})
@@ -196,7 +196,7 @@ func (d *Dispatcher) OnCallback(c telebot.Context) error {
 				}
 
 				go func() {
-					err := handler.Run(plugin.NextbotContext{
+					err := handler.Run(plugin.GobotContext{
 						Context: c,
 						Matches: matches,
 					})
@@ -270,7 +270,7 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 				}
 
 				go func() {
-					err := handler.Run(plugin.NextbotContext{
+					err := handler.Run(plugin.GobotContext{
 						Context: c,
 						Matches: matches,
 					})

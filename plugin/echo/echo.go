@@ -27,7 +27,7 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func onEcho(c plugin.NextbotContext) error {
+func onEcho(c plugin.GobotContext) error {
 	return c.Reply(c.Matches[1], &telebot.SendOptions{
 		AllowWithoutReply:     true,
 		DisableWebPagePreview: true,

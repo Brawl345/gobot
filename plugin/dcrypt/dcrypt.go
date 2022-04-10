@@ -48,13 +48,13 @@ func (plg *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	}
 }
 
-func (plg *Plugin) OnFile(c plugin.NextbotContext) error {
+func (plg *Plugin) OnFile(c plugin.GobotContext) error {
 	if c.Message().Document.MIME != "text/plain" ||
 		!strings.HasSuffix(c.Message().Document.FileName, ".dlc") {
 		return nil
 	}
 
-	c.Notify(telebot.UploadingDocument)
+	_ = c.Notify(telebot.UploadingDocument)
 
 	if c.Message().Document.FileSize > utils.MaxFilesizeDownload {
 		return c.Reply("❌ DLC-Container ist größer als 20 MB.", utils.DefaultSendOptions)

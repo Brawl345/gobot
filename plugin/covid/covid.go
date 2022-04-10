@@ -118,8 +118,8 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func OnCountry(c plugin.NextbotContext) error {
-	c.Notify(telebot.Typing)
+func OnCountry(c plugin.GobotContext) error {
+	_ = c.Notify(telebot.Typing)
 
 	var httpError *utils.HttpError
 	var result countryResult
@@ -206,7 +206,7 @@ func OnCountry(c plugin.NextbotContext) error {
 		),
 	)
 
-	c.Notify(telebot.Typing)
+	_ = c.Notify(telebot.Typing)
 	var vaccine vaccineResult
 	err = utils.GetRequest(
 		fmt.Sprintf(
@@ -248,8 +248,8 @@ func OnCountry(c plugin.NextbotContext) error {
 
 }
 
-func OnRun(c plugin.NextbotContext) error {
-	c.Notify(telebot.Typing)
+func OnRun(c plugin.GobotContext) error {
+	_ = c.Notify(telebot.Typing)
 
 	resultCh := make(chan allResult)
 	allCountriesCh := make(chan []countryResult)

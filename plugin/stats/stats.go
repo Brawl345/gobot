@@ -39,7 +39,7 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (plg *Plugin) OnStats(c plugin.NextbotContext) error {
+func (plg *Plugin) OnStats(c plugin.GobotContext) error {
 	users, err := plg.chatsUsersService.GetAllUsersWithMsgCount(c.Chat())
 	if err != nil {
 		log.Err(err).Int64("chat_id", c.Chat().ID).Msg("Failed to get statistics")

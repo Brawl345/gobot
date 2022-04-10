@@ -25,12 +25,12 @@ import (
 var log = logger.NewLogger("bot")
 
 type (
-	Nextbot struct {
+	Gobot struct {
 		Telebot *telebot.Bot
 	}
 )
 
-func New() (*Nextbot, error) {
+func New() (*Gobot, error) {
 	db, err := sql.New()
 	if err != nil {
 		return nil, err
@@ -89,7 +89,7 @@ func New() (*Nextbot, error) {
 		return nil, err
 	}
 
-	b := &Nextbot{
+	b := &Gobot{
 		Telebot: bot,
 	}
 

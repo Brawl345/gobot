@@ -71,6 +71,6 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (plg *Plugin) OnAbout(c plugin.NextbotContext) error {
+func (plg *Plugin) OnAbout(c plugin.GobotContext) error {
 	return c.Reply(plg.aboutText, utils.DefaultSendOptions)
 }

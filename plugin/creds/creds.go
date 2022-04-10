@@ -53,7 +53,7 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (plg *Plugin) OnGet(c plugin.NextbotContext) error {
+func (plg *Plugin) OnGet(c plugin.GobotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
@@ -93,7 +93,7 @@ func (plg *Plugin) OnGet(c plugin.NextbotContext) error {
 
 }
 
-func (plg *Plugin) OnAdd(c plugin.NextbotContext) error {
+func (plg *Plugin) OnAdd(c plugin.GobotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
@@ -110,7 +110,7 @@ func (plg *Plugin) OnAdd(c plugin.NextbotContext) error {
 	return c.Reply("✅ Schlüssel gespeichert", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnDelete(c plugin.NextbotContext) error {
+func (plg *Plugin) OnDelete(c plugin.GobotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
@@ -126,7 +126,7 @@ func (plg *Plugin) OnDelete(c plugin.NextbotContext) error {
 	return c.Reply("✅ Schlüssel gelöscht", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnHide(c plugin.NextbotContext) error {
+func (plg *Plugin) OnHide(c plugin.GobotContext) error {
 	err := c.Bot().Delete(c.Callback().Message)
 	if err != nil {
 		log.Err(err).Send()

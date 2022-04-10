@@ -14,32 +14,32 @@ type (
 
 	Handler interface {
 		Command() any
-		Run(c NextbotContext) error
+		Run(c GobotContext) error
 	}
 
-	NextbotContext struct {
+	GobotContext struct {
 		telebot.Context
 		Matches []string // Regex matches
 	}
 
-	NextbotHandlerFunc func(c NextbotContext) error
+	GobotHandlerFunc func(c GobotContext) error
 
 	CommandHandler struct {
 		Trigger     any
-		HandlerFunc NextbotHandlerFunc
+		HandlerFunc GobotHandlerFunc
 		AdminOnly   bool
 		GroupOnly   bool
 		HandleEdits bool
 	}
 
 	CallbackHandler struct {
-		HandlerFunc NextbotHandlerFunc
+		HandlerFunc GobotHandlerFunc
 		Trigger     *regexp.Regexp
 		AdminOnly   bool
 	}
 
 	InlineHandler struct {
-		HandlerFunc         NextbotHandlerFunc
+		HandlerFunc         GobotHandlerFunc
 		Trigger             *regexp.Regexp
 		AdminOnly           bool
 		CanBeUsedByEveryone bool
@@ -50,7 +50,7 @@ func (h *CommandHandler) Command() any {
 	return h.Trigger
 }
 
-func (h *CommandHandler) Run(c NextbotContext) error {
+func (h *CommandHandler) Run(c GobotContext) error {
 	return h.HandlerFunc(c)
 }
 
@@ -58,7 +58,7 @@ func (h *CallbackHandler) Command() any {
 	return h.Trigger
 }
 
-func (h *CallbackHandler) Run(c NextbotContext) error {
+func (h *CallbackHandler) Run(c GobotContext) error {
 	return h.HandlerFunc(c)
 }
 
@@ -66,6 +66,6 @@ func (h *InlineHandler) Command() any {
 	return h.Trigger
 }
 
-func (h *InlineHandler) Run(c NextbotContext) error {
+func (h *InlineHandler) Run(c GobotContext) error {
 	return h.HandlerFunc(c)
 }

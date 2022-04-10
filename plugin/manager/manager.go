@@ -60,7 +60,7 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (plg *Plugin) OnEnable(c plugin.NextbotContext) error {
+func (plg *Plugin) OnEnable(c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
 	err := plg.managerService.EnablePlugin(pluginName)
@@ -73,7 +73,7 @@ func (plg *Plugin) OnEnable(c plugin.NextbotContext) error {
 	return c.Reply("✅ Plugin wurde aktiviert", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnEnableInChat(c plugin.NextbotContext) error {
+func (plg *Plugin) OnEnableInChat(c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
 	err := plg.managerService.EnablePluginForChat(c.Chat(), pluginName)
@@ -87,7 +87,7 @@ func (plg *Plugin) OnEnableInChat(c plugin.NextbotContext) error {
 	return c.Reply("✅ Plugin wurde für diesen Chat wieder aktiviert", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnDisable(c plugin.NextbotContext) error {
+func (plg *Plugin) OnDisable(c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
 	if pluginName == "manager" {
@@ -104,7 +104,7 @@ func (plg *Plugin) OnDisable(c plugin.NextbotContext) error {
 	return c.Reply("✅ Plugin wurde deaktiviert", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnDisableInChat(c plugin.NextbotContext) error {
+func (plg *Plugin) OnDisableInChat(c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
 	if pluginName == "manager" {

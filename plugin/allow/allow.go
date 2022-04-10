@@ -55,7 +55,7 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (plg *Plugin) OnAllow(c plugin.NextbotContext) error {
+func (plg *Plugin) OnAllow(c plugin.GobotContext) error {
 	if c.Message().IsReply() { // Allow user
 		if c.Message().ReplyTo.Sender.IsBot {
 			return c.Reply("🤖🤖🤖", utils.DefaultSendOptions)
@@ -98,7 +98,7 @@ func (plg *Plugin) OnAllow(c plugin.NextbotContext) error {
 	}
 }
 
-func (plg *Plugin) OnDeny(c plugin.NextbotContext) error {
+func (plg *Plugin) OnDeny(c plugin.GobotContext) error {
 	if c.Message().IsReply() { // Deny user
 		if c.Message().ReplyTo.Sender.IsBot {
 			return c.Reply("🤖🤖🤖", utils.DefaultSendOptions)

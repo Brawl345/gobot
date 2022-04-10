@@ -35,7 +35,7 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 		},
 	}
 }
-func onId(c plugin.NextbotContext) error {
+func onId(c plugin.GobotContext) error {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("Du bist <b>%s", html.EscapeString(c.Sender().FirstName)))
@@ -59,7 +59,7 @@ func onId(c plugin.NextbotContext) error {
 	return c.Reply(sb.String(), utils.DefaultSendOptions)
 }
 
-func onIdInline(c plugin.NextbotContext) error {
+func onIdInline(c plugin.GobotContext) error {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("<b>%s", html.EscapeString(c.Sender().FirstName)))

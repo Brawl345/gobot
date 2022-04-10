@@ -135,7 +135,7 @@ func (plg *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	}
 }
 
-func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
+func (plg *Plugin) OnStatus(c plugin.GobotContext) error {
 	var httpError *utils.HttpError
 	var partialError *PartialError
 	var twitterError *Error
@@ -401,7 +401,7 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 
 	// Send video as seperate message
 	if video.MediaKey != "" {
-		c.Notify(telebot.UploadingVideo)
+		_ = c.Notify(telebot.UploadingVideo)
 
 		// Need to contact 1.1 API since v2 API doesn't return direct URL to video
 		//	See: https://twitterdevfeedback.uservoice.com/forums/930250-/suggestions/41291761-
@@ -476,7 +476,7 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 				log.Err(err).Msg("Could not send initial 'download video' message")
 			}
 
-			c.Notify(telebot.UploadingVideo)
+			_ = c.Notify(telebot.UploadingVideo)
 
 			resp, err := http.Get(videoUrl)
 			log.Info().Str("url", videoUrl).Msg("Downloading video")
@@ -517,7 +517,7 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 
 	// Send images (> 1) as seperate message (album)
 	if len(images) > 1 {
-		c.Notify(telebot.UploadingPhoto)
+		_ = c.Notify(telebot.UploadingPhoto)
 		album := make([]telebot.Inputtable, 0, len(images))
 		for _, image := range images {
 			album = append(album, &telebot.Photo{File: telebot.FromURL(image.Url)})
@@ -528,7 +528,7 @@ func (plg *Plugin) OnStatus(c plugin.NextbotContext) error {
 			// Group send failed - sending images manually as seperate messages
 			log.Err(err).Msg("Error while sending album")
 			for _, image := range images {
-				c.Notify(telebot.UploadingPhoto)
+				_ = c.Notify(telebot.UploadingPhoto)
 
 				func() {
 					resp, err := http.Get(image.Url)

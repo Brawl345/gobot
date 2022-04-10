@@ -51,7 +51,7 @@ func (plg *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	}
 }
 
-func (plg *Plugin) OnMedia(c plugin.NextbotContext) error {
+func (plg *Plugin) OnMedia(c plugin.GobotContext) error {
 	var fileID string
 	var uniqueID string
 	var subFolder string
