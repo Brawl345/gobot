@@ -18,6 +18,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/id"
 	"github.com/Brawl345/gobot/plugin/manager"
 	"github.com/Brawl345/gobot/plugin/stats"
+	"github.com/Brawl345/gobot/plugin/twitter"
 	"gopkg.in/telebot.v3"
 )
 
@@ -78,6 +79,7 @@ func New() (*Nextbot, error) {
 		id.New(),
 		manager.New(managerService),
 		stats.New(chatsUsersService),
+		twitter.New(credentialService),
 	}
 	managerService.SetPlugins(plugins)
 

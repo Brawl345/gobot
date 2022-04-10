@@ -46,6 +46,14 @@ type (
 	}
 )
 
+func GermanTimezone() *time.Location {
+	timezone, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		timezone, _ = time.LoadLocation("UTC")
+	}
+	return timezone
+}
+
 func ReadVersionInfo() (VersionInfo, error) {
 	buildInfo, ok := debug.ReadBuildInfo()
 
@@ -82,6 +90,45 @@ func IsAdmin(user *telebot.User) bool {
 
 func GetRequest(url string, result any) error {
 	resp, err := http.Get(url)
+
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return &HttpError{
+			StatusCode: resp.StatusCode,
+			Status:     resp.Status,
+		}
+	}
+
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+
+	if err != nil {
+		return err
+	}
+
+	if err := json.Unmarshal(body, result); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetRequestWithHeaders(url string, headers map[string]string, result any) error {
+	req, err := http.NewRequest("GET", url, nil)
+
+	if err != nil {
+		return err
+	}
+
+	for k, v := range headers {
+		req.Header.Add(k, v)
+	}
+
+	client := &http.Client{}
+	resp, err := client.Do(req)
 
 	if err != nil {
 		return err
