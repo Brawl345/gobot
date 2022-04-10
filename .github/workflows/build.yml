@@ -13,8 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        GOOS: [ linux ]
+        GOOS: [ windows, linux ]
         GOARCH: [ amd64, arm ]
+        exclude:
+          - GOOS: windows
+            GOARCH: arm
 
     steps:
       - name: Checkout repo
@@ -41,7 +44,12 @@ jobs:
           GOARCH: ${{ matrix.GOARCH }}
         run: go build -ldflags="-s -w" -o dist/$NAME-$GOOS-$GOARCH
 
+      - name: Rename binaries (Windows)
+        if: matrix.GOOS == 'windows'
+        run: for x in dist/$NAME-windows-*; do mv $x $x.exe; done
+
       - name: Compress binary
+        if: matrix.GOOS != 'windows' || matrix.GOARCH != 'arm64'
         uses: crazy-max/ghaction-upx@v1
         with:
           version: latest
