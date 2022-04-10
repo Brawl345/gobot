@@ -1,6 +1,7 @@
 package twitter
 
 // Taken from https://github.com/klaidas/go-oauth1
+// 	Released under the MIT license
 
 import (
 	"crypto/hmac"
