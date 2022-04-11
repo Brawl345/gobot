@@ -41,13 +41,13 @@ func (*Plugin) Name() string {
 func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/allow(?:@%s)?$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/allow(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: plg.OnAllow,
 			AdminOnly:   true,
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/deny(?:@%s)?$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/deny(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: plg.OnDeny,
 			AdminOnly:   true,
 			GroupOnly:   true,

@@ -21,7 +21,7 @@ func (*Plugin) Name() string {
 func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/e(?:cho)?(?:@%s)? (.+)$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/e(?:cho)?(?:@%s)? (.+)$`, botInfo.Username)),
 			HandlerFunc: onEcho,
 		},
 	}

@@ -105,11 +105,11 @@ func (*Plugin) Name() string {
 func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/covid(?:@%s)?$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/covid(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: OnRun,
 		},
 		&plugin.CommandHandler{
-			Trigger: regexp.MustCompile(fmt.Sprintf(`^/covid(?:@%s)?[ _]([A-z ]+)(?:@%s)?$`,
+			Trigger: regexp.MustCompile(fmt.Sprintf(`(?i)^/covid(?:@%s)?[ _]([A-z ]+)(?:@%s)?$`,
 				botInfo.Username,
 				botInfo.Username),
 			),

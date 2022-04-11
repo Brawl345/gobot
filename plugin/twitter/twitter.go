@@ -121,15 +121,15 @@ func (*Plugin) Name() string {
 func (plg *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile("twitter\\.com/[0-9A-Za-z_]+/status(?:es)?/(\\d+)"),
+			Trigger:     regexp.MustCompile("(?i)twitter\\.com/[0-9A-Za-z_]+/status(?:es)?/(\\d+)"),
 			HandlerFunc: plg.OnStatus,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile("twitter\\.com/status(?:es)?/(\\d+)"),
+			Trigger:     regexp.MustCompile("(?i)twitter\\.com/status(?:es)?/(\\d+)"),
 			HandlerFunc: plg.OnStatus,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile("nitter\\.net/[0-9A-Za-z_]+/status(?:es)?/(\\d+)"),
+			Trigger:     regexp.MustCompile("(?i)nitter\\.net/[0-9A-Za-z_]+/status(?:es)?/(\\d+)"),
 			HandlerFunc: plg.OnStatus,
 		},
 	}

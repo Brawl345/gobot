@@ -31,17 +31,17 @@ func (*Plugin) Name() string {
 func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/creds(?:@%s)?$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/creds(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: plg.OnGet,
 			AdminOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/creds_add(?:@%s)? ([^\s]+) (.+)$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/creds_add(?:@%s)? ([^\s]+) (.+)$`, botInfo.Username)),
 			HandlerFunc: plg.OnAdd,
 			AdminOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/creds_del(?:@%s)? ([^\s]+)$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/creds_del(?:@%s)? ([^\s]+)$`, botInfo.Username)),
 			HandlerFunc: plg.OnDelete,
 			AdminOnly:   true,
 		},

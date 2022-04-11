@@ -65,7 +65,7 @@ func (*Plugin) Name() string {
 func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/about|start(?:@%s)?$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/about|start(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: plg.OnAbout,
 		},
 	}

@@ -32,7 +32,7 @@ func (*Plugin) Name() string {
 func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`^/stats(?:@%s)?$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/stats(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: plg.OnStats,
 			GroupOnly:   true,
 		},
