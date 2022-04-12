@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/sosodev/duration"
 	"golang.org/x/exp/constraints"
 )
 
@@ -57,5 +58,46 @@ func EmbedGUID(guid string) string {
 	sb.WriteString("(<code>")
 	sb.WriteString(guid)
 	sb.WriteString("</code>)")
+	return sb.String()
+}
+
+func HumanizeDuration(d *duration.Duration) string {
+	var sb strings.Builder
+
+	if d.Years > 0 {
+		sb.WriteString(strconv.Itoa(int(d.Years)))
+		sb.WriteString("y")
+	}
+
+	if d.Months > 0 {
+		sb.WriteString(strconv.Itoa(int(d.Months)))
+		sb.WriteString("M")
+	}
+
+	if d.Weeks > 0 {
+		sb.WriteString(strconv.Itoa(int(d.Weeks)))
+		sb.WriteString("w")
+	}
+
+	if d.Days > 0 {
+		sb.WriteString(strconv.Itoa(int(d.Days)))
+		sb.WriteString("d")
+	}
+
+	if d.Hours > 0 {
+		sb.WriteString(strconv.Itoa(int(d.Hours)))
+		sb.WriteString("h")
+	}
+
+	if d.Minutes > 0 {
+		sb.WriteString(strconv.Itoa(int(d.Minutes)))
+		sb.WriteString("m")
+	}
+
+	if d.Seconds > 0 {
+		sb.WriteString(strconv.Itoa(int(d.Seconds)))
+		sb.WriteString("s")
+	}
+
 	return sb.String()
 }

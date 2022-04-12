@@ -19,10 +19,11 @@ import (
 	"github.com/Brawl345/gobot/plugin/manager"
 	"github.com/Brawl345/gobot/plugin/stats"
 	"github.com/Brawl345/gobot/plugin/twitter"
+	"github.com/Brawl345/gobot/plugin/youtube"
 	"gopkg.in/telebot.v3"
 )
 
-var log = logger.NewLogger("bot")
+var log = logger.New("bot")
 
 type (
 	Gobot struct {
@@ -80,6 +81,7 @@ func New() (*Gobot, error) {
 		manager.New(managerService),
 		stats.New(chatsUsersService),
 		twitter.New(credentialService),
+		youtube.New(credentialService),
 	}
 	managerService.SetPlugins(plugins)
 

@@ -16,4 +16,5 @@ require (
 require (
 	github.com/go-gorp/gorp/v3 v3.0.2 // indirect
 	github.com/rs/xid v1.4.0 // indirect
+	github.com/sosodev/duration v0.0.0-20220124054057-cb2cd96dd316 // indirect
 )
