@@ -30,28 +30,28 @@ type (
 	}
 )
 
-func New(credentialsService models.CredentialService) *Plugin {
-	bearerToken, err := credentialsService.GetKey("twitter_bearer_token")
+func New(credentialService models.CredentialService) *Plugin {
+	bearerToken, err := credentialService.GetKey("twitter_bearer_token")
 	if err != nil {
 		log.Warn().Msg("twitter_bearer_token not found")
 	}
 
-	consumerKey, err := credentialsService.GetKey("twitter_consumer_key")
+	consumerKey, err := credentialService.GetKey("twitter_consumer_key")
 	if err != nil {
 		log.Warn().Msg("twitter_consumer_key not found")
 	}
 
-	consumerSecret, err := credentialsService.GetKey("twitter_consumer_secret")
+	consumerSecret, err := credentialService.GetKey("twitter_consumer_secret")
 	if err != nil {
 		log.Warn().Msg("twitter_consumer_secret not found")
 	}
 
-	accessToken, err := credentialsService.GetKey("twitter_access_token_key")
+	accessToken, err := credentialService.GetKey("twitter_access_token_key")
 	if err != nil {
 		log.Warn().Msg("twitter_access_token_key not found")
 	}
 
-	accessSecret, err := credentialsService.GetKey("twitter_access_token_secret")
+	accessSecret, err := credentialService.GetKey("twitter_access_token_secret")
 	if err != nil {
 		log.Warn().Msg("twitter_access_token_secret not found")
 	}

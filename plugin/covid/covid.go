@@ -17,13 +17,13 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-var log = logger.New("covid")
-
 const (
 	BaseUrl       = "https://disease.sh/v3/covid-19"
 	MyCountry     = "Germany" // Country that will definitely be shown in the top list
 	TopListPlaces = 10
 )
+
+var log = logger.New("covid")
 
 type (
 	Plugin struct{}

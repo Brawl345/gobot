@@ -21,8 +21,8 @@ type Plugin struct {
 	apiKey string
 }
 
-func New(credentialsService models.CredentialService) *Plugin {
-	apiKey, err := credentialsService.GetKey("google_api_key")
+func New(credentialService models.CredentialService) *Plugin {
+	apiKey, err := credentialService.GetKey("google_api_key")
 	if err != nil {
 		log.Warn().Msg("google_api_key not found")
 	}
