@@ -446,9 +446,15 @@ func (plg *Plugin) OnStatus(c plugin.GobotContext) error {
 			return nil
 		}
 
+		if len(videoResponse.ExtendedEntities.Media) == 0 {
+			log.Error().Str("url", api11Url).Msg("No video found")
+			return nil
+		}
+
 		videoUrl := videoResponse.ExtendedEntities.Media[0].HighestResolution()
 		if videoUrl == "" {
 			log.Error().Str("url", api11Url).Msg("No video URL found")
+			return nil
 		}
 
 		plural := ""
