@@ -2,3 +2,4 @@
 *.iml
 .env
 tmp/
+http-client.private.env.json

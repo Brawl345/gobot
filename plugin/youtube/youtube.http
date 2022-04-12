@@ -1,0 +1,20 @@
+### Normal video
+GET https://www.googleapis.com/youtube/v3/videos
+    ?key={{google_api_key}}
+    &id=v_vdxnYuwsM
+    &part=snippet,statistics,contentDetails,liveStreamingDetails
+    &fields=items/id,items/snippet(publishedAt,channelId,channelTitle,title),items/statistics(viewCount,likeCount,commentCount),items/contentDetails(duration,regionRestriction),items/liveStreamingDetails(scheduledStartTime,scheduledEndTime,actualStartTime,actualEndTime,concurrentViewers)
+
+### Livestream
+GET https://www.googleapis.com/youtube/v3/videos
+    ?key={{google_api_key}}
+    &id=9Auq9mYxFEE
+    &part=snippet,statistics,contentDetails,liveStreamingDetails
+    &fields=items/id,items/snippet(publishedAt,channelId,channelTitle,title),items/statistics(viewCount,likeCount,commentCount),items/contentDetails(duration,regionRestriction),items/liveStreamingDetails(scheduledStartTime,scheduledEndTime,actualStartTime,actualEndTime,concurrentViewers)
+
+### Archived Livestream
+GET https://www.googleapis.com/youtube/v3/videos
+    ?key={{google_api_key}}
+    &id=COvAMv8d9L4
+    &part=snippet,statistics,contentDetails,liveStreamingDetails
+    &fields=items/id,items/snippet(publishedAt,channelId,channelTitle,title),items/statistics(viewCount,likeCount,commentCount),items/contentDetails(duration,regionRestriction),items/liveStreamingDetails(scheduledStartTime,scheduledEndTime,actualStartTime,actualEndTime,concurrentViewers)

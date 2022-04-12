@@ -1,0 +1,8 @@
+### Tweet (API v2)
+GET https://api.twitter.com/2/tweets/1512158553670397954
+    ?expansions=attachments.media_keys,attachments.poll_ids,author_id,referenced_tweets.id,referenced_tweets.id.author_id
+    &media.fields=alt_text,media_key,public_metrics,type,url
+    &poll.fields=id,options,end_datetime,voting_status
+    &tweet.fields=created_at,entities,public_metrics,withheld
+    &user.fields=id,username,name,verified,protected
+Authorization: Bearer {{twitter_bearer_token}}
