@@ -11,10 +11,11 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
 
-var log = logger.NewLogger("dcrypt")
+var log = logger.New("dcrypt")
 var textRegex = regexp.MustCompile("(?s)<textarea>(.+)</textarea>")
 
 type (
@@ -62,7 +63,9 @@ func (plg *Plugin) OnFile(c plugin.GobotContext) error {
 
 	file, err := c.Bot().File(&telebot.File{FileID: c.Message().Document.FileID})
 	if err != nil {
-		log.Err(err).Msg("Failed to download file")
+		log.Err(err).
+			Interface("file", c.Message().Document).
+			Msg("Failed to download file")
 		return c.Reply("❌ Konnte Datei nicht von Telegram herunterladen.", utils.DefaultSendOptions)
 	}
 	defer file.Close()
@@ -79,8 +82,12 @@ func (plg *Plugin) OnFile(c plugin.GobotContext) error {
 		},
 	)
 	if err != nil {
-		log.Err(err).Msg("Failed to upload file")
-		return c.Reply("❌ Konnte Datei nicht zu dcrypt.it hochladen.", utils.DefaultSendOptions)
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Msg("Failed to upload file")
+		return c.Reply(fmt.Sprintf("❌ Konnte Datei nicht zu dcrypt.it hochladen.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions)
 	}
 
 	if resp.StatusCode == 413 {
@@ -100,27 +107,38 @@ func (plg *Plugin) OnFile(c plugin.GobotContext) error {
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		log.Err(err).Msg("Failed to read response body")
-		return c.Reply("❌ Konnte Antwort von dcrypt.it nicht lesen.", utils.DefaultSendOptions)
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Msg("Failed to read response body")
+		return c.Reply(fmt.Sprintf("❌ Konnte Antwort von dcrypt.it nicht lesen.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions)
 	}
 
 	matches := textRegex.FindStringSubmatch(string(body))
 	if matches == nil {
-		return c.Reply("❌ Konnte Antwort von dcrypt.it nicht lesen.", utils.DefaultSendOptions)
+		return c.Reply("❌ dcrypt.it hat keine Links gefunden.", utils.DefaultSendOptions)
 	}
 
 	var data Response
 	if err := json.Unmarshal([]byte(matches[1]), &data); err != nil {
-		log.Err(err).Msg("Failed to unmarshal response body")
-		return c.Reply("❌ Konnte Antwort von dcrypt.it nicht lesen.", utils.DefaultSendOptions)
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Msg("Failed to unmarshal response body")
+		return c.Reply(fmt.Sprintf("❌ Konnte Antwort von dcrypt.it nicht lesen.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions)
 	}
 
 	if data.Success.Message == "" {
+		guid := xid.New().String()
 		log.
 			Error().
+			Str("guid", guid).
 			Strs("form_errors", data.FormErrors.Dlcfile).
 			Msg("Failed to decrypt DLC")
-		return c.Reply("❌ DLC-Container konnte nicht gelesen werden.", utils.DefaultSendOptions)
+		return c.Reply(fmt.Sprintf("❌ DLC-Container konnte nicht gelesen werden.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions)
 	}
 
 	var filename string

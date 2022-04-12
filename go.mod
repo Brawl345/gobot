@@ -13,4 +13,7 @@ require (
 	gopkg.in/telebot.v3 v3.0.0
 )
 
-require github.com/go-gorp/gorp/v3 v3.0.2 // indirect
+require (
+	github.com/go-gorp/gorp/v3 v3.0.2 // indirect
+	github.com/rs/xid v1.4.0 // indirect
+)

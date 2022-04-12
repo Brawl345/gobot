@@ -8,10 +8,11 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
 
-var log = logger.NewLogger("allow")
+var log = logger.New("allow")
 
 type (
 	Plugin struct {
@@ -70,10 +71,13 @@ func (plg *Plugin) OnAllow(c plugin.GobotContext) error {
 
 		err := plg.allowService.AllowUser(c.Message().ReplyTo.Sender)
 		if err != nil {
+			guid := xid.New().String()
 			log.Err(err).
+				Str("guid", guid).
 				Int64("chat_id", c.Message().ReplyTo.Sender.ID).
 				Msg("Failed to allow user")
-			return c.Reply("❌ Fehler beim Erlauben des Nutzers.", utils.DefaultSendOptions)
+			return c.Reply(fmt.Sprintf("❌ Fehler beim Erlauben des Nutzers.%s", utils.EmbedGUID(guid)),
+				utils.DefaultSendOptions)
 		}
 
 		return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot jetzt überall benutzen",
@@ -88,10 +92,13 @@ func (plg *Plugin) OnAllow(c plugin.GobotContext) error {
 
 		err := plg.allowService.AllowChat(c.Chat())
 		if err != nil {
+			guid := xid.New().String()
 			log.Err(err).
+				Str("guid", guid).
 				Int64("chat_id", c.Message().ReplyTo.Sender.ID).
 				Msg("Failed to allow chat")
-			return c.Reply("❌ Fehler beim Erlauben des Chats.", utils.DefaultSendOptions)
+			return c.Reply(fmt.Sprintf("❌ Fehler beim Erlauben des Chats.%s", utils.EmbedGUID(guid)),
+				utils.DefaultSendOptions)
 		}
 
 		return c.Reply("✅ Dieser Chat darf den Bot jetzt nutzen", utils.DefaultSendOptions)
@@ -113,10 +120,13 @@ func (plg *Plugin) OnDeny(c plugin.GobotContext) error {
 
 		err := plg.allowService.DenyUser(c.Message().ReplyTo.Sender)
 		if err != nil {
+			guid := xid.New().String()
 			log.Err(err).
+				Str("guid", guid).
 				Int64("chat_id", c.Message().ReplyTo.Sender.ID).
 				Msg("Failed to deny user")
-			return c.Reply("❌ Fehler beim Verweigern des Nutzers.", utils.DefaultSendOptions)
+			return c.Reply(fmt.Sprintf("❌ Fehler beim Verweigern des Nutzers.%s", utils.EmbedGUID(guid)),
+				utils.DefaultSendOptions)
 		}
 
 		return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot jetzt nicht mehr überall benutzen",
@@ -131,10 +141,13 @@ func (plg *Plugin) OnDeny(c plugin.GobotContext) error {
 
 		err := plg.allowService.DenyChat(c.Chat())
 		if err != nil {
+			guid := xid.New().String()
 			log.Err(err).
+				Str("guid", guid).
 				Int64("chat_id", c.Message().ReplyTo.Sender.ID).
 				Msg("Failed to deny chat")
-			return c.Reply("❌ Fehler beim Verweigern des Chats.", utils.DefaultSendOptions)
+			return c.Reply(fmt.Sprintf("❌ Fehler beim Verweigern des Chats.%s", utils.EmbedGUID(guid)),
+				utils.DefaultSendOptions)
 		}
 
 		return c.Reply("✅ Dieser Chat darf den Bot jetzt nicht mehr nutzen", utils.DefaultSendOptions)

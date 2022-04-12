@@ -7,10 +7,11 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
 
-var log = logger.NewLogger("manager")
+var log = logger.New("manager")
 
 type (
 	Plugin struct {
@@ -65,10 +66,12 @@ func (plg *Plugin) OnEnable(c plugin.GobotContext) error {
 
 	err := plg.managerService.EnablePlugin(pluginName)
 	if err != nil {
+		guid := xid.New().String()
 		log.Err(err).
+			Str("guid", guid).
 			Str("plugin", pluginName).
 			Msg("Failed to enable plugin")
-		return c.Reply(err.Error(), utils.DefaultSendOptions)
+		return c.Reply(fmt.Sprintf("%s%s", err.Error(), utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 	}
 	return c.Reply("✅ Plugin wurde aktiviert", utils.DefaultSendOptions)
 }
@@ -78,11 +81,13 @@ func (plg *Plugin) OnEnableInChat(c plugin.GobotContext) error {
 
 	err := plg.managerService.EnablePluginForChat(c.Chat(), pluginName)
 	if err != nil {
+		guid := xid.New().String()
 		log.Err(err).
+			Str("guid", guid).
 			Str("plugin", pluginName).
 			Int64("chat_id", c.Chat().ID).
 			Msg("Failed to enable plugin in chat")
-		return c.Reply(err.Error(), utils.DefaultSendOptions)
+		return c.Reply(fmt.Sprintf("%s%s", err.Error(), utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 	}
 	return c.Reply("✅ Plugin wurde für diesen Chat wieder aktiviert", utils.DefaultSendOptions)
 }
@@ -96,10 +101,12 @@ func (plg *Plugin) OnDisable(c plugin.GobotContext) error {
 
 	err := plg.managerService.DisablePlugin(pluginName)
 	if err != nil {
+		guid := xid.New().String()
 		log.Err(err).
+			Str("guid", guid).
 			Str("plugin", pluginName).
 			Msg("Failed to disable plugin")
-		return c.Reply(err.Error(), utils.DefaultSendOptions)
+		return c.Reply(fmt.Sprintf("%s%s", err.Error(), utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 	}
 	return c.Reply("✅ Plugin wurde deaktiviert", utils.DefaultSendOptions)
 }
@@ -113,11 +120,13 @@ func (plg *Plugin) OnDisableInChat(c plugin.GobotContext) error {
 
 	err := plg.managerService.DisablePluginForChat(c.Chat(), pluginName)
 	if err != nil {
+		guid := xid.New().String()
 		log.Err(err).
+			Str("guid", guid).
 			Str("plugin", pluginName).
 			Int64("chat_id", c.Chat().ID).
 			Msg("Failed to disable plugin in chat")
-		return c.Reply(err.Error(), utils.DefaultSendOptions)
+		return c.Reply(fmt.Sprintf("%s%s", err.Error(), utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 	}
 	return c.Reply("✅ Plugin wurde für diesen Chat deaktiviert", utils.DefaultSendOptions)
 }

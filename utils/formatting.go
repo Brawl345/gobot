@@ -50,3 +50,12 @@ func EmbedImage(url string) string {
 
 	return sb.String()
 }
+
+func EmbedGUID(guid string) string {
+	var sb strings.Builder
+	sb.WriteString("\n")
+	sb.WriteString("(<code>")
+	sb.WriteString(guid)
+	sb.WriteString("</code>)")
+	return sb.String()
+}

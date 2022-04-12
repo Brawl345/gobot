@@ -12,17 +12,21 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/Brawl345/gobot/logger"
 	"gopkg.in/telebot.v3"
 )
 
 const MaxFilesizeDownload = int(20e6)
 
-var DefaultSendOptions = &telebot.SendOptions{
-	AllowWithoutReply:     true,
-	DisableWebPagePreview: true,
-	DisableNotification:   true,
-	ParseMode:             telebot.ModeHTML,
-}
+var (
+	DefaultSendOptions = &telebot.SendOptions{
+		AllowWithoutReply:     true,
+		DisableWebPagePreview: true,
+		DisableNotification:   true,
+		ParseMode:             telebot.ModeHTML,
+	}
+	log = logger.New("utils")
+)
 
 type (
 	MultiPartParam struct {
@@ -49,6 +53,7 @@ type (
 func GermanTimezone() *time.Location {
 	timezone, err := time.LoadLocation("Europe/Berlin")
 	if err != nil {
+		log.Err(err).Msg("Failed to load timezone, using UTC")
 		timezone, _ = time.LoadLocation("UTC")
 	}
 	return timezone
@@ -89,6 +94,10 @@ func IsAdmin(user *telebot.User) bool {
 }
 
 func GetRequest(url string, result any) error {
+	log.Debug().
+		Str("url", url).
+		Send()
+
 	resp, err := http.Get(url)
 
 	if err != nil {
@@ -113,10 +122,19 @@ func GetRequest(url string, result any) error {
 		return err
 	}
 
+	log.Debug().
+		Str("url", url).
+		Interface("result", result).
+		Send()
 	return nil
 }
 
 func GetRequestWithHeader(url string, headers map[string]string, result any) error {
+	log.Debug().
+		Str("url", url).
+		Interface("headers", headers).
+		Send()
+
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
@@ -152,10 +170,20 @@ func GetRequestWithHeader(url string, headers map[string]string, result any) err
 		return err
 	}
 
+	log.Debug().
+		Str("url", url).
+		Interface("result", result).
+		Send()
+
 	return nil
 }
 
 func MultiPartFormRequest(url string, params []MultiPartParam, files []MultiPartFile) (*http.Response, error) {
+	log.Debug().
+		Str("url", url).
+		Interface("params", params).
+		Send()
+
 	var b bytes.Buffer
 	writer := multipart.NewWriter(&b)
 	defer writer.Close()

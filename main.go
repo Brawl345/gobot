@@ -11,7 +11,7 @@ import (
 	_ "github.com/joho/godotenv/autoload"
 )
 
-var log = logger.NewLogger("main")
+var log = logger.New("main")
 
 func main() {
 	versionInfo, err := utils.ReadVersionInfo()

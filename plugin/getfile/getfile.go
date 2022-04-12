@@ -14,7 +14,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-var log = logger.NewLogger("getfile")
+var log = logger.New("getfile")
 
 type Plugin struct {
 	fileService models.FileService

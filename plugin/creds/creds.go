@@ -9,10 +9,11 @@ import (
 	"github.com/Brawl345/gobot/models"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
 
-var log = logger.NewLogger("creds")
+var log = logger.New("creds")
 
 type Plugin struct {
 	credentialService models.CredentialService
@@ -61,8 +62,12 @@ func (plg *Plugin) OnGet(c plugin.GobotContext) error {
 	creds, err := plg.credentialService.GetAllCredentials()
 
 	if err != nil {
-		log.Err(err).Send()
-		return c.Reply("❌ Fehler beim Abrufen der Schlüssel", utils.DefaultSendOptions)
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Send()
+		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Schlüssel.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions)
 	}
 
 	if len(creds) == 0 {
@@ -103,7 +108,10 @@ func (plg *Plugin) OnAdd(c plugin.GobotContext) error {
 
 	err := plg.credentialService.SetKey(key, value)
 	if err != nil {
-		log.Err(err).Str("key", key).Send()
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Msg("Error adding key")
 		return c.Reply("❌ Fehler beim Speichern des Schlüssels", utils.DefaultSendOptions)
 	}
 
@@ -119,7 +127,10 @@ func (plg *Plugin) OnDelete(c plugin.GobotContext) error {
 	err := plg.credentialService.DeleteKey(key)
 
 	if err != nil {
-		log.Err(err).Str("key", key).Send()
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Msg("Error deleting key")
 		return c.Reply(err.Error())
 	}
 

@@ -12,11 +12,12 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/rs/xid"
 	"gopkg.in/guregu/null.v4"
 	"gopkg.in/telebot.v3"
 )
 
-var log = logger.NewLogger("covid")
+var log = logger.New("covid")
 
 const (
 	BaseUrl       = "https://disease.sh/v3/covid-19"
@@ -133,6 +134,7 @@ func OnCountry(c plugin.GobotContext) error {
 	)
 
 	if err != nil {
+		guid := xid.New().String()
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == 404 {
 				return c.Reply("❌ Das gesuchte Land existiert nicht oder hat keine COVID-Fälle gemeldet.\n"+
@@ -140,13 +142,19 @@ func OnCountry(c plugin.GobotContext) error {
 					utils.DefaultSendOptions,
 				)
 			} else {
-				log.Error().Int("status_code", httpError.StatusCode).Msg("Unexpected status code")
+				log.Error().
+					Str("guid", guid).
+					Int("status_code", httpError.StatusCode).
+					Msg("Unexpected status code")
 			}
 		} else {
-			log.Err(err).Send()
+			log.Err(err).
+				Str("guid", guid).
+				Send()
 		}
 
-		return c.Reply("❌ Bei der Anfrage ist ein Fehler aufgetreten.", utils.DefaultSendOptions)
+		return c.Reply(fmt.Sprintf("❌ Bei der Anfrage ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions)
 	}
 
 	if result.Message.Valid {

@@ -8,7 +8,7 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func NewLogger(component string) zerolog.Logger {
+func New(component string) zerolog.Logger {
 	sublogger := log.With().
 		Str("component", component).
 		Logger()

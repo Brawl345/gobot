@@ -18,7 +18,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-var log = logger.NewLogger("twitter")
+var log = logger.New("twitter")
 
 type (
 	Plugin struct {
@@ -66,7 +66,9 @@ func New(credentialsService models.CredentialService) *Plugin {
 }
 
 func doTwitterRequest(url string, bearerToken string, result any) error {
-	log.Debug().Str("url", url).Send()
+	log.Debug().
+		Str("url", url).
+		Send()
 	req, err := http.NewRequest("GET", url, nil)
 
 	if err != nil {
@@ -97,6 +99,10 @@ func doTwitterRequest(url string, bearerToken string, result any) error {
 				Status:     resp.Status,
 			}
 		}
+		log.Error().
+			Str("url", url).
+			Interface("response", twitterError).
+			Msg("Got Twitter error")
 		return &twitterError
 	}
 
@@ -104,12 +110,21 @@ func doTwitterRequest(url string, bearerToken string, result any) error {
 
 	err = json.Unmarshal(body, &partialError)
 	if err == nil && partialError.Errors != nil {
+		log.Error().
+			Str("url", url).
+			Interface("response", partialError).
+			Msg("Got partial Twitter error")
 		return &partialError
 	}
 
 	if err := json.Unmarshal(body, result); err != nil {
 		return err
 	}
+
+	log.Debug().
+		Str("url", url).
+		Interface("response", result).
+		Send()
 
 	return nil
 }
@@ -199,7 +214,7 @@ func (plg *Plugin) OnStatus(c plugin.GobotContext) error {
 				}
 			}
 			log.Err(twitterError).Interface("error", twitterError.Errors).Send()
-		} else if errors.As(err, &partialError) { // // Log only errors that are not "status not found"
+		} else if errors.As(err, &partialError) {
 			for _, err := range partialError.Errors {
 				if err.Title == "Not Found Error" {
 					return c.Reply("❌ Der Status wurde nicht gefunden.")
@@ -208,7 +223,6 @@ func (plg *Plugin) OnStatus(c plugin.GobotContext) error {
 					return c.Reply("❌ Die Tweets dieses Nutzers sind privat.")
 				}
 			}
-			log.Error().Interface("error", partialError.Errors).Send()
 			return c.Reply(fmt.Sprintf("❌ <b>API-Fehler:</b> %s", html.EscapeString(partialError.Errors[0].Detail)),
 				utils.DefaultSendOptions)
 		} else {
@@ -216,8 +230,6 @@ func (plg *Plugin) OnStatus(c plugin.GobotContext) error {
 		}
 		return c.Reply("❌ Bei der Anfrage ist ein Fehler aufgetreten.", utils.DefaultSendOptions)
 	}
-
-	log.Debug().Str("url", requestUrl.String()).Interface("response", response).Send()
 
 	sendOptions := &telebot.SendOptions{
 		AllowWithoutReply:     true,
@@ -433,8 +445,6 @@ func (plg *Plugin) OnStatus(c plugin.GobotContext) error {
 			log.Err(err).Str("url", api11Url).Msg("Error while contacting v1.1 API")
 			return nil
 		}
-
-		log.Debug().Str("url", api11Url).Interface("videoResponse", videoResponse).Send()
 
 		videoUrl := videoResponse.ExtendedEntities.Media[0].HighestResolution()
 		if videoUrl == "" {
