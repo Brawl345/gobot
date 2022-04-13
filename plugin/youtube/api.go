@@ -49,9 +49,11 @@ func (v *Video) BlockedInGermany() bool {
 		return true
 	}
 
-	if !slices.Contains(v.ContentDetails.RegionRestriction.Allowed, "DE") {
+	if len(v.ContentDetails.RegionRestriction.Allowed) > 0 &&
+		!slices.Contains(v.ContentDetails.RegionRestriction.Allowed, "DE") {
 		return true
 	}
+
 	return false
 }
 
