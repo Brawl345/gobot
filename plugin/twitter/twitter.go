@@ -457,16 +457,20 @@ func (plg *Plugin) OnStatus(c plugin.GobotContext) error {
 			return nil
 		}
 
-		plural := ""
-		if video.PublicMetrics.ViewCount != 1 {
-			plural = "e"
+		caption := videoUrl
+		if video.PublicMetrics.ViewCount > 0 {
+			plural := ""
+			if video.PublicMetrics.ViewCount != 1 {
+				plural = "e"
+			}
+			caption = fmt.Sprintf(
+				"%s (%s Aufruf%s)",
+				videoUrl,
+				utils.FormatThousand(video.PublicMetrics.ViewCount),
+				plural,
+			)
 		}
-		caption := fmt.Sprintf(
-			"%s (%s Aufruf%s)",
-			videoUrl,
-			utils.FormatThousand(video.PublicMetrics.ViewCount),
-			plural,
-		)
+
 		err = c.Reply(
 			&telebot.Video{
 				File:      telebot.FromURL(videoUrl),
