@@ -138,8 +138,8 @@ func New() (*Gobot, error) {
 func GetPoller() telebot.Poller {
 	allowedUpdates := []string{"message", "edited_message", "callback_query", "inline_query"}
 
-	webhookPort := strings.TrimSpace(os.Getenv("WEBHOOK_PORT"))
-	webhookURL := strings.TrimSpace(os.Getenv("WEBHOOK_URL"))
+	webhookPort := strings.TrimSpace(os.Getenv("PORT"))
+	webhookURL := strings.TrimSpace(os.Getenv("WEBHOOK_PUBLIC_URL"))
 
 	if webhookPort == "" || webhookURL == "" {
 		log.Debug().Msg("Using long polling")
@@ -151,7 +151,7 @@ func GetPoller() telebot.Poller {
 
 	log.Debug().
 		Str("port", webhookPort).
-		Str("webhook_url", webhookURL).
+		Str("webhook_public_url", webhookURL).
 		Msg("Using webhook")
 
 	return &telebot.Webhook{

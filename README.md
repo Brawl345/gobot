@@ -26,7 +26,7 @@ To use a webhook, set the webhook-related variables. If you don't, long-polling 
 
 Example with [Hookdeck](https://hookdeck.com/):
 
-1. Copy your `https://events.hookdeck.com/e/...` URL to `WEBHOOK_URL` variable
+1. Copy your `https://events.hookdeck.com/e/...` URL to `WEBHOOK_PUBLIC_URL` variable
 2. Choose a webhook port (e.g. `41320`) - be careful, no error will be shown if the port is already in use (limitation
    of telebot)!
 3. Use the Hookdeck CLI: `hookdeck listen 41320 [SOURCE]`
@@ -36,3 +36,5 @@ Example with [Hookdeck](https://hookdeck.com/):
 Set the env variable `PRINT_MSGS` to some value (like `true`) to print all messages the bot receives to the terminal.
 
 Set `DEBUG` to some value (like `true`) to enable debug logs.
+
+Set `IGNORE_SQL_MIGRATION` to some value (like `true`) to ignore the SQL migration feature when you want to migrate yourself (for example with PlanetScale since it doesn't support foreign key references).
