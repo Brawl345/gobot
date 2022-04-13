@@ -2,24 +2,24 @@
 
 CREATE TABLE `chats`
 (
-    `id`         BIGINT(20) NOT NULL PRIMARY KEY,
-    `created_at` DATETIME   NOT NULL DEFAULT current_timestamp(),
-    `updated_at` DATETIME   NULL     DEFAULT NULL ON UPDATE current_timestamp(),
-    `title`      TINYTEXT   NOT NULL,
-    `allowed`    TINYINT(1) NOT NULL DEFAULT 0,
+    `id`         BIGINT(20)   NOT NULL PRIMARY KEY,
+    `created_at` DATETIME     NOT NULL DEFAULT current_timestamp(),
+    `updated_at` DATETIME     NULL     DEFAULT NULL ON UPDATE current_timestamp(),
+    `title`      VARCHAR(255) NOT NULL,
+    `allowed`    TINYINT(1)   NOT NULL DEFAULT 0,
     INDEX `allowed` (`allowed`)
 ) COLLATE = 'utf8mb4_general_ci'
   ENGINE = InnoDB;
 
 CREATE TABLE `users`
 (
-    `id`         BIGINT(20) NOT NULL PRIMARY KEY,
-    `created_at` DATETIME   NOT NULL DEFAULT current_timestamp(),
-    `updated_at` DATETIME   NULL     DEFAULT NULL ON UPDATE current_timestamp(),
-    `first_name` TINYTEXT   NOT NULL,
-    `last_name`  TINYTEXT   NULL,
-    `username`   TINYTEXT   NULL,
-    `allowed`    TINYINT(1) NOT NULL DEFAULT 0,
+    `id`         BIGINT(20)   NOT NULL PRIMARY KEY,
+    `created_at` DATETIME     NOT NULL DEFAULT current_timestamp(),
+    `updated_at` DATETIME     NULL     DEFAULT NULL ON UPDATE current_timestamp(),
+    `first_name` VARCHAR(255) NOT NULL,
+    `last_name`  VARCHAR(255) NULL,
+    `username`   VARCHAR(255) NULL,
+    `allowed`    TINYINT(1)   NOT NULL DEFAULT 0,
     INDEX `allowed` (`allowed`),
     INDEX `username` (`username`)
 ) COLLATE = 'utf8mb4_general_ci'
@@ -61,8 +61,8 @@ CREATE TABLE `chats_plugins`
     PRIMARY KEY (`chat_id`, `plugin_name`),
     INDEX `FK_chats_plugins_plugins` (`plugin_name`),
     INDEX `enabled` (`enabled`),
-    CONSTRAINT `FK_chats_plugins_chats` FOREIGN KEY (`chat_id`) REFERENCES `andi_gobot`.`chats` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT `FK_chats_plugins_plugins` FOREIGN KEY (`plugin_name`) REFERENCES `andi_gobot`.`plugins` (`name`) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT `FK_chats_plugins_chats` FOREIGN KEY (`chat_id`) REFERENCES `chats` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT `FK_chats_plugins_plugins` FOREIGN KEY (`plugin_name`) REFERENCES `plugins` (`name`) ON UPDATE CASCADE ON DELETE CASCADE
 ) COLLATE = 'utf8mb4_general_ci'
   ENGINE = InnoDB;
 
