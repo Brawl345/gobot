@@ -16,12 +16,19 @@ import (
 
 var log = logger.New("getfile")
 
-type Plugin struct {
-	fileService models.FileService
-	dir         string
-}
+type (
+	Plugin struct {
+		fileService Service
+		dir         string
+	}
 
-func New(credentialService models.CredentialService, fileService models.FileService) *Plugin {
+	Service interface {
+		Create(uniqueID, fileName, mediaType string) error
+		Exists(uniqueID string) (bool, error)
+	}
+)
+
+func New(credentialService models.CredentialService, fileService Service) *Plugin {
 	dir, err := credentialService.GetKey("getfile_dir")
 	if err != nil {
 		dir = "tmp"
