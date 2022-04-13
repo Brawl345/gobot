@@ -10,6 +10,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/plugin/about"
 	"github.com/Brawl345/gobot/plugin/allow"
+	"github.com/Brawl345/gobot/plugin/cleverbot"
 	"github.com/Brawl345/gobot/plugin/covid"
 	"github.com/Brawl345/gobot/plugin/creds"
 	"github.com/Brawl345/gobot/plugin/dcrypt"
@@ -59,6 +60,8 @@ func New() (*Gobot, error) {
 	chatsPluginsService := sql.NewChatsPluginsService(db, chatService, pluginService)
 	chatsUsersService := sql.NewChatsUsersService(db, chatService, userService)
 
+	cleverbotService := sql.NewCleverbotService(db)
+
 	allowService, err := NewAllowService(chatService, userService)
 	if err != nil {
 		return nil, err
@@ -72,6 +75,7 @@ func New() (*Gobot, error) {
 	plugins := []plugin.Plugin{
 		about.New(),
 		allow.New(allowService),
+		cleverbot.New(credentialService, cleverbotService),
 		covid.New(),
 		creds.New(credentialService),
 		dcrypt.New(),

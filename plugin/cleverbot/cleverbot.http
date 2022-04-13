@@ -1,0 +1,10 @@
+### Cleverbot without state
+GET https://www.cleverbot.com/getreply
+    ?key={{cleverbot_api_key}}
+    &input=Hallo Welt!
+
+### Cleverbot with state
+GET https://www.cleverbot.com/getreply
+    ?key={{cleverbot_api_key}}
+    &input=Warum so frech?
+    &cs=MXYxCTh2MQlBdldZRDFUVFJDMzgJMUZ2MTY0OTgwMjgxMQk2NHZIYWxsbyBXZWx0IQk2NGlIYWxsbyBtw7xsbCB0b25uZS4J
