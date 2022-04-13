@@ -1,1 +1,1 @@
-web: gobot
+web: bin/gobot
