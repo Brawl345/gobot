@@ -26,22 +26,25 @@ func New() *Plugin {
 
 	sb.WriteString("<b>Gobot</b>\n")
 
-	sb.WriteString(
-		fmt.Sprintf(
-			"<code>%s</code>\n",
-			versionInfo.Revision,
-		),
-	)
+	if versionInfo.Revision != "" {
+		sb.WriteString(
+			fmt.Sprintf(
+				"<code>%s</code>\n",
+				versionInfo.Revision,
+			),
+		)
+	}
 
-	sb.WriteString(
-		fmt.Sprintf(
-			"<i>Comitted: %s</i>",
-			versionInfo.LastCommit,
-		),
-	)
-
-	if versionInfo.DirtyBuild {
-		sb.WriteString(" (dirty)")
+	if !versionInfo.LastCommit.IsZero() {
+		sb.WriteString(
+			fmt.Sprintf(
+				"<i>Comitted: %s</i>",
+				versionInfo.LastCommit,
+			),
+		)
+		if versionInfo.DirtyBuild {
+			sb.WriteString(" (dirty)")
+		}
 	}
 
 	sb.WriteString(
