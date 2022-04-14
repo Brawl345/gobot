@@ -24,12 +24,12 @@ func New() *Plugin {
 
 	var sb strings.Builder
 
-	sb.WriteString("<b>Gobot</b>\n")
+	sb.WriteString("<b>Gobot</b>")
 
 	if versionInfo.Revision != "" {
 		sb.WriteString(
 			fmt.Sprintf(
-				"<code>%s</code>\n",
+				"\n<code>%s</code>",
 				versionInfo.Revision,
 			),
 		)
@@ -38,7 +38,7 @@ func New() *Plugin {
 	if !versionInfo.LastCommit.IsZero() {
 		sb.WriteString(
 			fmt.Sprintf(
-				"<i>Comitted: %s</i>",
+				"\n<i>Comitted: %s</i>",
 				versionInfo.LastCommit,
 			),
 		)
