@@ -136,7 +136,7 @@ func (*Plugin) Name() string {
 func (plg *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile("(?i)twitter\\.com/[0-9A-Za-z_]+/status(?:es)?/(\\d+)"),
+			Trigger:     regexp.MustCompile("(?i)twitter\\.com/\\w+/status(?:es)?/(\\d+)"),
 			HandlerFunc: plg.OnStatus,
 		},
 		&plugin.CommandHandler{
@@ -144,7 +144,7 @@ func (plg *Plugin) Handlers(*telebot.User) []plugin.Handler {
 			HandlerFunc: plg.OnStatus,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile("(?i)nitter\\.net/[0-9A-Za-z_]+/status(?:es)?/(\\d+)"),
+			Trigger:     regexp.MustCompile("(?i)nitter\\.net/\\w+/status(?:es)?/(\\d+)"),
 			HandlerFunc: plg.OnStatus,
 		},
 	}
@@ -288,10 +288,10 @@ func (plg *Plugin) OnStatus(c plugin.GobotContext) error {
 			percentage := (float64(option.Votes) / float64(totalVotes)) * 100
 			sb.WriteString(
 				fmt.Sprintf(
-					"%d) %s <i>(%d Stimme%s, %.1f %%)</i>\n",
+					"%d) %s <i>(%s Stimme%s, %.1f %%)</i>\n",
 					option.Position,
 					html.EscapeString(option.Label),
-					option.Votes,
+					utils.FormatThousand(option.Votes),
 					plural,
 					percentage,
 				),
@@ -310,8 +310,8 @@ func (plg *Plugin) OnStatus(c plugin.GobotContext) error {
 
 		sb.WriteString(
 			fmt.Sprintf(
-				"\n<i>%d Stimme%s - endet%s am %s</i>\n\n",
-				totalVotes,
+				"\n<i>%s Stimme%s - endet%s am %s</i>\n\n",
+				utils.FormatThousand(totalVotes),
 				plural,
 				closed,
 				poll.EndDatetime.In(timezone).Format("02.01.2006, 15:04:05 Uhr"),
