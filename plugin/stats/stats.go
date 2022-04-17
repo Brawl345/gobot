@@ -69,12 +69,14 @@ func (plg *Plugin) OnStats(c plugin.GobotContext) error {
 
 	for _, user := range users {
 		percentage := (float64(user.MsgCount) / float64(totalCount)) * 100
+		percentageString := fmt.Sprintf("%.2f", percentage)
+		percentageString = strings.ReplaceAll(percentageString, ".", ",")
 		if user.InGroup && user.MsgCount > 0 {
 			sb.WriteString(
-				fmt.Sprintf("<b>%s:</b> %s <code>(%.2f %%)</code>\n",
+				fmt.Sprintf("<b>%s:</b> %s <code>(%s %%)</code>\n",
 					html.EscapeString(user.GetFullName()),
 					utils.FormatThousand(user.MsgCount),
-					percentage,
+					percentageString,
 				),
 			)
 		}
@@ -83,9 +85,11 @@ func (plg *Plugin) OnStats(c plugin.GobotContext) error {
 	sb.WriteString("==============\n")
 	if otherMsgs > 0 {
 		percentage := (float64(otherMsgs) / float64(totalCount)) * 100
-		sb.WriteString(fmt.Sprintf("<b>Andere Nutzer:</b> %s <code>(%.2f %%)</code>\n",
+		percentageString := fmt.Sprintf("%.2f", percentage)
+		percentageString = strings.ReplaceAll(percentageString, ".", ",")
+		sb.WriteString(fmt.Sprintf("<b>Andere Nutzer:</b> %s <code>(%s %%)</code>\n",
 			utils.FormatThousand(otherMsgs),
-			percentage),
+			percentageString),
 		)
 	}
 	sb.WriteString(fmt.Sprintf("<b>GESAMT:</b> %s", utils.FormatThousand(totalCount)))
