@@ -87,7 +87,7 @@ func (p *Plugin) OnYouTubeLink(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", requestUrl.String()).
 			Msg("error getting youtube video")
-		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen des YouTube-Videos\n(<code>%s</code>)", guid),
+		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen des YouTube-Videos.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions)
 	}
 
