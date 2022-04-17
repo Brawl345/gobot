@@ -21,7 +21,7 @@ func NewAllowService(chatService models.ChatService, userService models.UserServ
 		return nil, err
 	}
 
-	allowedChats, err := userService.GetAllAllowed()
+	allowedChats, err := chatService.GetAllAllowed()
 	if err != nil {
 		return nil, err
 	}

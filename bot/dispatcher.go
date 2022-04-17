@@ -27,6 +27,7 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 	}
 
 	if !isAllowed {
+		log.Debug().Int64("chat_id", c.Chat().ID).Msg("User/Chat is not allowed")
 		return nil
 	}
 
