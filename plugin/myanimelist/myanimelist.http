@@ -1,0 +1,21 @@
+### Anime Details
+GET https://api.myanimelist.net/v2/anime/23209
+    ?fields=id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,num_list_users,num_scoring_users,nsfw,created_at,updated_at,media_type,status,genres,num_episodes,start_season,broadcast,source,average_episode_duration,rating,pictures,background,studios,statistics
+X-MAL-CLIENT-ID: {{mal_client_id}}
+
+### Anime Details (not found)
+GET https://api.myanimelist.net/v2/anime/0
+X-MAL-CLIENT-ID: {{mal_client_id}}
+
+### Anime Search
+GET https://api.myanimelist.net/v2/anime
+    ?q=love+live
+    &fields=id,title
+    &limit=5
+    &nsfw=true
+X-MAL-CLIENT-ID: {{mal_client_id}}
+
+### Anime Search (not found)
+GET https://api.myanimelist.net/v2/anime
+    ?q=§§§§
+X-MAL-CLIENT-ID: {{mal_client_id}}
