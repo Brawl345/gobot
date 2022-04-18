@@ -9,6 +9,7 @@ import (
 	"github.com/Brawl345/gobot/models/sql"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/plugin/about"
+	"github.com/Brawl345/gobot/plugin/alive"
 	"github.com/Brawl345/gobot/plugin/allow"
 	"github.com/Brawl345/gobot/plugin/cleverbot"
 	"github.com/Brawl345/gobot/plugin/covid"
@@ -75,6 +76,7 @@ func New() (*Gobot, error) {
 
 	plugins := []plugin.Plugin{
 		about.New(),
+		alive.New(),
 		allow.New(allowService),
 		cleverbot.New(credentialService, cleverbotService),
 		covid.New(),

@@ -2,6 +2,7 @@
 
 INSERT INTO `plugins` (`name`, `enabled`)
 VALUES ('about', 1),
+       ('alive', 1),
        ('allow', 1),
        ('creds', 1),
        ('echo', 1),
