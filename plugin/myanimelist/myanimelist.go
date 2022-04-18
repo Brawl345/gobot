@@ -55,6 +55,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 }
 
 func (p *Plugin) onSearch(c plugin.GobotContext) error {
+	_ = c.Notify(telebot.Typing)
 	var response AnimeSearch
 
 	requestUrl := url.URL{
@@ -112,6 +113,7 @@ func (p *Plugin) onSearch(c plugin.GobotContext) error {
 }
 
 func (p *Plugin) onAnime(c plugin.GobotContext) error {
+	_ = c.Notify(telebot.Typing)
 	var anime Anime
 	var httpError *utils.HttpError
 
