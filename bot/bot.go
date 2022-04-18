@@ -21,6 +21,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/kaomoji"
 	"github.com/Brawl345/gobot/plugin/manager"
 	"github.com/Brawl345/gobot/plugin/myanimelist"
+	"github.com/Brawl345/gobot/plugin/rki"
 	"github.com/Brawl345/gobot/plugin/stats"
 	"github.com/Brawl345/gobot/plugin/twitter"
 	"github.com/Brawl345/gobot/plugin/youtube"
@@ -89,6 +90,7 @@ func New() (*Gobot, error) {
 		kaomoji.New(),
 		manager.New(managerService),
 		myanimelist.New(credentialService),
+		rki.New(),
 		stats.New(chatsUsersService),
 		twitter.New(credentialService),
 		youtube.New(credentialService),

@@ -1,0 +1,8 @@
+### Germany
+GET https://api.corona-zahlen.org/germany
+
+### All districts
+GET https://api.corona-zahlen.org/districts
+
+### District
+GET https://api.corona-zahlen.org/districts/02000
