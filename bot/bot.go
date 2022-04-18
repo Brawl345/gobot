@@ -18,6 +18,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/echo"
 	"github.com/Brawl345/gobot/plugin/getfile"
 	"github.com/Brawl345/gobot/plugin/id"
+	"github.com/Brawl345/gobot/plugin/kaomoji"
 	"github.com/Brawl345/gobot/plugin/manager"
 	"github.com/Brawl345/gobot/plugin/myanimelist"
 	"github.com/Brawl345/gobot/plugin/stats"
@@ -85,6 +86,7 @@ func New() (*Gobot, error) {
 		echo.New(),
 		getfile.New(credentialService, fileService),
 		id.New(),
+		kaomoji.New(),
 		manager.New(managerService),
 		myanimelist.New(credentialService),
 		stats.New(chatsUsersService),
