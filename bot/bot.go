@@ -56,15 +56,18 @@ func New() (*Gobot, error) {
 		return nil, err
 	}
 
+	// General services
 	chatService := sql.NewChatService(db)
 	credentialService := sql.NewCredentialService(db)
-	fileService := sql.NewFileService(db)
 	pluginService := sql.NewPluginService(db)
 	userService := sql.NewUserService(db)
 	chatsPluginsService := sql.NewChatsPluginsService(db, chatService, pluginService)
 	chatsUsersService := sql.NewChatsUsersService(db, chatService, userService)
 
+	// Plugin-specific services
 	cleverbotService := sql.NewCleverbotService(db)
+	fileService := sql.NewFileService(db)
+	rkiService := sql.NewRKIService(db)
 
 	allowService, err := NewAllowService(chatService, userService)
 	if err != nil {
@@ -90,7 +93,7 @@ func New() (*Gobot, error) {
 		kaomoji.New(),
 		manager.New(managerService),
 		myanimelist.New(credentialService),
-		rki.New(),
+		rki.New(rkiService),
 		stats.New(chatsUsersService),
 		twitter.New(credentialService),
 		youtube.New(credentialService),

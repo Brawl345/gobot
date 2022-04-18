@@ -17,10 +17,22 @@ var log = logger.New("rki")
 
 const BaseUrl = "https://api.corona-zahlen.org"
 
-type Plugin struct{}
+type (
+	Plugin struct {
+		rkiService Service
+	}
 
-func New() *Plugin {
-	return &Plugin{}
+	Service interface {
+		DelAGS(user *telebot.User) error
+		GetAGS(user *telebot.User) (string, error)
+		SetAGS(user *telebot.User, ags string) error
+	}
+)
+
+func New(rkiService Service) *Plugin {
+	return &Plugin{
+		rkiService: rkiService,
+	}
 }
 
 func (p *Plugin) Name() string {
@@ -40,6 +52,18 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/rki_(\d+)(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: onDistrict,
+		},
+		&plugin.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/setrki_(\d+)(?:@%s)?$`, botInfo.Username)),
+			HandlerFunc: p.setRkiAGS,
+		},
+		&plugin.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/myrki(?:@%s)?$`, botInfo.Username)),
+			HandlerFunc: p.onMyRKI,
+		},
+		&plugin.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/delrki(?:@%s)?$`, botInfo.Username)),
+			HandlerFunc: p.delRKI,
 		},
 	}
 }
@@ -196,11 +220,9 @@ func onDistrictSearch(c plugin.GobotContext) error {
 	return c.Reply(sb.String(), utils.DefaultSendOptions)
 }
 
-func onDistrict(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func districtText(ags string) string {
+	url := fmt.Sprintf("%s/districts/%s", BaseUrl, ags)
 	var response DistrictResponse
-
-	url := fmt.Sprintf("%s/districts/%s", BaseUrl, c.Matches[1])
 	err := utils.GetRequest(
 		url,
 		&response,
@@ -213,15 +235,14 @@ func onDistrict(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", url).
 			Msg("error getting RKI data")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		return fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid))
 	}
 
 	if len(response.Districts) == 0 {
-		return c.Reply("❌ Stadt nicht gefunden.", utils.DefaultSendOptions)
+		return "❌ Stadt nicht gefunden."
 	}
 
-	district := response.Districts[c.Matches[1]]
+	district := response.Districts[ags]
 
 	var sb strings.Builder
 
@@ -278,10 +299,108 @@ func onDistrict(c plugin.GobotContext) error {
 	timezone := utils.GermanTimezone()
 	sb.WriteString(
 		fmt.Sprintf(
-			"\n<i>Zuletzt aktualisiert: %s</i>",
+			"\n<i>Zuletzt aktualisiert: %s</i>\n",
 			response.Meta.LastUpdate.In(timezone).Format("02.01.2006"),
 		),
 	)
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	sb.WriteString(
+		fmt.Sprintf(
+			"<i>Als Heimatstadt setzen: /setrki_%s</i>",
+			html.EscapeString(district.Ags),
+		),
+	)
+
+	return sb.String()
+}
+
+func onDistrict(c plugin.GobotContext) error {
+	_ = c.Notify(telebot.Typing)
+	return c.Reply(districtText(c.Matches[1]), utils.DefaultSendOptions)
+}
+
+func (p *Plugin) setRkiAGS(c plugin.GobotContext) error {
+	_ = c.Notify(telebot.Typing)
+	ags := c.Matches[1]
+
+	if len(ags) > 8 {
+		return c.Reply("❌ Gemeindeschlüssel muss kleiner als 8 Zeichen lang sein.\nSuche mit <code>/rki STADT</code>.",
+			utils.DefaultSendOptions)
+	}
+
+	var response DistrictResponse
+	url := fmt.Sprintf("%s/districts/%s", BaseUrl, ags)
+	err := utils.GetRequest(
+		url,
+		&response,
+	)
+
+	if err != nil {
+		guid := xid.New().String()
+		log.Error().
+			Err(err).
+			Str("guid", guid).
+			Str("url", url).
+			Msg("error getting RKI data")
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions)
+	}
+
+	if len(response.Districts) == 0 {
+		return c.Reply("❌ Stadt nicht gefunden.", utils.DefaultSendOptions)
+	}
+
+	err = p.rkiService.SetAGS(c.Sender(), ags)
+	if err != nil {
+		guid := xid.New().String()
+		log.Error().
+			Err(err).
+			Str("guid", guid).
+			Int64("user_id", c.Sender().ID).
+			Str("ags", ags).
+			Msg("error while saving AGS")
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(xid.New().String())),
+			utils.DefaultSendOptions)
+	}
+
+	return c.Reply("✅ Du kannst jetzt /myrki nutzen.", utils.DefaultSendOptions)
+}
+
+func (p *Plugin) onMyRKI(c plugin.GobotContext) error {
+	_ = c.Notify(telebot.Typing)
+	ags, err := p.rkiService.GetAGS(c.Sender())
+	if err != nil {
+		guid := xid.New().String()
+		log.Error().
+			Err(err).
+			Str("guid", guid).
+			Int64("user_id", c.Sender().ID).
+			Msg("error while getting AGS")
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions)
+	}
+
+	if ags == "" {
+		return c.Reply("❌ Du hast keinen Gemeindeschlüssel gespeichert."+
+			"\nSuche mit <code>/rki STADT</code> und setze ihn mit <code>/setrki_AGS</code>.",
+			utils.DefaultSendOptions)
+	}
+
+	return c.Reply(districtText(ags), utils.DefaultSendOptions)
+}
+
+func (p *Plugin) delRKI(c plugin.GobotContext) error {
+	err := p.rkiService.DelAGS(c.Sender())
+	if err != nil {
+		guid := xid.New().String()
+		log.Error().
+			Err(err).
+			Str("guid", guid).
+			Int64("user_id", c.Sender().ID).
+			Msg("error while deleting AGS")
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions)
+	}
+
+	return c.Reply("✅", utils.DefaultSendOptions)
 }
