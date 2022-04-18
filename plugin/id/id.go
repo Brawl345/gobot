@@ -30,7 +30,7 @@ func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 		},
 		&plugin.InlineHandler{
 			HandlerFunc:         onIdInline,
-			Trigger:             regexp.MustCompile("^(?:whoami|id)$"),
+			Trigger:             regexp.MustCompile("(?i)^(?:whoami|id)$"),
 			CanBeUsedByEveryone: true,
 		},
 	}
@@ -85,7 +85,7 @@ func onIdInline(c plugin.GobotContext) error {
 
 	return c.Answer(&telebot.QueryResponse{
 		Results:    telebot.Results{result},
-		CacheTime:  7200,
+		CacheTime:  2,
 		IsPersonal: true,
 	})
 }
