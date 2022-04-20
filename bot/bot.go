@@ -14,6 +14,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/cleverbot"
 	"github.com/Brawl345/gobot/plugin/covid"
 	"github.com/Brawl345/gobot/plugin/creds"
+	"github.com/Brawl345/gobot/plugin/currency"
 	"github.com/Brawl345/gobot/plugin/dcrypt"
 	"github.com/Brawl345/gobot/plugin/echo"
 	"github.com/Brawl345/gobot/plugin/getfile"
@@ -86,6 +87,7 @@ func New() (*Gobot, error) {
 		cleverbot.New(credentialService, cleverbotService),
 		covid.New(),
 		creds.New(credentialService),
+		currency.New(),
 		dcrypt.New(),
 		echo.New(),
 		getfile.New(credentialService, fileService),

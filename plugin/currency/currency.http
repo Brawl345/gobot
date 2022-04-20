@@ -1,0 +1,11 @@
+### Convert
+GET https://api.frankfurter.app/latest
+    ?amount=500.70
+    &from=JPY
+    &to=EUR
+
+### Invalid currency
+GET https://api.frankfurter.app/latest
+    ?amount=500.70
+    &from=XXX
+    &to=EUR
