@@ -12,6 +12,8 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
+const InlineQueryCacheTime = 7200
+
 type Plugin struct{}
 
 func New() *Plugin {
@@ -85,7 +87,7 @@ func onIdInline(c plugin.GobotContext) error {
 
 	return c.Answer(&telebot.QueryResponse{
 		Results:    telebot.Results{result},
-		CacheTime:  2,
+		CacheTime:  InlineQueryCacheTime,
 		IsPersonal: true,
 	})
 }

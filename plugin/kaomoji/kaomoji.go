@@ -15,6 +15,8 @@ const (
 	shrug             = "¯\\_(ツ)_/¯"
 )
 
+const InlineQueryCacheTime = 7200
+
 type Plugin struct{}
 
 func New() *Plugin {
@@ -67,7 +69,7 @@ func onShrugInline(c plugin.GobotContext) error {
 			Title: shrug,
 			Text:  shrug,
 		}},
-		CacheTime: 7200,
+		CacheTime: InlineQueryCacheTime,
 	})
 }
 
@@ -81,7 +83,7 @@ func onLennyFaceInline(c plugin.GobotContext) error {
 			Title: lennyFace,
 			Text:  lennyFace,
 		}},
-		CacheTime: 7200,
+		CacheTime: InlineQueryCacheTime,
 	})
 }
 
@@ -95,6 +97,6 @@ func onLookOfDisapprovalInline(c plugin.GobotContext) error {
 			Title: lookOfDisapproval,
 			Text:  lookOfDisapproval,
 		}},
-		CacheTime: 7200,
+		CacheTime: InlineQueryCacheTime,
 	})
 }

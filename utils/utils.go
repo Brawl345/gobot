@@ -16,8 +16,6 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-const MaxFilesizeDownload = int(20e6)
-
 var (
 	DefaultSendOptions = &telebot.SendOptions{
 		AllowWithoutReply:     true,

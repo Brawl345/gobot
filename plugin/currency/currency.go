@@ -17,9 +17,8 @@ import (
 var log = logger.New("currency")
 
 const (
-	ApiUrl                 = "https://api.frankfurter.app/latest?amount=%s&from=%s&to=%s"
-	InlineFailureCacheTime = 2
-	InlineCacheTime        = 3600
+	ApiUrl               = "https://api.frankfurter.app/latest?amount=%s&from=%s&to=%s"
+	InlineQueryCacheTime = 3600
 )
 
 type Plugin struct{}
@@ -141,7 +140,7 @@ func onConvertFromToInline(c plugin.GobotContext) error {
 			Msg("Failed to convert currency (inline mode)")
 		return c.Answer(&telebot.QueryResponse{
 			Results:    telebot.Results{},
-			CacheTime:  InlineFailureCacheTime,
+			CacheTime:  utils.InlineQueryFailureCacheTime,
 			IsPersonal: true,
 		})
 	}
@@ -159,7 +158,7 @@ func onConvertFromToInline(c plugin.GobotContext) error {
 
 	return c.Answer(&telebot.QueryResponse{
 		Results:    telebot.Results{result},
-		CacheTime:  InlineCacheTime,
+		CacheTime:  InlineQueryCacheTime,
 		IsPersonal: false,
 	})
 }
@@ -172,7 +171,7 @@ func onConvertToEURInline(c plugin.GobotContext) error {
 			Msg("Failed to convert currency (inline mode)")
 		return c.Answer(&telebot.QueryResponse{
 			Results:    telebot.Results{},
-			CacheTime:  InlineFailureCacheTime,
+			CacheTime:  utils.InlineQueryFailureCacheTime,
 			IsPersonal: true,
 		})
 	}
@@ -190,7 +189,7 @@ func onConvertToEURInline(c plugin.GobotContext) error {
 
 	return c.Answer(&telebot.QueryResponse{
 		Results:    telebot.Results{result},
-		CacheTime:  InlineCacheTime,
+		CacheTime:  InlineQueryCacheTime,
 		IsPersonal: false,
 	})
 }

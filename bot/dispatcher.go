@@ -222,7 +222,7 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 
 	if inlineQuery.Text == "" {
 		return c.Answer(&telebot.QueryResponse{
-			CacheTime:  1,
+			CacheTime:  utils.InlineQueryFailureCacheTime,
 			IsPersonal: true,
 		})
 	}
@@ -247,7 +247,7 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 				if !d.managerService.isPluginEnabled(plg.Name()) {
 					log.Printf("Plugin %s is disabled globally", plg.Name())
 					return c.Answer(&telebot.QueryResponse{
-						CacheTime:  1,
+						CacheTime:  utils.InlineQueryFailureCacheTime,
 						IsPersonal: true,
 					})
 				}
@@ -255,7 +255,7 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 				if handler.AdminOnly && !utils.IsAdmin(c.Sender()) {
 					log.Print("User is not an admin.")
 					return c.Answer(&telebot.QueryResponse{
-						CacheTime:  1,
+						CacheTime:  utils.InlineQueryFailureCacheTime,
 						IsPersonal: true,
 					})
 				}
@@ -264,7 +264,7 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 					isAllowed := d.allowService.IsUserAllowed(c.Sender())
 					if !isAllowed {
 						return c.Answer(&telebot.QueryResponse{
-							CacheTime:  1,
+							CacheTime:  utils.InlineQueryFailureCacheTime,
 							IsPersonal: true,
 						})
 					}
