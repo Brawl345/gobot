@@ -288,11 +288,7 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 		}
 	}
 
-	return c.Answer(&telebot.QueryResponse{
-		CacheTime:  1,
-		IsPersonal: true,
-	})
-
+	return nil
 }
 
 func (d *Dispatcher) OnUserJoined(c telebot.Context) error {
