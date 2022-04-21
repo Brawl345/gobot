@@ -1,6 +1,7 @@
 package covid
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"html"
@@ -13,91 +14,17 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
-	"gopkg.in/guregu/null.v4"
+	"golang.org/x/sync/errgroup"
 	"gopkg.in/telebot.v3"
 )
 
 const (
-	BaseUrl       = "https://disease.sh/v3/covid-19"
+	BaseUrl       = "https://corona.lmao.ninja/v3/covid-19"
 	MyCountry     = "Germany" // Country that will definitely be shown in the top list
 	TopListPlaces = 10
 )
 
 var log = logger.New("covid")
-
-type (
-	Plugin struct{}
-
-	Result struct {
-		Message                null.String `json:"message"`
-		Updated                null.Int    `json:"updated"`
-		Cases                  null.Int    `json:"cases"`
-		TodayCases             null.Int    `json:"todayCases"`
-		Deaths                 null.Int    `json:"deaths"`
-		TodayDeaths            null.Int    `json:"todayDeaths"`
-		Recovered              null.Int    `json:"recovered"`
-		TodayRecovered         null.Int    `json:"todayRecovered"`
-		Active                 null.Int    `json:"active"`
-		Critical               null.Int    `json:"critical"`
-		CasesPerOneMillion     null.Int    `json:"casesPerOneMillion"`
-		Tests                  null.Int    `json:"tests"`
-		TestsPerOneMillion     null.Float  `json:"testsPerOneMillion"`
-		Population             null.Int    `json:"population"`
-		OneCasePerPeople       null.Int    `json:"oneCasePerPeople"`
-		OneDeathPerPeople      null.Int    `json:"oneDeathPerPeople"`
-		OneTestPerPeople       null.Int    `json:"oneTestPerPeople"`
-		ActivePerOneMillion    null.Float  `json:"activePerOneMillion"`
-		RecoveredPerOneMillion null.Float  `json:"recoveredPerOneMillion"`
-		CriticalPerOneMillion  null.Float  `json:"criticalPerOneMillion"`
-	}
-
-	allResult struct {
-		*Result
-		AffectedCountries   int        `json:"affectedCountries"`
-		DeathsPerOneMillion null.Float `json:"deathsPerOneMillion"`
-	}
-
-	countryResult struct {
-		*Result
-		Country     null.String `json:"country"`
-		CountryInfo struct {
-			Flag null.String `json:"flag"`
-		} `json:"countryInfo"`
-		Continent           null.String `json:"continent"`
-		DeathsPerOneMillion null.Int    `json:"deathsPerOneMillion"`
-	}
-
-	vaccineResult struct {
-		Message  null.String `json:"message"`
-		Country  null.String `json:"country"`
-		Timeline []struct {
-			Total           int64  `json:"total"`
-			Daily           int64  `json:"daily"`
-			TotalPerHundred int64  `json:"totalPerHundred"`
-			DailyPerMillion int64  `json:"dailyPerMillion"`
-			Date            string `json:"date"`
-		} `json:"timeline"`
-	}
-)
-
-func New() *Plugin {
-	return &Plugin{}
-}
-
-func (countryResult *countryResult) GetRankingText(place int) string {
-	return fmt.Sprintf(
-		"%d. <b>%s:</b> %s Gesamt (+ %s); %s aktiv\n",
-		place,
-		countryResult.Country.String,
-		utils.FormatThousand(countryResult.Cases.Int64),
-		utils.FormatThousand(countryResult.TodayCases.Int64),
-		utils.FormatThousand(countryResult.Active.Int64),
-	)
-}
-
-func (result *Result) UpdatedParsed() time.Time {
-	return time.Unix(result.Updated.Int64/1000, 0)
-}
 
 func (*Plugin) Name() string {
 	return "covid"
@@ -259,50 +186,37 @@ func OnCountry(c plugin.GobotContext) error {
 func OnRun(c plugin.GobotContext) error {
 	_ = c.Notify(telebot.Typing)
 
-	resultCh := make(chan allResult)
-	allCountriesCh := make(chan []countryResult)
-	hasErrorCh := make(chan bool)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	eg, ctx := errgroup.WithContext(ctx)
 
-	go func() {
-		var countryResults []countryResult
-		err := utils.GetRequest(
+	var allCountries []countryResult
+	eg.Go(func() error {
+		return utils.GetRequest(
 			fmt.Sprintf(
 				"%s/countries?sort=cases&allowNull=true",
 				BaseUrl,
 			),
-			&countryResults,
+			&allCountries,
 		)
-		if err != nil {
-			log.Err(err).Str("on", "countries").Send()
-			close(allCountriesCh)
-			return
-		}
-		allCountriesCh <- countryResults
-	}()
+	})
 
-	go func() {
-		var all allResult
-		err := utils.GetRequest(
-			fmt.Sprintf(
-				"%s/all?allowNull=true",
-				BaseUrl,
-			),
-			&all,
-		)
-		if err != nil {
-			log.Err(err).Str("on", "all").Send()
-			hasErrorCh <- true
-			close(resultCh)
-			return
-		}
-		resultCh <- all
-		close(hasErrorCh)
-	}()
+	var all allResult
+	err := utils.GetRequest(
+		fmt.Sprintf(
+			"%s/all?allowNull=true",
+			BaseUrl,
+		),
+		&all,
+	)
 
-	result, allCountries, hasError := <-resultCh, <-allCountriesCh, <-hasErrorCh
-
-	if hasError {
-		return c.Reply("❌ Bei der Anfrage ist ein Fehler aufgetreten.", utils.DefaultSendOptions)
+	if err != nil {
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Str("on", "all").
+			Msg("Failed to get 'all' data")
+		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 	}
 
 	var sb strings.Builder
@@ -310,42 +224,57 @@ func OnRun(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>COVID-19-Fälle weltweit (%d Länder):</b>\n",
-			result.AffectedCountries,
+			all.AffectedCountries,
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Gesamt:</b> %s (+ %s) (%s pro Million)\n",
-			utils.FormatThousand(result.Cases.Int64),
-			utils.FormatThousand(result.TodayCases.Int64),
-			utils.FormatThousand(result.CasesPerOneMillion.Int64),
+			utils.FormatThousand(all.Cases.Int64),
+			utils.FormatThousand(all.TodayCases.Int64),
+			utils.FormatThousand(all.CasesPerOneMillion.Int64),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Aktiv:</b> %s (%s pro Million)\n",
-			utils.FormatThousand(result.Active.Int64),
-			utils.RoundAndFormatThousand(result.ActivePerOneMillion.Float64),
+			utils.FormatThousand(all.Active.Int64),
+			utils.RoundAndFormatThousand(all.ActivePerOneMillion.Float64),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Genesen:</b> %s\n",
-			utils.FormatThousand(result.Recovered.Int64),
+			utils.FormatThousand(all.Recovered.Int64),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Todesfälle:</b> %s (+ %s) (%s pro Million)\n\n",
-			utils.FormatThousand(result.Deaths.Int64),
-			utils.FormatThousand(result.TodayDeaths.Int64),
-			utils.RoundAndFormatThousand(result.DeathsPerOneMillion.Float64),
+			utils.FormatThousand(all.Deaths.Int64),
+			utils.FormatThousand(all.TodayDeaths.Int64),
+			utils.RoundAndFormatThousand(all.DeathsPerOneMillion.Float64),
 		),
 	)
+
+	err = eg.Wait()
+	if err != nil {
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Str("on", "countries").
+			Msg("Failed to get 'all countries' data")
+		sb.WriteString(fmt.Sprintf("❌ Fehler beim Abrufen aller Länder.%s", utils.EmbedGUID(guid)))
+
+		return c.Reply(sb.String(), &telebot.SendOptions{
+			AllowWithoutReply: true,
+			ParseMode:         telebot.ModeHTML,
+		})
+	}
 
 	myCountryIndex := 0
 
@@ -378,7 +307,7 @@ func OnRun(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"\n<i>Zuletzt aktualisiert: %s Uhr</i>",
-			result.UpdatedParsed().Format("02.01.2006, 15:04:05"),
+			all.UpdatedParsed().Format("02.01.2006, 15:04:05"),
 		),
 	)
 
