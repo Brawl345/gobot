@@ -1,0 +1,6 @@
+### Geocode location
+GET https://nominatim.openstreetmap.org/search.php
+    ?q=Osaka
+    &accept-language=de
+    &limit=1
+    &format=jsonv2

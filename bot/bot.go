@@ -18,6 +18,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/dcrypt"
 	"github.com/Brawl345/gobot/plugin/echo"
 	"github.com/Brawl345/gobot/plugin/getfile"
+	"github.com/Brawl345/gobot/plugin/home"
 	"github.com/Brawl345/gobot/plugin/id"
 	"github.com/Brawl345/gobot/plugin/kaomoji"
 	"github.com/Brawl345/gobot/plugin/manager"
@@ -61,6 +62,7 @@ func New() (*Gobot, error) {
 	// General services
 	chatService := sql.NewChatService(db)
 	credentialService := sql.NewCredentialService(db)
+	geocodingService := sql.NewGeocodingService(db)
 	pluginService := sql.NewPluginService(db)
 	userService := sql.NewUserService(db)
 	chatsPluginsService := sql.NewChatsPluginsService(db, chatService, pluginService)
@@ -69,6 +71,7 @@ func New() (*Gobot, error) {
 	// Plugin-specific services
 	cleverbotService := sql.NewCleverbotService(db)
 	fileService := sql.NewFileService(db)
+	homeService := sql.NewHomeService(db)
 	rkiService := sql.NewRKIService(db)
 
 	allowService, err := NewAllowService(chatService, userService)
@@ -92,6 +95,7 @@ func New() (*Gobot, error) {
 		dcrypt.New(),
 		echo.New(),
 		getfile.New(credentialService, fileService),
+		home.New(geocodingService, homeService),
 		id.New(),
 		kaomoji.New(),
 		manager.New(managerService),

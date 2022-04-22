@@ -15,7 +15,7 @@ type chatsPluginsService struct {
 	*sqlx.DB
 }
 
-var log = logger.New("chats_plugins")
+var log = logger.New("sql")
 
 func NewChatsPluginsService(
 	db *sqlx.DB,
