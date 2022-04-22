@@ -62,7 +62,7 @@ func New() (*Gobot, error) {
 	// General services
 	chatService := sql.NewChatService(db)
 	credentialService := sql.NewCredentialService(db)
-	geocodingService := sql.NewGeocodingService(db)
+	geocodingService := NewGeocodingService()
 	pluginService := sql.NewPluginService(db)
 	userService := sql.NewUserService(db)
 	chatsPluginsService := sql.NewChatsPluginsService(db, chatService, pluginService)

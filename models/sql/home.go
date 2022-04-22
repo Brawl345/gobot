@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 
@@ -49,12 +50,38 @@ func (db *homeService) GetHome(user *telebot.User) (*telebot.Venue, error) {
 }
 
 func (db *homeService) SetHome(user *telebot.User, venue *telebot.Venue) error {
-	const query = `UPDATE users
-	SET HOME = (SELECT id FROM geocoding g
-	WHERE g.address = ?)
-	WHERE id = ?`
+	tx, err := db.BeginTxx(context.Background(), nil)
+	if err != nil {
+		return err
+	}
 
-	_, err := db.Exec(query, venue.Address, user.ID)
+	defer tx.Rollback()
+
+	const insertAddressQuery = `INSERT INTO geocoding 
+    (address, latitude, longitude) 
+	VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`
+	res, err := db.Exec(insertAddressQuery, venue.Address, venue.Location.Lat, venue.Location.Lng)
+	if err != nil {
+		return err
+	}
+
+	lastInsertId, err := res.LastInsertId()
+	if err != nil {
+		return err
+	}
+
+	const insertHomeQuery = `UPDATE users
+	SET home = ?
+	WHERE id = ?`
+	_, err = tx.Exec(insertHomeQuery, lastInsertId, user.ID)
+	if err != nil {
+		return err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return err
+	}
+
 	return err
 }
 
