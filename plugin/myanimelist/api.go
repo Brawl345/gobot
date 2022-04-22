@@ -3,6 +3,8 @@ package myanimelist
 import (
 	"strings"
 	"time"
+
+	"github.com/Brawl345/gobot/utils"
 )
 
 type (
@@ -148,7 +150,7 @@ func (a *Anime) StartDateFormatted() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return parsed.Format("Jan 2006"), nil
+		return utils.LocalizeDatestring(parsed.Format("January 2006")), nil
 	}
 	parsed, err := time.Parse("2006", a.StartDate)
 	if err != nil {
@@ -172,7 +174,7 @@ func (a *Anime) EndDateFormatted() (string, error) {
 		if err != nil {
 			return "", err
 		}
-		return parsed.Format("Jan 2006"), nil
+		return utils.LocalizeDatestring(parsed.Format("January 2006")), nil
 	}
 	parsed, err := time.Parse("2006", a.EndDate)
 	if err != nil {
