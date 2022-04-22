@@ -8,17 +8,19 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/models"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
-	"github.com/rs/zerolog/log"
 	"gopkg.in/telebot.v3"
 )
 
 type Plugin struct {
 	apiKey string // https://www.bingmapsportal.com/
 }
+
+var log = logger.New("worldclock")
 
 func New(credentialService models.CredentialService) *Plugin {
 	apiKey, err := credentialService.GetKey("bing_maps_api_key")
