@@ -25,6 +25,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/rki"
 	"github.com/Brawl345/gobot/plugin/stats"
 	"github.com/Brawl345/gobot/plugin/twitter"
+	"github.com/Brawl345/gobot/plugin/worldclock"
 	"github.com/Brawl345/gobot/plugin/youtube"
 	"gopkg.in/telebot.v3"
 )
@@ -98,6 +99,7 @@ func New() (*Gobot, error) {
 		rki.New(rkiService),
 		stats.New(chatsUsersService),
 		twitter.New(credentialService),
+		worldclock.New(credentialService),
 		youtube.New(credentialService),
 	}
 	managerService.SetPlugins(plugins)

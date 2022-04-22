@@ -101,3 +101,33 @@ func HumanizeDuration(d *duration.Duration) string {
 
 	return sb.String()
 }
+
+func LocalizeDatestring(date string) string {
+	return strings.NewReplacer(
+		"January", "Januar",
+		"February", "Februar",
+		"March", "März",
+		"May", "Mai",
+		"June", "Juni",
+		"July", "Juli",
+		"October", "Oktober",
+		"December", "Dezember",
+		"Mar", "Mär",
+		"Oct", "Okt",
+		"Dec", "Dez",
+		"Monday", "Montag",
+		"Tuesday", "Dienstag",
+		"Wednesday", "Mittwoch",
+		"Thursday", "Donnerstag",
+		"Friday", "Freitag",
+		"Saturday", "Samstag",
+		"Sunday", "Sonntag",
+		"Mon", "Mo",
+		"Tue", "Di",
+		"Wed", "Mi",
+		"Thu", "Do",
+		"Fri", "Fr",
+		"Sat", "Sa",
+		"Sun", "So",
+	).Replace(date)
+}
