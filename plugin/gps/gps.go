@@ -3,6 +3,7 @@ package gps
 import (
 	"errors"
 	"fmt"
+	"html"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -121,11 +122,10 @@ func (p *Plugin) onLocation(c plugin.GobotContext) error {
 	}
 
 	if response.DisplayName != "" {
-		return c.Reply(response.DisplayName, &telebot.SendOptions{
-			AllowWithoutReply:     true,
-			DisableWebPagePreview: true,
-			DisableNotification:   true,
-		})
+		return c.Reply(fmt.Sprintf(
+			"<a href=\"https://maps.google.com/maps?q=%s,%s&ll=%s,%s&z=16\">%s</a>",
+			lat, lon, lat, lon, html.EscapeString(response.DisplayName),
+		), utils.DefaultSendOptions)
 	}
 	return nil
 }
