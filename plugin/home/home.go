@@ -90,7 +90,7 @@ func (p *Plugin) onHomeSet(c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	err = p.homeService.SetHome(c.Sender(), venue)
+	err = p.homeService.SetHome(c.Sender(), &venue)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
@@ -102,7 +102,7 @@ func (p *Plugin) onHomeSet(c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 	venue.Title = "✅ Wohnort festgelegt"
-	return c.Reply(venue, utils.DefaultSendOptions)
+	return c.Reply(&venue, utils.DefaultSendOptions)
 }
 
 func (p *Plugin) onDeleteHome(c plugin.GobotContext) error {

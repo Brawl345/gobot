@@ -28,7 +28,7 @@ func NewGeocodingService() *geocodingService {
 	return &geocodingService{}
 }
 
-func (db *geocodingService) Geocode(address string) (*telebot.Venue, error) {
+func (db *geocodingService) Geocode(address string) (telebot.Venue, error) {
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "nominatim.openstreetmap.org",
@@ -53,14 +53,14 @@ func (db *geocodingService) Geocode(address string) (*telebot.Venue, error) {
 	)
 
 	if err != nil {
-		return nil, fmt.Errorf("error while geocoding: %w, url: %s", err, requestUrl.String())
+		return telebot.Venue{}, fmt.Errorf("error while geocoding: %w, url: %s", err, requestUrl.String())
 	}
 
 	if len(response) == 0 {
-		return nil, models.ErrAddressNotFound
+		return telebot.Venue{}, models.ErrAddressNotFound
 	}
 
-	return &telebot.Venue{
+	return telebot.Venue{
 		Title:   response[0].DisplayName,
 		Address: response[0].DisplayName,
 		Location: telebot.Location{

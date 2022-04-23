@@ -71,7 +71,7 @@ func (p *Plugin) onGPS(c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	return c.Reply(venue, utils.DefaultSendOptions)
+	return c.Reply(&venue, utils.DefaultSendOptions)
 }
 
 func (p *Plugin) onLocation(c plugin.GobotContext) error {
