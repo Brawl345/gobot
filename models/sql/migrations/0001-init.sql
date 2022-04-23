@@ -68,7 +68,8 @@ CREATE TABLE `chats_plugins`
 
 CREATE TABLE `credentials`
 (
-    `name`  VARCHAR(50) NOT NULL PRIMARY KEY,
-    `value` TEXT        NOT NULL
+    `name`       VARCHAR(50) NOT NULL PRIMARY KEY,
+    `created_at` DATETIME    NOT NULL DEFAULT current_timestamp(),
+    `value`      TEXT        NOT NULL
 ) COLLATE = 'utf8mb4_general_ci'
   ENGINE = InnoDB;
