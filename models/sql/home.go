@@ -3,8 +3,8 @@ package sql
 import (
 	"context"
 	"database/sql"
-	"errors"
 
+	"github.com/Brawl345/gobot/models"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
@@ -17,7 +17,7 @@ func NewHomeService(db *sqlx.DB) *homeService {
 	return &homeService{db}
 }
 
-func (db *homeService) GetHome(user *telebot.User) (*telebot.Venue, error) {
+func (db *homeService) GetHome(user *telebot.User) (telebot.Venue, error) {
 	const query = `SELECT address, latitude, longitude
 	FROM geocoding g
 	RIGHT OUTER JOIN users u ON u.home = g.id
@@ -32,14 +32,14 @@ func (db *homeService) GetHome(user *telebot.User) (*telebot.Venue, error) {
 	var geocoding Home
 	err := db.Get(&geocoding, query, user.ID)
 	if err != nil {
-		return nil, nil
+		return telebot.Venue{}, nil
 	}
 
 	if !geocoding.Address.Valid {
-		return nil, errors.New("no home address set")
+		return telebot.Venue{}, models.ErrHomeAddressNotSet
 	}
 
-	return &telebot.Venue{
+	return telebot.Venue{
 		Title:   "Festgelegter Wohnort",
 		Address: geocoding.Address.String,
 		Location: telebot.Location{

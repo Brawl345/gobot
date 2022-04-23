@@ -18,17 +18,11 @@ var log = logger.New("home")
 type (
 	Plugin struct {
 		geocodingService models.GeocodingService
-		homeService      Service
-	}
-
-	Service interface {
-		GetHome(user *telebot.User) (*telebot.Venue, error)
-		SetHome(user *telebot.User, venue *telebot.Venue) error
-		DeleteHome(user *telebot.User) error
+		homeService      models.HomeService
 	}
 )
 
-func New(geocodingService models.GeocodingService, homeService Service) *Plugin {
+func New(geocodingService models.GeocodingService, homeService models.HomeService) *Plugin {
 	return &Plugin{
 		geocodingService: geocodingService,
 		homeService:      homeService,
@@ -60,7 +54,7 @@ func (p *Plugin) onGetHome(c plugin.GobotContext) error {
 	_ = c.Notify(telebot.FindingLocation)
 	venue, err := p.homeService.GetHome(c.Sender())
 	if err != nil {
-		if venue == nil {
+		if errors.Is(err, models.ErrHomeAddressNotSet) {
 			return c.Reply("🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
 				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions)
 		}
@@ -75,7 +69,7 @@ func (p *Plugin) onGetHome(c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	return c.Reply(venue, utils.DefaultSendOptions)
+	return c.Reply(&venue, utils.DefaultSendOptions)
 }
 
 func (p *Plugin) onHomeSet(c plugin.GobotContext) error {
