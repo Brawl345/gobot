@@ -1,0 +1,8 @@
+### Weather forecast
+GET https://api.open-meteo.com/v1/forecast
+    ?latitude=42.601969
+    &longitude=140.895684
+    &daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_hours
+    &hourly=temperature_2m,precipitation,weathercode,snow_depth
+    &current_weather=true
+    &timezone=Europe%2FBerlin
