@@ -17,13 +17,8 @@ type (
 			Temperature Temperature `json:"temperature"`
 			Weathercode Weathercode `json:"weathercode"`
 		} `json:"current_weather"`
-		Daily  Daily `json:"daily"`
-		Hourly struct {
-			Precipitation []float64     `json:"precipitation"`
-			Temperature2M []Temperature `json:"temperature_2m"`
-			Time          []string      `json:"time"`
-			Weathercode   []Weathercode `json:"weathercode"`
-		} `json:"hourly"`
+		Daily  Daily  `json:"daily"`
+		Hourly Hourly `json:"hourly"`
 	}
 
 	Daily struct {
@@ -35,6 +30,13 @@ type (
 		Temperature2MMin   []Temperature      `json:"temperature_2m_min"`
 		Time               []string           `json:"time"`
 		Weathercode        []Weathercode      `json:"weathercode"`
+	}
+
+	Hourly struct {
+		Precipitation []float64     `json:"precipitation"`
+		Temperature2M []Temperature `json:"temperature_2m"`
+		Time          []string      `json:"time"`
+		Weathercode   []Weathercode `json:"weathercode"`
 	}
 )
 
@@ -100,6 +102,44 @@ func (daily *Daily) Forecast(day int) (string, error) {
 			"%s %s",
 			daily.Weathercode[day].Icon(),
 			daily.Weathercode[day].Description(),
+		),
+	)
+
+	return sb.String(), nil
+}
+
+func (hourly *Hourly) Forecast(hour int) (string, error) {
+	if hour > len(hourly.Time) {
+		return "", fmt.Errorf("hour %d is out of range", hour)
+	}
+
+	var sb strings.Builder
+
+	parsedHour, err := time.Parse("2006-01-02T15:04", hourly.Time[hour])
+	if err != nil {
+		return "", err
+	}
+	sb.WriteString(
+		fmt.Sprintf(
+			"<b>%s Uhr</b>",
+			parsedHour.Format("15:04"),
+		),
+	)
+	sb.WriteString(" | ")
+
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s",
+			hourly.Temperature2M[hour].String(),
+		),
+	)
+
+	sb.WriteString(" | ")
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s %s",
+			hourly.Weathercode[hour].Icon(),
+			hourly.Weathercode[hour].Description(),
 		),
 	)
 
