@@ -3,6 +3,9 @@ package weather
 import (
 	"fmt"
 	"strings"
+	"time"
+
+	"github.com/Brawl345/gobot/utils"
 )
 
 type (
@@ -14,22 +17,24 @@ type (
 			Temperature Temperature `json:"temperature"`
 			Weathercode Weathercode `json:"weathercode"`
 		} `json:"current_weather"`
-		Daily struct {
-			PrecipitationHours []int              `json:"precipitation_hours"`
-			PrecipitationSum   []PrecipitationSum `json:"precipitation_sum"`
-			Sunrise            []string           `json:"sunrise"`
-			Sunset             []string           `json:"sunset"`
-			Temperature2MMax   []Temperature      `json:"temperature_2m_max"`
-			Temperature2MMin   []Temperature      `json:"temperature_2m_min"`
-			Time               []string           `json:"time"`
-			Weathercode        []Weathercode      `json:"weathercode"`
-		} `json:"daily"`
+		Daily  Daily `json:"daily"`
 		Hourly struct {
 			Precipitation []float64     `json:"precipitation"`
 			Temperature2M []Temperature `json:"temperature_2m"`
 			Time          []string      `json:"time"`
 			Weathercode   []Weathercode `json:"weathercode"`
 		} `json:"hourly"`
+	}
+
+	Daily struct {
+		PrecipitationHours []int              `json:"precipitation_hours"`
+		PrecipitationSum   []PrecipitationSum `json:"precipitation_sum"`
+		Sunrise            []string           `json:"sunrise"`
+		Sunset             []string           `json:"sunset"`
+		Temperature2MMax   []Temperature      `json:"temperature_2m_max"`
+		Temperature2MMin   []Temperature      `json:"temperature_2m_min"`
+		Time               []string           `json:"time"`
+		Weathercode        []Weathercode      `json:"weathercode"`
 	}
 )
 
@@ -55,4 +60,48 @@ func (temperature Temperature) Icon() string {
 	} else {
 		return "🤬"
 	}
+}
+
+func (daily *Daily) Forecast(day int) (string, error) {
+	if day > len(daily.Time) {
+		return "", fmt.Errorf("day %d is out of range", day)
+	}
+
+	var sb strings.Builder
+
+	if day == 0 {
+		sb.WriteString("<b>Heute:</b> ")
+	} else if day == 1 {
+		sb.WriteString("<b>Morgen:</b> ")
+	} else {
+		dateParsed, err := time.Parse("2006-01-02", daily.Time[day])
+		if err != nil {
+			return "", err
+		}
+		sb.WriteString(fmt.Sprintf("<b>%s:</b> ", utils.LocalizeDatestring(dateParsed.Format("Mon, 2.01"))))
+	}
+
+	sb.WriteString(
+		fmt.Sprintf(
+			"☀ %s",
+			daily.Temperature2MMax[day].String(),
+		),
+	)
+	sb.WriteString(" | ")
+	sb.WriteString(
+		fmt.Sprintf(
+			"🌙 %s",
+			daily.Temperature2MMin[day].String(),
+		),
+	)
+	sb.WriteString(" | ")
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s %s",
+			daily.Weathercode[day].Icon(),
+			daily.Weathercode[day].Description(),
+		),
+	)
+
+	return sb.String(), nil
 }

@@ -44,6 +44,14 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/w(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: p.onWeather,
 		},
+		&plugin.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/f(?:@%s)?$`, botInfo.Username)),
+			HandlerFunc: p.onForecast,
+		},
+		&plugin.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/f(?:@%s)? (.+)$`, botInfo.Username)),
+			HandlerFunc: p.onForecast,
+		},
 	}
 }
 
@@ -111,7 +119,7 @@ func (p *Plugin) onWeather(c plugin.GobotContext) error {
 
 	sb.WriteString(
 		fmt.Sprintf(
-			"<b>Heute:</b> Max %s | Min %s | %s %s\n",
+			"<b>Heute:</b> Max. %s | Min. %s | %s %s\n",
 			response.Daily.Temperature2MMax[0].String(),
 			response.Daily.Temperature2MMin[0].String(),
 			response.Daily.Weathercode[0].Description(),
@@ -176,7 +184,7 @@ func (p *Plugin) onWeather(c plugin.GobotContext) error {
 
 		sb.WriteString(
 			fmt.Sprintf(
-				"Regnet um: %s Uhr\n",
+				"Regen um: %s Uhr\n",
 				rainyHoursString.String(),
 			),
 		)
@@ -209,11 +217,81 @@ func (p *Plugin) onWeather(c plugin.GobotContext) error {
 
 	sb.WriteString(
 		fmt.Sprintf(
-			"☀ Sonnenaufgang: %s | 🌙 Sonnenuntergang: %s\n",
+			"☀⏫: %s | ☀⏬: %s\n",
 			sunrise,
 			sunset,
 		),
 	)
+
+	return c.Reply(sb.String(), utils.DefaultSendOptions)
+}
+
+func (p *Plugin) onForecast(c plugin.GobotContext) error {
+	_ = c.Notify(telebot.FindingLocation)
+
+	var err error
+	var venue telebot.Venue
+	if len(c.Matches) > 1 {
+		venue, err = p.geocodingService.Geocode(c.Matches[1])
+	} else {
+		venue, err = p.homeService.GetHome(c.Sender())
+	}
+
+	if err != nil {
+		if errors.Is(err, models.ErrHomeAddressNotSet) {
+			return c.Reply("🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
+				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions)
+		}
+		if errors.Is(err, models.ErrAddressNotFound) {
+			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+		}
+		guid := xid.New().String()
+		log.Error().
+			Err(err).
+			Int64("user_id", c.Sender().ID).
+			Str("guid", guid).
+			Msg("error getting location")
+		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions)
+	}
+
+	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe/Berlin", venue.Location.Lat, venue.Location.Lng)
+
+	var response Response
+	err = utils.GetRequest(requestUrl, &response)
+	if err != nil {
+		guid := xid.New().String()
+		log.Error().
+			Err(err).
+			Str("guid", guid).
+			Msg("error getting weather")
+		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions)
+	}
+
+	var sb strings.Builder
+
+	sb.WriteString(
+		fmt.Sprintf(
+			"🌡 <b>Wettervorhersage für %s:</b>\n",
+			html.EscapeString(venue.Address),
+		),
+	)
+
+	for day := range response.Daily.Time {
+		forecast, err := response.Daily.Forecast(day)
+		if err != nil {
+			guid := xid.New().String()
+			log.Error().
+				Err(err).
+				Str("guid", guid).
+				Msg("error constructing forecast")
+			sb.WriteString(fmt.Sprintf("❌ Fehler: <code>%s</code>", guid))
+		} else {
+			sb.WriteString(forecast)
+		}
+		sb.WriteString("\n")
+	}
 
 	return c.Reply(sb.String(), utils.DefaultSendOptions)
 }
