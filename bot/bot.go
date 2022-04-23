@@ -18,6 +18,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/dcrypt"
 	"github.com/Brawl345/gobot/plugin/echo"
 	"github.com/Brawl345/gobot/plugin/getfile"
+	"github.com/Brawl345/gobot/plugin/gps"
 	"github.com/Brawl345/gobot/plugin/home"
 	"github.com/Brawl345/gobot/plugin/id"
 	"github.com/Brawl345/gobot/plugin/kaomoji"
@@ -95,6 +96,7 @@ func New() (*Gobot, error) {
 		dcrypt.New(),
 		echo.New(),
 		getfile.New(credentialService, fileService),
+		gps.New(geocodingService),
 		home.New(geocodingService, homeService),
 		id.New(),
 		kaomoji.New(),

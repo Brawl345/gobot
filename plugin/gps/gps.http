@@ -1,0 +1,8 @@
+### Reverse Geocoding
+GET https://nominatim.openstreetmap.org/reverse.php
+    ?lat=35.021035
+    &lon=135.755613
+    &zoom=16
+    &accept-language=de
+    &limit=1
+    &format=jsonv2

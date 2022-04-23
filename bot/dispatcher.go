@@ -85,6 +85,10 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 					matched = command == telebot.OnDocument
 				case msg.Sticker != nil:
 					matched = command == telebot.OnSticker
+				case msg.Location != nil:
+					matched = command == telebot.OnLocation
+				case msg.Venue != nil:
+					matched = command == telebot.OnVenue
 				}
 
 				if !matched && msg.Media() != nil {
