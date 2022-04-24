@@ -225,7 +225,7 @@ func (p *Plugin) onWeather(c plugin.GobotContext) error {
 
 	sb.WriteString(
 		fmt.Sprintf(
-			"☀⏫: %s | ☀⏬: %s\n",
+			"☀⏫ %s | ☀⏬ %s\n",
 			sunrise,
 			sunset,
 		),
