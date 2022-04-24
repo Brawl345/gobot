@@ -1,0 +1,11 @@
+### Image search
+GET https://customsearch.googleapis.com/customsearch/v1
+    ?key={{google_api_key}}
+    &cx={{google_search_engine_id}}
+    &fields=items(link,mime,image/contextLink)
+    &hl=de
+    &gl=de
+    &num=10
+    &safe=active
+    &searchType=image
+    &q=Hokkaido

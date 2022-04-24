@@ -18,6 +18,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/dcrypt"
 	"github.com/Brawl345/gobot/plugin/echo"
 	"github.com/Brawl345/gobot/plugin/getfile"
+	"github.com/Brawl345/gobot/plugin/google_images"
 	"github.com/Brawl345/gobot/plugin/gps"
 	"github.com/Brawl345/gobot/plugin/home"
 	"github.com/Brawl345/gobot/plugin/id"
@@ -73,6 +74,7 @@ func New() (*Gobot, error) {
 	// Plugin-specific services
 	cleverbotService := sql.NewCleverbotService(db)
 	fileService := sql.NewFileService(db)
+	googleImagesService := sql.NewGoogleImagesService(db)
 	homeService := sql.NewHomeService(db)
 	rkiService := sql.NewRKIService(db)
 
@@ -97,6 +99,7 @@ func New() (*Gobot, error) {
 		dcrypt.New(),
 		echo.New(),
 		getfile.New(credentialService, fileService),
+		google_images.New(credentialService, googleImagesService),
 		gps.New(geocodingService),
 		home.New(geocodingService, homeService),
 		id.New(),
