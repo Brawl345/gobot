@@ -229,7 +229,7 @@ func (p *Plugin) onImageSearch(c plugin.GobotContext) error {
 
 func (p *Plugin) onImageSearchCallback(c plugin.GobotContext) error {
 	// ignore callback queries older than 7 days
-	if c.Callback().Message.Time().Add(7 * 24 * time.Hour).Before(time.Now()) {
+	if c.Callback().Message.Time().Add(utils.Week).Before(time.Now()) {
 		return c.Respond(&telebot.CallbackResponse{
 			Text:      "❌ Bitte sende den Befehl erneut ab.",
 			ShowAlert: true,
