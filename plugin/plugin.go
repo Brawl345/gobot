@@ -2,6 +2,7 @@ package plugin
 
 import (
 	"regexp"
+	"time"
 
 	"gopkg.in/telebot.v3"
 )
@@ -33,9 +34,11 @@ type (
 	}
 
 	CallbackHandler struct {
-		HandlerFunc GobotHandlerFunc
-		Trigger     *regexp.Regexp
-		AdminOnly   bool
+		HandlerFunc  GobotHandlerFunc
+		Trigger      *regexp.Regexp
+		AdminOnly    bool
+		DeleteButton bool
+		Cooldown     time.Duration
 	}
 
 	InlineHandler struct {

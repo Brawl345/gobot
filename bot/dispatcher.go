@@ -1,7 +1,10 @@
 package bot
 
 import (
+	"fmt"
 	"regexp"
+	"strings"
+	"time"
 
 	"github.com/Brawl345/gobot/models"
 	"github.com/Brawl345/gobot/plugin"
@@ -95,7 +98,7 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 					matched = command == telebot.OnMedia
 				}
 			default:
-				panic("Unspported BaseHandler type!!")
+				panic("Unspported handler type!!")
 			}
 
 			if matched {
@@ -169,7 +172,7 @@ func (d *Dispatcher) OnCallback(c telebot.Context) error {
 
 			command, ok := handler.Command().(*regexp.Regexp)
 			if !ok {
-				panic("Unsupported callback BaseHandler type!! Must be regexp.Regexp!")
+				panic("Unsupported callback handler type!! Must be regexp.Regexp!")
 			}
 
 			matches := command.FindStringSubmatch(callback.Data)
@@ -198,6 +201,32 @@ func (d *Dispatcher) OnCallback(c telebot.Context) error {
 						Text:      "Du bist kein Bot-Administrator.",
 						ShowAlert: true,
 					})
+				}
+
+				if handler.Cooldown > 0 {
+					callbackTime := c.Callback().Message.Time()
+					currentTime := time.Now()
+					waitTime := handler.Cooldown - currentTime.Sub(callbackTime)
+
+					if waitTime > 0 {
+						waitTimeStr := fmt.Sprintf("%.1f", waitTime.Seconds())
+						waittimeStr := strings.ReplaceAll(waitTimeStr, ".", ",")
+						return c.Respond(&telebot.CallbackResponse{
+							Text:      fmt.Sprintf("🕒 Bitte warte noch %s Sekunden.", waittimeStr),
+							ShowAlert: true,
+						})
+					}
+				}
+
+				if handler.DeleteButton && c.Message() != nil {
+					go func() {
+						err := c.Edit(&telebot.ReplyMarkup{})
+						if err != nil {
+							log.Err(err).
+								Int64("chat_id", c.Sender().ID).
+								Msg("Error removing inline keyboard")
+						}
+					}()
 				}
 
 				go func() {
@@ -242,7 +271,7 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 
 			command, ok := handler.Command().(*regexp.Regexp)
 			if !ok {
-				panic("Unsupported callback BaseHandler type!! Must be regexp.Regexp!")
+				panic("Unsupported callback handler type!! Must be regexp.Regexp!")
 			}
 
 			matches := command.FindStringSubmatch(inlineQuery.Text)
