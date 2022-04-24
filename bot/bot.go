@@ -75,6 +75,7 @@ func New() (*Gobot, error) {
 	cleverbotService := sql.NewCleverbotService(db)
 	fileService := sql.NewFileService(db)
 	googleImagesService := sql.NewGoogleImagesService(db)
+	googleImagesCleanupService := sql.NewGoogleImagesCleanupService(db)
 	homeService := sql.NewHomeService(db)
 	rkiService := sql.NewRKIService(db)
 
@@ -99,7 +100,7 @@ func New() (*Gobot, error) {
 		dcrypt.New(),
 		echo.New(),
 		getfile.New(credentialService, fileService),
-		google_images.New(credentialService, googleImagesService),
+		google_images.New(credentialService, googleImagesService, googleImagesCleanupService),
 		gps.New(geocodingService),
 		home.New(geocodingService, homeService),
 		id.New(),

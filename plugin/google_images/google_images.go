@@ -23,6 +23,10 @@ type (
 		googleImagesService Service
 	}
 
+	CleanupService interface {
+		Cleanup() error
+	}
+
 	Service interface {
 		GetImages(query string) (models.GoogleImages, error)
 		GetImagesFromQueryID(queryID int64) (models.GoogleImages, error)
@@ -31,7 +35,7 @@ type (
 	}
 )
 
-func New(credentialService models.CredentialService, googleImagesService Service) *Plugin {
+func New(credentialService models.CredentialService, googleImagesService Service, cleanupService CleanupService) *Plugin {
 	apiKey, err := credentialService.GetKey("google_api_key")
 	if err != nil {
 		log.Warn().Msg("google_api_key not found")
@@ -42,11 +46,28 @@ func New(credentialService models.CredentialService, googleImagesService Service
 		log.Warn().Msg("google_search_engine_id not found")
 	}
 
+	time.AfterFunc(24*time.Hour, func() {
+		cleanup(cleanupService)
+	})
+
 	return &Plugin{
 		apiKey:              apiKey,
 		searchEngineID:      searchEngineID,
 		googleImagesService: googleImagesService,
 	}
+}
+
+func cleanup(cleanupService CleanupService) {
+	log.Debug().Msg("starting cleanup")
+	defer time.AfterFunc(24*time.Hour, func() {
+		cleanup(cleanupService)
+	})
+
+	err := cleanupService.Cleanup()
+	if err != nil {
+		log.Error().Err(err).Msg("error cleaning up google images")
+	}
+
 }
 
 func (p *Plugin) Name() string {
