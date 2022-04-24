@@ -16,7 +16,7 @@ func NewCredentialService(db *sqlx.DB) *credentialService {
 }
 
 func (db *credentialService) GetAllCredentials() ([]models.Credential, error) {
-	const query = `SELECT name, value FROM credentials ORDER BY name DESC`
+	const query = `SELECT name, value FROM credentials ORDER BY name`
 	var credentials []models.Credential
 	err := db.Select(&credentials, query)
 	return credentials, err
