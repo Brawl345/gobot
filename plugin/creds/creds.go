@@ -83,6 +83,7 @@ func (plg *Plugin) OnGet(c plugin.GobotContext) error {
 	return c.Reply(sb.String(), &telebot.SendOptions{
 		AllowWithoutReply:     true,
 		DisableWebPagePreview: true,
+		Protected:             true,
 		ParseMode:             telebot.ModeHTML,
 		ReplyMarkup: &telebot.ReplyMarkup{
 			InlineKeyboard: [][]telebot.InlineButton{
