@@ -25,6 +25,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/kaomoji"
 	"github.com/Brawl345/gobot/plugin/manager"
 	"github.com/Brawl345/gobot/plugin/myanimelist"
+	"github.com/Brawl345/gobot/plugin/quotes"
 	"github.com/Brawl345/gobot/plugin/rki"
 	"github.com/Brawl345/gobot/plugin/stats"
 	"github.com/Brawl345/gobot/plugin/twitter"
@@ -77,6 +78,7 @@ func New() (*Gobot, error) {
 	googleImagesService := sql.NewGoogleImagesService(db)
 	googleImagesCleanupService := sql.NewGoogleImagesCleanupService(db)
 	homeService := sql.NewHomeService(db)
+	quoteService := sql.NewQuoteService(db)
 	rkiService := sql.NewRKIService(db)
 
 	allowService, err := NewAllowService(chatService, userService)
@@ -107,6 +109,7 @@ func New() (*Gobot, error) {
 		kaomoji.New(),
 		manager.New(managerService),
 		myanimelist.New(credentialService),
+		quotes.New(quoteService),
 		rki.New(rkiService),
 		stats.New(chatsUsersService),
 		twitter.New(credentialService),
