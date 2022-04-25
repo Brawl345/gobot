@@ -1,6 +1,11 @@
 package sql
 
-import "github.com/jmoiron/sqlx"
+import (
+	"database/sql"
+	"errors"
+
+	"github.com/jmoiron/sqlx"
+)
 
 type fileService struct {
 	*sqlx.DB
@@ -22,5 +27,11 @@ WHERE id = ?`
 
 	var exists bool
 	err := db.Get(&exists, query, uniqueID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, nil
+		}
+		return false, err
+	}
 	return exists, err
 }

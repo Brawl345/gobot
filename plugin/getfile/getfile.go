@@ -81,7 +81,11 @@ func (plg *Plugin) OnMedia(c plugin.GobotContext) error {
 		return nil
 	}
 
-	exists, _ := plg.fileService.Exists(uniqueID)
+	exists, err := plg.fileService.Exists(uniqueID)
+	if err != nil {
+		log.Err(err).Msg("Error checking if file exists")
+		return nil
+	}
 
 	if exists {
 		log.Info().Msgf("File already exists: %s", uniqueID)
@@ -89,9 +93,9 @@ func (plg *Plugin) OnMedia(c plugin.GobotContext) error {
 	}
 
 	savePath := filepath.Join(plg.dir, subFolder)
-	err := os.MkdirAll(savePath, 0660)
+	err = os.MkdirAll(savePath, 0660)
 	if err != nil {
-		log.Error().Msgf("Could not create directory: %s", savePath)
+		log.Err(err).Msgf("Could not create directory: %s", savePath)
 		return nil
 	}
 
