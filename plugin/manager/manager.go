@@ -1,10 +1,12 @@
 package manager
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/models"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -66,12 +68,19 @@ func (p *Plugin) OnEnable(c plugin.GobotContext) error {
 
 	err := p.managerService.EnablePlugin(pluginName)
 	if err != nil {
+		if errors.Is(err, models.ErrAlreadyExists) {
+			return c.Reply("💡 Plugin ist bereits aktiv", utils.DefaultSendOptions)
+		}
+		if errors.Is(err, models.ErrNotFound) {
+			return c.Reply("❌ Plugin existiert nicht", utils.DefaultSendOptions)
+		}
+
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
 			Str("plugin", pluginName).
 			Msg("Failed to enable plugin")
-		return c.Reply(fmt.Sprintf("%s%s", err.Error(), utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 	}
 	return c.Reply("✅ Plugin wurde aktiviert", utils.DefaultSendOptions)
 }
@@ -81,13 +90,20 @@ func (p *Plugin) OnEnableInChat(c plugin.GobotContext) error {
 
 	err := p.managerService.EnablePluginForChat(c.Chat(), pluginName)
 	if err != nil {
+		if errors.Is(err, models.ErrAlreadyExists) {
+			return c.Reply("💡 Plugin ist für diesen Chat schon aktiv", utils.DefaultSendOptions)
+		}
+		if errors.Is(err, models.ErrNotFound) {
+			return c.Reply("❌ Plugin existiert nicht", utils.DefaultSendOptions)
+		}
+
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
 			Str("plugin", pluginName).
 			Int64("chat_id", c.Chat().ID).
 			Msg("Failed to enable plugin in chat")
-		return c.Reply(fmt.Sprintf("%s%s", err.Error(), utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 	}
 	return c.Reply("✅ Plugin wurde für diesen Chat wieder aktiviert", utils.DefaultSendOptions)
 }
@@ -95,18 +111,22 @@ func (p *Plugin) OnEnableInChat(c plugin.GobotContext) error {
 func (p *Plugin) OnDisable(c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
-	if pluginName == "manager" {
+	if pluginName == p.Name() {
 		return c.Reply("❌ Manager kann nicht deaktiviert werden.", utils.DefaultSendOptions)
 	}
 
 	err := p.managerService.DisablePlugin(pluginName)
 	if err != nil {
+		if errors.Is(err, models.ErrNotFound) {
+			return c.Reply("💡 Plugin ist nicht aktiv", utils.DefaultSendOptions)
+		}
+
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
 			Str("plugin", pluginName).
 			Msg("Failed to disable plugin")
-		return c.Reply(fmt.Sprintf("%s%s", err.Error(), utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 	}
 	return c.Reply("✅ Plugin wurde deaktiviert", utils.DefaultSendOptions)
 }
@@ -114,19 +134,26 @@ func (p *Plugin) OnDisable(c plugin.GobotContext) error {
 func (p *Plugin) OnDisableInChat(c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
-	if pluginName == "manager" {
+	if pluginName == p.Name() {
 		return c.Reply("❌ Manager kann nicht deaktiviert werden.", utils.DefaultSendOptions)
 	}
 
 	err := p.managerService.DisablePluginForChat(c.Chat(), pluginName)
 	if err != nil {
+		if errors.Is(err, models.ErrAlreadyExists) {
+			return c.Reply("💡 Plugin ist für diesen Chat schon deaktiviert", utils.DefaultSendOptions)
+		}
+		if errors.Is(err, models.ErrNotFound) {
+			return c.Reply("❌ Plugin existiert nicht", utils.DefaultSendOptions)
+		}
+
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
 			Str("plugin", pluginName).
 			Int64("chat_id", c.Chat().ID).
 			Msg("Failed to disable plugin in chat")
-		return c.Reply(fmt.Sprintf("%s%s", err.Error(), utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 	}
 	return c.Reply("✅ Plugin wurde für diesen Chat deaktiviert", utils.DefaultSendOptions)
 }

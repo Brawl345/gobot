@@ -1,8 +1,6 @@
 package bot
 
 import (
-	"errors"
-
 	"github.com/Brawl345/gobot/models"
 	"github.com/Brawl345/gobot/plugin"
 	"golang.org/x/exp/slices"
@@ -46,7 +44,7 @@ func (service *managerService) SetPlugins(plugins []plugin.Plugin) {
 
 func (service *managerService) EnablePlugin(name string) error {
 	if slices.Contains(service.enabledPlugins, name) {
-		return errors.New("✅ Das Plugin ist bereits aktiv")
+		return models.ErrAlreadyExists
 	}
 
 	for _, plg := range service.plugins {
@@ -59,7 +57,7 @@ func (service *managerService) EnablePlugin(name string) error {
 			return nil
 		}
 	}
-	return errors.New("❌ Plugin existiert nicht")
+	return models.ErrNotFound
 }
 
 func (service *managerService) isPluginDisabledForChat(chat *telebot.Chat, name string) bool {
@@ -72,7 +70,7 @@ func (service *managerService) isPluginDisabledForChat(chat *telebot.Chat, name 
 
 func (service *managerService) EnablePluginForChat(chat *telebot.Chat, name string) error {
 	if !service.isPluginDisabledForChat(chat, name) {
-		return errors.New("✅ Das Plugin ist für diesen Chat schon aktiv")
+		return models.ErrAlreadyExists
 	}
 
 	for _, plg := range service.plugins {
@@ -89,12 +87,12 @@ func (service *managerService) EnablePluginForChat(chat *telebot.Chat, name stri
 			return nil
 		}
 	}
-	return errors.New("❌ Plugin existiert nicht")
+	return models.ErrNotFound
 }
 
 func (service *managerService) DisablePlugin(name string) error {
 	if !slices.Contains(service.enabledPlugins, name) {
-		return errors.New("✅ Das Plugin ist nicht aktiv")
+		return models.ErrNotFound
 	}
 
 	err := service.pluginService.Disable(name)
@@ -108,7 +106,7 @@ func (service *managerService) DisablePlugin(name string) error {
 
 func (service *managerService) DisablePluginForChat(chat *telebot.Chat, name string) error {
 	if service.isPluginDisabledForChat(chat, name) {
-		return errors.New("✅ Das Plugin ist für diesen Chat schon deaktiviert")
+		return models.ErrAlreadyExists
 	}
 
 	for _, plg := range service.plugins {
@@ -123,7 +121,7 @@ func (service *managerService) DisablePluginForChat(chat *telebot.Chat, name str
 			return nil
 		}
 	}
-	return errors.New("❌ Plugin existiert nicht")
+	return models.ErrNotFound
 }
 
 func (service *managerService) isPluginEnabled(name string) bool {
