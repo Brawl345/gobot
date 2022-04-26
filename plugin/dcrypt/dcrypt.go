@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"regexp"
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
@@ -16,21 +15,8 @@ import (
 )
 
 var log = logger.New("dcrypt")
-var textRegex = regexp.MustCompile("(?s)<textarea>(.+)</textarea>")
 
-type (
-	Plugin struct{}
-
-	Response struct {
-		FormErrors struct {
-			Dlcfile []string `json:"dlcfile"`
-		} `json:"form_errors"`
-		Success struct {
-			Message string   `json:"message"`
-			Links   []string `json:"links"`
-		} `json:"success"`
-	}
-)
+type Plugin struct{}
 
 func New() *Plugin {
 	return &Plugin{}
