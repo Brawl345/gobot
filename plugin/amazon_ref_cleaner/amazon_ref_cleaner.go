@@ -1,4 +1,4 @@
-package no_amazon_ref
+package amazon_ref_cleaner
 
 import (
 	"net/http"
@@ -12,7 +12,7 @@ import (
 	"gopkg.in/telebot.v3"
 )
 
-var log = logger.New("no_amazon_ref")
+var log = logger.New("amazon_ref_cleaner")
 
 type Plugin struct{}
 
@@ -21,7 +21,7 @@ func New() *Plugin {
 }
 
 func (p *Plugin) Name() string {
-	return "no_amazon_ref"
+	return "amazon_ref_cleaner"
 }
 
 func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {

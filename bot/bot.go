@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/about"
 	"github.com/Brawl345/gobot/plugin/alive"
 	"github.com/Brawl345/gobot/plugin/allow"
+	"github.com/Brawl345/gobot/plugin/amazon_ref_cleaner"
 	"github.com/Brawl345/gobot/plugin/cleverbot"
 	"github.com/Brawl345/gobot/plugin/covid"
 	"github.com/Brawl345/gobot/plugin/creds"
@@ -25,7 +26,6 @@ import (
 	"github.com/Brawl345/gobot/plugin/kaomoji"
 	"github.com/Brawl345/gobot/plugin/manager"
 	"github.com/Brawl345/gobot/plugin/myanimelist"
-	"github.com/Brawl345/gobot/plugin/no_amazon_ref"
 	"github.com/Brawl345/gobot/plugin/quotes"
 	"github.com/Brawl345/gobot/plugin/rki"
 	"github.com/Brawl345/gobot/plugin/stats"
@@ -110,7 +110,7 @@ func New() (*Gobot, error) {
 		kaomoji.New(),
 		manager.New(managerService),
 		myanimelist.New(credentialService),
-		no_amazon_ref.New(),
+		amazon_ref_cleaner.New(),
 		quotes.New(quoteService),
 		rki.New(rkiService),
 		stats.New(chatsUsersService),
