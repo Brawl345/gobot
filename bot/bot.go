@@ -17,6 +17,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/creds"
 	"github.com/Brawl345/gobot/plugin/currency"
 	"github.com/Brawl345/gobot/plugin/dcrypt"
+	"github.com/Brawl345/gobot/plugin/delmsg"
 	"github.com/Brawl345/gobot/plugin/echo"
 	"github.com/Brawl345/gobot/plugin/getfile"
 	"github.com/Brawl345/gobot/plugin/google_images"
@@ -96,11 +97,13 @@ func New() (*Gobot, error) {
 		about.New(),
 		alive.New(),
 		allow.New(allowService),
+		amazon_ref_cleaner.New(),
 		cleverbot.New(credentialService, cleverbotService),
 		covid.New(),
 		creds.New(credentialService),
 		currency.New(),
 		dcrypt.New(),
+		delmsg.New(),
 		echo.New(),
 		getfile.New(credentialService, fileService),
 		google_images.New(credentialService, googleImagesService, googleImagesCleanupService),
@@ -110,7 +113,6 @@ func New() (*Gobot, error) {
 		kaomoji.New(),
 		manager.New(managerService),
 		myanimelist.New(credentialService),
-		amazon_ref_cleaner.New(),
 		quotes.New(quoteService),
 		rki.New(rkiService),
 		stats.New(chatsUsersService),
