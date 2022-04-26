@@ -65,15 +65,15 @@ func (*Plugin) Name() string {
 	return "about"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/(?:about|start)(?:@%s)?$`, botInfo.Username)),
-			HandlerFunc: plg.OnAbout,
+			HandlerFunc: p.OnAbout,
 		},
 	}
 }
 
-func (plg *Plugin) OnAbout(c plugin.GobotContext) error {
-	return c.Reply(plg.aboutText, utils.DefaultSendOptions)
+func (p *Plugin) OnAbout(c plugin.GobotContext) error {
+	return c.Reply(p.aboutText, utils.DefaultSendOptions)
 }

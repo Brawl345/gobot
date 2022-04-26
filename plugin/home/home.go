@@ -33,19 +33,19 @@ func (p *Plugin) Name() string {
 	return "home"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/home(?:@%s)?$`, botInfo.Username)),
-			HandlerFunc: plg.onGetHome,
+			HandlerFunc: p.onGetHome,
 		},
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/home(?:@%s)? (.+)$`, botInfo.Username)),
-			HandlerFunc: plg.onHomeSet,
+			HandlerFunc: p.onHomeSet,
 		},
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/home_delete(?:@%s)?$`, botInfo.Username)),
-			HandlerFunc: plg.onDeleteHome,
+			HandlerFunc: p.onDeleteHome,
 		},
 	}
 }

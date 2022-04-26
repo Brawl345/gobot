@@ -36,35 +36,35 @@ func (*Plugin) Name() string {
 	return "manager"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/enable(?:@%s)? (.+)$`, botInfo.Username)),
-			HandlerFunc: plg.OnEnable,
+			HandlerFunc: p.OnEnable,
 			AdminOnly:   true,
 		},
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/disable(?:@%s)? (.+)$`, botInfo.Username)),
-			HandlerFunc: plg.OnDisable,
+			HandlerFunc: p.OnDisable,
 			AdminOnly:   true,
 		},
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/enable_chat(?:@%s)? (.+)$`, botInfo.Username)),
-			HandlerFunc: plg.OnEnableInChat,
+			HandlerFunc: p.OnEnableInChat,
 			AdminOnly:   true,
 		},
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/disable_chat(?:@%s)? (.+)$`, botInfo.Username)),
-			HandlerFunc: plg.OnDisableInChat,
+			HandlerFunc: p.OnDisableInChat,
 			AdminOnly:   true,
 		},
 	}
 }
 
-func (plg *Plugin) OnEnable(c plugin.GobotContext) error {
+func (p *Plugin) OnEnable(c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
-	err := plg.managerService.EnablePlugin(pluginName)
+	err := p.managerService.EnablePlugin(pluginName)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
@@ -76,10 +76,10 @@ func (plg *Plugin) OnEnable(c plugin.GobotContext) error {
 	return c.Reply("✅ Plugin wurde aktiviert", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnEnableInChat(c plugin.GobotContext) error {
+func (p *Plugin) OnEnableInChat(c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
-	err := plg.managerService.EnablePluginForChat(c.Chat(), pluginName)
+	err := p.managerService.EnablePluginForChat(c.Chat(), pluginName)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
@@ -92,14 +92,14 @@ func (plg *Plugin) OnEnableInChat(c plugin.GobotContext) error {
 	return c.Reply("✅ Plugin wurde für diesen Chat wieder aktiviert", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnDisable(c plugin.GobotContext) error {
+func (p *Plugin) OnDisable(c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
 	if pluginName == "manager" {
 		return c.Reply("❌ Manager kann nicht deaktiviert werden.", utils.DefaultSendOptions)
 	}
 
-	err := plg.managerService.DisablePlugin(pluginName)
+	err := p.managerService.DisablePlugin(pluginName)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
@@ -111,14 +111,14 @@ func (plg *Plugin) OnDisable(c plugin.GobotContext) error {
 	return c.Reply("✅ Plugin wurde deaktiviert", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnDisableInChat(c plugin.GobotContext) error {
+func (p *Plugin) OnDisableInChat(c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
 	if pluginName == "manager" {
 		return c.Reply("❌ Manager kann nicht deaktiviert werden.", utils.DefaultSendOptions)
 	}
 
-	err := plg.managerService.DisablePluginForChat(c.Chat(), pluginName)
+	err := p.managerService.DisablePluginForChat(c.Chat(), pluginName)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).

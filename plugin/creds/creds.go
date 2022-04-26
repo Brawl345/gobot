@@ -29,37 +29,37 @@ func (*Plugin) Name() string {
 	return "creds"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/creds(?:@%s)?$`, botInfo.Username)),
-			HandlerFunc: plg.OnGet,
+			HandlerFunc: p.OnGet,
 			AdminOnly:   true,
 		},
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/creds_add(?:@%s)? ([^\s]+) (.+)$`, botInfo.Username)),
-			HandlerFunc: plg.OnAdd,
+			HandlerFunc: p.OnAdd,
 			AdminOnly:   true,
 		},
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/creds_del(?:@%s)? ([^\s]+)$`, botInfo.Username)),
-			HandlerFunc: plg.OnDelete,
+			HandlerFunc: p.OnDelete,
 			AdminOnly:   true,
 		},
 		&plugin.CallbackHandler{
-			HandlerFunc: plg.OnHide,
+			HandlerFunc: p.OnHide,
 			Trigger:     regexp.MustCompile(`^creds_hide$`),
 			AdminOnly:   true,
 		},
 	}
 }
 
-func (plg *Plugin) OnGet(c plugin.GobotContext) error {
+func (p *Plugin) OnGet(c plugin.GobotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
 
-	creds, err := plg.credentialService.GetAllCredentials()
+	creds, err := p.credentialService.GetAllCredentials()
 
 	if err != nil {
 		guid := xid.New().String()
@@ -99,7 +99,7 @@ func (plg *Plugin) OnGet(c plugin.GobotContext) error {
 
 }
 
-func (plg *Plugin) OnAdd(c plugin.GobotContext) error {
+func (p *Plugin) OnAdd(c plugin.GobotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
@@ -107,7 +107,7 @@ func (plg *Plugin) OnAdd(c plugin.GobotContext) error {
 	key := c.Matches[1]
 	value := c.Matches[2]
 
-	err := plg.credentialService.SetKey(key, value)
+	err := p.credentialService.SetKey(key, value)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
@@ -119,13 +119,13 @@ func (plg *Plugin) OnAdd(c plugin.GobotContext) error {
 	return c.Reply("✅ Schlüssel gespeichert", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnDelete(c plugin.GobotContext) error {
+func (p *Plugin) OnDelete(c plugin.GobotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
 
 	key := c.Matches[1]
-	err := plg.credentialService.DeleteKey(key)
+	err := p.credentialService.DeleteKey(key)
 
 	if err != nil {
 		guid := xid.New().String()
@@ -138,7 +138,7 @@ func (plg *Plugin) OnDelete(c plugin.GobotContext) error {
 	return c.Reply("✅ Schlüssel gelöscht", utils.DefaultSendOptions)
 }
 
-func (plg *Plugin) OnHide(c plugin.GobotContext) error {
+func (p *Plugin) OnHide(c plugin.GobotContext) error {
 	err := c.Bot().Delete(c.Callback().Message)
 	if err != nil {
 		log.Err(err).Send()

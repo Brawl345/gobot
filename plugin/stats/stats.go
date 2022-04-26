@@ -30,18 +30,18 @@ func (*Plugin) Name() string {
 	return "stats"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/stats(?:@%s)?$`, botInfo.Username)),
-			HandlerFunc: plg.OnStats,
+			HandlerFunc: p.OnStats,
 			GroupOnly:   true,
 		},
 	}
 }
 
-func (plg *Plugin) OnStats(c plugin.GobotContext) error {
-	users, err := plg.chatsUsersService.GetAllUsersWithMsgCount(c.Chat())
+func (p *Plugin) OnStats(c plugin.GobotContext) error {
+	users, err := p.chatsUsersService.GetAllUsersWithMsgCount(c.Chat())
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).

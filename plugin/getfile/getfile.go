@@ -43,22 +43,22 @@ func (*Plugin) Name() string {
 	return "getfile"
 }
 
-func (plg *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     telebot.OnMedia,
-			HandlerFunc: plg.OnMedia,
+			HandlerFunc: p.OnMedia,
 			HandleEdits: true,
 		},
 		&plugin.CommandHandler{ // telebots Message.Media does not include Stickers :(
 			Trigger:     telebot.OnSticker,
-			HandlerFunc: plg.OnMedia,
+			HandlerFunc: p.OnMedia,
 			HandleEdits: true,
 		},
 	}
 }
 
-func (plg *Plugin) OnMedia(c plugin.GobotContext) error {
+func (p *Plugin) OnMedia(c plugin.GobotContext) error {
 	var fileID string
 	var uniqueID string
 	var subFolder string
@@ -81,7 +81,7 @@ func (plg *Plugin) OnMedia(c plugin.GobotContext) error {
 		return nil
 	}
 
-	exists, err := plg.fileService.Exists(uniqueID)
+	exists, err := p.fileService.Exists(uniqueID)
 	if err != nil {
 		log.Err(err).Msg("Error checking if file exists")
 		return nil
@@ -92,7 +92,7 @@ func (plg *Plugin) OnMedia(c plugin.GobotContext) error {
 		return nil
 	}
 
-	savePath := filepath.Join(plg.dir, subFolder)
+	savePath := filepath.Join(p.dir, subFolder)
 	err = os.MkdirAll(savePath, 0660)
 	if err != nil {
 		log.Err(err).Msgf("Could not create directory: %s", savePath)
@@ -146,7 +146,7 @@ func (plg *Plugin) OnMedia(c plugin.GobotContext) error {
 	}
 	log.Info().Msgf("Saved as: %s", filepath.Join(savePath, fileName))
 
-	err = plg.fileService.Create(uniqueID, fileName, subFolder)
+	err = p.fileService.Create(uniqueID, fileName, subFolder)
 	if err != nil {
 		return err
 	}

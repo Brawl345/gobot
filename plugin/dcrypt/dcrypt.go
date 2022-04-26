@@ -40,16 +40,16 @@ func (*Plugin) Name() string {
 	return "dcrypt"
 }
 
-func (plg *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     telebot.OnDocument,
-			HandlerFunc: plg.OnFile,
+			HandlerFunc: p.OnFile,
 		},
 	}
 }
 
-func (plg *Plugin) OnFile(c plugin.GobotContext) error {
+func (p *Plugin) OnFile(c plugin.GobotContext) error {
 	if c.Message().Document.MIME != "text/plain" ||
 		!strings.HasSuffix(c.Message().Document.FileName, ".dlc") {
 		return nil

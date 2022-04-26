@@ -20,11 +20,11 @@ func New() *Plugin {
 	return &Plugin{}
 }
 
-func (plg *Plugin) Name() string {
+func (p *Plugin) Name() string {
 	return "id"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/(?:(?:whoami)|(?:id))(?:@%s)?$`, botInfo.Username)),

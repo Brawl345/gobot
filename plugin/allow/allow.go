@@ -39,37 +39,37 @@ func (*Plugin) Name() string {
 	return "allow"
 }
 
-func (plg *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/allow(?:@%s)?$`, botInfo.Username)),
-			HandlerFunc: plg.OnAllow,
+			HandlerFunc: p.OnAllow,
 			AdminOnly:   true,
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/deny(?:@%s)?$`, botInfo.Username)),
-			HandlerFunc: plg.OnDeny,
+			HandlerFunc: p.OnDeny,
 			AdminOnly:   true,
 			GroupOnly:   true,
 		},
 	}
 }
 
-func (plg *Plugin) OnAllow(c plugin.GobotContext) error {
+func (p *Plugin) OnAllow(c plugin.GobotContext) error {
 	if c.Message().IsReply() { // Allow user
 		if c.Message().ReplyTo.Sender.IsBot {
 			return c.Reply("🤖🤖🤖", utils.DefaultSendOptions)
 		}
 
-		isAllowed := plg.allowService.IsUserAllowed(c.Message().ReplyTo.Sender)
+		isAllowed := p.allowService.IsUserAllowed(c.Message().ReplyTo.Sender)
 		if isAllowed {
 			return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot bereits überall benutzen.",
 				html.EscapeString(c.Message().ReplyTo.Sender.FirstName)),
 				utils.DefaultSendOptions)
 		}
 
-		err := plg.allowService.AllowUser(c.Message().ReplyTo.Sender)
+		err := p.allowService.AllowUser(c.Message().ReplyTo.Sender)
 		if err != nil {
 			guid := xid.New().String()
 			log.Err(err).
@@ -84,13 +84,13 @@ func (plg *Plugin) OnAllow(c plugin.GobotContext) error {
 			html.EscapeString(c.Message().ReplyTo.Sender.FirstName)),
 			utils.DefaultSendOptions)
 	} else { // Allow group
-		isAllowed := plg.allowService.IsChatAllowed(c.Chat())
+		isAllowed := p.allowService.IsChatAllowed(c.Chat())
 
 		if isAllowed {
 			return c.Reply("✅ Dieser Chat darf den Bot bereits nutzen.", utils.DefaultSendOptions)
 		}
 
-		err := plg.allowService.AllowChat(c.Chat())
+		err := p.allowService.AllowChat(c.Chat())
 		if err != nil {
 			guid := xid.New().String()
 			log.Err(err).
@@ -105,20 +105,20 @@ func (plg *Plugin) OnAllow(c plugin.GobotContext) error {
 	}
 }
 
-func (plg *Plugin) OnDeny(c plugin.GobotContext) error {
+func (p *Plugin) OnDeny(c plugin.GobotContext) error {
 	if c.Message().IsReply() { // Deny user
 		if c.Message().ReplyTo.Sender.IsBot {
 			return c.Reply("🤖🤖🤖", utils.DefaultSendOptions)
 		}
 
-		isAllowed := plg.allowService.IsUserAllowed(c.Message().ReplyTo.Sender)
+		isAllowed := p.allowService.IsUserAllowed(c.Message().ReplyTo.Sender)
 		if !isAllowed {
 			return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot nicht überall benutzen.",
 				html.EscapeString(c.Message().ReplyTo.Sender.FirstName)),
 				utils.DefaultSendOptions)
 		}
 
-		err := plg.allowService.DenyUser(c.Message().ReplyTo.Sender)
+		err := p.allowService.DenyUser(c.Message().ReplyTo.Sender)
 		if err != nil {
 			guid := xid.New().String()
 			log.Err(err).
@@ -133,13 +133,13 @@ func (plg *Plugin) OnDeny(c plugin.GobotContext) error {
 			html.EscapeString(c.Message().ReplyTo.Sender.FirstName)),
 			utils.DefaultSendOptions)
 	} else { // Deny group
-		isAllowed := plg.allowService.IsChatAllowed(c.Chat())
+		isAllowed := p.allowService.IsChatAllowed(c.Chat())
 
 		if !isAllowed {
 			return c.Reply("✅ Dieser Chat darf den Bot nicht nutzen.", utils.DefaultSendOptions)
 		}
 
-		err := plg.allowService.DenyChat(c.Chat())
+		err := p.allowService.DenyChat(c.Chat())
 		if err != nil {
 			guid := xid.New().String()
 			log.Err(err).

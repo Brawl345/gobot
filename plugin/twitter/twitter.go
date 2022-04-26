@@ -133,24 +133,24 @@ func (*Plugin) Name() string {
 	return "twitter"
 }
 
-func (plg *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile("(?i)twitter\\.com/\\w+/status(?:es)?/(\\d+)"),
-			HandlerFunc: plg.OnStatus,
+			HandlerFunc: p.OnStatus,
 		},
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile("(?i)twitter\\.com/status(?:es)?/(\\d+)"),
-			HandlerFunc: plg.OnStatus,
+			HandlerFunc: p.OnStatus,
 		},
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile("(?i)nitter\\.net/\\w+/status(?:es)?/(\\d+)"),
-			HandlerFunc: plg.OnStatus,
+			HandlerFunc: p.OnStatus,
 		},
 	}
 }
 
-func (plg *Plugin) OnStatus(c plugin.GobotContext) error {
+func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	var httpError *utils.HttpError
 	var partialError *PartialError
 	var twitterError *Error
@@ -198,7 +198,7 @@ func (plg *Plugin) OnStatus(c plugin.GobotContext) error {
 
 	err := doTwitterRequest(
 		requestUrl.String(),
-		plg.bearerToken,
+		p.bearerToken,
 		&response,
 	)
 
@@ -422,10 +422,10 @@ func (plg *Plugin) OnStatus(c plugin.GobotContext) error {
 			response.Tweet.ID)
 
 		auth := OAuth1{
-			ConsumerKey:    plg.consumerKey,
-			ConsumerSecret: plg.consumerSecret,
-			AccessToken:    plg.accessToken,
-			AccessSecret:   plg.accessSecret,
+			ConsumerKey:    p.consumerKey,
+			ConsumerSecret: p.consumerSecret,
+			AccessToken:    p.accessToken,
+			AccessSecret:   p.accessSecret,
 		}
 
 		authHeader := auth.BuildOAuth1Header(method, api11Url, map[string]string{
