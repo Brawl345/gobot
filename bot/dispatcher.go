@@ -97,12 +97,19 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 				if !matched && msg.Media() != nil {
 					matched = command == telebot.OnMedia
 				}
+			case telebot.EntityType:
+				for _, entity := range msg.Entities {
+					matched = entity.Type == command
+					if matched {
+						break
+					}
+				}
 			default:
 				panic("Unspported handler type!!")
 			}
 
 			if matched {
-				log.Printf("Matched plugin %s: %s", plg.Name(), handler.Trigger)
+				log.Printf("Matched plugin '%s': %s (%T)", plg.Name(), handler.Trigger, handler.Trigger)
 
 				if !d.managerService.isPluginEnabled(plg.Name()) {
 					log.Printf("Plugin %s is disabled globally", plg.Name())
