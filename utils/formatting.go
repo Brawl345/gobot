@@ -61,6 +61,16 @@ func EmbedGUID(guid string) string {
 	return sb.String()
 }
 
+func FullName(firstName, lastName string) string {
+	var sb strings.Builder
+	sb.WriteString(firstName)
+	if lastName != "" {
+		sb.WriteString(" ")
+		sb.WriteString(lastName)
+	}
+	return sb.String()
+}
+
 func HumanizeDuration(d *duration.Duration) string {
 	var sb strings.Builder
 
