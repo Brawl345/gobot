@@ -35,7 +35,7 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 
 func onAmazonLink(c plugin.GobotContext) error {
 	var links []string
-	for _, entity := range c.Message().Entities {
+	for _, entity := range utils.AnyEntities(c.Message()) {
 		if entity.Type == telebot.EntityURL {
 			amazonUrl, err := url.Parse(c.Message().EntityText(entity))
 

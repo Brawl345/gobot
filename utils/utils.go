@@ -57,6 +57,14 @@ func GermanTimezone() *time.Location {
 	return timezone
 }
 
+func AnyEntities(message *telebot.Message) telebot.Entities {
+	entities := message.Entities
+	if message.Entities == nil {
+		entities = message.CaptionEntities
+	}
+	return entities
+}
+
 func ReadVersionInfo() (VersionInfo, error) {
 	buildInfo, ok := debug.ReadBuildInfo()
 

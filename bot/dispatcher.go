@@ -98,7 +98,11 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 					matched = command == telebot.OnMedia
 				}
 			case telebot.EntityType:
-				for _, entity := range msg.Entities {
+				entities := msg.Entities
+				if entities == nil {
+					entities = msg.CaptionEntities
+				}
+				for _, entity := range entities {
 					matched = entity.Type == command
 					if matched {
 						break
