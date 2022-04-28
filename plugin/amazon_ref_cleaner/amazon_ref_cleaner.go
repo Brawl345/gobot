@@ -48,7 +48,6 @@ func onAmazonLink(c plugin.GobotContext) error {
 
 			if amazonUrl.Hostname() == "amzn.to" {
 				req, err := http.NewRequest("GET", amazonUrl.String(), nil) // HEAD requests lead to 405 :(
-				req.Header.Set("User-Agent", utils.UserAgent)               // Amazon blocks unknown user agents
 
 				if err != nil {
 					log.Err(err).
@@ -57,6 +56,7 @@ func onAmazonLink(c plugin.GobotContext) error {
 					continue
 				}
 
+				req.Header.Set("User-Agent", utils.UserAgent) // Amazon blocks unknown user agents
 				client := &http.Client{
 					CheckRedirect: func(req *http.Request, via []*http.Request) error {
 						return http.ErrUseLastResponse
