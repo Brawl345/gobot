@@ -19,6 +19,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/dcrypt"
 	"github.com/Brawl345/gobot/plugin/delmsg"
 	"github.com/Brawl345/gobot/plugin/echo"
+	"github.com/Brawl345/gobot/plugin/expand"
 	"github.com/Brawl345/gobot/plugin/getfile"
 	"github.com/Brawl345/gobot/plugin/google_images"
 	"github.com/Brawl345/gobot/plugin/gps"
@@ -107,6 +108,7 @@ func New() (*Gobot, error) {
 		dcrypt.New(),
 		delmsg.New(),
 		echo.New(),
+		expand.New(),
 		getfile.New(credentialService, fileService),
 		google_images.New(credentialService, googleImagesService, googleImagesCleanupService),
 		gps.New(geocodingService),
