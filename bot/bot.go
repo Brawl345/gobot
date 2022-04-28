@@ -30,6 +30,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/myanimelist"
 	"github.com/Brawl345/gobot/plugin/notify"
 	"github.com/Brawl345/gobot/plugin/quotes"
+	"github.com/Brawl345/gobot/plugin/randoms"
 	"github.com/Brawl345/gobot/plugin/rki"
 	"github.com/Brawl345/gobot/plugin/stats"
 	"github.com/Brawl345/gobot/plugin/twitter"
@@ -85,6 +86,7 @@ func New() (*Gobot, error) {
 	homeService := sql.NewHomeService(db)
 	notifyService := sql.NewNotifyService(db)
 	quoteService := sql.NewQuoteService(db)
+	randomService := sql.NewRandomService(db)
 	rkiService := sql.NewRKIService(db)
 
 	allowService, err := NewAllowService(chatService, userService)
@@ -120,6 +122,7 @@ func New() (*Gobot, error) {
 		myanimelist.New(credentialService),
 		notify.New(notifyService),
 		quotes.New(quoteService),
+		randoms.New(randomService),
 		rki.New(rkiService),
 		stats.New(chatsUsersService),
 		twitter.New(credentialService),
