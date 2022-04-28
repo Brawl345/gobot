@@ -93,7 +93,7 @@ func (p *Plugin) OnMedia(c plugin.GobotContext) error {
 	}
 
 	savePath := filepath.Join(p.dir, subFolder)
-	err = os.MkdirAll(savePath, 0660)
+	err = os.MkdirAll(savePath, 0770)
 	if err != nil {
 		log.Err(err).Msgf("Could not create directory: %s", savePath)
 		return nil
