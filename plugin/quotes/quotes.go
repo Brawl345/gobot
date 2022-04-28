@@ -1,7 +1,6 @@
 package quotes
 
 import (
-	"database/sql"
 	"errors"
 	"fmt"
 	"regexp"
@@ -73,7 +72,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 func (p *Plugin) getQuote(c plugin.GobotContext) error {
 	quote, err := p.quoteService.GetQuote(c.Chat())
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
+		if errors.Is(err, models.ErrNotFound) {
 			return c.Reply("<b>Es wurden noch keine Zitate eingespeichert!</b>\n"+
 				"Füge welche mit <code>/addquote ZITAT</code> hinzu.", utils.DefaultSendOptions)
 		}
@@ -110,7 +109,7 @@ func (p *Plugin) addQuote(c plugin.GobotContext) error {
 
 	if err != nil {
 		if errors.Is(err, models.ErrAlreadyExists) {
-			return c.Reply("<b>✅ Zitat existiert bereits!</b>", utils.DefaultSendOptions)
+			return c.Reply("<b>💡 Zitat existiert bereits!</b>", utils.DefaultSendOptions)
 		}
 
 		guid := xid.New().String()

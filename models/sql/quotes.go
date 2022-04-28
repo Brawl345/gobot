@@ -20,6 +20,9 @@ func NewQuoteService(db *sqlx.DB) *quoteService {
 func (db *quoteService) GetQuote(chat *telebot.Chat) (string, error) {
 	var quote string
 	err := db.Get(&quote, "SELECT quote FROM quotes WHERE chat_id = ? ORDER BY RAND() LIMIT 1", chat.ID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", models.ErrNotFound
+	}
 	return quote, err
 }
 
