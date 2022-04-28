@@ -33,7 +33,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/rki"
 	"github.com/Brawl345/gobot/plugin/stats"
 	"github.com/Brawl345/gobot/plugin/twitter"
-	"github.com/Brawl345/gobot/plugin/upload_from_link"
+	"github.com/Brawl345/gobot/plugin/upload_by_url"
 	"github.com/Brawl345/gobot/plugin/weather"
 	"github.com/Brawl345/gobot/plugin/worldclock"
 	"github.com/Brawl345/gobot/plugin/youtube"
@@ -123,7 +123,7 @@ func New() (*Gobot, error) {
 		rki.New(rkiService),
 		stats.New(chatsUsersService),
 		twitter.New(credentialService),
-		upload_from_link.New(),
+		upload_by_url.New(),
 		weather.New(geocodingService, homeService),
 		worldclock.New(credentialService),
 		youtube.New(credentialService),

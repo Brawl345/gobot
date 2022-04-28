@@ -1,4 +1,4 @@
-package upload_from_link
+package upload_by_url
 
 import (
 	"net/http"
@@ -15,7 +15,7 @@ import (
 )
 
 var (
-	log      = logger.New("upload_from_link")
+	log      = logger.New("upload_by_url")
 	audioExt = []string{"mp3", "ogg", "ogv", "flac"}
 	imageExt = []string{"jpg", "jpeg", "png"}
 	videoExt = []string{"mp4", "avi"}
@@ -28,7 +28,7 @@ func New() *Plugin {
 }
 
 func (p *Plugin) Name() string {
-	return "upload_from_link"
+	return "upload_by_url"
 }
 
 func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
