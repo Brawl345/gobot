@@ -26,6 +26,12 @@ const (
 
 var log = logger.New("covid")
 
+type Plugin struct{}
+
+func New() *Plugin {
+	return &Plugin{}
+}
+
 func (*Plugin) Name() string {
 	return "covid"
 }
@@ -54,7 +60,7 @@ func OnCountry(c plugin.GobotContext) error {
 
 	err := utils.GetRequest(
 		fmt.Sprintf(
-			"%s/countries/%s?strict=false&allowNull=true",
+			"%s/countries/%s?strict=false",
 			BaseUrl, url.PathEscape(c.Matches[1]),
 		),
 		&result,
@@ -84,60 +90,60 @@ func OnCountry(c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	if result.Message.Valid {
-		log.Error().Str("message", result.Message.String).Msg("Error message found in data")
-		return c.Reply(fmt.Sprintf("❌ %s", result.Message.String), utils.DefaultSendOptions)
+	if result.Message != "" {
+		log.Error().Str("message", result.Message).Msg("Error message found in data")
+		return c.Reply(fmt.Sprintf("❌ %s", result.Message), utils.DefaultSendOptions)
 	}
 
 	var sb strings.Builder
-	if result.CountryInfo.Flag.Valid {
-		sb.WriteString(utils.EmbedImage(result.CountryInfo.Flag.String))
+	if result.CountryInfo.Flag != "" {
+		sb.WriteString(utils.EmbedImage(result.CountryInfo.Flag))
 	}
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>COVID-19-Fälle in %s</b>:\n",
-			html.EscapeString(result.Country.String),
+			html.EscapeString(result.Country),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Gesamt:</b> %s (+ %s) (%s pro Mio.)\n",
-			utils.FormatThousand(result.Cases.Int64),
-			utils.FormatThousand(result.TodayCases.Int64),
-			utils.FormatThousand(result.CasesPerOneMillion.Int64),
+			utils.FormatThousand(result.Cases),
+			utils.FormatThousand(result.TodayCases),
+			utils.FormatThousand(result.CasesPerOneMillion),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Aktiv:</b> %s\n",
-			utils.FormatThousand(result.Active.Int64),
+			utils.FormatThousand(result.Active),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Kritisch:</b> %s\n",
-			utils.FormatThousand(result.Critical.Int64),
+			utils.FormatThousand(result.Critical),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Genesen:</b> %s (+ %s)\n",
-			utils.FormatThousand(result.Recovered.Int64),
-			utils.FormatThousand(result.TodayRecovered.Int64),
+			utils.FormatThousand(result.Recovered),
+			utils.FormatThousand(result.TodayRecovered),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Todesfälle:</b> %s (+ %s) (%s pro Mio.)\n",
-			utils.FormatThousand(result.Deaths.Int64),
-			utils.FormatThousand(result.TodayDeaths.Int64),
-			utils.FormatThousand(result.DeathsPerOneMillion.Int64),
+			utils.FormatThousand(result.Deaths),
+			utils.FormatThousand(result.TodayDeaths),
+			utils.FormatThousand(result.DeathsPerOneMillion),
 		),
 	)
 
@@ -146,7 +152,7 @@ func OnCountry(c plugin.GobotContext) error {
 	err = utils.GetRequest(
 		fmt.Sprintf(
 			"%s/vaccine/coverage/countries/%s?lastdays=1&fullData=true",
-			BaseUrl, url.PathEscape(result.Country.String),
+			BaseUrl, url.PathEscape(result.Country),
 		),
 		&vaccine,
 	)
@@ -194,7 +200,7 @@ func OnRun(c plugin.GobotContext) error {
 	eg.Go(func() error {
 		return utils.GetRequest(
 			fmt.Sprintf(
-				"%s/countries?sort=cases&allowNull=true",
+				"%s/countries?sort=cases",
 				BaseUrl,
 			),
 			&allCountries,
@@ -204,7 +210,7 @@ func OnRun(c plugin.GobotContext) error {
 	var all allResult
 	err := utils.GetRequest(
 		fmt.Sprintf(
-			"%s/all?allowNull=true",
+			"%s/all",
 			BaseUrl,
 		),
 		&all,
@@ -231,33 +237,33 @@ func OnRun(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Gesamt:</b> %s (+ %s) (%s pro Million)\n",
-			utils.FormatThousand(all.Cases.Int64),
-			utils.FormatThousand(all.TodayCases.Int64),
-			utils.FormatThousand(all.CasesPerOneMillion.Int64),
+			utils.FormatThousand(all.Cases),
+			utils.FormatThousand(all.TodayCases),
+			utils.FormatThousand(all.CasesPerOneMillion),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Aktiv:</b> %s (%s pro Million)\n",
-			utils.FormatThousand(all.Active.Int64),
-			utils.RoundAndFormatThousand(all.ActivePerOneMillion.Float64),
+			utils.FormatThousand(all.Active),
+			utils.RoundAndFormatThousand(all.ActivePerOneMillion),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Genesen:</b> %s\n",
-			utils.FormatThousand(all.Recovered.Int64),
+			utils.FormatThousand(all.Recovered),
 		),
 	)
 
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>Todesfälle:</b> %s (+ %s) (%s pro Million)\n\n",
-			utils.FormatThousand(all.Deaths.Int64),
-			utils.FormatThousand(all.TodayDeaths.Int64),
-			utils.RoundAndFormatThousand(all.DeathsPerOneMillion.Float64),
+			utils.FormatThousand(all.Deaths),
+			utils.FormatThousand(all.TodayDeaths),
+			utils.RoundAndFormatThousand(all.DeathsPerOneMillion),
 		),
 	)
 
@@ -279,7 +285,7 @@ func OnRun(c plugin.GobotContext) error {
 	myCountryIndex := 0
 
 	for i, country := range allCountries {
-		if country.Country.String == MyCountry {
+		if country.Country == MyCountry {
 			myCountryIndex = i
 			break
 		}

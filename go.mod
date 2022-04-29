@@ -13,7 +13,6 @@ require (
 	github.com/sosodev/duration v0.0.0-20220124054057-cb2cd96dd316
 	golang.org/x/exp v0.0.0-20220428152302-39d4317da171
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	gopkg.in/guregu/null.v4 v4.0.0
 	gopkg.in/telebot.v3 v3.0.0
 )
 
