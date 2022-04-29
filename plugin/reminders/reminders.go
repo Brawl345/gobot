@@ -66,6 +66,10 @@ func (p *Plugin) Name() string {
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/remind(?:@%s)? (\d+).(\d+). (\d+):(\d+) (.+)$`, botInfo.Username)),
+			HandlerFunc: p.onAddDateTimeReminder,
+		},
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/remind(?:@%s)? (\d+):(\d+) (.+)$`, botInfo.Username)),
 			HandlerFunc: p.onAddTimeReminder,
 		},
@@ -82,6 +86,92 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 			HandlerFunc: p.onGetReminders,
 		},
 	}
+}
+
+func (p *Plugin) onAddDateTimeReminder(c plugin.GobotContext) error {
+	text := c.Matches[5]
+	day, err := strconv.ParseInt(c.Matches[1], 10, 32)
+	if err != nil {
+		log.Err(err).
+			Str("day", c.Matches[1]).
+			Msg("Failed to parse hour")
+		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
+			utils.DefaultSendOptions)
+	}
+
+	month, err := strconv.ParseInt(c.Matches[2], 10, 32)
+	if err != nil {
+		log.Err(err).
+			Str("month", c.Matches[2]).
+			Msg("Failed to parse minutes")
+		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
+			utils.DefaultSendOptions)
+	}
+
+	hour, err := strconv.ParseInt(c.Matches[3], 10, 32)
+	if err != nil {
+		log.Err(err).
+			Str("hour", c.Matches[1]).
+			Msg("Failed to parse hour")
+		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
+			utils.DefaultSendOptions)
+	}
+
+	min, err := strconv.ParseInt(c.Matches[4], 10, 32)
+	if err != nil {
+		log.Err(err).
+			Str("min", c.Matches[2]).
+			Msg("Failed to parse minutes")
+		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
+			utils.DefaultSendOptions)
+	}
+
+	_, err = time.Parse("02.01.2006 15:05",
+		fmt.Sprintf("%02d.%02d.%d %02d:%02d", day, month, time.Now().Year(), hour, min),
+	)
+	if err != nil {
+		log.Err(err).
+			Int64("day", day).
+			Int64("month", month).
+			Msg("Unsupported unit")
+		return c.Reply(fmt.Sprintf("❌ Bitte gib ein gültiges Datum an."),
+			utils.DefaultSendOptions)
+	}
+
+	now := time.Now()
+	remindTime := time.Date(
+		now.Year(),
+		time.Month(month),
+		int(day),
+		int(hour),
+		int(min),
+		0,
+		0,
+		time.Local,
+	)
+
+	if remindTime.Before(now) {
+		remindTime = remindTime.AddDate(1, 0, 0)
+	}
+
+	id, err := p.reminderService.SaveReminder(c.Chat(), c.Sender(), remindTime, text)
+	if err != nil {
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Msg("Failed to save reminder")
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+	}
+
+	time.AfterFunc(time.Until(remindTime), func() {
+		p.sendReminder(c.Bot(), id)
+	})
+
+	return c.Reply(
+		fmt.Sprintf("🕒 Erinnerung eingestellt für den <b>%s</b>.",
+			remindTime.Format("02.01.2006 um 15:04:05 Uhr"),
+		),
+		utils.DefaultSendOptions)
 }
 
 func (p *Plugin) onAddTimeReminder(c plugin.GobotContext) error {
@@ -104,7 +194,7 @@ func (p *Plugin) onAddTimeReminder(c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	_, err = time.Parse("15:04", fmt.Sprintf("%d:%d", hour, min))
+	_, err = time.Parse("15:04", fmt.Sprintf("%02d:%02d", hour, min))
 	if err != nil {
 		log.Err(err).
 			Int64("hour", hour).
@@ -127,7 +217,7 @@ func (p *Plugin) onAddTimeReminder(c plugin.GobotContext) error {
 	)
 
 	if remindTime.Before(now) {
-		remindTime = remindTime.Add(time.Hour * 24)
+		remindTime = remindTime.AddDate(0, 0, 1)
 	}
 
 	id, err := p.reminderService.SaveReminder(c.Chat(), c.Sender(), remindTime, text)
