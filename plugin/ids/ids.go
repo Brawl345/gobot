@@ -116,7 +116,7 @@ func (p *Plugin) onIds(c plugin.GobotContext) error {
 		sb.WriteString(
 			fmt.Sprintf(
 				"<b>%s</b> <code>%d</code>",
-				utils.FullName(user.FirstName, user.LastName.String),
+				html.EscapeString(utils.FullName(user.FirstName, user.LastName.String)),
 				user.ID,
 			),
 		)
