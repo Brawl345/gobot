@@ -32,6 +32,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/quotes"
 	"github.com/Brawl345/gobot/plugin/randoms"
 	"github.com/Brawl345/gobot/plugin/reminders"
+	"github.com/Brawl345/gobot/plugin/replace"
 	"github.com/Brawl345/gobot/plugin/rki"
 	"github.com/Brawl345/gobot/plugin/stats"
 	"github.com/Brawl345/gobot/plugin/twitter"
@@ -126,6 +127,7 @@ func New() (*Gobot, error) {
 		quotes.New(quoteService),
 		randoms.New(randomService),
 		reminders.New(bot, reminderService),
+		replace.New(),
 		rki.New(rkiService),
 		stats.New(chatsUsersService),
 		twitter.New(credentialService),
