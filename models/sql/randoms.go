@@ -17,9 +17,9 @@ func NewRandomService(db *sqlx.DB) *randomService {
 }
 
 func (db *randomService) exists(random string) (bool, error) {
-	const quoery = `SELECT 1 FROM randoms WHERE text = ?`
+	const query = `SELECT 1 FROM randoms WHERE text = ?`
 	var exists bool
-	err := db.Get(&exists, quoery, random)
+	err := db.Get(&exists, query, random)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil

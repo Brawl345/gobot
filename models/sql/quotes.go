@@ -27,9 +27,9 @@ func (db *quoteService) GetQuote(chat *telebot.Chat) (string, error) {
 }
 
 func (db *quoteService) exists(chat *telebot.Chat, quote string) (bool, error) {
-	const quoery = `SELECT 1 FROM quotes WHERE chat_id = ? AND quote = ?`
+	const query = `SELECT 1 FROM quotes WHERE chat_id = ? AND quote = ?`
 	var exists bool
-	err := db.Get(&exists, quoery, chat.ID, quote)
+	err := db.Get(&exists, query, chat.ID, quote)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil
