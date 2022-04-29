@@ -25,6 +25,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/gps"
 	"github.com/Brawl345/gobot/plugin/home"
 	"github.com/Brawl345/gobot/plugin/id"
+	"github.com/Brawl345/gobot/plugin/ids"
 	"github.com/Brawl345/gobot/plugin/kaomoji"
 	"github.com/Brawl345/gobot/plugin/manager"
 	"github.com/Brawl345/gobot/plugin/myanimelist"
@@ -120,6 +121,7 @@ func New() (*Gobot, error) {
 		gps.New(geocodingService),
 		home.New(geocodingService, homeService),
 		id.New(),
+		ids.New(chatsUsersService),
 		kaomoji.New(),
 		manager.New(managerService),
 		myanimelist.New(credentialService),

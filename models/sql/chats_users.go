@@ -138,3 +138,14 @@ func (db *chatsUsersService) Leave(chat *telebot.Chat, user *telebot.User) error
 	_, err := db.Exec(query, chat.ID, user.ID)
 	return err
 }
+
+func (db *chatsUsersService) GetAllUsersInChat(chat *telebot.Chat) ([]models.User, error) {
+	const query = `SELECT u.id, u.first_name, u.last_name FROM chats_users
+	JOIN users u on u.id = chats_users.user_id
+	WHERE chat_id = ?
+	AND in_group = true
+	ORDER BY u.first_name, u.last_name`
+	var users []models.User
+	err := db.Select(&users, query, chat.ID)
+	return users, err
+}
