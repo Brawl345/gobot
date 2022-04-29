@@ -1,0 +1,2 @@
+GET https://api.urbandictionary.com/v0/define
+    ?term=somewhere
