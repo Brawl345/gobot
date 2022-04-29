@@ -66,8 +66,12 @@ func (p *Plugin) Name() string {
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/remind(?:@%s)? (\d+):(\d+) (.+)$`, botInfo.Username)),
+			HandlerFunc: p.onAddTimeReminder,
+		},
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/remind(?:@%s)? (\d+)(h|m|s) (.+)$`, botInfo.Username)),
-			HandlerFunc: p.onAddReminder,
+			HandlerFunc: p.onAddDeltaReminder,
 		},
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/remind_delete(?:@%s)? (\d+)$`, botInfo.Username)),
@@ -80,7 +84,73 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onAddReminder(c plugin.GobotContext) error {
+func (p *Plugin) onAddTimeReminder(c plugin.GobotContext) error {
+	text := c.Matches[3]
+	hour, err := strconv.ParseInt(c.Matches[1], 10, 32)
+	if err != nil {
+		log.Err(err).
+			Str("hour", c.Matches[1]).
+			Msg("Failed to parse hour")
+		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
+			utils.DefaultSendOptions)
+	}
+
+	min, err := strconv.ParseInt(c.Matches[2], 10, 32)
+	if err != nil {
+		log.Err(err).
+			Str("min", c.Matches[2]).
+			Msg("Failed to parse minutes")
+		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
+			utils.DefaultSendOptions)
+	}
+
+	_, err = time.Parse("15:04", fmt.Sprintf("%d:%d", hour, min))
+	if err != nil {
+		log.Err(err).
+			Int64("hour", hour).
+			Int64("min", min).
+			Msg("Unsupported unit")
+		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
+			utils.DefaultSendOptions)
+	}
+
+	now := time.Now()
+	remindTime := time.Date(
+		now.Year(),
+		now.Month(),
+		now.Day(),
+		int(hour),
+		int(min),
+		0,
+		0,
+		time.Local,
+	)
+
+	if remindTime.Before(now) {
+		remindTime = remindTime.Add(time.Hour * 24)
+	}
+
+	id, err := p.reminderService.SaveReminder(c.Chat(), c.Sender(), remindTime, text)
+	if err != nil {
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Msg("Failed to save reminder")
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+	}
+
+	time.AfterFunc(time.Until(remindTime), func() {
+		p.sendReminder(c.Bot(), id)
+	})
+
+	return c.Reply(
+		fmt.Sprintf("🕒 Erinnerung eingestellt für den <b>%s</b>.",
+			remindTime.Format("02.01.2006 um 15:04:05 Uhr"),
+		),
+		utils.DefaultSendOptions)
+}
+
+func (p *Plugin) onAddDeltaReminder(c plugin.GobotContext) error {
 	dur, err := strconv.ParseInt(c.Matches[1], 10, 64)
 	if err != nil {
 		log.Err(err).
