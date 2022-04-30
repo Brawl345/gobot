@@ -183,7 +183,7 @@ func (p *Plugin) doImageSearch(c *plugin.GobotContext) error {
 		},
 	}
 
-	for success == false && numberOfTries < maxNumberOfTries {
+	for !success && numberOfTries < maxNumberOfTries {
 		image := wrapper.Images[index]
 		caption := fmt.Sprintf(
 			"<a href=\"%s\">🖼 Vollbild</a> • <a href=\"%s\">🌐 Seite aufrufen</a>",
