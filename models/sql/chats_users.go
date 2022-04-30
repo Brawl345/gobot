@@ -29,7 +29,12 @@ func (db *chatsUsersService) Create(chat *telebot.Chat, user *telebot.User) erro
 		return err
 	}
 
-	defer tx.Rollback()
+	defer func(tx *sqlx.Tx) {
+		err := tx.Rollback()
+		if err != nil {
+			log.Err(err).Msg("Failed to rollback")
+		}
+	}(tx)
 
 	err = db.Chats.CreateTx(tx, chat)
 	if err != nil {
@@ -66,7 +71,12 @@ func (db *chatsUsersService) CreateBatch(chat *telebot.Chat, users *[]telebot.Us
 		return err
 	}
 
-	defer tx.Rollback()
+	defer func(tx *sqlx.Tx) {
+		err := tx.Rollback()
+		if err != nil {
+			log.Err(err).Msg("Failed to rollback")
+		}
+	}(tx)
 
 	// creating a query for every user is inefficient,
 	// but idc

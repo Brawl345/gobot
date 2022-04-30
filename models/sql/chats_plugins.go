@@ -35,7 +35,12 @@ func (db *chatsPluginsService) Disable(chat *telebot.Chat, pluginName string) er
 		return err
 	}
 
-	defer tx.Rollback()
+	defer func(tx *sqlx.Tx) {
+		err := tx.Rollback()
+		if err != nil {
+			log.Err(err).Msg("Failed to rollback")
+		}
+	}(tx)
 
 	err = db.Chats.CreateTx(tx, chat)
 	if err != nil {
@@ -65,7 +70,12 @@ func (db *chatsPluginsService) Enable(chat *telebot.Chat, pluginName string) err
 		return err
 	}
 
-	defer tx.Rollback()
+	defer func(tx *sqlx.Tx) {
+		err := tx.Rollback()
+		if err != nil {
+			log.Err(err).Msg("Failed to rollback")
+		}
+	}(tx)
 
 	err = db.Chats.CreateTx(tx, chat)
 	if err != nil {
