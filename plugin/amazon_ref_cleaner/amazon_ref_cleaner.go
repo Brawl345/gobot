@@ -78,7 +78,7 @@ func onAmazonLink(c plugin.GobotContext) error {
 					continue
 				}
 
-				amazonUrl, err = resp.Location()
+				fullLink, err := resp.Location()
 				if err != nil {
 					log.Error().
 						Interface("headers", resp.Header).
@@ -86,6 +86,7 @@ func onAmazonLink(c plugin.GobotContext) error {
 						Msg("Failed to parse location header")
 					continue
 				}
+				amazonUrl = fullLink
 			}
 
 			if amazonUrl.Query().Has("tag") || amazonUrl.Query().Has("linkId") {
