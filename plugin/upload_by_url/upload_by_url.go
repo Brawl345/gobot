@@ -35,7 +35,7 @@ func (p *Plugin) Name() string {
 func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile("(https?://.+\\.(zip|7z|rar|tar\\.(?:gz|bzip2)|jpe?g|png|gif|apk|avi|mp[34]|webp|og[gv]))"),
+			Trigger:     regexp.MustCompile(`(https?://.+\.(zip|7z|rar|tar\.(?:gz|bzip2)|jpe?g|png|gif|apk|avi|mp[34]|webp|og[gv]))`),
 			HandlerFunc: onFileLink,
 		},
 	}

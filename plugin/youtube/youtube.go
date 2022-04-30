@@ -40,15 +40,15 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	// For videoId see https://webapps.stackexchange.com/a/101153
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile("(?i)youtube\\.com/watch(?:\\?|\\?.+&)?v=([\\dA-Za-z_-]{10}[048AEIMQUYcgkosw])"),
+			Trigger:     regexp.MustCompile(`(?i)youtube\.com/watch(?:\?|\?.+&)?v=([\dA-Za-z_-]{10}[048AEIMQUYcgkosw])`),
 			HandlerFunc: p.OnYouTubeLink,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile("(?i)youtube\\.com/(?:embed|shorts)/([\\dA-Za-z_-]{10}[048AEIMQUYcgkosw])"),
+			Trigger:     regexp.MustCompile(`(?i)youtube\.com/(?:embed|shorts)/([\dA-Za-z_-]{10}[048AEIMQUYcgkosw])`),
 			HandlerFunc: p.OnYouTubeLink,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile("(?i)youtu\\.be/([\\dA-Za-z_-]{10}[048AEIMQUYcgkosw])"),
+			Trigger:     regexp.MustCompile(`(?i)youtu\.be/([\dA-Za-z_-]{10}[048AEIMQUYcgkosw])`),
 			HandlerFunc: p.OnYouTubeLink,
 		},
 	}
