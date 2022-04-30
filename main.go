@@ -30,7 +30,6 @@ func main() {
 
 	channel := make(chan os.Signal)
 	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
-	signal.Notify(channel, os.Interrupt, syscall.SIGKILL)
 	signal.Notify(channel, os.Interrupt, syscall.SIGINT)
 	go func() {
 		<-channel
