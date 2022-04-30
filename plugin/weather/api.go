@@ -127,12 +127,7 @@ func (hourly *Hourly) Forecast(hour int) (string, error) {
 	)
 	sb.WriteString(" | ")
 
-	sb.WriteString(
-		fmt.Sprintf(
-			"%s",
-			hourly.Temperature2M[hour].String(),
-		),
-	)
+	sb.WriteString(hourly.Temperature2M[hour].String())
 
 	sb.WriteString(" | ")
 	sb.WriteString(
