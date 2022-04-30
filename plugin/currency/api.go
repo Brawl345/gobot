@@ -9,7 +9,7 @@ type Response struct {
 }
 
 var (
-	BadAmountError    = errors.New("bad amount")
-	BadCurrencyError  = errors.New("bad currency")
-	SameCurrencyError = errors.New("is same currency")
+	ErrBadAmount    = errors.New("bad amount")
+	ErrBadCurrency  = errors.New("bad currency")
+	ErrSameCurrency = errors.New("is same currency")
 )

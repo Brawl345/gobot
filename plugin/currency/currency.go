@@ -56,13 +56,13 @@ func convertCurrency(amount, from, to string) (string, error) {
 	amount = strings.ReplaceAll(amount, ",", ".")
 	_, err := strconv.ParseFloat(amount, 64)
 	if err != nil {
-		return "", BadAmountError
+		return "", ErrBadAmount
 	}
 
 	from = strings.ToUpper(from)
 	to = strings.ToUpper(to)
 	if from == to {
-		return "", SameCurrencyError
+		return "", ErrSameCurrency
 	}
 
 	var response Response
@@ -70,7 +70,7 @@ func convertCurrency(amount, from, to string) (string, error) {
 	err = utils.GetRequest(fmt.Sprintf(ApiUrl, amount, from, to), &response)
 	if err != nil {
 		if errors.As(err, &httpError) && httpError.StatusCode == 404 {
-			return "", BadCurrencyError
+			return "", ErrBadCurrency
 		}
 		return "", err
 	}
@@ -91,11 +91,11 @@ func onConvertFromTo(c plugin.GobotContext) error {
 	text, err := convertCurrency(c.Matches[1], c.Matches[2], c.Matches[3])
 	if err != nil {
 		switch err {
-		case BadAmountError:
+		case ErrBadAmount:
 			return c.Reply("❌ Ungültiger Betrag", utils.DefaultSendOptions)
-		case BadCurrencyError:
+		case ErrBadCurrency:
 			return c.Reply("❌ Bitte gib eine <a href=\"https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.de.html\">gültige Währung</a> an.", utils.DefaultSendOptions)
-		case SameCurrencyError:
+		case ErrSameCurrency:
 			return c.Reply("❌ Die beiden Währungen sind identisch.", utils.DefaultSendOptions)
 		default:
 			guid := xid.New().String()
@@ -114,11 +114,11 @@ func onConvertToEUR(c plugin.GobotContext) error {
 	text, err := convertCurrency(c.Matches[1], c.Matches[2], "EUR")
 	if err != nil {
 		switch err {
-		case BadAmountError:
+		case ErrBadAmount:
 			return c.Reply("❌ Ungültiger Betrag", utils.DefaultSendOptions)
-		case BadCurrencyError:
+		case ErrBadCurrency:
 			return c.Reply("❌ Bitte gib eine <a href=\"https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.de.html\">gültige Zielwährung</a> an.", utils.DefaultSendOptions)
-		case SameCurrencyError:
+		case ErrSameCurrency:
 			return c.Reply("❌ Mit diesem Befehl rechnest du bereits in Euro um.", utils.DefaultSendOptions)
 		default:
 			guid := xid.New().String()
