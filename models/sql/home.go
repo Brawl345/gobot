@@ -55,7 +55,12 @@ func (db *homeService) SetHome(user *telebot.User, venue *telebot.Venue) error {
 		return err
 	}
 
-	defer tx.Rollback()
+	defer func(tx *sqlx.Tx) {
+		err := tx.Rollback()
+		if err != nil {
+			log.Err(err).Msg("failed to rollback")
+		}
+	}(tx)
 
 	const insertAddressQuery = `INSERT INTO geocoding 
     (address, latitude, longitude) 
