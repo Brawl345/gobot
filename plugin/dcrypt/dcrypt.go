@@ -54,7 +54,13 @@ func (p *Plugin) OnFile(c plugin.GobotContext) error {
 			Msg("Failed to download file")
 		return c.Reply("❌ Konnte Datei nicht von Telegram herunterladen.", utils.DefaultSendOptions)
 	}
-	defer file.Close()
+
+	defer func(file io.ReadCloser) {
+		err := file.Close()
+		if err != nil {
+			log.Err(err).Msg("Failed to close file")
+		}
+	}(file)
 
 	resp, err := utils.MultiPartFormRequest(
 		"https://dcrypt.it/decrypt/upload",
@@ -90,7 +96,13 @@ func (p *Plugin) OnFile(c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Err(err).Msg("Failed to close response body")
+		}
+	}(resp.Body)
+
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		guid := xid.New().String()

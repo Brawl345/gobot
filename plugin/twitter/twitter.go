@@ -84,7 +84,12 @@ func doTwitterRequest(url string, bearerToken string, result any) error {
 		return err
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Error().Err(err).Msg("error closing body")
+		}
+	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 
 	if err != nil {
@@ -511,7 +516,12 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 				return nil
 			}
 
-			defer resp.Body.Close()
+			defer func(Body io.ReadCloser) {
+				err := Body.Close()
+				if err != nil {
+					log.Err(err).Msg("Error while closing video body")
+				}
+			}(resp.Body)
 
 			err = c.Reply(
 				&telebot.Video{
@@ -562,7 +572,12 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 						return
 					}
 
-					defer resp.Body.Close()
+					defer func(Body io.ReadCloser) {
+						err := Body.Close()
+						if err != nil {
+							log.Err(err).Msg("Error while closing image body")
+						}
+					}(resp.Body)
 
 					err = c.Reply(&telebot.Photo{File: telebot.FromReader(resp.Body)}, telebot.Silent)
 					if err != nil {

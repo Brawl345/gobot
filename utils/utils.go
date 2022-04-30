@@ -117,7 +117,12 @@ func GetRequest(url string, result any) error {
 		}
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Err(err).Msg("Failed to close response body")
+		}
+	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 
 	if err != nil {
@@ -165,7 +170,12 @@ func GetRequestWithHeader(url string, headers map[string]string, result any) err
 		}
 	}
 
-	defer resp.Body.Close()
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Err(err).Msg("Failed to close response body")
+		}
+	}(resp.Body)
 	body, err := io.ReadAll(resp.Body)
 
 	if err != nil {
@@ -192,7 +202,12 @@ func MultiPartFormRequest(url string, params []MultiPartParam, files []MultiPart
 
 	var b bytes.Buffer
 	writer := multipart.NewWriter(&b)
-	defer writer.Close()
+	defer func(writer *multipart.Writer) {
+		err := writer.Close()
+		if err != nil {
+			log.Err(err).Msg("Failed to close multipart writer")
+		}
+	}(writer)
 
 	for _, param := range params {
 		err := writer.WriteField(param.Name, param.Value)
@@ -212,7 +227,10 @@ func MultiPartFormRequest(url string, params []MultiPartParam, files []MultiPart
 		}
 	}
 
-	writer.Close()
+	err := writer.Close()
+	if err != nil {
+		return nil, err
+	}
 
 	req, err := http.NewRequest("POST", url, &b)
 	if err != nil {

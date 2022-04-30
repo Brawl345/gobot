@@ -119,7 +119,12 @@ func (db *googleImagesService) SaveImages(query string, wrapper *models.GoogleIm
 		return 0, err
 	}
 
-	defer tx.Rollback()
+	defer func(tx *sqlx.Tx) {
+		err := tx.Rollback()
+		if err != nil {
+			log.Err(err).Send()
+		}
+	}(tx)
 
 	const insertSearchQuery = `INSERT INTO google_images_queries (query, current_index) VALUES (?, ?)`
 	res, err := tx.Exec(insertSearchQuery, query, wrapper.CurrentIndex)

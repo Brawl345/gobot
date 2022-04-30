@@ -1,6 +1,7 @@
 package upload_by_url
 
 import (
+	"io"
 	"net/http"
 	"path"
 	"regexp"
@@ -126,7 +127,14 @@ func onFileLink(c plugin.GobotContext) error {
 			return nil
 		}
 
-		defer resp.Body.Close()
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				log.Err(err).
+					Str("url", url).
+					Msg("Failed to close response body")
+			}
+		}(resp.Body)
 
 		file := telebot.FromReader(resp.Body)
 		fileName := path.Base(url)

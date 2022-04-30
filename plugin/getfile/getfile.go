@@ -104,7 +104,12 @@ func (p *Plugin) OnMedia(c plugin.GobotContext) error {
 	if err != nil {
 		return err
 	}
-	defer reader.Close()
+	defer func(reader io.ReadCloser) {
+		err := reader.Close()
+		if err != nil {
+			log.Err(err).Msg("Error closing file")
+		}
+	}(reader)
 
 	var fileName string
 	if c.Message().Animation != nil && c.Message().Animation.FileName != "" {
@@ -138,7 +143,12 @@ func (p *Plugin) OnMedia(c plugin.GobotContext) error {
 	if err != nil {
 		return err
 	}
-	defer out.Close()
+	defer func(out *os.File) {
+		err := out.Close()
+		if err != nil {
+			log.Err(err).Msg("Error closing file")
+		}
+	}(out)
 
 	_, err = io.Copy(out, reader)
 	if err != nil {
