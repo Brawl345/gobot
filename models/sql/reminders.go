@@ -109,6 +109,9 @@ func (db *reminderService) SaveReminder(
 		const query = `INSERT INTO reminders (chat_id, user_id, time, text) VALUES (?, ?, ?, ?)`
 		res, err = db.Exec(query, chat.ID, user.ID, remindAt, text)
 	}
+	if err != nil {
+		return 0, err
+	}
 	lastInsertedID, err := res.LastInsertId()
 	return lastInsertedID, err
 }

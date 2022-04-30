@@ -99,7 +99,11 @@ func (p *Plugin) doImageSearch(c *plugin.GobotContext) error {
 		if err != nil {
 			return err
 		}
+
 		wrapper, err = p.googleImagesService.GetImagesFromQueryID(queryID)
+		if err != nil {
+			return err
+		}
 		if len(wrapper.Images) == 0 {
 			return ErrNoImagesFound
 		}
