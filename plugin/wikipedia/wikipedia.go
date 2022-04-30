@@ -43,7 +43,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 			HandlerFunc: onArticle,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(`(?i)https?://(?P<lang>\w+).(?:m.)?wikipedia.org/wiki/(?P<query>\S+)(?:#(?P<section>\S+))?`),
+			Trigger:     regexp.MustCompile(`(?i)https?://(?P<lang>\w+).(?:m.)?wikipedia.org/wiki/(?P<query>[^\s#]+)(?:#(?P<section>\S+))?`),
 			HandlerFunc: onArticle,
 		},
 	}
@@ -55,6 +55,7 @@ func onArticle(c plugin.GobotContext) error {
 	if lang == "" {
 		lang = "de"
 	}
+	section := c.NamedMatches["section"]
 
 	query = strings.NewReplacer(
 		"_", " ",
@@ -87,7 +88,9 @@ func onArticle(c plugin.GobotContext) error {
 	q.Set("formatversion", "2")
 	q.Set("inprop", "url")
 	q.Set("ppprop", "disambiguation")
-	q.Set("exintro", "1")
+	if section == "" {
+		q.Set("exintro", "1")
+	}
 	q.Set("explaintext", "1")
 
 	requestUrl.RawQuery = q.Encode()
@@ -198,6 +201,38 @@ func onArticle(c plugin.GobotContext) error {
 				},
 			},
 		})
+	}
+
+	if section != "" {
+		section = strings.ReplaceAll(section, "_", " ")
+		section, err = url.PathUnescape(section)
+		if err != nil {
+			guid := xid.New().String()
+			log.Err(err).
+				Str("query", query).
+				Str("section", section).
+				Msg("Failed to unescape section")
+			return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+				utils.DefaultSendOptions)
+		}
+		matches := regexSection.FindAllStringSubmatch(article.Text, -1)
+		for _, match := range matches {
+			sectionTitle := strings.TrimSpace(match[1])
+			if section == sectionTitle {
+				sectionText := strings.TrimSpace(match[2])
+				if sectionText == "" {
+					break
+				}
+				sb.WriteString(
+					fmt.Sprintf(
+						"<b>Abschnitt:</b> <i>%s</i>\n",
+						html.EscapeString(sectionTitle),
+					),
+				)
+				article.Text = sectionText
+				break
+			}
+		}
 	}
 
 	summary := strings.TrimSpace(article.Text)

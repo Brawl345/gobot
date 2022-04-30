@@ -5,6 +5,7 @@ import "regexp"
 var (
 	regexDisambiguation = regexp.MustCompile(`(?iUm)<li>(.+)</li>`)
 	regexHTML           = regexp.MustCompile("<.*?>")
+	regexSection        = regexp.MustCompile(`\n+=+ (.+) =+\n+(.*)`)
 	regexWprov          = regexp.MustCompile(`\?wprov=.*`)
 )
 
