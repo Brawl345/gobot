@@ -60,6 +60,9 @@ func (db *notifyService) GetAllToBeNotifiedUsers(chat *telebot.Chat, mentionedUs
 	  AND cu.in_group = TRUE
 	  AND u.username IN (?);`
 	query, args, err := sqlx.In(query, chat.ID, mentionedUsernames)
+	if err != nil {
+		return nil, err
+	}
 	query = db.Rebind(query)
 
 	var userIDs []int64

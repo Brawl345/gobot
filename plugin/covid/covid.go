@@ -194,7 +194,7 @@ func OnRun(c plugin.GobotContext) error {
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
-	eg, ctx := errgroup.WithContext(ctx)
+	eg, _ := errgroup.WithContext(ctx)
 
 	var allCountries []countryResult
 	eg.Go(func() error {

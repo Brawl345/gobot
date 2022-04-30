@@ -65,6 +65,9 @@ func (db *chatsUsersService) CreateBatch(chat *telebot.Chat, users *[]telebot.Us
     ON DUPLICATE KEY UPDATE chat_id = chat_id, in_group = true`
 
 	tx, err := db.BeginTxx(context.Background(), nil)
+	if err != nil {
+		return err
+	}
 
 	err = db.Chats.CreateTx(tx, chat)
 	if err != nil {
