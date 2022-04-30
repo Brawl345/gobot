@@ -72,11 +72,17 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 
 			var matched bool
 			var matches []string
+			namedMatches := make(map[string]string)
 
 			switch command := handler.Command().(type) {
 			case *regexp.Regexp:
 				matches = command.FindStringSubmatch(text)
 				matched = len(matches) > 0
+				if matched {
+					for i, name := range matches {
+						namedMatches[command.SubexpNames()[i]] = name
+					}
+				}
 			case string:
 				switch {
 				// More to be added when needed
@@ -132,8 +138,9 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 
 				go func() {
 					err := handler.Run(plugin.GobotContext{
-						Context: c,
-						Matches: matches,
+						Context:      c,
+						Matches:      matches,
+						NamedMatches: namedMatches,
 					})
 					if err != nil {
 						log.Err(err).
@@ -240,10 +247,16 @@ func (d *Dispatcher) OnCallback(c telebot.Context) error {
 					}()
 				}
 
+				namedMatches := make(map[string]string)
+				for i, name := range matches {
+					namedMatches[command.SubexpNames()[i]] = name
+				}
+
 				go func() {
 					err := handler.Run(plugin.GobotContext{
-						Context: c,
-						Matches: matches,
+						Context:      c,
+						Matches:      matches,
+						NamedMatches: namedMatches,
 					})
 					if err != nil {
 						log.Err(err).
@@ -314,10 +327,16 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 					}
 				}
 
+				namedMatches := make(map[string]string)
+				for i, name := range matches {
+					namedMatches[command.SubexpNames()[i]] = name
+				}
+
 				go func() {
 					err := handler.Run(plugin.GobotContext{
-						Context: c,
-						Matches: matches,
+						Context:      c,
+						Matches:      matches,
+						NamedMatches: namedMatches,
 					})
 					if err != nil {
 						log.Err(err).

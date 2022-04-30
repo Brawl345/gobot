@@ -20,7 +20,8 @@ type (
 
 	GobotContext struct {
 		telebot.Context
-		Matches []string // Regex matches
+		Matches      []string          // Regex matches
+		NamedMatches map[string]string // Named Regex matches
 	}
 
 	GobotHandlerFunc func(c GobotContext) error
