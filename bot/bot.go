@@ -146,10 +146,6 @@ func New() (*Gobot, error) {
 
 	log.Info().Msgf("Loaded %d plugins", len(plugins))
 
-	if err != nil {
-		return nil, err
-	}
-
 	b := &Gobot{
 		Telebot: bot,
 	}
