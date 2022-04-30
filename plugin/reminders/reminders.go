@@ -95,8 +95,7 @@ func (p *Plugin) onAddDateTimeReminder(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("day", c.Matches[1]).
 			Msg("Failed to parse hour")
-		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
-			utils.DefaultSendOptions)
+		return c.Reply("❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions)
 	}
 
 	month, err := strconv.ParseInt(c.Matches[2], 10, 32)
@@ -104,8 +103,7 @@ func (p *Plugin) onAddDateTimeReminder(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("month", c.Matches[2]).
 			Msg("Failed to parse minutes")
-		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
-			utils.DefaultSendOptions)
+		return c.Reply("❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions)
 	}
 
 	hour, err := strconv.ParseInt(c.Matches[3], 10, 32)
@@ -113,8 +111,7 @@ func (p *Plugin) onAddDateTimeReminder(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("hour", c.Matches[1]).
 			Msg("Failed to parse hour")
-		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
-			utils.DefaultSendOptions)
+		return c.Reply("❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions)
 	}
 
 	min, err := strconv.ParseInt(c.Matches[4], 10, 32)
@@ -122,8 +119,7 @@ func (p *Plugin) onAddDateTimeReminder(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("min", c.Matches[2]).
 			Msg("Failed to parse minutes")
-		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
-			utils.DefaultSendOptions)
+		return c.Reply("❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions)
 	}
 
 	_, err = time.Parse("02.01.2006 15:05",
@@ -134,8 +130,7 @@ func (p *Plugin) onAddDateTimeReminder(c plugin.GobotContext) error {
 			Int64("day", day).
 			Int64("month", month).
 			Msg("Unsupported unit")
-		return c.Reply(fmt.Sprintf("❌ Bitte gib ein gültiges Datum an."),
-			utils.DefaultSendOptions)
+		return c.Reply("❌ Bitte gib ein gültiges Datum an.", utils.DefaultSendOptions)
 	}
 
 	now := time.Now()
@@ -181,8 +176,7 @@ func (p *Plugin) onAddTimeReminder(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("hour", c.Matches[1]).
 			Msg("Failed to parse hour")
-		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
-			utils.DefaultSendOptions)
+		return c.Reply("❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions)
 	}
 
 	min, err := strconv.ParseInt(c.Matches[2], 10, 32)
@@ -190,8 +184,7 @@ func (p *Plugin) onAddTimeReminder(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("min", c.Matches[2]).
 			Msg("Failed to parse minutes")
-		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
-			utils.DefaultSendOptions)
+		return c.Reply("❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions)
 	}
 
 	_, err = time.Parse("15:04", fmt.Sprintf("%02d:%02d", hour, min))
@@ -200,8 +193,7 @@ func (p *Plugin) onAddTimeReminder(c plugin.GobotContext) error {
 			Int64("hour", hour).
 			Int64("min", min).
 			Msg("Unsupported unit")
-		return c.Reply(fmt.Sprintf("❌ Bitte gib eine gültige Uhrzeit an."),
-			utils.DefaultSendOptions)
+		return c.Reply("❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions)
 	}
 
 	now := time.Now()
@@ -246,8 +238,7 @@ func (p *Plugin) onAddDeltaReminder(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("duration", c.Matches[1]).
 			Msg("Failed to parse amount")
-		return c.Reply(fmt.Sprintf("❌ Bitte wähle eine kürzere Dauer."),
-			utils.DefaultSendOptions)
+		return c.Reply("❌ Bitte wähle eine kürzere Dauer.", utils.DefaultSendOptions)
 	}
 	unit := c.Matches[2]
 	text := c.Matches[3]
@@ -265,8 +256,7 @@ func (p *Plugin) onAddDeltaReminder(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("unit", unit).
 			Msg("Unsupported unit")
-		return c.Reply(fmt.Sprintf("❌ Bitte wähle als Zeitangabe entweder 's', 'm' oder 'h'."),
-			utils.DefaultSendOptions)
+		return c.Reply("❌ Bitte wähle als Zeitangabe entweder 's', 'm' oder 'h'.", utils.DefaultSendOptions)
 	}
 
 	id, err := p.reminderService.SaveReminder(c.Chat(), c.Sender(), remindTime, text)
