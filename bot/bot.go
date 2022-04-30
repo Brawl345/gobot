@@ -40,6 +40,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/upload_by_url"
 	"github.com/Brawl345/gobot/plugin/urbandictionary"
 	"github.com/Brawl345/gobot/plugin/weather"
+	"github.com/Brawl345/gobot/plugin/wikipedia"
 	"github.com/Brawl345/gobot/plugin/worldclock"
 	"github.com/Brawl345/gobot/plugin/youtube"
 	"gopkg.in/telebot.v3"
@@ -137,6 +138,7 @@ func New() (*Gobot, error) {
 		upload_by_url.New(),
 		urbandictionary.New(),
 		weather.New(geocodingService, homeService),
+		wikipedia.New(),
 		worldclock.New(credentialService),
 		youtube.New(credentialService),
 	}

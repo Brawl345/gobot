@@ -1,0 +1,59 @@
+### Get page
+GET https://de.wikipedia.org/w/api.php
+    ?action=query
+    &titles=Hardware
+    &format=json
+    &prop=info%7Cpageprops%7Cextracts
+    &redirects=1
+    &formatversion=2
+    &inprop=url
+    &ppprop=disambiguation
+    &exintro=1
+    &explaintext=1
+
+### If disambiguation -> parse list from HTML
+GET https://de.wikipedia.org/w/api.php
+    ?action=query
+    &titles=asdf
+    &format=json
+    &prop=info%7Cpageprops%7Cextracts
+    &redirects=1
+    &formatversion=2
+    &inprop=url
+    &ppprop=disambiguation
+
+### If section is set -> parse sections from HTML
+GET https://de.wikipedia.org/w/api.php
+    ?action=query
+    &format=json
+    &titles=Wii
+    &prop=info%7Cpageprops%7Cextracts
+    &redirects=1
+    &formatversion=2
+    &inprop=url
+    &ppprop=disambiguation
+    &explaintext=1
+
+### Missing page
+GET https://de.wikipedia.org/w/api.php
+    ?action=query
+    &titles=Nicht%20existierende%20Seite
+    &format=json
+    &prop=info%7Cpageprops%7Cextracts
+    &redirects=1
+    &formatversion=2
+    &inprop=url
+    &ppprop=disambiguation
+    &explaintext=1
+
+### Redirect
+GET https://de.wikipedia.org/w/api.php
+    ?action=query
+    &titles=Hutb%C3%BCrger
+    &format=json
+    &prop=info%7Cpageprops%7Cextracts
+    &redirects=1
+    &formatversion=2
+    &inprop=url
+    &ppprop=disambiguation
+    &explaintext=1
