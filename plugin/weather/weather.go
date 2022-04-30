@@ -160,7 +160,7 @@ func (p *Plugin) onWeather(c plugin.GobotContext) error {
 			}
 		}
 
-		var rainyHoursCollapsed [][]int
+		rainyHoursCollapsed := make([][]int, 0)
 		prevHour := -1
 		for i, hour := range rainyHours {
 			if i == 0 {
