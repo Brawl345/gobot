@@ -42,11 +42,11 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 			HandlerFunc: onConvertToEUR,
 		},
 		&plugin.InlineHandler{
-			Trigger:     regexp.MustCompile(`(?i)cash ([\d,]+) ([A-Za-z]{3}) (?:in )?([A-Za-z]{3})$`),
+			Trigger:     regexp.MustCompile(`(?i)^cash ([\d,]+) ([A-Za-z]{3}) (?:in )?([A-Za-z]{3})$`),
 			HandlerFunc: onConvertFromToInline,
 		},
 		&plugin.InlineHandler{
-			Trigger:     regexp.MustCompile(`(?i)cash ([\d,]+) ([A-Za-z]{3})$`),
+			Trigger:     regexp.MustCompile(`(?i)^cash ([\d,]+) ([A-Za-z]{3})$`),
 			HandlerFunc: onConvertToEURInline,
 		},
 	}
