@@ -12,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/alive"
 	"github.com/Brawl345/gobot/plugin/allow"
 	"github.com/Brawl345/gobot/plugin/amazon_ref_cleaner"
+	"github.com/Brawl345/gobot/plugin/calc"
 	"github.com/Brawl345/gobot/plugin/cleverbot"
 	"github.com/Brawl345/gobot/plugin/covid"
 	"github.com/Brawl345/gobot/plugin/creds"
@@ -110,6 +111,7 @@ func New() (*Gobot, error) {
 		alive.New(),
 		allow.New(allowService),
 		amazon_ref_cleaner.New(),
+		calc.New(),
 		cleverbot.New(credentialService, cleverbotService),
 		covid.New(),
 		creds.New(credentialService),
