@@ -24,6 +24,7 @@ type (
 		Allowed   bool           `db:"allowed"`
 		MsgCount  int64          `db:"msg_count"`
 		InGroup   bool           `db:"in_group"`
+		Birthday  sql.NullTime   `db:"birthday"`
 	}
 )
 
