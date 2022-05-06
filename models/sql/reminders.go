@@ -5,6 +5,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/models"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
@@ -12,10 +13,14 @@ import (
 
 type reminderService struct {
 	*sqlx.DB
+	log *logger.Logger
 }
 
 func NewReminderService(db *sqlx.DB) *reminderService {
-	return &reminderService{db}
+	return &reminderService{
+		DB:  db,
+		log: logger.New("reminderService"),
+	}
 }
 
 func (db *reminderService) DeleteReminder(chat *telebot.Chat, user *telebot.User, id string) error {

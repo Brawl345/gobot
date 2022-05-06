@@ -1,16 +1,21 @@
 package sql
 
 import (
+	"github.com/Brawl345/gobot/logger"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
 
 type chatService struct {
 	*sqlx.DB
+	log *logger.Logger
 }
 
 func NewChatService(db *sqlx.DB) *chatService {
-	return &chatService{db}
+	return &chatService{
+		DB:  db,
+		log: logger.New("chatService"),
+	}
 }
 
 func (db *chatService) Allow(chat *telebot.Chat) error {

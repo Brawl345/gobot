@@ -8,11 +8,15 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-func New(component string) zerolog.Logger {
+type Logger struct {
+	*zerolog.Logger
+}
+
+func New(component string) *Logger {
 	sublogger := log.With().
 		Str("component", component).
 		Logger()
-	return sublogger
+	return &Logger{&sublogger}
 }
 
 func init() {

@@ -3,7 +3,9 @@ package sql
 import (
 	"context"
 	"database/sql"
+	"errors"
 
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/models"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
@@ -11,10 +13,14 @@ import (
 
 type homeService struct {
 	*sqlx.DB
+	log *logger.Logger
 }
 
 func NewHomeService(db *sqlx.DB) *homeService {
-	return &homeService{db}
+	return &homeService{
+		DB:  db,
+		log: logger.New("homeService"),
+	}
 }
 
 func (db *homeService) GetHome(user *telebot.User) (telebot.Venue, error) {
@@ -57,8 +63,8 @@ func (db *homeService) SetHome(user *telebot.User, venue *telebot.Venue) error {
 
 	defer func(tx *sqlx.Tx) {
 		err := tx.Rollback()
-		if err != nil {
-			log.Err(err).Msg("failed to rollback")
+		if err != nil && !errors.Is(err, sql.ErrTxDone) {
+			db.log.Err(err).Msg("failed to rollback transaction")
 		}
 	}(tx)
 

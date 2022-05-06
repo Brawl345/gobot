@@ -1,16 +1,21 @@
 package sql
 
 import (
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/models"
 	"github.com/jmoiron/sqlx"
 )
 
 type pluginService struct {
 	*sqlx.DB
+	log *logger.Logger
 }
 
 func NewPluginService(db *sqlx.DB) *pluginService {
-	return &pluginService{db}
+	return &pluginService{
+		DB:  db,
+		log: logger.New("pluginService"),
+	}
 }
 
 func (db *pluginService) CreateTx(tx *sqlx.Tx, pluginName string) error {

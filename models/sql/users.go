@@ -1,16 +1,21 @@
 package sql
 
 import (
+	"github.com/Brawl345/gobot/logger"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
 
 type userService struct {
 	*sqlx.DB
+	log *logger.Logger
 }
 
 func NewUserService(db *sqlx.DB) *userService {
-	return &userService{db}
+	return &userService{
+		DB:  db,
+		log: logger.New("userService"),
+	}
 }
 
 func (db *userService) Allow(user *telebot.User) error {

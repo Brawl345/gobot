@@ -2,7 +2,10 @@ package sql
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/models"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/jmoiron/sqlx"
@@ -13,6 +16,7 @@ type chatsUsersService struct {
 	Chats models.ChatService
 	Users models.UserService
 	*sqlx.DB
+	log *logger.Logger
 }
 
 func NewChatsUsersService(db *sqlx.DB, chatService models.ChatService, userService models.UserService) *chatsUsersService {
@@ -20,6 +24,7 @@ func NewChatsUsersService(db *sqlx.DB, chatService models.ChatService, userServi
 		Chats: chatService,
 		Users: userService,
 		DB:    db,
+		log:   logger.New("chatsUsersService"),
 	}
 }
 
@@ -31,8 +36,8 @@ func (db *chatsUsersService) Create(chat *telebot.Chat, user *telebot.User) erro
 
 	defer func(tx *sqlx.Tx) {
 		err := tx.Rollback()
-		if err != nil {
-			log.Err(err).Msg("Failed to rollback")
+		if err != nil && !errors.Is(err, sql.ErrTxDone) {
+			db.log.Err(err).Msg("failed to rollback transaction")
 		}
 	}(tx)
 
@@ -76,8 +81,8 @@ func (db *chatsUsersService) CreateBatch(chat *telebot.Chat, users *[]telebot.Us
 
 	defer func(tx *sqlx.Tx) {
 		err := tx.Rollback()
-		if err != nil {
-			log.Err(err).Msg("Failed to rollback")
+		if err != nil && !errors.Is(err, sql.ErrTxDone) {
+			db.log.Err(err).Msg("failed to rollback transaction")
 		}
 	}(tx)
 

@@ -3,16 +3,21 @@ package sql
 import (
 	"database/sql"
 
+	"github.com/Brawl345/gobot/logger"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
 
 type cleverbotService struct {
 	*sqlx.DB
+	log *logger.Logger
 }
 
 func NewCleverbotService(db *sqlx.DB) *cleverbotService {
-	return &cleverbotService{db}
+	return &cleverbotService{
+		DB:  db,
+		log: logger.New("cleverbotService"),
+	}
 }
 
 func (db *cleverbotService) SetState(chat *telebot.Chat, state string) error {

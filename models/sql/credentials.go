@@ -3,16 +3,21 @@ package sql
 import (
 	"errors"
 
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/models"
 	"github.com/jmoiron/sqlx"
 )
 
 type credentialService struct {
 	*sqlx.DB
+	log *logger.Logger
 }
 
 func NewCredentialService(db *sqlx.DB) *credentialService {
-	return &credentialService{db}
+	return &credentialService{
+		DB:  db,
+		log: logger.New("credentialService"),
+	}
 }
 
 func (db *credentialService) GetAllCredentials() ([]models.Credential, error) {

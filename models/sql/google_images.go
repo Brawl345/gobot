@@ -2,8 +2,11 @@ package sql
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"strings"
 
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/models"
 	"github.com/jmoiron/sqlx"
 )
@@ -11,6 +14,7 @@ import (
 type (
 	googleImagesService struct {
 		*sqlx.DB
+		log *logger.Logger
 	}
 
 	Image struct {
@@ -34,7 +38,10 @@ func (i Image) IsGIF() bool {
 }
 
 func NewGoogleImagesService(db *sqlx.DB) *googleImagesService {
-	return &googleImagesService{db}
+	return &googleImagesService{
+		DB:  db,
+		log: logger.New("googleImagesService"),
+	}
 }
 
 func (db *googleImagesService) GetImages(query string) (models.GoogleImages, error) {
@@ -51,7 +58,7 @@ func (db *googleImagesService) GetImages(query string) (models.GoogleImages, err
 	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
 		if err != nil {
-			log.Err(err).Send()
+			db.log.Err(err).Send()
 		}
 	}(rows)
 
@@ -62,7 +69,7 @@ func (db *googleImagesService) GetImages(query string) (models.GoogleImages, err
 		var image Image
 		err := rows.Scan(&queryID, &image.ImageURL, &image.ContextURL, &image.GIF, &currentIndex)
 		if err != nil {
-			log.Err(err).Send()
+			db.log.Err(err).Send()
 			return models.GoogleImages{}, err
 		}
 		images = append(images, image)
@@ -88,7 +95,7 @@ func (db *googleImagesService) GetImagesFromQueryID(queryID int64) (models.Googl
 	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
 		if err != nil {
-			log.Err(err).Send()
+			db.log.Err(err).Send()
 		}
 	}(rows)
 
@@ -98,7 +105,7 @@ func (db *googleImagesService) GetImagesFromQueryID(queryID int64) (models.Googl
 		var image Image
 		err := rows.Scan(&image.ImageURL, &image.ContextURL, &image.GIF, &currentIndex)
 		if err != nil {
-			log.Err(err).Send()
+			db.log.Err(err).Send()
 			return models.GoogleImages{}, err
 		}
 		images = append(images, image)
@@ -121,8 +128,8 @@ func (db *googleImagesService) SaveImages(query string, wrapper *models.GoogleIm
 
 	defer func(tx *sqlx.Tx) {
 		err := tx.Rollback()
-		if err != nil {
-			log.Err(err).Send()
+		if err != nil && !errors.Is(err, sql.ErrTxDone) {
+			db.log.Err(err).Msg("failed to rollback transaction")
 		}
 	}(tx)
 

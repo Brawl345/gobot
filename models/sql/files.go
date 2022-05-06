@@ -4,15 +4,20 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/Brawl345/gobot/logger"
 	"github.com/jmoiron/sqlx"
 )
 
 type fileService struct {
 	*sqlx.DB
+	log *logger.Logger
 }
 
 func NewFileService(db *sqlx.DB) *fileService {
-	return &fileService{db}
+	return &fileService{
+		DB:  db,
+		log: logger.New("fileService"),
+	}
 }
 
 func (db *fileService) Create(uniqueID, fileName, mediaType string) error {

@@ -4,16 +4,21 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/models"
 	"github.com/jmoiron/sqlx"
 )
 
 type randomService struct {
 	*sqlx.DB
+	log *logger.Logger
 }
 
 func NewRandomService(db *sqlx.DB) *randomService {
-	return &randomService{db}
+	return &randomService{
+		DB:  db,
+		log: logger.New("randomService"),
+	}
 }
 
 func (db *randomService) exists(random string) (bool, error) {

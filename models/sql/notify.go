@@ -4,16 +4,21 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/Brawl345/gobot/logger"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
 
 type notifyService struct {
 	*sqlx.DB
+	log *logger.Logger
 }
 
 func NewNotifyService(db *sqlx.DB) *notifyService {
-	return &notifyService{db}
+	return &notifyService{
+		DB:  db,
+		log: logger.New("notifyService"),
+	}
 }
 
 func (db *notifyService) Enabled(chat *telebot.Chat, user *telebot.User) (bool, error) {

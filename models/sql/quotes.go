@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/models"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
@@ -11,10 +12,14 @@ import (
 
 type quoteService struct {
 	*sqlx.DB
+	log *logger.Logger
 }
 
 func NewQuoteService(db *sqlx.DB) *quoteService {
-	return &quoteService{db}
+	return &quoteService{
+		DB:  db,
+		log: logger.New("quoteService"),
+	}
 }
 
 func (db *quoteService) GetQuote(chat *telebot.Chat) (string, error) {

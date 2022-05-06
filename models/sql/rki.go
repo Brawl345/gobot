@@ -3,16 +3,21 @@ package sql
 import (
 	"database/sql"
 
+	"github.com/Brawl345/gobot/logger"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
 
 type rkiService struct {
 	*sqlx.DB
+	log *logger.Logger
 }
 
 func NewRKIService(db *sqlx.DB) *rkiService {
-	return &rkiService{db}
+	return &rkiService{
+		DB:  db,
+		log: logger.New("rkiService"),
+	}
 }
 
 func (db *rkiService) DelAGS(user *telebot.User) error {

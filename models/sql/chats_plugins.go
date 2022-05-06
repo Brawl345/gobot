@@ -2,6 +2,8 @@ package sql
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/models"
@@ -13,9 +15,8 @@ type chatsPluginsService struct {
 	Chats   models.ChatService
 	Plugins models.PluginService
 	*sqlx.DB
+	log *logger.Logger
 }
-
-var log = logger.New("sql")
 
 func NewChatsPluginsService(
 	db *sqlx.DB,
@@ -26,6 +27,7 @@ func NewChatsPluginsService(
 		Chats:   chatService,
 		Plugins: pluginService,
 		DB:      db,
+		log:     logger.New("chatsPluginsService"),
 	}
 }
 
@@ -37,8 +39,8 @@ func (db *chatsPluginsService) Disable(chat *telebot.Chat, pluginName string) er
 
 	defer func(tx *sqlx.Tx) {
 		err := tx.Rollback()
-		if err != nil {
-			log.Err(err).Msg("Failed to rollback")
+		if err != nil && !errors.Is(err, sql.ErrTxDone) {
+			db.log.Err(err).Msg("failed to rollback transaction")
 		}
 	}(tx)
 
@@ -72,8 +74,8 @@ func (db *chatsPluginsService) Enable(chat *telebot.Chat, pluginName string) err
 
 	defer func(tx *sqlx.Tx) {
 		err := tx.Rollback()
-		if err != nil {
-			log.Err(err).Msg("Failed to rollback")
+		if err != nil && !errors.Is(err, sql.ErrTxDone) {
+			db.log.Err(err).Msg("failed to rollback transaction")
 		}
 	}(tx)
 
@@ -115,7 +117,7 @@ func (db *chatsPluginsService) GetAllDisabled() (map[int64][]string, error) {
 	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
 		if err != nil {
-			log.Err(err).Send()
+			db.log.Err(err).Send()
 		}
 	}(rows)
 
@@ -126,7 +128,7 @@ func (db *chatsPluginsService) GetAllDisabled() (map[int64][]string, error) {
 		var pluginName string
 		err := rows.Scan(&chatID, &pluginName)
 		if err != nil {
-			log.Err(err).Send()
+			db.log.Err(err).Send()
 			return nil, err
 		}
 
