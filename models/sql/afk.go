@@ -68,3 +68,23 @@ func (db *afkService) BackAgain(chat *telebot.Chat, user *telebot.User) error {
 	_, err := db.Exec(updateQuery, chat.ID, user.ID)
 	return err
 }
+
+func (db *afkService) IsAFKByUsername(chat *telebot.Chat, username string) (bool, models.AFKData, error) {
+	const query = `SELECT afk_since, afk_reason, first_name
+	FROM chats_users
+	LEFT JOIN users ON chats_users.user_id = users.id
+	WHERE chat_id = ?
+	  AND in_group = TRUE
+	  AND username = ?
+	  AND afk_since IS NOT NULL`
+
+	var afkData models.AFKData
+	err := db.Get(&afkData, query, chat.ID, username)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return false, afkData, nil
+		}
+		return false, afkData, err
+	}
+	return true, afkData, nil
+}

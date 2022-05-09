@@ -25,6 +25,7 @@ type (
 	Service interface {
 		BackAgain(chat *telebot.Chat, user *telebot.User) error
 		IsAFK(chat *telebot.Chat, user *telebot.User) (bool, models.AFKData, error)
+		IsAFKByUsername(chat *telebot.Chat, username string) (bool, models.AFKData, error)
 		SetAFK(chat *telebot.Chat, user *telebot.User) error
 		SetAFKWithReason(chat *telebot.Chat, user *telebot.User, reason string) error
 	}
@@ -55,6 +56,11 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 		&plugin.CommandHandler{
 			Trigger:     utils.OnMsg,
 			HandlerFunc: p.checkAFK,
+			GroupOnly:   true,
+		},
+		&plugin.CommandHandler{
+			Trigger:     telebot.EntityMention,
+			HandlerFunc: p.notifyIfAFK,
 			GroupOnly:   true,
 		},
 	}
@@ -153,6 +159,60 @@ func (p *Plugin) checkAFK(c plugin.GobotContext) error {
 			),
 		)
 	}
+	sb.WriteString(")</i>")
+
+	return c.Reply(sb.String(), utils.DefaultSendOptions)
+}
+
+func (p *Plugin) notifyIfAFK(c plugin.GobotContext) error {
+	var mentionedUsername string
+	for _, entity := range utils.AnyEntities(c.Message()) {
+		if entity.Type == telebot.EntityMention {
+			if mentionedUsername != "" {
+				return nil // Supports only one username
+			}
+			username := strings.TrimPrefix(c.Message().EntityText(entity), "@")
+			mentionedUsername = strings.ToLower(username)
+		}
+	}
+
+	if mentionedUsername == "" ||
+		mentionedUsername == strings.ToLower(c.Bot().Me.Username) ||
+		mentionedUsername == strings.ToLower(c.Sender().Username) {
+		return nil
+	}
+
+	isAFK, data, err := p.afkService.IsAFKByUsername(c.Chat(), mentionedUsername)
+	if err != nil {
+		log.Err(err).
+			Int64("chat_id", c.Chat().ID).
+			Str("username", mentionedUsername).
+			Msg("Failure to check AFK")
+		return nil
+	}
+
+	if !isAFK {
+		return nil
+	}
+
+	var sb strings.Builder
+	sb.WriteString(
+		fmt.Sprintf(
+			"💤 <b>%s ist zurzeit AFK!</b> <i>(🕒 seit %s",
+			html.EscapeString(data.FirstName),
+			data.Duration().Round(time.Second),
+		),
+	)
+
+	if data.Reason.Valid {
+		sb.WriteString(
+			fmt.Sprintf(
+				", 💬 %s",
+				html.EscapeString(data.Reason.String),
+			),
+		)
+	}
+
 	sb.WriteString(")</i>")
 
 	return c.Reply(sb.String(), utils.DefaultSendOptions)

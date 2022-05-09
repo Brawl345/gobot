@@ -6,8 +6,9 @@ import (
 )
 
 type AFKData struct {
-	Since  time.Time      `db:"afk_since"`
-	Reason sql.NullString `db:"afk_reason"`
+	Since     time.Time      `db:"afk_since"`
+	Reason    sql.NullString `db:"afk_reason"`
+	FirstName string         `db:"first_name"`
 }
 
 func (a *AFKData) Duration() time.Duration {
