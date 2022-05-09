@@ -33,8 +33,10 @@ Example with [Hookdeck](https://hookdeck.com/):
 
 ### More options
 
-Set the env variable `PRINT_MSGS` to some value (like `true`) to print all messages the bot receives to the terminal.
+Set the following variables to a truthy value (like "`true`") to enable them:
 
-Set `DEBUG` to some value (like `true`) to enable debug logs.
-
-Set `IGNORE_SQL_MIGRATION` to some value (like `true`) to ignore the SQL migration feature when you want to migrate yourself (for example with PlanetScale since it doesn't support foreign key references).
+* `PRINT_MSGS`: Print all messages the bot receives to the terminal
+* `PRETTY_PRINT_LOG`: Pretty print log
+* `DEBUG`: Enable debug logs (verbose!)
+* `IGNORE_SQL_MIGRATION`: Ignore the SQL migration feature when you want to migrate yourself (for example with
+  PlanetScale since it doesn't support foreign key references).
