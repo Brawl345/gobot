@@ -10,6 +10,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/plugin/allow"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
 
@@ -143,11 +144,14 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 						NamedMatches: namedMatches,
 					})
 					if err != nil {
+						guid := xid.New().String()
 						log.Err(err).
+							Str("guid", guid).
 							Int64("chat_id", c.Sender().ID).
 							Str("text", c.Text()).
 							Str("component", plg.Name()).
 							Send()
+						_ = c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 					}
 				}()
 
