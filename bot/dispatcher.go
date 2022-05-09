@@ -104,6 +104,10 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 				if !matched && msg.Media() != nil {
 					matched = command == telebot.OnMedia
 				}
+
+				if !matched {
+					matched = command == utils.OnMsg
+				}
 			case telebot.EntityType:
 				entities := msg.Entities
 				if entities == nil {

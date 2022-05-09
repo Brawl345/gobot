@@ -3,6 +3,8 @@ package utils
 import "time"
 
 const (
+	OnMsg = "\agobot_msg" // Shortcut for handling any message
+
 	Day  = 24 * time.Hour
 	Week = 7 * Day
 
