@@ -9,6 +9,7 @@ import (
 	"github.com/Brawl345/gobot/models/sql"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/plugin/about"
+	"github.com/Brawl345/gobot/plugin/afk"
 	"github.com/Brawl345/gobot/plugin/alive"
 	"github.com/Brawl345/gobot/plugin/allow"
 	"github.com/Brawl345/gobot/plugin/amazon_ref_cleaner"
@@ -86,6 +87,7 @@ func New() (*Gobot, error) {
 	chatsUsersService := sql.NewChatsUsersService(db, chatService, userService)
 
 	// Plugin-specific services
+	afkService := sql.NewAfkService(db)
 	birthdayService := sql.NewBirthdayService(db)
 	cleverbotService := sql.NewCleverbotService(db)
 	fileService := sql.NewFileService(db)
@@ -110,6 +112,7 @@ func New() (*Gobot, error) {
 
 	plugins := []plugin.Plugin{
 		about.New(),
+		afk.New(afkService),
 		alive.New(),
 		allow.New(allowService),
 		amazon_ref_cleaner.New(),
