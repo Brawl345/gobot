@@ -26,7 +26,7 @@ type (
 		BackAgain(chat *telebot.Chat, user *telebot.User) error
 		IsAFK(chat *telebot.Chat, user *telebot.User) (bool, models.AFKData, error)
 		IsAFKByUsername(chat *telebot.Chat, username string) (bool, models.AFKData, error)
-		SetAFK(chat *telebot.Chat, user *telebot.User) error
+		SetAFK(chat *telebot.Chat, user *telebot.User, now time.Time) error
 		SetAFKWithReason(chat *telebot.Chat, user *telebot.User, reason string) error
 	}
 )
@@ -76,7 +76,7 @@ func (p *Plugin) goAFK(c plugin.GobotContext) error {
 	if reason != "" {
 		err = p.afkService.SetAFKWithReason(c.Chat(), c.Sender(), reason)
 	} else {
-		err = p.afkService.SetAFK(c.Chat(), c.Sender())
+		err = p.afkService.SetAFK(c.Chat(), c.Sender(), time.Now())
 	}
 
 	if err != nil {

@@ -3,6 +3,7 @@ package sql
 import (
 	"database/sql"
 	"errors"
+	"time"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/models"
@@ -22,13 +23,13 @@ func NewAfkService(db *sqlx.DB) *afkService {
 	}
 }
 
-func (db *afkService) SetAFK(chat *telebot.Chat, user *telebot.User) error {
+func (db *afkService) SetAFK(chat *telebot.Chat, user *telebot.User, now time.Time) error {
 	const query = `UPDATE chats_users
-	SET afk_since = CURRENT_TIME(),
+	SET afk_since = ?,
 	    afk_reason = NULL
 	WHERE chat_id = ?
 	  AND user_id = ?`
-	_, err := db.Exec(query, chat.ID, user.ID)
+	_, err := db.Exec(query, now, chat.ID, user.ID)
 	return err
 }
 
