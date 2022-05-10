@@ -80,7 +80,7 @@ func New() (*Gobot, error) {
 	// General services
 	chatService := sql.NewChatService(db)
 	credentialService := sql.NewCredentialService(db)
-	geocodingService := NewGeocodingService()
+	geocodingService := sql.NewGeocodingService()
 	pluginService := sql.NewPluginService(db)
 	userService := sql.NewUserService(db)
 	chatsPluginsService := sql.NewChatsPluginsService(db, chatService, pluginService)
@@ -100,7 +100,7 @@ func New() (*Gobot, error) {
 	reminderService := sql.NewReminderService(db)
 	rkiService := sql.NewRKIService(db)
 
-	allowService, err := NewAllowService(chatService, userService)
+	allowService, err := sql.NewAllowService(chatService, userService)
 	if err != nil {
 		return nil, err
 	}
