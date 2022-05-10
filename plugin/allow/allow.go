@@ -6,6 +6,7 @@ import (
 	"regexp"
 
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/models"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -16,20 +17,11 @@ var log = logger.New("allow")
 
 type (
 	Plugin struct {
-		allowService Service
-	}
-
-	Service interface {
-		AllowChat(chat *telebot.Chat) error
-		AllowUser(user *telebot.User) error
-		DenyChat(chat *telebot.Chat) error
-		DenyUser(user *telebot.User) error
-		IsChatAllowed(chat *telebot.Chat) bool
-		IsUserAllowed(user *telebot.User) bool
+		allowService models.AllowService
 	}
 )
 
-func New(service Service) *Plugin {
+func New(service models.AllowService) *Plugin {
 	return &Plugin{
 		allowService: service,
 	}

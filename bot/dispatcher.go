@@ -8,14 +8,13 @@ import (
 
 	"github.com/Brawl345/gobot/models"
 	"github.com/Brawl345/gobot/plugin"
-	"github.com/Brawl345/gobot/plugin/allow"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
 
 type Dispatcher struct {
-	allowService      allow.Service
+	allowService      models.AllowService
 	chatsUsersService models.ChatsUsersService
 	managerService    *managerService
 	userService       models.UserService
