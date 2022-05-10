@@ -16,7 +16,7 @@ type (
 		PlaceId     int     `json:"place_id"`
 		OsmType     string  `json:"osm_type"`
 		OsmId       int     `json:"osm_id"`
-		Lat         float32 `json:"lat,string"` // this hurts but telebot doesn't uses float32
+		Lat         float32 `json:"lat,string"`
 		Lng         float32 `json:"lon,string"`
 		DisplayName string  `json:"display_name"`
 		Category    string  `json:"category"`
