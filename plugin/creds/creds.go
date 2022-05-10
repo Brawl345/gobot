@@ -116,7 +116,7 @@ func (p *Plugin) OnAdd(c plugin.GobotContext) error {
 		return c.Reply("❌ Fehler beim Speichern des Schlüssels", utils.DefaultSendOptions)
 	}
 
-	return c.Reply("✅ Schlüssel gespeichert", utils.DefaultSendOptions)
+	return c.Reply("✅ Schlüssel gespeichert. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions)
 }
 
 func (p *Plugin) OnDelete(c plugin.GobotContext) error {
@@ -135,7 +135,7 @@ func (p *Plugin) OnDelete(c plugin.GobotContext) error {
 		return c.Reply(err.Error())
 	}
 
-	return c.Reply("✅ Schlüssel gelöscht", utils.DefaultSendOptions)
+	return c.Reply("✅ Schlüssel gelöscht. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions)
 }
 
 func (p *Plugin) OnHide(c plugin.GobotContext) error {
