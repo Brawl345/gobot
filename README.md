@@ -1,6 +1,7 @@
 # Gobot
 
-[![Build](https://github.com/Brawl345/gobot/actions/workflows/build.yml/badge.svg "GitHub Actions Build Badge")](https://github.com/Brawl345/gobot/actions/workflows/build.yml) [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+[![Build](https://github.com/Brawl345/gobot/actions/workflows/build.yml/badge.svg "GitHub Actions Build Badge")](https://github.com/Brawl345/gobot/actions/workflows/build.yml) [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy) [![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&name=gobot&ports=8080;http;/&repository=github.com/Brawl345/gobot&branch=master)
+
 
 
 Multi-purpose bot for the Telegram Messenger based on [Telebot](https://github.com/tucnak/telebot/) and inspired
