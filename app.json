@@ -1,0 +1,51 @@
+{
+  "name": "Gobot",
+  "description": "Multi-purpose Telegram bot",
+  "env": {
+    "ADMIN_ID": {
+      "description": "Telegram User ID of the admin user",
+      "value": "1337",
+      "required": false
+    },
+    "BOT_TOKEN": {
+      "description": "Telegram Bot Token",
+      "value": "12345:abcdefg",
+      "required": true
+    },
+    "IGNORE_SQL_MIGRATION": {
+      "description": "Remove this if you want to use SQL migration feature",
+      "value": "true",
+      "required": false
+    },
+    "MYSQL_HOST": {
+      "value": "127.0.0.1",
+      "required": true
+    },
+    "MYSQL_PORT": {
+      "value": "3306",
+      "required": true
+    },
+    "MYSQL_USER": {
+      "value": "myuser",
+      "required": true
+    },
+    "MYSQL_PASSWORD": {
+      "value": "mypass",
+      "required": true
+    },
+    "MYSQL_DB": {
+      "value": "mydb",
+      "required": true
+    },
+    "TZ": {
+      "description": "Do yourself a favor and set your timezone here",
+      "value": "Europe/Berlin",
+      "required": false
+    },
+    "WEBHOOK_PUBLIC_URL": {
+      "description": "URL to your heroku instance",
+      "value": "https://some-app.herokuapp.com/",
+      "required": false
+    }
+  }
+}

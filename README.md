@@ -1,5 +1,8 @@
 # Gobot
 
+[![Build](https://github.com/Brawl345/gobot/actions/workflows/build.yml/badge.svg "GitHub Actions Build Badge")](https://github.com/Brawl345/gobot/actions/workflows/build.yml) [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy)
+
+
 Multi-purpose bot for the Telegram Messenger based on [Telebot](https://github.com/tucnak/telebot/) and inspired
 by [Python-Telegram-Bot](https://github.com/python-telegram-bot/python-telegram-bot).
 
