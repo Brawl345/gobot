@@ -27,7 +27,7 @@ func init() {
 		zerolog.SetGlobalLevel(zerolog.DebugLevel)
 	}
 
-	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
+	zerolog.TimeFieldFormat = time.RFC3339
 	_, prettyPrint := os.LookupEnv("PRETTY_PRINT_LOG")
 	if prettyPrint {
 		log.Logger = log.Output(zerolog.ConsoleWriter{
