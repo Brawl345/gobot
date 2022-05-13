@@ -74,6 +74,15 @@ func (p *Plugin) Name() string {
 	return "google_images"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "i",
+			Description: "<Suchbegriff> - Nach Bildern suchen",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

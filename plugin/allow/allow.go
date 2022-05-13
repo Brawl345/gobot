@@ -31,6 +31,10 @@ func (*Plugin) Name() string {
 	return "allow"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return nil // Because it's a superuser command
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

@@ -10,6 +10,7 @@ import (
 type (
 	Plugin interface {
 		Name() string
+		Commands() []telebot.Command
 		Handlers(botInfo *telebot.User) []Handler
 	}
 

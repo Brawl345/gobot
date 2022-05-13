@@ -34,6 +34,23 @@ func (p *Plugin) Name() string {
 	return "weather"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "f",
+			Description: "[Ort] - Wettervorhersage",
+		},
+		{
+			Text:        "fh",
+			Description: "[Ort] - 24-Stunden-Wettervorhersage",
+		},
+		{
+			Text:        "w",
+			Description: "[Ort] - Aktuelles Wetter",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

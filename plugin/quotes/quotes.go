@@ -38,6 +38,19 @@ func (p *Plugin) Name() string {
 	return "quotes"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "quote",
+			Description: "Zitat anzeigen",
+		},
+		{
+			Text:        "addquote",
+			Description: "<Zitat> - Zitat hinzufügen",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
@@ -104,6 +117,7 @@ func (p *Plugin) getQuote(c plugin.GobotContext) error {
 }
 
 func (p *Plugin) addQuote(c plugin.GobotContext) error {
+	// TODO: Save by reply
 	quote := c.Matches[1]
 	err := p.quoteService.SaveQuote(c.Chat(), quote)
 

@@ -32,6 +32,19 @@ func (p *Plugin) Name() string {
 	return "wikipedia"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "wiki",
+			Description: "<Begriff> - In der Wikipedia nachschlagen",
+		},
+		{
+			Text:        "wiki_en",
+			Description: "<Begriff> - In der englischen Wikipedia nachschlagen",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

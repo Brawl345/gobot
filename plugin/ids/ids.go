@@ -37,6 +37,15 @@ func (p *Plugin) Name() string {
 	return "ids"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "ids",
+			Description: "Zeigt die IDs der User in diesem Chat an",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

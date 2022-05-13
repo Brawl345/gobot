@@ -36,6 +36,19 @@ func (*Plugin) Name() string {
 	return "covid"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "covid",
+			Description: "[Ort] - COVID-19-Statistik",
+		},
+		{
+			Text:        "covid_germany",
+			Description: "COVID-19-Statistik für Deutschland",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

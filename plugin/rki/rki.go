@@ -39,6 +39,15 @@ func (p *Plugin) Name() string {
 	return "rki"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "rki",
+			Description: "<Stadt> - COVID-19-Fälle in dieser deutschen Stadt",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

@@ -27,6 +27,23 @@ func (p *Plugin) Name() string {
 	return "kaomoji"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "lf",
+			Description: lennyFace,
+		},
+		{
+			Text:        "lod",
+			Description: lookOfDisapproval,
+		},
+		{
+			Text:        "shrug",
+			Description: shrug,
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

@@ -45,6 +45,23 @@ func (p *Plugin) Name() string {
 	return "birthdays"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "bday",
+			Description: "<TT.MM.JJJJ> - Geburtstag setzen",
+		},
+		{
+			Text:        "bday_delete",
+			Description: "Geburtstag löschen",
+		},
+		{
+			Text:        "bdays",
+			Description: "Geburtstage anzeigen, falls Benachrichtigungen aktiv",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

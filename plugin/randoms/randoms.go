@@ -39,6 +39,15 @@ func (p *Plugin) Name() string {
 	return "randoms"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "random",
+			Description: "<Nutzer> - Schabernack",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

@@ -30,6 +30,15 @@ func (*Plugin) Name() string {
 	return "stats"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "stats",
+			Description: "Chat-Statistiken anzeigen",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

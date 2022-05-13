@@ -26,6 +26,15 @@ func (p *Plugin) Name() string {
 	return "urbandictionary"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "ud",
+			Description: "<Begriff> - Im Urban Dictionary suchen",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

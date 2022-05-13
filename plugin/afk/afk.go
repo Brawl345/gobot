@@ -41,6 +41,15 @@ func (p *Plugin) Name() string {
 	return "afk"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "afk",
+			Description: "[Text] - Auf AFK schalten",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

@@ -36,6 +36,10 @@ func (p *Plugin) Name() string {
 	return "youtube"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return nil
+}
+
 func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	// For videoId see https://webapps.stackexchange.com/a/101153
 	return []plugin.Handler{

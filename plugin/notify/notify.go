@@ -40,6 +40,19 @@ func (p *Plugin) Name() string {
 	return "notify"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "notify",
+			Description: "Über neue Erwähnungen informiert werden",
+		},
+		{
+			Text:        "notify_disable",
+			Description: "Nicht mehr über neue Erwähnungen informiert werden",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

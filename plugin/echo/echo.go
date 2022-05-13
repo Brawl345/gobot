@@ -18,6 +18,15 @@ func (*Plugin) Name() string {
 	return "echo"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "echo",
+			Description: "<Text> - Echo... echo... echo...",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

@@ -32,6 +32,10 @@ func (p *Plugin) Name() string {
 	return "upload_by_url"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return nil
+}
+
 func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

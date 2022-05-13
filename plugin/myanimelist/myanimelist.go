@@ -37,6 +37,15 @@ func (*Plugin) Name() string {
 	return "myanimelist"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "mal",
+			Description: "<Suchbegriff> - Anime suchen",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

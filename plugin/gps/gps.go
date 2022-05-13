@@ -37,6 +37,15 @@ func (p *Plugin) Name() string {
 	return "gps"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "map",
+			Description: "<Ort> - Ort auf der Karte anzeigen",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

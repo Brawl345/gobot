@@ -43,6 +43,10 @@ func (*Plugin) Name() string {
 	return "getfile"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return nil
+}
+
 func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

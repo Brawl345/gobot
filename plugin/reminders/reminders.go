@@ -63,6 +63,19 @@ func (p *Plugin) Name() string {
 	return "reminders"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "remind",
+			Description: "<Zeit> <Text> - Erinnerung speichern. Unterstützt absolute und relative Zeitangaben",
+		},
+		{
+			Text:        "reminders",
+			Description: "Alle Erinnerungen anzeigen",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

@@ -29,6 +29,19 @@ func New(geocodingService models.GeocodingService, homeService models.HomeServic
 	}
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "home",
+			Description: "<Ort> - Heimatort setzen",
+		},
+		{
+			Text:        "home_delete",
+			Description: "Heimatort löschen",
+		},
+	}
+}
+
 func (p *Plugin) Name() string {
 	return "home"
 }

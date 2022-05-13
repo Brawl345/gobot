@@ -2,6 +2,7 @@ package bot
 
 import (
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -153,6 +154,24 @@ func New() (*Gobot, error) {
 	managerService.SetPlugins(plugins)
 
 	log.Info().Msgf("Loaded %d plugins", len(plugins))
+
+	var commands []telebot.Command
+	for _, plg := range plugins {
+		commands = append(commands, plg.Commands()...)
+	}
+	sort.Slice(commands, func(i, j int) bool {
+		return commands[i].Text < commands[j].Text
+	})
+	if commands != nil {
+		if len(commands) > 100 {
+			log.Warn().Msg("Too many commands, some will be ignored")
+			commands = commands[:100]
+		}
+		err = bot.SetCommands(commands)
+		if err != nil {
+			log.Err(err).Msg("Failed to set commands")
+		}
+	}
 
 	b := &Gobot{
 		Telebot: bot,

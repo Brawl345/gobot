@@ -24,6 +24,15 @@ func (p *Plugin) Name() string {
 	return "id"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "whoami",
+			Description: "Deine Telegram-Informationen anzeigen",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

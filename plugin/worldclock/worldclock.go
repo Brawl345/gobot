@@ -37,6 +37,15 @@ func (p *Plugin) Name() string {
 	return "worldclock"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "time",
+			Description: "[Ort] - Aktuelle Uhrzeit an diesem Ort",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

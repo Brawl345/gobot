@@ -45,6 +45,15 @@ func (p *Plugin) Name() string {
 	return "cleverbot"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "cbot",
+			Description: "<Text> - Befrag den Cleverbot",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

@@ -21,6 +21,10 @@ func (p *Plugin) Name() string {
 	return "delmsg"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return nil
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{

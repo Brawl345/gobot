@@ -31,6 +31,15 @@ func (p *Plugin) Name() string {
 	return "currency"
 }
 
+func (p *Plugin) Commands() []telebot.Command {
+	return []telebot.Command{
+		{
+			Text:        "cash",
+			Description: "<Wert> <Basis> [Zu] - Währung umrechnen",
+		},
+	}
+}
+
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
