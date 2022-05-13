@@ -35,7 +35,6 @@ func main() {
 	go func() {
 		<-channel
 		log.Info().Msg("Stopping...")
-		b.Telebot.Stop()
 		os.Exit(0)
 	}()
 
