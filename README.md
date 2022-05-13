@@ -7,8 +7,8 @@
 Multi-purpose bot for the Telegram Messenger based on [Telebot](https://github.com/tucnak/telebot/) and inspired
 by [Python-Telegram-Bot](https://github.com/python-telegram-bot/python-telegram-bot).
 
-**The source code is here so YOU can do what you want with it - don't ask questions about it nor ask for help how to use
-it! The code might contain ugly architecture, but it solves my specific problems.**
+**The source code is here so YOU can do what you want with it - don't ask questions about it nor ask for help on how to use
+it!**
 
 ## Features
 
@@ -37,10 +37,10 @@ Example with [Hookdeck](https://hookdeck.com/):
 
 ### More options
 
-Set the following variables to a truthy value (like "`true`") to enable them:
+Set the following variables to any value (like "`1`") to enable them:
 
 * `PRINT_MSGS`: Print all messages the bot receives to the terminal
 * `PRETTY_PRINT_LOG`: Pretty print log
-* `DEBUG`: Enable debug logs (verbose!)
+* `DEBUG`: Enable debug logs (verbose, contains secrets!)
 * `IGNORE_SQL_MIGRATION`: Ignore the SQL migration feature when you want to migrate yourself (for example with
   PlanetScale since it doesn't support foreign key references).
