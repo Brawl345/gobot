@@ -116,8 +116,20 @@ func (p *Plugin) getQuote(c plugin.GobotContext) error {
 }
 
 func (p *Plugin) addQuote(c plugin.GobotContext) error {
-	// TODO: Save by reply
-	quote := c.Matches[1]
+	var quote string
+	if c.Message().IsReply() &&
+		!c.Message().Sender.IsBot {
+		if c.Message().ReplyTo.Text != "" {
+			quote = fmt.Sprintf("\"%s\" —%s", c.Message().ReplyTo.Text, c.Matches[1])
+		} else if c.Message().ReplyTo.Caption != "" {
+			quote = fmt.Sprintf("\"%s\" —%s", c.Message().ReplyTo.Caption, c.Matches[1])
+		}
+	}
+
+	if quote == "" {
+		quote = c.Matches[1]
+	}
+
 	err := p.quoteService.SaveQuote(c.Chat(), quote)
 
 	if err != nil {
