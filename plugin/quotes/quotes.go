@@ -59,7 +59,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/addquote(?:@%s)? (.+)$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/addquote(?:@%s)? ([\s\S]+)$`, botInfo.Username)),
 			HandlerFunc: p.addQuote,
 			GroupOnly:   true,
 		},
@@ -69,7 +69,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/delquote(?:@%s)? (.+)$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/delquote(?:@%s)? ([\s\S]+)$`, botInfo.Username)),
 			HandlerFunc: p.deleteQuote,
 			GroupOnly:   true,
 		},
@@ -145,7 +145,7 @@ func (p *Plugin) deleteQuote(c plugin.GobotContext) error {
 		if !c.Message().IsReply() || c.Message().ReplyTo.Text == "" {
 			return nil
 		}
-		quoteMatches := regexp.MustCompile(fmt.Sprintf(`(?i)^(?:/addquote(?:@%s)? )?(.+)$`, c.Bot().Me.Username)).FindStringSubmatch(c.Message().ReplyTo.Text)
+		quoteMatches := regexp.MustCompile(fmt.Sprintf(`(?i)^(?:/addquote(?:@%s)? )?([\s\S]+)$`, c.Bot().Me.Username)).FindStringSubmatch(c.Message().ReplyTo.Text)
 		if len(quoteMatches) < 2 {
 			return nil
 		}
