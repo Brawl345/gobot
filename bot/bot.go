@@ -177,12 +177,7 @@ func New() (*Gobot, error) {
 		Telebot: bot,
 	}
 
-	d := &Dispatcher{
-		allowService:      allowService,
-		chatsUsersService: chatsUsersService,
-		managerService:    managerService,
-		userService:       userService,
-	}
+	d := NewDispatcher(allowService, chatsUsersService, managerService, userService)
 
 	_, shouldPrintMsgs := os.LookupEnv("PRINT_MSGS")
 	if shouldPrintMsgs {

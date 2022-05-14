@@ -38,6 +38,10 @@ func NewManagerService(
 	}, nil
 }
 
+func (service *managerService) Plugins() []plugin.Plugin {
+	return service.plugins
+}
+
 func (service *managerService) SetPlugins(plugins []plugin.Plugin) {
 	service.plugins = plugins
 }
@@ -60,7 +64,7 @@ func (service *managerService) EnablePlugin(name string) error {
 	return models.ErrNotFound
 }
 
-func (service *managerService) isPluginDisabledForChat(chat *telebot.Chat, name string) bool {
+func (service *managerService) IsPluginDisabledForChat(chat *telebot.Chat, name string) bool {
 	disabledPlugins, exists := service.disabledPluginsForChat[chat.ID]
 	if !exists {
 		return false
@@ -69,7 +73,7 @@ func (service *managerService) isPluginDisabledForChat(chat *telebot.Chat, name 
 }
 
 func (service *managerService) EnablePluginForChat(chat *telebot.Chat, name string) error {
-	if !service.isPluginDisabledForChat(chat, name) {
+	if !service.IsPluginDisabledForChat(chat, name) {
 		return models.ErrAlreadyExists
 	}
 
@@ -105,7 +109,7 @@ func (service *managerService) DisablePlugin(name string) error {
 }
 
 func (service *managerService) DisablePluginForChat(chat *telebot.Chat, name string) error {
-	if service.isPluginDisabledForChat(chat, name) {
+	if service.IsPluginDisabledForChat(chat, name) {
 		return models.ErrAlreadyExists
 	}
 
@@ -124,6 +128,6 @@ func (service *managerService) DisablePluginForChat(chat *telebot.Chat, name str
 	return models.ErrNotFound
 }
 
-func (service *managerService) isPluginEnabled(name string) bool {
+func (service *managerService) IsPluginEnabled(name string) bool {
 	return slices.Contains(service.enabledPlugins, name)
 }

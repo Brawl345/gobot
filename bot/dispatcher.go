@@ -16,8 +16,17 @@ import (
 type Dispatcher struct {
 	allowService      models.AllowService
 	chatsUsersService models.ChatsUsersService
-	managerService    *managerService
+	managerService    models.ManagerService
 	userService       models.UserService
+}
+
+func NewDispatcher(allowService models.AllowService, chatsUsersService models.ChatsUsersService, managerService models.ManagerService, userService models.UserService) *Dispatcher {
+	return &Dispatcher{
+		allowService:      allowService,
+		chatsUsersService: chatsUsersService,
+		managerService:    managerService,
+		userService:       userService,
+	}
 }
 
 func (d *Dispatcher) OnText(c telebot.Context) error {
@@ -52,7 +61,7 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 		text = msg.Text
 	}
 
-	for _, plg := range d.managerService.plugins {
+	for _, plg := range d.managerService.Plugins() {
 		plg := plg
 		for _, h := range plg.Handlers(c.Bot().Me) {
 			h := h
@@ -125,12 +134,12 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 			if matched {
 				log.Printf("Matched plugin '%s': %s (%T)", plg.Name(), handler.Trigger, handler.Trigger)
 
-				if !d.managerService.isPluginEnabled(plg.Name()) {
+				if !d.managerService.IsPluginEnabled(plg.Name()) {
 					log.Printf("Plugin %s is disabled globally", plg.Name())
 					continue
 				}
 
-				if msg.FromGroup() && d.managerService.isPluginDisabledForChat(c.Chat(), plg.Name()) {
+				if msg.FromGroup() && d.managerService.IsPluginDisabledForChat(c.Chat(), plg.Name()) {
 					log.Printf("Plugin %s is disabled for this chat", plg.Name())
 					continue
 				}
@@ -185,7 +194,7 @@ func (d *Dispatcher) OnCallback(c telebot.Context) error {
 		})
 	}
 
-	for _, plg := range d.managerService.plugins {
+	for _, plg := range d.managerService.Plugins() {
 		plg := plg
 		for _, h := range plg.Handlers(c.Bot().Me) {
 			h := h
@@ -204,7 +213,7 @@ func (d *Dispatcher) OnCallback(c telebot.Context) error {
 			if len(matches) > 0 {
 				log.Printf("Matched plugin %s: %s", plg.Name(), handler.Trigger)
 
-				if !d.managerService.isPluginEnabled(plg.Name()) {
+				if !d.managerService.IsPluginEnabled(plg.Name()) {
 					log.Printf("Plugin %s is disabled globally", plg.Name())
 					return c.Respond(&telebot.CallbackResponse{
 						Text:      "Dieser Befehl ist nicht verfügbar.",
@@ -212,7 +221,7 @@ func (d *Dispatcher) OnCallback(c telebot.Context) error {
 					})
 				}
 
-				if msg.FromGroup() && d.managerService.isPluginDisabledForChat(c.Chat(), plg.Name()) {
+				if msg.FromGroup() && d.managerService.IsPluginDisabledForChat(c.Chat(), plg.Name()) {
 					log.Printf("Plugin %s is disabled for this chat", plg.Name())
 					return c.Respond(&telebot.CallbackResponse{
 						Text:      "Dieser Befehl ist nicht verfügbar.",
@@ -291,7 +300,7 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 		})
 	}
 
-	for _, plg := range d.managerService.plugins {
+	for _, plg := range d.managerService.Plugins() {
 		plg := plg
 		for _, h := range plg.Handlers(c.Bot().Me) {
 			h := h
@@ -308,7 +317,7 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 			matches := command.FindStringSubmatch(inlineQuery.Text)
 			if len(matches) > 0 {
 				log.Printf("Matched plugin %s: %s", plg.Name(), handler.Trigger)
-				if !d.managerService.isPluginEnabled(plg.Name()) {
+				if !d.managerService.IsPluginEnabled(plg.Name()) {
 					log.Printf("Plugin %s is disabled globally", plg.Name())
 					return c.Answer(&telebot.QueryResponse{
 						CacheTime:  utils.InlineQueryFailureCacheTime,
