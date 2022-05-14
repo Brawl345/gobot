@@ -102,7 +102,6 @@ func (p *Plugin) getQuote(c plugin.GobotContext) error {
 	return c.Send(quote, &telebot.SendOptions{
 		DisableWebPagePreview: true,
 		DisableNotification:   true,
-		Protected:             true,
 		ReplyMarkup: &telebot.ReplyMarkup{
 			InlineKeyboard: [][]telebot.InlineButton{
 				{
