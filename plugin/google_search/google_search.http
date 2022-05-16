@@ -1,0 +1,10 @@
+### Google search
+GET https://customsearch.googleapis.com/customsearch/v1
+    ?key={{google_api_key}}
+    &cx={{google_search_engine_id}}
+    &fields=queries/request/searchTerms,searchInformation/formattedTotalResults,items(title, link, displayLink)
+    &hl=de
+    &gl=de
+    &num=7
+    &safe=active
+    &q=Hokkaido

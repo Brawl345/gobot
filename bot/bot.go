@@ -26,6 +26,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/expand"
 	"github.com/Brawl345/gobot/plugin/getfile"
 	"github.com/Brawl345/gobot/plugin/google_images"
+	"github.com/Brawl345/gobot/plugin/google_search"
 	"github.com/Brawl345/gobot/plugin/gps"
 	"github.com/Brawl345/gobot/plugin/home"
 	"github.com/Brawl345/gobot/plugin/id"
@@ -129,6 +130,7 @@ func New() (*Gobot, error) {
 		expand.New(),
 		getfile.New(credentialService, fileService),
 		google_images.New(credentialService, googleImagesService, googleImagesCleanupService),
+		google_search.New(credentialService),
 		gps.New(geocodingService),
 		home.New(geocodingService, homeService),
 		id.New(),
