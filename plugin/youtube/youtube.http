@@ -18,3 +18,12 @@ GET https://www.googleapis.com/youtube/v3/videos
     &id=COvAMv8d9L4
     &part=snippet,statistics,contentDetails,liveStreamingDetails
     &fields=items/id,items/snippet(publishedAt,channelId,channelTitle,title),items/statistics(viewCount,likeCount,commentCount),items/contentDetails(duration,regionRestriction),items/liveStreamingDetails(scheduledStartTime,scheduledEndTime,actualStartTime,actualEndTime,concurrentViewers)
+
+### Search
+GET https://www.googleapis.com/youtube/v3/search
+    ?key={{google_api_key}}
+    &q=Nintendo
+    &part=snippet
+    &maxResults=1
+    &type=video
+    &fields=items/id/videoId

@@ -1,15 +1,26 @@
 package youtube
 
 import (
+	"errors"
 	"time"
 
 	"github.com/sosodev/duration"
 	"golang.org/x/exp/slices"
 )
 
+var ErrNoVideoFound = errors.New("no video found")
+
 type (
 	Response struct {
 		Items []Video `json:"items"`
+	}
+
+	SearchResponse struct {
+		Items []struct {
+			ID struct {
+				VideoID string `json:"videoId"`
+			} `json:"id"`
+		} `json:"items"`
 	}
 
 	Video struct {

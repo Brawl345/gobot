@@ -1,6 +1,7 @@
 package youtube
 
 import (
+	"errors"
 	"fmt"
 	"html"
 	"net/url"
@@ -37,10 +38,15 @@ func (p *Plugin) Name() string {
 }
 
 func (p *Plugin) Commands() []telebot.Command {
-	return nil
+	return []telebot.Command{
+		{
+			Text:        "yt",
+			Description: "<Suchbegriff> - Auf YouTube suchen",
+		},
+	}
 }
 
-func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	// For videoId see https://webapps.stackexchange.com/a/101153
 	return []plugin.Handler{
 		&plugin.CommandHandler{
@@ -55,12 +61,14 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 			Trigger:     regexp.MustCompile(`(?i)youtu\.be/([\dA-Za-z_-]{10}[048AEIMQUYcgkosw])`),
 			HandlerFunc: p.OnYouTubeLink,
 		},
+		&plugin.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/yt(?:@%s)? (.+)$`, botInfo.Username)),
+			HandlerFunc: p.onYouTubeSearch,
+		},
 	}
 }
 
-func (p *Plugin) OnYouTubeLink(c plugin.GobotContext) error {
-	videoId := c.Matches[1]
-
+func (p *Plugin) getVideoInfo(videoID string) (Video, error) {
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "www.googleapis.com",
@@ -69,7 +77,7 @@ func (p *Plugin) OnYouTubeLink(c plugin.GobotContext) error {
 
 	q := requestUrl.Query()
 	q.Set("key", p.apiKey)
-	q.Set("id", videoId)
+	q.Set("id", videoID)
 	q.Set("part", "snippet,statistics,contentDetails,liveStreamingDetails")
 	q.Set(
 		"fields",
@@ -85,22 +93,17 @@ func (p *Plugin) OnYouTubeLink(c plugin.GobotContext) error {
 	err := utils.GetRequest(requestUrl.String(), &response)
 
 	if err != nil {
-		guid := xid.New().String()
-		log.Error().
-			Err(err).
-			Str("guid", guid).
-			Str("url", requestUrl.String()).
-			Msg("error getting youtube video")
-		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen des YouTube-Videos.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		return Video{}, err
 	}
 
 	if len(response.Items) == 0 {
-		return c.Reply("❌ Video nicht gefunden")
+		return Video{}, ErrNoVideoFound
 	}
 
-	video := response.Items[0]
+	return response.Items[0], nil
+}
 
+func constructText(video *Video) string {
 	var sb strings.Builder
 
 	// Title
@@ -201,7 +204,7 @@ func (p *Plugin) OnYouTubeLink(c plugin.GobotContext) error {
 	if err != nil {
 		log.Error().
 			Err(err).
-			Str("url", requestUrl.String()).
+			Str("videoID", video.ID).
 			Str("duration", video.ContentDetails.Duration).
 			Msg("error parsing youtube video duration")
 		sb.WriteString(
@@ -262,5 +265,89 @@ func (p *Plugin) OnYouTubeLink(c plugin.GobotContext) error {
 		)
 	}
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	return sb.String()
+}
+
+func (p *Plugin) OnYouTubeLink(c plugin.GobotContext) error {
+	videoID := c.Matches[1]
+	video, err := p.getVideoInfo(videoID)
+
+	if err != nil {
+		if errors.Is(err, ErrNoVideoFound) {
+			return c.Reply("❌ Video nicht gefunden")
+		}
+
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Str("videoID", videoID).
+			Msg("Error while getting video info")
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+	}
+
+	text := constructText(&video)
+
+	return c.Reply(text, utils.DefaultSendOptions)
+}
+
+func (p *Plugin) onYouTubeSearch(c plugin.GobotContext) error {
+	query := c.Matches[1]
+	_ = c.Notify(telebot.Typing)
+	requestUrl := url.URL{
+		Scheme: "https",
+		Host:   "www.googleapis.com",
+		Path:   "/youtube/v3/search",
+	}
+
+	q := requestUrl.Query()
+	q.Set("key", p.apiKey)
+	q.Set("q", query)
+	q.Set("part", "snippet")
+	q.Set("maxResults", "1")
+	q.Set("type", "video")
+	q.Set("fields", "items/id/videoId")
+
+	requestUrl.RawQuery = q.Encode()
+
+	var response SearchResponse
+	err := utils.GetRequest(requestUrl.String(), &response)
+
+	if err != nil {
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Str("query", query).
+			Msg("error getting youtube search results")
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+	}
+
+	if len(response.Items) == 0 {
+		return c.Reply("❌ Keine Ergebnisse gefunden.", utils.DefaultSendOptions)
+	}
+
+	videoID := response.Items[0].ID.VideoID
+	video, err := p.getVideoInfo(videoID)
+
+	if err != nil {
+		if errors.Is(err, ErrNoVideoFound) {
+			return c.Reply("❌ Video nicht gefunden")
+		}
+
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Str("videoID", videoID).
+			Msg("Error while getting video info")
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+	}
+
+	var sb strings.Builder
+	sb.WriteString(fmt.Sprintf("https://www.youtube.com/watch?v=%s\n", video.ID))
+	sb.WriteString(constructText(&video))
+
+	return c.Reply(sb.String(), &telebot.SendOptions{
+		AllowWithoutReply:   true,
+		DisableNotification: true,
+		ParseMode:           telebot.ModeHTML,
+	})
 }
