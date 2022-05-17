@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -30,7 +30,7 @@ type (
 	}
 )
 
-func New(credentialService models.CredentialService, cleverbotService Service) *Plugin {
+func New(credentialService model.CredentialService, cleverbotService Service) *Plugin {
 	apiKey, err := credentialService.GetKey("cleverbot_api_key")
 	if err != nil {
 		log.Warn().Msg("cleverbot_api_key not found")

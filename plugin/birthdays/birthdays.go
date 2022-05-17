@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -25,11 +25,11 @@ type (
 	Service interface {
 		BirthdayNotificationsEnabled(chat *telebot.Chat) (bool, error)
 		DeleteBirthday(user *telebot.User) error
-		Birthdays(chat *telebot.Chat) ([]models.User, error)
+		Birthdays(chat *telebot.Chat) ([]model.User, error)
 		DisableBirthdayNotifications(chat *telebot.Chat) error
 		EnableBirthdayNotifications(chat *telebot.Chat) error
 		SetBirthday(user *telebot.User, birthday time.Time) error
-		TodaysBirthdays() (map[int64][]models.User, error)
+		TodaysBirthdays() (map[int64][]model.User, error)
 	}
 )
 

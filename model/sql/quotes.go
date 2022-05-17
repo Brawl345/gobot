@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
@@ -26,7 +26,7 @@ func (db *quoteService) GetQuote(chat *telebot.Chat) (string, error) {
 	var quote string
 	err := db.Get(&quote, "SELECT quote FROM quotes WHERE chat_id = ? ORDER BY RAND() LIMIT 1", chat.ID)
 	if errors.Is(err, sql.ErrNoRows) {
-		return "", models.ErrNotFound
+		return "", model.ErrNotFound
 	}
 	return quote, err
 }
@@ -50,7 +50,7 @@ func (db *quoteService) SaveQuote(chat *telebot.Chat, quote string) error {
 		return err
 	}
 	if exists {
-		return models.ErrAlreadyExists
+		return model.ErrAlreadyExists
 	}
 
 	const query = `INSERT INTO quotes (chat_id, quote) VALUES (?, ?)`
@@ -65,7 +65,7 @@ func (db *quoteService) DeleteQuote(chat *telebot.Chat, quote string) error {
 		return err
 	}
 	if !exists {
-		return models.ErrNotFound
+		return model.ErrNotFound
 	}
 
 	const query = `DELETE FROM quotes WHERE chat_id = ? AND quote = ?`

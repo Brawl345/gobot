@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -24,8 +24,8 @@ type (
 
 	Service interface {
 		BackAgain(chat *telebot.Chat, user *telebot.User) error
-		IsAFK(chat *telebot.Chat, user *telebot.User) (bool, models.AFKData, error)
-		IsAFKByUsername(chat *telebot.Chat, username string) (bool, models.AFKData, error)
+		IsAFK(chat *telebot.Chat, user *telebot.User) (bool, model.AFKData, error)
+		IsAFKByUsername(chat *telebot.Chat, username string) (bool, model.AFKData, error)
 		SetAFK(chat *telebot.Chat, user *telebot.User, now time.Time) error
 		SetAFKWithReason(chat *telebot.Chat, user *telebot.User, reason string) error
 	}

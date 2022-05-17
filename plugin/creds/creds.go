@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -16,10 +16,10 @@ import (
 var log = logger.New("creds")
 
 type Plugin struct {
-	credentialService models.CredentialService
+	credentialService model.CredentialService
 }
 
-func New(credentialService models.CredentialService) *Plugin {
+func New(credentialService model.CredentialService) *Plugin {
 	return &Plugin{
 		credentialService: credentialService,
 	}

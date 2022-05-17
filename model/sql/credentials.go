@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -20,9 +20,9 @@ func NewCredentialService(db *sqlx.DB) *credentialService {
 	}
 }
 
-func (db *credentialService) GetAllCredentials() ([]models.Credential, error) {
+func (db *credentialService) GetAllCredentials() ([]model.Credential, error) {
 	const query = `SELECT name, value FROM credentials ORDER BY name`
-	var credentials []models.Credential
+	var credentials []model.Credential
 	err := db.Select(&credentials, query)
 	return credentials, err
 }

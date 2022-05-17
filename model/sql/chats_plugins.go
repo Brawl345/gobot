@@ -6,22 +6,22 @@ import (
 	"errors"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
 
 type chatsPluginsService struct {
-	Chats   models.ChatService
-	Plugins models.PluginService
+	Chats   model.ChatService
+	Plugins model.PluginService
 	*sqlx.DB
 	log *logger.Logger
 }
 
 func NewChatsPluginsService(
 	db *sqlx.DB,
-	chatService models.ChatService,
-	pluginService models.PluginService,
+	chatService model.ChatService,
+	pluginService model.PluginService,
 ) *chatsPluginsService {
 	return &chatsPluginsService{
 		Chats:   chatService,

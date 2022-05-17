@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -14,13 +14,13 @@ import (
 )
 
 type Dispatcher struct {
-	allowService      models.AllowService
-	chatsUsersService models.ChatsUsersService
-	managerService    models.ManagerService
-	userService       models.UserService
+	allowService      model.AllowService
+	chatsUsersService model.ChatsUsersService
+	managerService    model.ManagerService
+	userService       model.UserService
 }
 
-func NewDispatcher(allowService models.AllowService, chatsUsersService models.ChatsUsersService, managerService models.ManagerService, userService models.UserService) *Dispatcher {
+func NewDispatcher(allowService model.AllowService, chatsUsersService model.ChatsUsersService, managerService model.ManagerService, userService model.UserService) *Dispatcher {
 	return &Dispatcher{
 		allowService:      allowService,
 		chatsUsersService: chatsUsersService,

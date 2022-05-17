@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
@@ -36,13 +36,13 @@ func (db *reminderService) DeleteReminder(chat *telebot.Chat, user *telebot.User
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return models.ErrNotFound
+			return model.ErrNotFound
 		}
 		return err
 	}
 
 	if !exists {
-		return models.ErrNotFound
+		return model.ErrNotFound
 	}
 
 	if chat.Type == telebot.ChatPrivate {
@@ -62,31 +62,31 @@ func (db *reminderService) DeleteReminderByID(id int64) error {
 	return err
 }
 
-func (db *reminderService) GetAllReminders() ([]models.Reminder, error) {
+func (db *reminderService) GetAllReminders() ([]model.Reminder, error) {
 	const query = `SELECT id, time FROM reminders`
-	var reminders []models.Reminder
+	var reminders []model.Reminder
 	err := db.Select(&reminders, query)
 	return reminders, err
 }
 
-func (db *reminderService) GetReminderByID(id int64) (models.Reminder, error) {
+func (db *reminderService) GetReminderByID(id int64) (model.Reminder, error) {
 	const query = `SELECT chat_id, user_id, username, text FROM reminders r 
     RIGHT JOIN users u ON r.user_id = u.id
 	WHERE r.id = ?`
-	var reminder models.Reminder
+	var reminder model.Reminder
 	err := db.Get(&reminder, query, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return reminder, models.ErrNotFound
+			return reminder, model.ErrNotFound
 		}
 	}
 
 	return reminder, err
 }
 
-func (db *reminderService) GetReminders(chat *telebot.Chat, user *telebot.User) ([]models.Reminder, error) {
+func (db *reminderService) GetReminders(chat *telebot.Chat, user *telebot.User) ([]model.Reminder, error) {
 	var err error
-	var reminders []models.Reminder
+	var reminders []model.Reminder
 
 	if chat.Type == telebot.ChatPrivate {
 		const query = `SELECT id, time, text FROM reminders WHERE chat_id IS NULL AND user_id = ? ORDER BY time`

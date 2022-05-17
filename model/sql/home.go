@@ -6,7 +6,7 @@ import (
 	"errors"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
@@ -42,7 +42,7 @@ func (db *homeService) GetHome(user *telebot.User) (telebot.Venue, error) {
 	}
 
 	if !geocoding.Address.Valid {
-		return telebot.Venue{}, models.ErrHomeAddressNotSet
+		return telebot.Venue{}, model.ErrHomeAddressNotSet
 	}
 
 	return telebot.Venue{

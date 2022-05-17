@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -78,7 +78,7 @@ func (p *Plugin) addRandom(c plugin.GobotContext) error {
 	err := p.randomService.SaveRandom(random)
 
 	if err != nil {
-		if errors.Is(err, models.ErrAlreadyExists) {
+		if errors.Is(err, model.ErrAlreadyExists) {
 			return c.Reply("<b>💡 Text existiert bereits!</b>", utils.DefaultSendOptions)
 		}
 
@@ -103,7 +103,7 @@ func (p *Plugin) delRandom(c plugin.GobotContext) error {
 	random := c.Matches[1]
 	err := p.randomService.DeleteRandom(random)
 	if err != nil {
-		if errors.Is(err, models.ErrNotFound) {
+		if errors.Is(err, model.ErrNotFound) {
 			return c.Reply("<b>❌ Nicht gefunden!</b>", utils.DefaultSendOptions)
 		}
 
@@ -121,7 +121,7 @@ func (p *Plugin) delRandom(c plugin.GobotContext) error {
 func (p *Plugin) random(c plugin.GobotContext) error {
 	random, err := p.randomService.GetRandom()
 	if err != nil {
-		if errors.Is(err, models.ErrNotFound) {
+		if errors.Is(err, model.ErrNotFound) {
 			return c.Reply("<b>❌ Keine Texte gefunden!</b> Bitte doch den Bot-Administrator darum, welche einzuspeichern.", utils.DefaultSendOptions)
 		}
 

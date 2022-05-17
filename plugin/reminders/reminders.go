@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -27,9 +27,9 @@ type (
 	Service interface {
 		DeleteReminder(chat *telebot.Chat, user *telebot.User, id string) error
 		DeleteReminderByID(id int64) error
-		GetReminderByID(id int64) (models.Reminder, error)
-		GetAllReminders() ([]models.Reminder, error)
-		GetReminders(chat *telebot.Chat, user *telebot.User) ([]models.Reminder, error)
+		GetReminderByID(id int64) (model.Reminder, error)
+		GetAllReminders() ([]model.Reminder, error)
+		GetReminders(chat *telebot.Chat, user *telebot.User) ([]model.Reminder, error)
 		SaveReminder(chat *telebot.Chat, user *telebot.User, remindAt time.Time, text string) (int64, error)
 	}
 )
@@ -296,7 +296,7 @@ func (p *Plugin) onDeleteReminder(c plugin.GobotContext) error {
 	id := c.Matches[1]
 	err := p.reminderService.DeleteReminder(c.Chat(), c.Sender(), id)
 	if err != nil {
-		if errors.Is(err, models.ErrNotFound) {
+		if errors.Is(err, model.ErrNotFound) {
 			return c.Reply("❌ Diese Erinnerung existiert nicht.", utils.DefaultSendOptions)
 		}
 
@@ -350,7 +350,7 @@ func (p *Plugin) sendReminder(bot *telebot.Bot, id int64) {
 
 	reminder, err := p.reminderService.GetReminderByID(id)
 	if err != nil {
-		if errors.Is(err, models.ErrNotFound) {
+		if errors.Is(err, model.ErrNotFound) {
 			log.Debug().
 				Int64("id", id).
 				Msg("Reminder not found, probably deleted")

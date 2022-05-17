@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -40,7 +40,7 @@ func (db *randomService) DeleteRandom(random string) error {
 		return err
 	}
 	if !exists {
-		return models.ErrNotFound
+		return model.ErrNotFound
 	}
 
 	const query = `DELETE FROM randoms WHERE text = ?`
@@ -53,7 +53,7 @@ func (db *randomService) GetRandom() (string, error) {
 	var random string
 	err := db.Get(&random, "SELECT text FROM randoms ORDER BY RAND() LIMIT 1")
 	if errors.Is(err, sql.ErrNoRows) {
-		return "", models.ErrNotFound
+		return "", model.ErrNotFound
 	}
 	return random, err
 }
@@ -64,7 +64,7 @@ func (db *randomService) SaveRandom(random string) error {
 		return err
 	}
 	if exists {
-		return models.ErrAlreadyExists
+		return model.ErrAlreadyExists
 	}
 
 	const query = `INSERT INTO randoms (text) VALUES (?)`

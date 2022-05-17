@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -23,7 +23,7 @@ type (
 	}
 
 	Service interface {
-		GetAllUsersInChat(chat *telebot.Chat) ([]models.User, error)
+		GetAllUsersInChat(chat *telebot.Chat) ([]model.User, error)
 	}
 )
 

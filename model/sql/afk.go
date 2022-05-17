@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
@@ -43,13 +43,13 @@ func (db *afkService) SetAFKWithReason(chat *telebot.Chat, user *telebot.User, r
 	return err
 }
 
-func (db *afkService) IsAFK(chat *telebot.Chat, user *telebot.User) (bool, models.AFKData, error) {
+func (db *afkService) IsAFK(chat *telebot.Chat, user *telebot.User) (bool, model.AFKData, error) {
 	const query = `SELECT afk_since, afk_reason
 	FROM chats_users
 	WHERE chat_id = ?
 	  AND user_id = ?
 	  AND afk_since IS NOT NULL`
-	var afkData models.AFKData
+	var afkData model.AFKData
 	err := db.Get(&afkData, query, chat.ID, user.ID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -70,7 +70,7 @@ func (db *afkService) BackAgain(chat *telebot.Chat, user *telebot.User) error {
 	return err
 }
 
-func (db *afkService) IsAFKByUsername(chat *telebot.Chat, username string) (bool, models.AFKData, error) {
+func (db *afkService) IsAFKByUsername(chat *telebot.Chat, username string) (bool, model.AFKData, error) {
 	const query = `SELECT afk_since, afk_reason, first_name
 	FROM chats_users
 	LEFT JOIN users ON chats_users.user_id = users.id
@@ -79,7 +79,7 @@ func (db *afkService) IsAFKByUsername(chat *telebot.Chat, username string) (bool
 	  AND username = ?
 	  AND afk_since IS NOT NULL`
 
-	var afkData models.AFKData
+	var afkData model.AFKData
 	err := db.Get(&afkData, query, chat.ID, username)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

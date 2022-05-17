@@ -1,23 +1,23 @@
 package bot
 
 import (
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"golang.org/x/exp/slices"
 	"gopkg.in/telebot.v3"
 )
 
 type managerService struct {
-	chatsPluginsService    models.ChatsPluginsService
-	pluginService          models.PluginService
+	chatsPluginsService    model.ChatsPluginsService
+	pluginService          model.PluginService
 	plugins                []plugin.Plugin
 	enabledPlugins         []string
 	disabledPluginsForChat map[int64][]string
 }
 
 func NewManagerService(
-	chatsPluginsService models.ChatsPluginsService,
-	pluginService models.PluginService,
+	chatsPluginsService model.ChatsPluginsService,
+	pluginService model.PluginService,
 ) (*managerService, error) {
 
 	enabledPlugins, err := pluginService.GetAllEnabled()
@@ -48,7 +48,7 @@ func (service *managerService) SetPlugins(plugins []plugin.Plugin) {
 
 func (service *managerService) EnablePlugin(name string) error {
 	if slices.Contains(service.enabledPlugins, name) {
-		return models.ErrAlreadyExists
+		return model.ErrAlreadyExists
 	}
 
 	for _, plg := range service.plugins {
@@ -61,7 +61,7 @@ func (service *managerService) EnablePlugin(name string) error {
 			return nil
 		}
 	}
-	return models.ErrNotFound
+	return model.ErrNotFound
 }
 
 func (service *managerService) IsPluginDisabledForChat(chat *telebot.Chat, name string) bool {
@@ -74,7 +74,7 @@ func (service *managerService) IsPluginDisabledForChat(chat *telebot.Chat, name 
 
 func (service *managerService) EnablePluginForChat(chat *telebot.Chat, name string) error {
 	if !service.IsPluginDisabledForChat(chat, name) {
-		return models.ErrAlreadyExists
+		return model.ErrAlreadyExists
 	}
 
 	for _, plg := range service.plugins {
@@ -91,12 +91,12 @@ func (service *managerService) EnablePluginForChat(chat *telebot.Chat, name stri
 			return nil
 		}
 	}
-	return models.ErrNotFound
+	return model.ErrNotFound
 }
 
 func (service *managerService) DisablePlugin(name string) error {
 	if !slices.Contains(service.enabledPlugins, name) {
-		return models.ErrNotFound
+		return model.ErrNotFound
 	}
 
 	err := service.pluginService.Disable(name)
@@ -110,7 +110,7 @@ func (service *managerService) DisablePlugin(name string) error {
 
 func (service *managerService) DisablePluginForChat(chat *telebot.Chat, name string) error {
 	if service.IsPluginDisabledForChat(chat, name) {
-		return models.ErrAlreadyExists
+		return model.ErrAlreadyExists
 	}
 
 	for _, plg := range service.plugins {
@@ -125,7 +125,7 @@ func (service *managerService) DisablePluginForChat(chat *telebot.Chat, name str
 			return nil
 		}
 	}
-	return models.ErrNotFound
+	return model.ErrNotFound
 }
 
 func (service *managerService) IsPluginEnabled(name string) bool {

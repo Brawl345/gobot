@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -85,7 +85,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 func (p *Plugin) getQuote(c plugin.GobotContext) error {
 	quote, err := p.quoteService.GetQuote(c.Chat())
 	if err != nil {
-		if errors.Is(err, models.ErrNotFound) {
+		if errors.Is(err, model.ErrNotFound) {
 			return c.Reply("<b>Es wurden noch keine Zitate eingespeichert!</b>\n"+
 				"Füge welche mit <code>/addquote ZITAT</code> hinzu.", utils.DefaultSendOptions)
 		}
@@ -133,7 +133,7 @@ func (p *Plugin) addQuote(c plugin.GobotContext) error {
 	err := p.quoteService.SaveQuote(c.Chat(), quote)
 
 	if err != nil {
-		if errors.Is(err, models.ErrAlreadyExists) {
+		if errors.Is(err, model.ErrAlreadyExists) {
 			return c.Reply("<b>💡 Zitat existiert bereits!</b>", utils.DefaultSendOptions)
 		}
 
@@ -166,7 +166,7 @@ func (p *Plugin) deleteQuote(c plugin.GobotContext) error {
 
 	err := p.quoteService.DeleteQuote(c.Chat(), quote)
 	if err != nil {
-		if errors.Is(err, models.ErrNotFound) {
+		if errors.Is(err, model.ErrNotFound) {
 			return c.Reply("<b>❌ Zitat nicht gefunden!</b>", utils.DefaultSendOptions)
 		}
 

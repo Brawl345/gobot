@@ -1,4 +1,4 @@
-package models
+package model
 
 type GoogleImages struct {
 	QueryID      int64

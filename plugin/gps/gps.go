@@ -9,7 +9,7 @@ import (
 	"strconv"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -20,14 +20,14 @@ var log = logger.New("gps")
 
 type (
 	Plugin struct {
-		geocodingService models.GeocodingService
+		geocodingService model.GeocodingService
 	}
 	Response struct {
 		DisplayName string `json:"display_name"`
 	}
 )
 
-func New(geocodingService models.GeocodingService) *Plugin {
+func New(geocodingService model.GeocodingService) *Plugin {
 	return &Plugin{
 		geocodingService: geocodingService,
 	}
@@ -67,7 +67,7 @@ func (p *Plugin) onGPS(c plugin.GobotContext) error {
 	_ = c.Notify(telebot.FindingLocation)
 	venue, err := p.geocodingService.Geocode(c.Matches[1])
 	if err != nil {
-		if errors.Is(err, models.ErrAddressNotFound) {
+		if errors.Is(err, model.ErrAddressNotFound) {
 			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
 		}
 

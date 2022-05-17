@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -28,14 +28,14 @@ type (
 	}
 
 	Service interface {
-		GetImages(query string) (models.GoogleImages, error)
-		GetImagesFromQueryID(queryID int64) (models.GoogleImages, error)
-		SaveImages(query string, wrapper *models.GoogleImages) (int64, error)
+		GetImages(query string) (model.GoogleImages, error)
+		GetImagesFromQueryID(queryID int64) (model.GoogleImages, error)
+		SaveImages(query string, wrapper *model.GoogleImages) (int64, error)
 		SaveIndex(queryID int64, index int) error
 	}
 )
 
-func New(credentialService models.CredentialService, googleImagesService Service, cleanupService CleanupService) *Plugin {
+func New(credentialService model.CredentialService, googleImagesService Service, cleanupService CleanupService) *Plugin {
 	apiKey, err := credentialService.GetKey("google_api_key")
 	if err != nil {
 		log.Warn().Msg("google_api_key not found")
@@ -101,7 +101,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 func (p *Plugin) doImageSearch(c *plugin.GobotContext) error {
 	query := c.Matches[1]
 
-	var wrapper models.GoogleImages
+	var wrapper model.GoogleImages
 	var err error
 	if c.Callback() != nil {
 		queryID, err := strconv.ParseInt(query, 10, 64)
@@ -155,13 +155,13 @@ func (p *Plugin) doImageSearch(c *plugin.GobotContext) error {
 			return ErrNoImagesFound
 		}
 
-		items := make([]models.Image, len(response.Items))
+		items := make([]model.Image, len(response.Items))
 		for i, v := range response.Items {
 			items[i] = v
 		}
 
 		wrapper.Images = items
-		queryID, err := p.googleImagesService.SaveImages(query, &models.GoogleImages{
+		queryID, err := p.googleImagesService.SaveImages(query, &model.GoogleImages{
 			Images: wrapper.Images,
 		})
 		if err != nil {

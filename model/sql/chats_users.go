@@ -6,20 +6,20 @@ import (
 	"errors"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
 
 type chatsUsersService struct {
-	Chats models.ChatService
-	Users models.UserService
+	Chats model.ChatService
+	Users model.UserService
 	*sqlx.DB
 	log *logger.Logger
 }
 
-func NewChatsUsersService(db *sqlx.DB, chatService models.ChatService, userService models.UserService) *chatsUsersService {
+func NewChatsUsersService(db *sqlx.DB, chatService model.ChatService, userService model.UserService) *chatsUsersService {
 	return &chatsUsersService{
 		Chats: chatService,
 		Users: userService,
@@ -111,12 +111,12 @@ func (db *chatsUsersService) CreateBatch(chat *telebot.Chat, users *[]telebot.Us
 	return nil
 }
 
-func (db *chatsUsersService) GetAllUsersWithMsgCount(chat *telebot.Chat) ([]models.User, error) {
+func (db *chatsUsersService) GetAllUsersWithMsgCount(chat *telebot.Chat) ([]model.User, error) {
 	const query = `SELECT u.first_name, u.last_name, msg_count, in_group FROM chats_users
 JOIN users u on u.id = chats_users.user_id
 WHERE chat_id = ?
 ORDER BY msg_count DESC`
-	var users []models.User
+	var users []model.User
 	err := db.Select(&users, query, chat.ID)
 	return users, err
 }
@@ -157,13 +157,13 @@ func (db *chatsUsersService) Leave(chat *telebot.Chat, user *telebot.User) error
 	return err
 }
 
-func (db *chatsUsersService) GetAllUsersInChat(chat *telebot.Chat) ([]models.User, error) {
+func (db *chatsUsersService) GetAllUsersInChat(chat *telebot.Chat) ([]model.User, error) {
 	const query = `SELECT u.id, u.first_name, u.last_name FROM chats_users
 	JOIN users u on u.id = chats_users.user_id
 	WHERE chat_id = ?
 	AND in_group = true
 	ORDER BY u.first_name, u.last_name`
-	var users []models.User
+	var users []model.User
 	err := db.Select(&users, query, chat.ID)
 	return users, err
 }

@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
@@ -28,7 +28,7 @@ type (
 	}
 )
 
-func New(credentialService models.CredentialService, fileService Service) *Plugin {
+func New(credentialService model.CredentialService, fileService Service) *Plugin {
 	dir, err := credentialService.GetKey("getfile_dir")
 	if err != nil {
 		dir = "tmp"

@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -19,11 +19,11 @@ import (
 var log = logger.New("weather")
 
 type Plugin struct {
-	geocodingService models.GeocodingService
-	homeService      models.HomeService
+	geocodingService model.GeocodingService
+	homeService      model.HomeService
 }
 
-func New(geocodingService models.GeocodingService, homeService models.HomeService) *Plugin {
+func New(geocodingService model.GeocodingService, homeService model.HomeService) *Plugin {
 	return &Plugin{
 		geocodingService: geocodingService,
 		homeService:      homeService,
@@ -92,11 +92,11 @@ func (p *Plugin) onWeather(c plugin.GobotContext) error {
 	}
 
 	if err != nil {
-		if errors.Is(err, models.ErrHomeAddressNotSet) {
+		if errors.Is(err, model.ErrHomeAddressNotSet) {
 			return c.Reply("🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
 				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions)
 		}
-		if errors.Is(err, models.ErrAddressNotFound) {
+		if errors.Is(err, model.ErrAddressNotFound) {
 			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
 		}
 		guid := xid.New().String()
@@ -263,11 +263,11 @@ func (p *Plugin) onForecast(c plugin.GobotContext) error {
 	}
 
 	if err != nil {
-		if errors.Is(err, models.ErrHomeAddressNotSet) {
+		if errors.Is(err, model.ErrHomeAddressNotSet) {
 			return c.Reply("🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
 				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions)
 		}
-		if errors.Is(err, models.ErrAddressNotFound) {
+		if errors.Is(err, model.ErrAddressNotFound) {
 			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
 		}
 		guid := xid.New().String()
@@ -333,11 +333,11 @@ func (p *Plugin) onHourlyForecast(c plugin.GobotContext) error {
 	}
 
 	if err != nil {
-		if errors.Is(err, models.ErrHomeAddressNotSet) {
+		if errors.Is(err, model.ErrHomeAddressNotSet) {
 			return c.Reply("🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
 				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions)
 		}
-		if errors.Is(err, models.ErrAddressNotFound) {
+		if errors.Is(err, model.ErrAddressNotFound) {
 			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
 		}
 		guid := xid.New().String()

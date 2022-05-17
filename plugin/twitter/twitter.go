@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
@@ -30,7 +30,7 @@ type (
 	}
 )
 
-func New(credentialService models.CredentialService) *Plugin {
+func New(credentialService model.CredentialService) *Plugin {
 	bearerToken, err := credentialService.GetKey("twitter_bearer_token")
 	if err != nil {
 		log.Warn().Msg("twitter_bearer_token not found")

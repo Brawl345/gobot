@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/utils"
 	"gopkg.in/telebot.v3"
 )
@@ -57,7 +57,7 @@ func (db *geocodingService) Geocode(address string) (telebot.Venue, error) {
 	}
 
 	if len(response) == 0 {
-		return telebot.Venue{}, models.ErrAddressNotFound
+		return telebot.Venue{}, model.ErrAddressNotFound
 	}
 
 	return telebot.Venue{

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models/sql"
+	"github.com/Brawl345/gobot/model/sql"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/plugin/about"
 	"github.com/Brawl345/gobot/plugin/afk"

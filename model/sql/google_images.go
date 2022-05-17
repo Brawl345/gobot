@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -44,7 +44,7 @@ func NewGoogleImagesService(db *sqlx.DB) *googleImagesService {
 	}
 }
 
-func (db *googleImagesService) GetImages(query string) (models.GoogleImages, error) {
+func (db *googleImagesService) GetImages(query string) (model.GoogleImages, error) {
 	query = strings.ToLower(query)
 	const selectQuery = `SELECT query_id, image_url, context_url, is_gif, current_index
 		FROM google_images gi
@@ -53,7 +53,7 @@ func (db *googleImagesService) GetImages(query string) (models.GoogleImages, err
 
 	rows, err := db.Queryx(selectQuery, query)
 	if err != nil {
-		return models.GoogleImages{}, err
+		return model.GoogleImages{}, err
 	}
 	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
@@ -62,7 +62,7 @@ func (db *googleImagesService) GetImages(query string) (models.GoogleImages, err
 		}
 	}(rows)
 
-	var images []models.Image
+	var images []model.Image
 	var currentIndex int
 	var queryID int64
 	for rows.Next() {
@@ -70,19 +70,19 @@ func (db *googleImagesService) GetImages(query string) (models.GoogleImages, err
 		err := rows.Scan(&queryID, &image.ImageURL, &image.ContextURL, &image.GIF, &currentIndex)
 		if err != nil {
 			db.log.Err(err).Send()
-			return models.GoogleImages{}, err
+			return model.GoogleImages{}, err
 		}
 		images = append(images, image)
 	}
 
-	return models.GoogleImages{
+	return model.GoogleImages{
 		CurrentIndex: currentIndex,
 		QueryID:      queryID,
 		Images:       images,
 	}, nil
 }
 
-func (db *googleImagesService) GetImagesFromQueryID(queryID int64) (models.GoogleImages, error) {
+func (db *googleImagesService) GetImagesFromQueryID(queryID int64) (model.GoogleImages, error) {
 	const selectQuery = `SELECT image_url, context_url, is_gif, current_index
 		FROM google_images gi
 		RIGHT JOIN google_images_queries giq ON giq.id = gi.query_id
@@ -90,7 +90,7 @@ func (db *googleImagesService) GetImagesFromQueryID(queryID int64) (models.Googl
 
 	rows, err := db.Queryx(selectQuery, queryID)
 	if err != nil {
-		return models.GoogleImages{}, err
+		return model.GoogleImages{}, err
 	}
 	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
@@ -99,19 +99,19 @@ func (db *googleImagesService) GetImagesFromQueryID(queryID int64) (models.Googl
 		}
 	}(rows)
 
-	var images []models.Image
+	var images []model.Image
 	var currentIndex int
 	for rows.Next() {
 		var image Image
 		err := rows.Scan(&image.ImageURL, &image.ContextURL, &image.GIF, &currentIndex)
 		if err != nil {
 			db.log.Err(err).Send()
-			return models.GoogleImages{}, err
+			return model.GoogleImages{}, err
 		}
 		images = append(images, image)
 	}
 
-	return models.GoogleImages{
+	return model.GoogleImages{
 		CurrentIndex: currentIndex,
 		QueryID:      queryID,
 		Images:       images,
@@ -119,7 +119,7 @@ func (db *googleImagesService) GetImagesFromQueryID(queryID int64) (models.Googl
 
 }
 
-func (db *googleImagesService) SaveImages(query string, wrapper *models.GoogleImages) (int64, error) {
+func (db *googleImagesService) SaveImages(query string, wrapper *model.GoogleImages) (int64, error) {
 	query = strings.ToLower(query)
 	tx, err := db.BeginTxx(context.Background(), nil)
 	if err != nil {

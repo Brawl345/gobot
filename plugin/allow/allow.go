@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -17,11 +17,11 @@ var log = logger.New("allow")
 
 type (
 	Plugin struct {
-		allowService models.AllowService
+		allowService model.AllowService
 	}
 )
 
-func New(service models.AllowService) *Plugin {
+func New(service model.AllowService) *Plugin {
 	return &Plugin{
 		allowService: service,
 	}

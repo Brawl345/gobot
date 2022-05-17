@@ -6,7 +6,7 @@ import (
 	"regexp"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/models"
+	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
@@ -17,11 +17,11 @@ var log = logger.New("manager")
 
 type (
 	Plugin struct {
-		managerService models.ManagerService
+		managerService model.ManagerService
 	}
 )
 
-func New(service models.ManagerService) *Plugin {
+func New(service model.ManagerService) *Plugin {
 	return &Plugin{
 		managerService: service,
 	}
@@ -69,7 +69,7 @@ func (p *Plugin) OnEnable(c plugin.GobotContext) error {
 
 	err := p.managerService.EnablePlugin(pluginName)
 	if err != nil {
-		if errors.Is(err, models.ErrNotFound) {
+		if errors.Is(err, model.ErrNotFound) {
 			return c.Reply("❌ Plugin existiert nicht", utils.DefaultSendOptions)
 		}
 
@@ -92,7 +92,7 @@ func (p *Plugin) OnEnableInChat(c plugin.GobotContext) error {
 
 	err := p.managerService.EnablePluginForChat(c.Chat(), pluginName)
 	if err != nil {
-		if errors.Is(err, models.ErrNotFound) {
+		if errors.Is(err, model.ErrNotFound) {
 			return c.Reply("❌ Plugin existiert nicht", utils.DefaultSendOptions)
 		}
 
@@ -143,7 +143,7 @@ func (p *Plugin) OnDisableInChat(c plugin.GobotContext) error {
 
 	err := p.managerService.DisablePluginForChat(c.Chat(), pluginName)
 	if err != nil {
-		if errors.Is(err, models.ErrNotFound) {
+		if errors.Is(err, model.ErrNotFound) {
 			return c.Reply("❌ Plugin existiert nicht", utils.DefaultSendOptions)
 		}
 
