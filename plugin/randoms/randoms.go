@@ -3,7 +3,6 @@ package randoms
 import (
 	"errors"
 	"fmt"
-	"html"
 	"regexp"
 	"strings"
 
@@ -95,7 +94,7 @@ func (p *Plugin) addRandom(c plugin.GobotContext) error {
 		"{other_user}", c.Bot().Me.FirstName,
 	).Replace(random)
 
-	return c.Reply(fmt.Sprintf("<b>✅ Gespeichert!</b> Beispiel:\n%s", html.EscapeString(example)),
+	return c.Reply(fmt.Sprintf("<b>✅ Gespeichert!</b> Beispiel:\n%s", utils.Escape(example)),
 		utils.DefaultSendOptions)
 }
 

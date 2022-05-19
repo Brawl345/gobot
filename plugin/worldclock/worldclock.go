@@ -3,7 +3,6 @@ package worldclock
 import (
 	"errors"
 	"fmt"
-	"html"
 	"net/url"
 	"regexp"
 	"strings"
@@ -113,7 +112,7 @@ func (p *Plugin) onTime(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>%s</b>\n",
-			html.EscapeString(timezone.IanaTimeZoneId),
+			utils.Escape(timezone.IanaTimeZoneId),
 		),
 	)
 
@@ -138,9 +137,9 @@ func (p *Plugin) onTime(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<i>%s (%s, UTC%s)</i>",
-			html.EscapeString(timezone.ConvertedTime.TimeZoneDisplayName),
-			html.EscapeString(timezone.ConvertedTime.TimeZoneDisplayAbbr),
-			html.EscapeString(timezone.ConvertedTime.UtcOffsetWithDstFormatted()),
+			utils.Escape(timezone.ConvertedTime.TimeZoneDisplayName),
+			utils.Escape(timezone.ConvertedTime.TimeZoneDisplayAbbr),
+			utils.Escape(timezone.ConvertedTime.UtcOffsetWithDstFormatted()),
 		),
 	)
 

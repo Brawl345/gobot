@@ -3,7 +3,6 @@ package myanimelist
 import (
 	"errors"
 	"fmt"
-	"html"
 	"net/url"
 	"regexp"
 	"strings"
@@ -109,7 +108,7 @@ func (p *Plugin) onSearch(c plugin.GobotContext) error {
 			fmt.Sprintf(
 				"/mal_%d - <b>%s</b>",
 				result.Anime.ID,
-				html.EscapeString(result.Anime.Title),
+				utils.Escape(result.Anime.Title),
 			),
 		)
 		if result.Anime.NSFW() {
@@ -174,7 +173,7 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 		fmt.Sprintf(
 			"<a href=\"https://myanimelist.net/anime/%d/\"><b>%s</b></a>",
 			anime.ID,
-			html.EscapeString(anime.Title),
+			utils.Escape(anime.Title),
 		),
 	)
 
@@ -182,7 +181,7 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 	alternativeTitles := anime.GetAlternativeTitles()
 	if len(alternativeTitles) > 0 {
 		sb.WriteString(" (<i>")
-		sb.WriteString(html.EscapeString(strings.Join(alternativeTitles, ", ")))
+		sb.WriteString(utils.Escape(strings.Join(alternativeTitles, ", ")))
 		sb.WriteString("</i>)")
 	}
 
@@ -190,7 +189,7 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			" [%s]",
-			html.EscapeString(anime.GetMediaType()),
+			utils.Escape(anime.GetMediaType()),
 		),
 	)
 
@@ -219,7 +218,7 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 				fmt.Sprintf(
 					"<a href=\"https://myanimelist.net/anime/producer/%d/\">%s</a>",
 					studio.ID,
-					html.EscapeString(studio.Name),
+					utils.Escape(studio.Name),
 				),
 			)
 			if i < len(anime.Studios)-1 {
@@ -248,7 +247,7 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 				fmt.Sprintf(
 					"<a href=\"https://myanimelist.net/anime/genre/%d/\">%s</a>",
 					genre.ID,
-					html.EscapeString(genre.Name),
+					utils.Escape(genre.Name),
 				),
 			)
 			if i < len(anime.Genres)-1 {
@@ -323,7 +322,7 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 		sb.WriteString(
 			fmt.Sprintf(
 				"📆 <b>Ausstrahlung:</b> %s %d",
-				html.EscapeString(anime.StartSeason.Season),
+				utils.Escape(anime.StartSeason.Season),
 				anime.StartSeason.Year,
 			),
 		)
@@ -334,14 +333,14 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 		sb.WriteString(
 			fmt.Sprintf(
 				" <i>(%s)</i>\n",
-				html.EscapeString(anime.GetStatus()),
+				utils.Escape(anime.GetStatus()),
 			),
 		)
 	} else {
 		sb.WriteString(
 			fmt.Sprintf(
 				"📆 <b>Ausstrahlung:</b> <i>%s</i>\n",
-				html.EscapeString(anime.GetStatus()),
+				utils.Escape(anime.GetStatus()),
 			),
 		)
 	}
@@ -374,10 +373,10 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 	if anime.Synopsis != "" {
 		sb.WriteString("\n")
 		if len(anime.Synopsis) > 250 {
-			sb.WriteString(html.EscapeString(anime.Synopsis[:250]))
+			sb.WriteString(utils.Escape(anime.Synopsis[:250]))
 			sb.WriteString("...")
 		} else {
-			sb.WriteString(html.EscapeString(anime.Synopsis))
+			sb.WriteString(utils.Escape(anime.Synopsis))
 		}
 	}
 

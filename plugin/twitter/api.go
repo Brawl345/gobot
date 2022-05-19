@@ -2,7 +2,6 @@ package twitter
 
 import (
 	"fmt"
-	"html"
 	"strings"
 	"time"
 
@@ -183,7 +182,7 @@ func (u *User) String() string {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>%s</b> (<a href=\"https://twitter.com/%s\">@%s</a>",
-			html.EscapeString(u.Name),
+			utils.Escape(u.Name),
 			u.Username,
 			u.Username,
 		),

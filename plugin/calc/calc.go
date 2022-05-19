@@ -3,7 +3,6 @@ package calc
 import (
 	"errors"
 	"fmt"
-	"html"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -113,7 +112,7 @@ func onCalc(c plugin.GobotContext) error {
 	if err != nil {
 		var apiError *ApiError
 		if errors.As(err, &apiError) {
-			return c.Reply(fmt.Sprintf("❌ <b>Fehler:</b> <i>%s</i>", html.EscapeString(apiError.Error())),
+			return c.Reply(fmt.Sprintf("❌ <b>Fehler:</b> <i>%s</i>", utils.Escape(apiError.Error())),
 				utils.DefaultSendOptions)
 		}
 

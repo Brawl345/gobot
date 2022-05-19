@@ -2,7 +2,6 @@ package google_search
 
 import (
 	"fmt"
-	"html"
 	"net/url"
 	"regexp"
 	"strings"
@@ -105,8 +104,8 @@ func (p *Plugin) onGoogleSearch(c plugin.GobotContext) error {
 			fmt.Sprintf(
 				"<a href=\"%s\">%s</a> - <code>%s</code>\n",
 				item.Link,
-				html.EscapeString(item.Title),
-				html.EscapeString(item.DisplayLink),
+				utils.Escape(item.Title),
+				utils.Escape(item.DisplayLink),
 			),
 		)
 	}

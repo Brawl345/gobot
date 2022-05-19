@@ -2,7 +2,6 @@ package rki
 
 import (
 	"fmt"
-	"html"
 	"regexp"
 	"strings"
 
@@ -219,9 +218,9 @@ func onDistrictSearch(c plugin.GobotContext) error {
 			fmt.Sprintf(
 				"/rki_%s - <strong>%s (%s, %s)</strong>\n",
 				district.Ags,
-				html.EscapeString(district.Name),
-				html.EscapeString(district.County),
-				html.EscapeString(district.State),
+				utils.Escape(district.Name),
+				utils.Escape(district.County),
+				utils.Escape(district.State),
 			),
 		)
 	}
@@ -258,9 +257,9 @@ func districtText(ags string) string {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>COVID-19-Übersicht für %s (%s, %s) lt. RKI:</b>\n",
-			html.EscapeString(district.Name),
-			html.EscapeString(district.County),
-			html.EscapeString(district.State),
+			utils.Escape(district.Name),
+			utils.Escape(district.County),
+			utils.Escape(district.State),
 		),
 	)
 
@@ -316,7 +315,7 @@ func districtText(ags string) string {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<i>Als Heimatstadt setzen: /setrki_%s</i>",
-			html.EscapeString(district.Ags),
+			utils.Escape(district.Ags),
 		),
 	)
 

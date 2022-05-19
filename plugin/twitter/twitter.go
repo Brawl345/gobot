@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"html"
 	"io"
 	"net/http"
 	"net/url"
@@ -232,7 +231,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 					return c.Reply("❌ Die Tweets dieses Nutzers sind privat.")
 				}
 			}
-			return c.Reply(fmt.Sprintf("❌ <b>API-Fehler:</b> %s", html.EscapeString(partialError.Errors[0].Detail)),
+			return c.Reply(fmt.Sprintf("❌ <b>API-Fehler:</b> %s", utils.Escape(partialError.Errors[0].Detail)),
 				utils.DefaultSendOptions)
 		} else {
 			log.Err(err).Send()
@@ -268,7 +267,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 			sb.WriteString(
 				fmt.Sprintf(
 					"%s\n",
-					html.EscapeString(tweet),
+					utils.Escape(tweet),
 				),
 			)
 		}
@@ -299,7 +298,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 				fmt.Sprintf(
 					"%d) %s <i>(%s Stimme%s, %.1f %%)</i>\n",
 					option.Position,
-					html.EscapeString(option.Label),
+					utils.Escape(option.Label),
 					utils.FormatThousand(option.Votes),
 					plural,
 					percentage,
@@ -363,7 +362,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 			sb.WriteString(
 				fmt.Sprintf(
 					"%s\n",
-					html.EscapeString(tweet),
+					utils.Escape(tweet),
 				),
 			)
 		}

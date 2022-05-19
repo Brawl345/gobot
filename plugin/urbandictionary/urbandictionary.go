@@ -2,7 +2,6 @@ package urbandictionary
 
 import (
 	"fmt"
-	"html"
 	"net/url"
 	"regexp"
 	"strings"
@@ -70,7 +69,7 @@ func onUrbanDictionary(c plugin.GobotContext) error {
 		fmt.Sprintf(
 			"<b><a href=\"%s\">%s</a></b>\n",
 			term.Permalink,
-			html.EscapeString(term.Word),
+			utils.Escape(term.Word),
 		),
 	)
 	definition := strings.NewReplacer(
@@ -78,14 +77,14 @@ func onUrbanDictionary(c plugin.GobotContext) error {
 		"]", "",
 	).Replace(term.Definition)
 
-	sb.WriteString(html.EscapeString(definition))
+	sb.WriteString(utils.Escape(definition))
 
 	if len(term.Example) > 0 {
 		example := strings.NewReplacer(
 			"[", "",
 			"]", "",
 		).Replace(term.Example)
-		sb.WriteString(fmt.Sprintf("\n\n<i>Beispiel:</i>\n%s", html.EscapeString(example)))
+		sb.WriteString(fmt.Sprintf("\n\n<i>Beispiel:</i>\n%s", utils.Escape(example)))
 	}
 
 	timezone := utils.GermanTimezone()

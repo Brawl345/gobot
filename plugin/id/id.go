@@ -2,7 +2,6 @@ package id
 
 import (
 	"fmt"
-	"html"
 	"regexp"
 	"strconv"
 	"strings"
@@ -49,9 +48,9 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 func onId(c plugin.GobotContext) error {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("Du bist <b>%s", html.EscapeString(c.Sender().FirstName)))
+	sb.WriteString(fmt.Sprintf("Du bist <b>%s", utils.Escape(c.Sender().FirstName)))
 	if c.Sender().LastName != "" {
-		sb.WriteString(fmt.Sprintf(" %s", html.EscapeString(c.Sender().LastName)))
+		sb.WriteString(fmt.Sprintf(" %s", utils.Escape(c.Sender().LastName)))
 	}
 	sb.WriteString("</b> ")
 	sb.WriteString(fmt.Sprintf("<code>[%d]</code>", c.Sender().ID))
@@ -62,7 +61,7 @@ func onId(c plugin.GobotContext) error {
 
 	if c.Message().FromGroup() {
 		sb.WriteString(fmt.Sprintf("\nGruppe: <b>%s</b> <code>[%d]</code>",
-			html.EscapeString(c.Chat().Title),
+			utils.Escape(c.Chat().Title),
 			c.Chat().ID,
 		))
 	}
@@ -73,9 +72,9 @@ func onId(c plugin.GobotContext) error {
 func onIdInline(c plugin.GobotContext) error {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("<b>%s", html.EscapeString(c.Sender().FirstName)))
+	sb.WriteString(fmt.Sprintf("<b>%s", utils.Escape(c.Sender().FirstName)))
 	if c.Sender().LastName != "" {
-		sb.WriteString(fmt.Sprintf(" %s", html.EscapeString(c.Sender().LastName)))
+		sb.WriteString(fmt.Sprintf(" %s", utils.Escape(c.Sender().LastName)))
 	}
 	sb.WriteString("</b> ")
 	sb.WriteString(fmt.Sprintf("<code>[%d]</code>", c.Sender().ID))

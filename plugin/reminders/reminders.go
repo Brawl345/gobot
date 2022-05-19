@@ -3,7 +3,6 @@ package reminders
 import (
 	"errors"
 	"fmt"
-	"html"
 	"regexp"
 	"strconv"
 	"strings"
@@ -332,7 +331,7 @@ func (p *Plugin) onGetReminders(c plugin.GobotContext) error {
 				"<b>%d)</b> %s - <b>%s</b>\n",
 				reminder.ID,
 				reminder.Time.Format("02.01.2006, 15:04:05 Uhr"),
-				html.EscapeString(reminder.Text),
+				utils.Escape(reminder.Text),
 			),
 		)
 	}
@@ -372,13 +371,13 @@ func (p *Plugin) sendReminder(bot *telebot.Bot, id int64) {
 			sb.WriteString(
 				fmt.Sprintf(
 					"<b>@%s</b> ",
-					html.EscapeString(reminder.Username),
+					utils.Escape(reminder.Username),
 				),
 			)
 		}
 	}
 	sb.WriteString("<b>ERINNERUNG:</b>\n")
-	sb.WriteString(html.EscapeString(reminder.Text))
+	sb.WriteString(utils.Escape(reminder.Text))
 
 	_, err = bot.Send(
 		telebot.ChatID(recipient),

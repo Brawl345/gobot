@@ -2,7 +2,6 @@ package stats
 
 import (
 	"fmt"
-	"html"
 	"regexp"
 	"strings"
 
@@ -83,7 +82,7 @@ func (p *Plugin) OnStats(c plugin.GobotContext) error {
 		if user.InGroup && user.MsgCount > 0 {
 			sb.WriteString(
 				fmt.Sprintf("<b>%s:</b> %s <code>(%s %%)</code>\n",
-					html.EscapeString(user.GetFullName()),
+					utils.Escape(user.GetFullName()),
 					utils.FormatThousand(user.MsgCount),
 					percentageString,
 				),

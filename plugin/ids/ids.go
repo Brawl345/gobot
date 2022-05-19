@@ -2,7 +2,6 @@ package ids
 
 import (
 	"fmt"
-	"html"
 	"regexp"
 	"strings"
 
@@ -102,7 +101,7 @@ func (p *Plugin) onIds(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"👥 <b>%s</b> <code>%d</code>\n",
-			html.EscapeString(c.Chat().Title),
+			utils.Escape(c.Chat().Title),
 			c.Chat().ID,
 		),
 	)
@@ -125,7 +124,7 @@ func (p *Plugin) onIds(c plugin.GobotContext) error {
 		sb.WriteString(
 			fmt.Sprintf(
 				"<b>%s</b> <code>%d</code>",
-				html.EscapeString(utils.FullName(user.FirstName, user.LastName.String)),
+				utils.Escape(utils.FullName(user.FirstName, user.LastName.String)),
 				user.ID,
 			),
 		)

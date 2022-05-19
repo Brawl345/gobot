@@ -2,7 +2,6 @@ package alive
 
 import (
 	"fmt"
-	"html"
 	"regexp"
 
 	"github.com/Brawl345/gobot/plugin"
@@ -35,7 +34,7 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 
 func onAliveCheck(c plugin.GobotContext) error {
 	return c.Reply(
-		fmt.Sprintf("<b>Ich bin da, %s!</b>", html.EscapeString(c.Sender().FirstName)),
+		fmt.Sprintf("<b>Ich bin da, %s!</b>", utils.Escape(c.Sender().FirstName)),
 		utils.DefaultSendOptions,
 	)
 }

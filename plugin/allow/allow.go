@@ -2,7 +2,6 @@ package allow
 
 import (
 	"fmt"
-	"html"
 	"regexp"
 
 	"github.com/Brawl345/gobot/logger"
@@ -61,7 +60,7 @@ func (p *Plugin) OnAllow(c plugin.GobotContext) error {
 		isAllowed := p.allowService.IsUserAllowed(c.Message().ReplyTo.Sender)
 		if isAllowed {
 			return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot bereits überall benutzen.",
-				html.EscapeString(c.Message().ReplyTo.Sender.FirstName)),
+				utils.Escape(c.Message().ReplyTo.Sender.FirstName)),
 				utils.DefaultSendOptions)
 		}
 
@@ -77,7 +76,7 @@ func (p *Plugin) OnAllow(c plugin.GobotContext) error {
 		}
 
 		return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot jetzt überall benutzen",
-			html.EscapeString(c.Message().ReplyTo.Sender.FirstName)),
+			utils.Escape(c.Message().ReplyTo.Sender.FirstName)),
 			utils.DefaultSendOptions)
 	} else { // Allow group
 		isAllowed := p.allowService.IsChatAllowed(c.Chat())
@@ -110,7 +109,7 @@ func (p *Plugin) OnDeny(c plugin.GobotContext) error {
 		isAllowed := p.allowService.IsUserAllowed(c.Message().ReplyTo.Sender)
 		if !isAllowed {
 			return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot nicht überall benutzen.",
-				html.EscapeString(c.Message().ReplyTo.Sender.FirstName)),
+				utils.Escape(c.Message().ReplyTo.Sender.FirstName)),
 				utils.DefaultSendOptions)
 		}
 
@@ -126,7 +125,7 @@ func (p *Plugin) OnDeny(c plugin.GobotContext) error {
 		}
 
 		return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot jetzt nicht mehr überall benutzen",
-			html.EscapeString(c.Message().ReplyTo.Sender.FirstName)),
+			utils.Escape(c.Message().ReplyTo.Sender.FirstName)),
 			utils.DefaultSendOptions)
 	} else { // Deny group
 		isAllowed := p.allowService.IsChatAllowed(c.Chat())

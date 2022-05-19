@@ -2,7 +2,6 @@ package birthdays
 
 import (
 	"fmt"
-	"html"
 	"regexp"
 	"strings"
 	"time"
@@ -118,7 +117,7 @@ func (p *Plugin) onNewDay(bot *telebot.Bot) {
 		for _, user := range list {
 			age := time.Now().Year() - user.Birthday.Time.Year()
 			text := fmt.Sprintf("🎂🍰🎈<b>%s hat heute Geburtstag und wird %d!</b>🎉🎁🕯\nAlles Gute!",
-				html.EscapeString(user.FirstName), age)
+				utils.Escape(user.FirstName), age)
 			_, err := bot.Send(telebot.ChatID(chatID), text, utils.DefaultSendOptions)
 			if err != nil {
 				log.Err(err).Msg("Failed to send birthday message")
@@ -262,7 +261,7 @@ func (p *Plugin) listBirthdays(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>🎂 Geburtstage in %s:</b>\n",
-			html.EscapeString(c.Chat().Title),
+			utils.Escape(c.Chat().Title),
 		),
 	)
 
@@ -270,7 +269,7 @@ func (p *Plugin) listBirthdays(c plugin.GobotContext) error {
 		sb.WriteString(
 			fmt.Sprintf(
 				"<b>%s:</b> %s\n",
-				html.EscapeString(user.GetFullName()),
+				utils.Escape(user.GetFullName()),
 				user.Birthday.Time.Format("02.01.2006"),
 			),
 		)

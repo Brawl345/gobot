@@ -3,7 +3,6 @@ package weather
 import (
 	"errors"
 	"fmt"
-	"html"
 	"regexp"
 	"strings"
 	"time"
@@ -128,7 +127,7 @@ func (p *Plugin) onWeather(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"🌡 <b>Wetter in %s:</b>\n",
-			html.EscapeString(venue.Address),
+			utils.Escape(venue.Address),
 		),
 	)
 
@@ -299,7 +298,7 @@ func (p *Plugin) onForecast(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"🌡 <b>Wettervorhersage für %s:</b>\n",
-			html.EscapeString(venue.Address),
+			utils.Escape(venue.Address),
 		),
 	)
 
@@ -369,7 +368,7 @@ func (p *Plugin) onHourlyForecast(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"🌡 <b>24-Stunden-Vorhersage für %s:</b>\n",
-			html.EscapeString(venue.Address),
+			utils.Escape(venue.Address),
 		),
 	)
 

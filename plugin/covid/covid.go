@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"html"
 	"net/url"
 	"regexp"
 	"strings"
@@ -116,7 +115,7 @@ func OnCountry(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>COVID-19-Fälle in %s</b>:\n",
-			html.EscapeString(result.Country),
+			utils.Escape(result.Country),
 		),
 	)
 

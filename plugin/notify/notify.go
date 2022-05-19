@@ -3,7 +3,6 @@ package notify
 import (
 	"errors"
 	"fmt"
-	"html"
 	"regexp"
 	"strings"
 
@@ -108,20 +107,20 @@ func (p *Plugin) notify(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"🔔 <b>%s</b> hat dich erwähnt:\n",
-			html.EscapeString(utils.FullName(c.Sender().FirstName, c.Sender().LastName)),
+			utils.Escape(utils.FullName(c.Sender().FirstName, c.Sender().LastName)),
 		),
 	)
 	sb.WriteString(
 		fmt.Sprintf(
 			"👥 <b>%s</b> | 📅 %s | 🕒 %s Uhr\n",
-			html.EscapeString(c.Chat().Title),
+			utils.Escape(c.Chat().Title),
 			c.Message().Time().Format("02.01.2006"),
 			c.Message().Time().Format("15:04:05"),
 		),
 	)
-	sb.WriteString(html.EscapeString(c.Message().Text))
+	sb.WriteString(utils.Escape(c.Message().Text))
 	if c.Message().Text == "" {
-		sb.WriteString(html.EscapeString(c.Message().Caption))
+		sb.WriteString(utils.Escape(c.Message().Caption))
 	}
 
 	for _, userID := range userIDs {

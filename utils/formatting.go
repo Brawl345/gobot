@@ -9,6 +9,18 @@ import (
 	"golang.org/x/exp/constraints"
 )
 
+// Do not escape ampersands, because they are not parsed by Telegram
+var htmlTelegramEscaper = strings.NewReplacer(
+	`'`, "&#39;",
+	`<`, "&lt;",
+	`>`, "&gt;",
+	`"`, "&#34;",
+)
+
+func Escape(s string) string {
+	return htmlTelegramEscaper.Replace(s)
+}
+
 func RoundAndFormatThousand(n float64) string {
 	return FormatThousand(int64(math.Round(n)))
 }

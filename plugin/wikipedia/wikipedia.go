@@ -3,7 +3,6 @@ package wikipedia
 import (
 	"errors"
 	"fmt"
-	"html"
 	"net"
 	"net/url"
 	"regexp"
@@ -148,7 +147,7 @@ func onArticle(c plugin.GobotContext) error {
 		fmt.Sprintf(
 			"<b><a href=\"%s\">%s</a></b>\n",
 			article.URL,
-			html.EscapeString(article.Title),
+			utils.Escape(article.Title),
 		),
 	)
 
@@ -194,7 +193,7 @@ func onArticle(c plugin.GobotContext) error {
 				}
 				articleTitle := strings.TrimSpace(match[1])
 				articleTitle = regexHTML.ReplaceAllString(articleTitle, "")
-				sb.WriteString(fmt.Sprintf("* %s\n", html.EscapeString(articleTitle)))
+				sb.WriteString(fmt.Sprintf("* %s\n", utils.Escape(articleTitle)))
 			}
 		}
 
@@ -239,7 +238,7 @@ func onArticle(c plugin.GobotContext) error {
 				sb.WriteString(
 					fmt.Sprintf(
 						"<b>Abschnitt:</b> <i>%s</i>\n",
-						html.EscapeString(sectionTitle),
+						utils.Escape(sectionTitle),
 					),
 				)
 				article.Text = sectionText
@@ -255,7 +254,7 @@ func onArticle(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"%s\n",
-			html.EscapeString(summary),
+			utils.Escape(summary),
 		),
 	)
 

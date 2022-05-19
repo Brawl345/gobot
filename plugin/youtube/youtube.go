@@ -3,7 +3,6 @@ package youtube
 import (
 	"errors"
 	"fmt"
-	"html"
 	"net/url"
 	"regexp"
 	"strings"
@@ -110,7 +109,7 @@ func constructText(video *Video) string {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>%s</b>\n",
-			html.EscapeString(video.Snippet.Title),
+			utils.Escape(video.Snippet.Title),
 		),
 	)
 
@@ -119,7 +118,7 @@ func constructText(video *Video) string {
 		fmt.Sprintf(
 			"🎥 <strong><a href=\"https://www.youtube.com/channel/%s/videos\">%s</a></strong>",
 			video.Snippet.ChannelID,
-			html.EscapeString(video.Snippet.ChannelTitle),
+			utils.Escape(video.Snippet.ChannelTitle),
 		),
 	)
 

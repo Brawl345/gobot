@@ -2,7 +2,6 @@ package afk
 
 import (
 	"fmt"
-	"html"
 	"regexp"
 	"strings"
 	"time"
@@ -104,7 +103,7 @@ func (p *Plugin) goAFK(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"💤 <b>%s ist jetzt AFK</b>",
-			html.EscapeString(c.Sender().FirstName),
+			utils.Escape(c.Sender().FirstName),
 		),
 	)
 
@@ -112,7 +111,7 @@ func (p *Plugin) goAFK(c plugin.GobotContext) error {
 		sb.WriteString(
 			fmt.Sprintf(
 				" <i>(%s)</i>",
-				html.EscapeString(reason),
+				utils.Escape(reason),
 			),
 		)
 	}
@@ -155,7 +154,7 @@ func (p *Plugin) checkAFK(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"🔔 <b>%s ist wieder da!</b> <i>(🕒 %s",
-			html.EscapeString(c.Sender().FirstName),
+			utils.Escape(c.Sender().FirstName),
 			data.Duration().Round(time.Second),
 		),
 	)
@@ -164,7 +163,7 @@ func (p *Plugin) checkAFK(c plugin.GobotContext) error {
 		sb.WriteString(
 			fmt.Sprintf(
 				", 💬 %s",
-				html.EscapeString(data.Reason.String),
+				utils.Escape(data.Reason.String),
 			),
 		)
 	}
@@ -208,7 +207,7 @@ func (p *Plugin) notifyIfAFK(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"💤 <b>%s ist zurzeit AFK!</b> <i>(🕒 seit %s",
-			html.EscapeString(data.FirstName),
+			utils.Escape(data.FirstName),
 			data.Duration().Round(time.Second),
 		),
 	)
@@ -217,7 +216,7 @@ func (p *Plugin) notifyIfAFK(c plugin.GobotContext) error {
 		sb.WriteString(
 			fmt.Sprintf(
 				", 💬 %s",
-				html.EscapeString(data.Reason.String),
+				utils.Escape(data.Reason.String),
 			),
 		)
 	}
