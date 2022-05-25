@@ -181,17 +181,6 @@ func constructText(video *Video) string {
 		sb.WriteString("\n")
 	}
 
-	// Livestream has ended
-	if video.WasLive() {
-		sb.WriteString(
-			fmt.Sprintf(
-				"🔴 <i>War live von %s bis %s</i>\n",
-				video.LiveStreamingDetails.ActualStartTime.In(timezone).Format("02.01.2006, 15:04:05 Uhr"),
-				video.LiveStreamingDetails.ActualEndTime.In(timezone).Format("02.01.2006, 15:04:05 Uhr"),
-			),
-		)
-	}
-
 	// Blocked
 	if video.BlockedInGermany() {
 		sb.WriteString("<i>❌ Nicht verfügbar in 🇩🇪</i>\n")
