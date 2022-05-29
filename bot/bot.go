@@ -48,6 +48,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/wikipedia"
 	"github.com/Brawl345/gobot/plugin/worldclock"
 	"github.com/Brawl345/gobot/plugin/youtube"
+	"github.com/jmoiron/sqlx"
 	"gopkg.in/telebot.v3"
 )
 
@@ -59,12 +60,7 @@ type (
 	}
 )
 
-func New() (*Gobot, error) {
-	db, err := sql.New()
-	if err != nil {
-		return nil, err
-	}
-
+func New(db *sqlx.DB) (*Gobot, error) {
 	bot, err := telebot.NewBot(telebot.Settings{
 		Token:  strings.TrimSpace(os.Getenv("BOT_TOKEN")),
 		Poller: GetPoller(),

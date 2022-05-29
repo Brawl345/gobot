@@ -9,6 +9,7 @@ import (
 
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/model/sql"
 	"github.com/Brawl345/gobot/utils"
 )
 
@@ -22,7 +23,12 @@ func main() {
 		log.Info().Msgf("Gobot-%s, %v", versionInfo.Revision, versionInfo.LastCommit)
 	}
 
-	b, err := bot.New()
+	db, err := sql.New()
+	if err != nil {
+		log.Fatal().Err(err).Send()
+	}
+
+	b, err := bot.New(db)
 	if err != nil {
 		log.Fatal().Err(err).Send()
 	}
