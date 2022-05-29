@@ -5,6 +5,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
@@ -65,6 +66,7 @@ func onAmazonLink(c plugin.GobotContext) error {
 					CheckRedirect: func(req *http.Request, via []*http.Request) error {
 						return http.ErrUseLastResponse
 					},
+					Timeout: 5 * time.Second,
 				}
 				resp, err := client.Do(req)
 

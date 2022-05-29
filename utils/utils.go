@@ -104,7 +104,10 @@ func GetRequest(url string, result any) error {
 		Str("url", url).
 		Send()
 
-	resp, err := http.Get(url)
+	client := http.Client{
+		Timeout: 5 * time.Second,
+	}
+	resp, err := client.Get(url)
 
 	if err != nil {
 		return err
@@ -156,7 +159,9 @@ func GetRequestWithHeader(url string, headers map[string]string, result any) err
 		req.Header.Add(k, v)
 	}
 
-	client := &http.Client{}
+	client := &http.Client{
+		Timeout: 5 * time.Second,
+	}
 	resp, err := client.Do(req)
 
 	if err != nil {
