@@ -9,7 +9,7 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/rs/xid v1.4.0
 	github.com/rs/zerolog v1.27.0
-	github.com/rubenv/sql-migrate v1.1.1
+	github.com/rubenv/sql-migrate v1.1.2
 	github.com/sosodev/duration v0.0.0-20220529014600-eb820b12a194
 	golang.org/x/exp v0.0.0-20220518171630-0b5c67f07fdf
 	golang.org/x/sync v0.0.0-20220513210516-0976fa681c29
