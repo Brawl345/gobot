@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	BaseUrl       = "https://corona.lmao.ninja/v3/covid-19"
+	BaseUrl       = "https://disease.sh/v3/covid-19"
 	MyCountry     = "Germany" // Country that will definitely be shown in the top list
 	TopListPlaces = 10
 )
