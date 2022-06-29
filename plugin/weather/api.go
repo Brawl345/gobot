@@ -22,7 +22,7 @@ type (
 	}
 
 	Daily struct {
-		PrecipitationHours []int              `json:"precipitation_hours"`
+		PrecipitationHours []float32          `json:"precipitation_hours"`
 		PrecipitationSum   []PrecipitationSum `json:"precipitation_sum"`
 		Sunrise            []string           `json:"sunrise"`
 		Sunset             []string           `json:"sunset"`

@@ -1,6 +1,6 @@
 package weather
 
-type Weathercode int
+type Weathercode float32
 
 func (weathercode Weathercode) Icon() string {
 	if weathercode == 0 {

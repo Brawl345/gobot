@@ -151,16 +151,19 @@ func (p *Plugin) onWeather(c plugin.GobotContext) error {
 		),
 	)
 
-	if response.Daily.PrecipitationHours[0] > 0 {
+	if response.Daily.PrecipitationHours[0] > 0.0 {
 		var plural string
-		if response.Daily.PrecipitationHours[0] > 1 {
+		if response.Daily.PrecipitationHours[0] > 1.0 {
 			plural = "n"
 		}
 
+		precipitationHours := fmt.Sprintf("%.2f", response.Daily.PrecipitationHours[0])
+		precipitationHours = strings.NewReplacer(".00", "", ".", ",").Replace(precipitationHours)
+
 		sb.WriteString(
 			fmt.Sprintf(
-				"💧 %d Regenstunde%s mit %s Niederschlag\n",
-				response.Daily.PrecipitationHours[0],
+				"💧 %s Regenstunde%s mit %s Niederschlag\n",
+				precipitationHours,
 				plural,
 				response.Daily.PrecipitationSum[0].String(),
 			),
