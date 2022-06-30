@@ -130,9 +130,10 @@ func (p *Plugin) OnMedia(c plugin.GobotContext) error {
 
 	// Fix file endings
 	if c.Message().Sticker != nil &&
-		!c.Message().Sticker.Animated &&
-		!strings.HasSuffix(fileName, ".webp") {
-		fileName += ".webp"
+		!c.Message().Sticker.Animated {
+		if !strings.HasSuffix(fileName, ".webp") && !strings.HasSuffix(fileName, ".webm") {
+			fileName += ".webp"
+		}
 	}
 	if c.Message().Voice != nil &&
 		!strings.HasSuffix(fileName, ".oga") {
