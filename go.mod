@@ -8,7 +8,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.4.0
 	github.com/rs/xid v1.4.0
-	github.com/rs/zerolog v1.27.0
+	github.com/rs/zerolog v1.28.0
 	github.com/rubenv/sql-migrate v1.1.2
 	github.com/sosodev/duration v1.0.1
 	golang.org/x/exp v0.0.0-20220608143224-64259d1afd70
