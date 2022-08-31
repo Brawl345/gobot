@@ -78,7 +78,7 @@ func doTwitterRequest(url string, bearerToken string, result any) error {
 	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", bearerToken))
 
 	client := &http.Client{
-		Timeout: 5 * time.Second,
+		Timeout: 10 * time.Second,
 	}
 	resp, err := client.Do(req)
 

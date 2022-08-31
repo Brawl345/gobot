@@ -67,7 +67,7 @@ func expandUrl(url string) (string, error) {
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
-		Timeout: 5 * time.Second,
+		Timeout: 10 * time.Second,
 	}
 	resp, err := client.Do(req)
 	if err != nil {
