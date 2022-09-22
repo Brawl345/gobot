@@ -106,7 +106,8 @@ func (p *Plugin) onSearch(c plugin.GobotContext) error {
 	for _, result := range response.Results {
 		sb.WriteString(
 			fmt.Sprintf(
-				"/mal_%d - <b>%s</b>",
+				"/mal_%d - <a href=\"https://myanimelist.net/anime/%d/\"><b>%s</b></a>",
+				result.Anime.ID,
 				result.Anime.ID,
 				utils.Escape(result.Anime.Title),
 			),
