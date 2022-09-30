@@ -10,14 +10,14 @@ require (
 	github.com/rs/zerolog v1.28.0
 	github.com/rubenv/sql-migrate v1.2.0
 	github.com/sosodev/duration v1.0.1
-	golang.org/x/exp v0.0.0-20220608143224-64259d1afd70
-	golang.org/x/sync v0.0.0-20220601150217-0de741cfad7f
+	golang.org/x/exp v0.0.0-20220929160808-de9c53c655b9
+	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0
 	gopkg.in/telebot.v3 v3.0.0
 )
 
 require (
 	github.com/go-gorp/gorp/v3 v3.0.2 // indirect
-	github.com/mattn/go-colorable v0.1.12 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
-	golang.org/x/sys v0.0.0-20220608164250-635b8c9b7f68 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.16 // indirect
+	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec // indirect
 )
