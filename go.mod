@@ -1,6 +1,5 @@
 module github.com/Brawl345/gobot
 
-// +heroku goVersion go1.18
 go 1.18
 
 require (

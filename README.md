@@ -1,6 +1,6 @@
 # Gobot
 
-[![Build](https://github.com/Brawl345/gobot/actions/workflows/build.yml/badge.svg "GitHub Actions Build Badge")](https://github.com/Brawl345/gobot/actions/workflows/build.yml) [![Deploy](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy) [![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&name=gobot&ports=8080;http;/&repository=github.com/Brawl345/gobot&branch=master)
+[![Build](https://github.com/Brawl345/gobot/actions/workflows/build.yml/badge.svg "GitHub Actions Build Badge")](https://github.com/Brawl345/gobot/actions/workflows/build.yml) [![Deploy to Koyeb](https://www.koyeb.com/static/images/deploy/button.svg)](https://app.koyeb.com/deploy?type=git&name=gobot&ports=8080;http;/&repository=github.com/Brawl345/gobot&branch=master)
 
 
 
