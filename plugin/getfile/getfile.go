@@ -54,11 +54,6 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 			HandlerFunc: p.OnMedia,
 			HandleEdits: true,
 		},
-		&plugin.CommandHandler{ // telebots Message.Media does not include Stickers :(
-			Trigger:     telebot.OnSticker,
-			HandlerFunc: p.OnMedia,
-			HandleEdits: true,
-		},
 	}
 }
 

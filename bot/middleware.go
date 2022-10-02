@@ -655,9 +655,12 @@ func PrintMessage(next telebot.HandlerFunc) telebot.HandlerFunc {
 
 func OnError(err error, c telebot.Context) {
 	if err != telebot.ErrTrueResult {
-		log.Err(err).
-			Int64("chat_id", c.Sender().ID).
-			Str("text", c.Text()).
-			Send()
+		lg := log.Err(err)
+		if c != nil {
+			lg = lg.
+				Int64("chat_id", c.Sender().ID).
+				Str("text", c.Text())
+		}
+		lg.Send()
 	}
 }

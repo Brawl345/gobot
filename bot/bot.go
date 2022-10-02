@@ -62,8 +62,9 @@ type (
 
 func New(db *sqlx.DB) (*Gobot, error) {
 	bot, err := telebot.NewBot(telebot.Settings{
-		Token:  strings.TrimSpace(os.Getenv("BOT_TOKEN")),
-		Poller: GetPoller(),
+		Token:   strings.TrimSpace(os.Getenv("BOT_TOKEN")),
+		Poller:  GetPoller(),
+		OnError: OnError,
 	})
 	if err != nil {
 		return nil, err
@@ -200,8 +201,6 @@ func New(db *sqlx.DB) (*Gobot, error) {
 	b.Telebot.Handle(telebot.OnNewGroupPhoto, d.NullRoute)
 	b.Telebot.Handle(telebot.OnGroupPhotoDeleted, d.NullRoute)
 	b.Telebot.Handle(telebot.OnGroupCreated, d.NullRoute)
-
-	b.Telebot.OnError = OnError
 
 	return b, nil
 }
