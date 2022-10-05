@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"net/http"
 	"os"
 	"sort"
 	"strings"
@@ -62,6 +63,7 @@ type (
 
 func New(db *sqlx.DB) (*Gobot, error) {
 	bot, err := telebot.NewBot(telebot.Settings{
+		Client:  &http.Client{Timeout: time.Minute},
 		Token:   strings.TrimSpace(os.Getenv("BOT_TOKEN")),
 		Poller:  GetPoller(),
 		OnError: OnError,

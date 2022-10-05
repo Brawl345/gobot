@@ -4,8 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -13,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
@@ -71,13 +70,13 @@ func calculate(expr string) (string, error) {
 
 	var err error
 
-	resp, err := http.Get(fmt.Sprintf(ApiUrl, url.QueryEscape(expr)))
+	resp, err := httpUtils.HttpClient.Get(fmt.Sprintf(ApiUrl, url.QueryEscape(expr)))
 	if err != nil {
 		return "", err
 	}
 
 	if resp.StatusCode != 200 && resp.StatusCode != 400 {
-		return "", &utils.HttpError{
+		return "", &httpUtils.HttpError{
 			StatusCode: resp.StatusCode,
 			Status:     resp.Status,
 		}
@@ -90,7 +89,7 @@ func calculate(expr string) (string, error) {
 		}
 	}(resp.Body)
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return "", err
 	}

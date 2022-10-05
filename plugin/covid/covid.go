@@ -12,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"golang.org/x/sync/errgroup"
 	"gopkg.in/telebot.v3"
@@ -67,10 +68,10 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 func OnCountry(c plugin.GobotContext) error {
 	_ = c.Notify(telebot.Typing)
 
-	var httpError *utils.HttpError
+	var httpError *httpUtils.HttpError
 	var result countryResult
 
-	err := utils.GetRequest(
+	err := httpUtils.GetRequest(
 		fmt.Sprintf(
 			"%s/countries/%s?strict=false",
 			BaseUrl, url.PathEscape(c.Matches[1]),
@@ -161,7 +162,7 @@ func OnCountry(c plugin.GobotContext) error {
 
 	_ = c.Notify(telebot.Typing)
 	var vaccine vaccineResult
-	err = utils.GetRequest(
+	err = httpUtils.GetRequest(
 		fmt.Sprintf(
 			"%s/vaccine/coverage/countries/%s?lastdays=1&fullData=true",
 			BaseUrl, url.PathEscape(result.Country),
@@ -210,7 +211,7 @@ func OnRun(c plugin.GobotContext) error {
 
 	var allCountries []countryResult
 	eg.Go(func() error {
-		return utils.GetRequest(
+		return httpUtils.GetRequest(
 			fmt.Sprintf(
 				"%s/countries?sort=cases",
 				BaseUrl,
@@ -220,7 +221,7 @@ func OnRun(c plugin.GobotContext) error {
 	})
 
 	var all allResult
-	err := utils.GetRequest(
+	err := httpUtils.GetRequest(
 		fmt.Sprintf(
 			"%s/all",
 			BaseUrl,

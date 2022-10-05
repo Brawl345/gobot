@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
@@ -111,7 +112,7 @@ func (p *Plugin) onWeather(c plugin.GobotContext) error {
 	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_hours&hourly=precipitation&current_weather=true&timezone=Europe/Berlin", venue.Location.Lat, venue.Location.Lng)
 
 	var response Response
-	err = utils.GetRequest(requestUrl, &response)
+	err = httpUtils.GetRequest(requestUrl, &response)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
@@ -285,7 +286,7 @@ func (p *Plugin) onForecast(c plugin.GobotContext) error {
 	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe/Berlin", venue.Location.Lat, venue.Location.Lng)
 
 	var response Response
-	err = utils.GetRequest(requestUrl, &response)
+	err = httpUtils.GetRequest(requestUrl, &response)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
@@ -355,7 +356,7 @@ func (p *Plugin) onHourlyForecast(c plugin.GobotContext) error {
 	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,weathercode&timezone=Europe/Berlin", venue.Location.Lat, venue.Location.Lng)
 
 	var response Response
-	err = utils.GetRequest(requestUrl, &response)
+	err = httpUtils.GetRequest(requestUrl, &response)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().

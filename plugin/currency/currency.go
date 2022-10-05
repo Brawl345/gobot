@@ -10,6 +10,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
@@ -75,8 +76,8 @@ func convertCurrency(amount, from, to string) (string, error) {
 	}
 
 	var response Response
-	var httpError *utils.HttpError
-	err = utils.GetRequest(fmt.Sprintf(ApiUrl, amount, from, to), &response)
+	var httpError *httpUtils.HttpError
+	err = httpUtils.GetRequest(fmt.Sprintf(ApiUrl, amount, from, to), &response)
 	if err != nil {
 		if errors.As(err, &httpError) && httpError.StatusCode == 404 {
 			return "", ErrBadCurrency

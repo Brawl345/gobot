@@ -15,6 +15,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"gopkg.in/telebot.v3"
 )
 
@@ -101,7 +102,7 @@ func doTwitterRequest(url string, bearerToken string, result any) error {
 	var twitterError Error
 	if resp.StatusCode != 200 {
 		if err := json.Unmarshal(body, &twitterError); err != nil {
-			return &utils.HttpError{
+			return &httpUtils.HttpError{
 				StatusCode: resp.StatusCode,
 				Status:     resp.Status,
 			}
@@ -162,7 +163,7 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 }
 
 func (p *Plugin) OnStatus(c plugin.GobotContext) error {
-	var httpError *utils.HttpError
+	var httpError *httpUtils.HttpError
 	var partialError *PartialError
 	var twitterError *Error
 	var response Response
@@ -447,7 +448,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		})
 
 		var videoResponse Response11
-		err := utils.GetRequestWithHeader(
+		err := httpUtils.GetRequestWithHeader(
 			api11Url,
 			map[string]string{"Authorization": authHeader},
 			&videoResponse,
@@ -509,7 +510,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 
 			_ = c.Notify(telebot.UploadingVideo)
 
-			resp, err := http.Get(videoUrl)
+			resp, err := httpUtils.HttpClient.Get(videoUrl)
 			log.Info().Str("url", videoUrl).Msg("Downloading video")
 			if err != nil {
 				// Downloading failed - send the video URL as text
@@ -567,7 +568,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 				_ = c.Notify(telebot.UploadingPhoto)
 
 				func() {
-					resp, err := http.Get(image.Url)
+					resp, err := httpUtils.HttpClient.Get(image.Url)
 					log.Info().Str("url", image.Url).Msg("Downloading image")
 					if err != nil {
 						log.Err(err).Str("url", image.Url).Msg("Error while downloading image")

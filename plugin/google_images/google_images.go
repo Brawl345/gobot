@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"github.com/rs/zerolog/log"
 	"gopkg.in/telebot.v3"
@@ -145,7 +146,7 @@ func (p *Plugin) doImageSearch(c *plugin.GobotContext) error {
 		requestUrl.RawQuery = q.Encode()
 
 		var response Response
-		err = utils.GetRequest(requestUrl.String(), &response)
+		err = httpUtils.GetRequest(requestUrl.String(), &response)
 
 		if err != nil {
 			return fmt.Errorf("error getting google images: %w", err)
@@ -242,7 +243,7 @@ func (p *Plugin) doImageSearch(c *plugin.GobotContext) error {
 
 func (p *Plugin) onImageSearch(c plugin.GobotContext) error {
 	err := p.doImageSearch(&c)
-	var httpError *utils.HttpError
+	var httpError *httpUtils.HttpError
 	if err != nil {
 		if errors.Is(err, ErrNoImagesFound) {
 			return c.Reply("❌ Keine Bilder gefunden.", utils.DefaultSendOptions)

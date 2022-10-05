@@ -9,6 +9,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
@@ -95,7 +96,7 @@ func (p *Plugin) onCleverbot(c plugin.GobotContext) error {
 	)
 
 	var response Response
-	err = utils.GetRequest(
+	err = httpUtils.GetRequest(
 		requestUrl,
 		&response,
 	)

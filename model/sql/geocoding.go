@@ -5,7 +5,7 @@ import (
 	"net/url"
 
 	"github.com/Brawl345/gobot/model"
-	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"gopkg.in/telebot.v3"
 )
 
@@ -44,7 +44,7 @@ func (db *geocodingService) Geocode(address string) (telebot.Venue, error) {
 	requestUrl.RawQuery = q.Encode()
 
 	var response []Location
-	err := utils.GetRequestWithHeader(
+	err := httpUtils.GetRequestWithHeader(
 		requestUrl.String(),
 		map[string]string{
 			"User-Agent": "Gobot for Telegram",

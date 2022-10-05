@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
@@ -112,7 +113,7 @@ func (p *Plugin) onLocation(c plugin.GobotContext) error {
 	requestUrl.RawQuery = q.Encode()
 
 	var response Response
-	err := utils.GetRequestWithHeader(
+	err := httpUtils.GetRequestWithHeader(
 		requestUrl.String(),
 		map[string]string{
 			"User-Agent": "Gobot for Telegram",

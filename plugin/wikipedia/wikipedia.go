@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
@@ -108,7 +109,7 @@ func onArticle(c plugin.GobotContext) error {
 	requestUrl.RawQuery = q.Encode()
 
 	var response Response
-	err = utils.GetRequest(requestUrl.String(), &response)
+	err = httpUtils.GetRequest(requestUrl.String(), &response)
 	if err != nil {
 		var noSuchHostErr *net.DNSError
 		if errors.As(err, &noSuchHostErr) {
@@ -172,7 +173,7 @@ func onArticle(c plugin.GobotContext) error {
 		requestUrl.RawQuery = q.Encode()
 
 		var response Response
-		err := utils.GetRequest(requestUrl.String(), &response)
+		err := httpUtils.GetRequest(requestUrl.String(), &response)
 		if err != nil {
 			guid := xid.New().String()
 			log.Err(err).

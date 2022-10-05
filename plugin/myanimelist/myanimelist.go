@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
@@ -78,7 +79,7 @@ func (p *Plugin) onSearch(c plugin.GobotContext) error {
 	q.Set("nsfw", "true")
 	requestUrl.RawQuery = q.Encode()
 
-	err := utils.GetRequestWithHeader(
+	err := httpUtils.GetRequestWithHeader(
 		requestUrl.String(),
 		map[string]string{
 			"X-MAL-CLIENT-ID": p.clientID,
@@ -124,7 +125,7 @@ func (p *Plugin) onSearch(c plugin.GobotContext) error {
 func (p *Plugin) onAnime(c plugin.GobotContext) error {
 	_ = c.Notify(telebot.Typing)
 	var anime Anime
-	var httpError *utils.HttpError
+	var httpError *httpUtils.HttpError
 
 	requestUrl := url.URL{
 		Scheme: "https",
@@ -135,7 +136,7 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 	q.Set("fields", "id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,nsfw,media_type,status,genres,num_episodes,start_season,average_episode_duration,studios")
 	requestUrl.RawQuery = q.Encode()
 
-	err := utils.GetRequestWithHeader(
+	err := httpUtils.GetRequestWithHeader(
 		requestUrl.String(),
 		map[string]string{
 			"X-MAL-CLIENT-ID": p.clientID,

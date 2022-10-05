@@ -9,6 +9,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
@@ -48,7 +49,7 @@ func onUrbanDictionary(c plugin.GobotContext) error {
 	query := c.Matches[1]
 
 	var response Response
-	err := utils.GetRequest(fmt.Sprintf(Url, url.QueryEscape(query)), &response)
+	err := httpUtils.GetRequest(fmt.Sprintf(Url, url.QueryEscape(query)), &response)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).

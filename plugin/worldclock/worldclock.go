@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
@@ -82,8 +83,8 @@ func (p *Plugin) onTime(c plugin.GobotContext) error {
 	requestUrl.RawQuery = q.Encode()
 
 	var response Response
-	var httpError *utils.HttpError
-	err := utils.GetRequest(requestUrl.String(), &response)
+	var httpError *httpUtils.HttpError
+	err := httpUtils.GetRequest(requestUrl.String(), &response)
 	if err != nil {
 		if errors.As(err, &httpError) && httpError.StatusCode == 404 {
 			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)

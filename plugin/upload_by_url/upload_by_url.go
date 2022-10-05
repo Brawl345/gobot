@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"golang.org/x/exp/slices"
 	"gopkg.in/telebot.v3"
 )
@@ -123,7 +124,7 @@ func onFileLink(c plugin.GobotContext) error {
 			Str("url", url).
 			Msg("Failed to send file through Telegram")
 
-		resp, err := http.Get(url)
+		resp, err := httpUtils.HttpClient.Get(url)
 		if err != nil {
 			log.Err(err).
 				Str("url", url).

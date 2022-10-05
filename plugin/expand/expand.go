@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"gopkg.in/telebot.v3"
 )
 
@@ -75,7 +76,7 @@ func expandUrl(url string) (string, error) {
 	}
 
 	if resp.Header.Get("Location") == "" {
-		return "", &utils.HttpError{
+		return "", &httpUtils.HttpError{
 			StatusCode: resp.StatusCode,
 			Status:     resp.Status,
 		}
@@ -87,7 +88,7 @@ func expandUrl(url string) (string, error) {
 func loop(sb *strings.Builder, url string, depth int) {
 	expandedUrl, err := expandUrl(url)
 	if err != nil {
-		var httpErr *utils.HttpError
+		var httpErr *httpUtils.HttpError
 		if errors.As(err, &httpErr) {
 			sb.WriteString(fmt.Sprintf("➡ <b>%s</b>\n", httpErr.Status))
 			return

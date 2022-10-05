@@ -8,6 +8,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
@@ -81,7 +82,7 @@ func onNational(c plugin.GobotContext) error {
 	var response Nationwide
 
 	url := fmt.Sprintf("%s/germany", BaseUrl)
-	err := utils.GetRequest(
+	err := httpUtils.GetRequest(
 		url,
 		&response,
 	)
@@ -182,7 +183,7 @@ func onDistrictSearch(c plugin.GobotContext) error {
 	var response DistrictResponse
 
 	url := fmt.Sprintf("%s/districts", BaseUrl)
-	err := utils.GetRequest(
+	err := httpUtils.GetRequest(
 		url,
 		&response,
 	)
@@ -231,7 +232,7 @@ func onDistrictSearch(c plugin.GobotContext) error {
 func districtText(ags string) string {
 	url := fmt.Sprintf("%s/districts/%s", BaseUrl, ags)
 	var response DistrictResponse
-	err := utils.GetRequest(
+	err := httpUtils.GetRequest(
 		url,
 		&response,
 	)
@@ -338,7 +339,7 @@ func (p *Plugin) setRkiAGS(c plugin.GobotContext) error {
 
 	var response DistrictResponse
 	url := fmt.Sprintf("%s/districts/%s", BaseUrl, ags)
-	err := utils.GetRequest(
+	err := httpUtils.GetRequest(
 		url,
 		&response,
 	)

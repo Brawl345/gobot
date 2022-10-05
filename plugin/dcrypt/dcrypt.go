@@ -10,6 +10,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
 )
@@ -66,10 +67,10 @@ func (p *Plugin) OnFile(c plugin.GobotContext) error {
 		}
 	}(file)
 
-	resp, err := utils.MultiPartFormRequest(
+	resp, err := httpUtils.MultiPartFormRequest(
 		"https://dcrypt.it/decrypt/upload",
-		[]utils.MultiPartParam{},
-		[]utils.MultiPartFile{
+		[]httpUtils.MultiPartParam{},
+		[]httpUtils.MultiPartFile{
 			{
 				FieldName: "dlcfile",
 				FileName:  "dlc.dlc",
