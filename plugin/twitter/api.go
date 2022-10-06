@@ -52,9 +52,15 @@ type (
 	}
 
 	Media struct {
-		MediaKey      string `json:"media_key"`
-		Type          string `json:"type"`
-		Url           string `json:"url"`
+		MediaKey string `json:"media_key"`
+		AltText  string `json:"alt_text"`
+		Type     string `json:"type"`
+		Url      string `json:"url"`
+		Variants []struct {
+			BitRate     int    `json:"bit_rate"`
+			ContentType string `json:"content_type"`
+			Url         string `json:"url"`
+		} `json:"variants"`
 		PublicMetrics struct {
 			ViewCount int `json:"view_count"`
 		} `json:"public_metrics"`
@@ -90,26 +96,10 @@ type (
 		Start       int    `json:"start"`
 		End         int    `json:"end"`
 		Url         string `json:"url"`
+		MediaKey    string `json:"media_key"`
 		ExpandedUrl string `json:"expanded_url"`
 		DisplayUrl  string `json:"display_url"`
-	}
-
-	Response11 struct {
-		ExtendedEntities struct {
-			Media []Media11 `json:"media"`
-		} `json:"extended_entities"`
-	}
-
-	Media11 struct {
-		VideoInfo VideoInfo `json:"video_info"`
-	}
-
-	VideoInfo struct {
-		Variants []struct {
-			Bitrate     int    `json:"bitrate"`
-			ContentType string `json:"content_type"`
-			Url         string `json:"url"`
-		} `json:"variants"`
+		UnwoundUrl  string `json:"unwound_url"`
 	}
 
 	Error struct {
@@ -269,16 +259,63 @@ func (p *PublicMetrics) String() string {
 	return sb.String()
 }
 
-// HighestResolution returns the URL of the video with the highest bitrate/resolution
-func (m *Media11) HighestResolution() string {
+func (u *URL) Expand() string {
+	if u.UnwoundUrl == "" {
+		return u.ExpandedUrl
+	} else {
+		return u.UnwoundUrl
+	}
+}
+
+func (m *Media) IsPhoto() bool {
+	return m.Type == "photo"
+}
+
+func (m *Media) IsGIF() bool {
+	// Well, not technically a GIF, but a video without sound
+	return m.Type == "animated_gif"
+}
+
+func (m *Media) IsVideo() bool {
+	return m.Type == "video"
+}
+
+func (m *Media) Caption() string {
+	var caption string
+	if m.IsVideo() {
+		caption = m.Link()
+		if m.PublicMetrics.ViewCount > 0 {
+			plural := ""
+			if m.PublicMetrics.ViewCount != 1 {
+				plural = "e"
+			}
+			caption = fmt.Sprintf(
+				"%s (%s Aufruf%s)",
+				m.Link(),
+				utils.FormatThousand(m.PublicMetrics.ViewCount),
+				plural,
+			)
+		}
+	} else {
+		caption = m.Link()
+	}
+
+	return caption
+}
+
+func (m *Media) Link() string {
+	if m.IsPhoto() {
+		return m.Url
+	}
+
 	var bitrate int
 	var index int
-	for i, variant := range m.VideoInfo.Variants {
-		if variant.Bitrate > bitrate {
-			bitrate = variant.Bitrate
+	for i, variant := range m.Variants {
+		if variant.BitRate > bitrate {
+			bitrate = variant.BitRate
 			index = i
 		}
 	}
 
-	return m.VideoInfo.Variants[index].Url
+	return m.Variants[index].Url
 }

@@ -23,11 +23,7 @@ var log = logger.New("twitter")
 
 type (
 	Plugin struct {
-		bearerToken    string
-		consumerKey    string
-		consumerSecret string
-		accessToken    string
-		accessSecret   string
+		bearerToken string
 	}
 )
 
@@ -37,32 +33,8 @@ func New(credentialService model.CredentialService) *Plugin {
 		log.Warn().Msg("twitter_bearer_token not found")
 	}
 
-	consumerKey, err := credentialService.GetKey("twitter_consumer_key")
-	if err != nil {
-		log.Warn().Msg("twitter_consumer_key not found")
-	}
-
-	consumerSecret, err := credentialService.GetKey("twitter_consumer_secret")
-	if err != nil {
-		log.Warn().Msg("twitter_consumer_secret not found")
-	}
-
-	accessToken, err := credentialService.GetKey("twitter_access_token_key")
-	if err != nil {
-		log.Warn().Msg("twitter_access_token_key not found")
-	}
-
-	accessSecret, err := credentialService.GetKey("twitter_access_token_secret")
-	if err != nil {
-		log.Warn().Msg("twitter_access_token_secret not found")
-	}
-
 	return &Plugin{
-		bearerToken:    bearerToken,
-		consumerKey:    consumerKey,
-		consumerSecret: consumerSecret,
-		accessToken:    accessToken,
-		accessSecret:   accessSecret,
+		bearerToken: bearerToken,
 	}
 }
 
@@ -152,6 +124,10 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 			HandlerFunc: p.OnStatus,
 		},
 		&plugin.CommandHandler{
+			Trigger:     regexp.MustCompile(`(?i)twitter\.com/i/web/status(?:es)?/(\d+)`),
+			HandlerFunc: p.OnStatus,
+		},
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(`(?i)twitter\.com/status(?:es)?/(\d+)`),
 			HandlerFunc: p.OnStatus,
 		},
@@ -185,7 +161,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	// https://developer.twitter.com/en/docs/twitter-api/data-dictionary/object-model/media
 	q.Set(
 		"media.fields",
-		"alt_text,media_key,public_metrics,type,url",
+		"alt_text,media_key,public_metrics,type,url,variants",
 	)
 
 	// https://developer.twitter.com/en/docs/twitter-api/data-dictionary/object-model/poll
@@ -260,10 +236,11 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	if response.Tweet.Text != "" && !(response.Tweet.Withheld.InGermany() && response.Tweet.Withheld.Scope == "tweet") {
 		tweet := response.Tweet.Text
 		for _, entityURL := range response.Tweet.Entities.URLs {
-			if strings.Contains(entityURL.ExpandedUrl, response.Tweet.ID) {
+			if entityURL.MediaKey != "" || strings.Contains(entityURL.ExpandedUrl, response.Tweet.ID) {
+				// GIFs don't have a mediaKey so we don't even know if the URL points to a GIF...
 				tweet = strings.ReplaceAll(tweet, entityURL.Url, "")
 			} else {
-				tweet = strings.ReplaceAll(tweet, entityURL.Url, entityURL.ExpandedUrl)
+				tweet = strings.ReplaceAll(tweet, entityURL.Url, entityURL.Expand())
 			}
 		}
 
@@ -360,7 +337,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 			tweet := quote.Text
 			for _, entityURL := range quote.Entities.URLs {
 				// Same as for normal tweets, but don't remove media links
-				tweet = strings.ReplaceAll(tweet, entityURL.Url, entityURL.ExpandedUrl)
+				tweet = strings.ReplaceAll(tweet, entityURL.Url, entityURL.Expand())
 			}
 
 			sb.WriteString(
@@ -399,21 +376,12 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	}
 
 	// Media
-	images := make([]Media, 0, len(response.Includes.Media))
-	var video Media
-	if len(response.Includes.Media) > 0 {
-		for _, media := range response.Includes.Media {
-			if media.Type == "photo" {
-				images = append(images, media)
-			} else if media.Type == "video" || media.Type == "animated_gif" {
-				video = media
-			}
-		}
-	}
-	if len(images) == 1 { // One picture = send as preview
+	media := response.Includes.Media
+
+	if len(media) == 1 && (media[0].IsPhoto() || media[0].IsGIF()) { // One picture or GIF = send as preview
 		sendOptions.DisableWebPagePreview = false
 		return c.Reply(
-			utils.EmbedImage(images[0].Url)+sb.String(),
+			utils.EmbedImage(media[0].Link())+sb.String(),
 			sendOptions,
 		)
 	}
@@ -423,158 +391,60 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		return err
 	}
 
-	// Send video as seperate message
-	if video.MediaKey != "" {
-		_ = c.Notify(telebot.UploadingVideo)
-
-		// Need to contact 1.1 API since v2 API doesn't return direct URL to video
-		//	See: https://twitterdevfeedback.uservoice.com/forums/930250-/suggestions/41291761-
-		method := "GET"
-		api11Url := fmt.Sprintf("https://api.twitter.com/1.1/statuses/show.json?id=%s&include_entities=true&trim_user=true&tweet_mode=extended",
-			response.Tweet.ID)
-
-		auth := OAuth1{
-			ConsumerKey:    p.consumerKey,
-			ConsumerSecret: p.consumerSecret,
-			AccessToken:    p.accessToken,
-			AccessSecret:   p.accessSecret,
+	// Multiple media = send all as album
+	// NOTE: Telegram does not support sending multiple *animations/GIFs* in an album
+	//	so we will handle them seperately
+	gifs := make([]Media, 0, len(media))
+	for _, medium := range media {
+		if medium.IsGIF() {
+			gifs = append(gifs, medium)
 		}
-
-		authHeader := auth.BuildOAuth1Header(method, api11Url, map[string]string{
-			"id":               response.Tweet.ID,
-			"include_entities": "true",
-			"trim_user":        "true",
-			"tweet_mode":       "extended",
-		})
-
-		var videoResponse Response11
-		err := httpUtils.GetRequestWithHeader(
-			api11Url,
-			map[string]string{"Authorization": authHeader},
-			&videoResponse,
-		)
-		if err != nil {
-			log.Err(err).Str("url", api11Url).Msg("Error while contacting v1.1 API")
-			return nil
-		}
-
-		if len(videoResponse.ExtendedEntities.Media) == 0 {
-			log.Error().Str("url", api11Url).Msg("No video found")
-			return nil
-		}
-
-		videoUrl := videoResponse.ExtendedEntities.Media[0].HighestResolution()
-		if videoUrl == "" {
-			log.Error().Str("url", api11Url).Msg("No video URL found")
-			return nil
-		}
-
-		caption := videoUrl
-		if video.PublicMetrics.ViewCount > 0 {
-			plural := ""
-			if video.PublicMetrics.ViewCount != 1 {
-				plural = "e"
-			}
-			caption = fmt.Sprintf(
-				"%s (%s Aufruf%s)",
-				videoUrl,
-				utils.FormatThousand(video.PublicMetrics.ViewCount),
-				plural,
-			)
-		}
-
-		err = c.Reply(
-			&telebot.Video{
-				File:      telebot.FromURL(videoUrl),
-				Caption:   caption,
-				Streaming: true,
-			},
-			telebot.Silent,
-			telebot.AllowWithoutReply,
-		)
-
-		if err != nil {
-			// Sending failed -send video manually
-			log.Err(err).Str("url", videoUrl).Msg("Error while sending video through telegram; downloading")
-			msg, err := c.Bot().Reply(c.Message(),
-				fmt.Sprintf(
-					"<i>🕒 <a href=\"%s\">Video</a> wird heruntergeladen und gesendet...</i>",
-					videoUrl,
-				),
-				utils.DefaultSendOptions,
-			)
-			if err != nil {
-				// This would be very awkward
-				log.Err(err).Msg("Could not send initial 'download video' message")
-			}
-
-			_ = c.Notify(telebot.UploadingVideo)
-
-			resp, err := httpUtils.HttpClient.Get(videoUrl)
-			log.Info().Str("url", videoUrl).Msg("Downloading video")
-			if err != nil {
-				// Downloading failed - send the video URL as text
-				log.Err(err).Str("url", videoUrl).Msg("Error while downloading video")
-				err := c.Reply(videoUrl, telebot.Silent, telebot.AllowWithoutReply)
-				if err != nil {
-					log.Err(err).Str("url", videoUrl).Msg("Error while replying with video link")
-				}
-				_ = c.Bot().Delete(msg)
-				return nil
-			}
-
-			defer func(Body io.ReadCloser) {
-				err := Body.Close()
-				if err != nil {
-					log.Err(err).Msg("Error while closing video body")
-				}
-			}(resp.Body)
-
-			err = c.Reply(
-				&telebot.Video{
-					File:      telebot.FromReader(resp.Body),
-					Caption:   caption,
-					Streaming: true,
-				},
-				telebot.Silent,
-			)
-			if err != nil {
-				// Last resort: Send video URL as text
-				log.Err(err).Str("url", videoUrl).Msg("Error while replying with downloaded video")
-				err := c.Reply(videoUrl, telebot.Silent, telebot.AllowWithoutReply)
-				if err != nil {
-					log.Err(err).Str("url", videoUrl).Msg("Error while replying with video link")
-				}
-			}
-			_ = c.Bot().Delete(msg)
-		}
-
-		return nil
 	}
 
-	// Send images (> 1) as seperate message (album)
-	if len(images) > 1 {
+	if len(media) > 0 && len(media) != len(gifs) {
+		// Try album (photos + videos, no GIFs) first
 		_ = c.Notify(telebot.UploadingPhoto)
-		album := make([]telebot.Inputtable, 0, len(images))
-		for _, image := range images {
-			album = append(album, &telebot.Photo{File: telebot.FromURL(image.Url)})
+		album := make([]telebot.Inputtable, 0, len(media))
+
+		for _, medium := range media {
+			if medium.IsPhoto() {
+				album = append(album, &telebot.Photo{Caption: medium.Caption(), File: telebot.FromURL(medium.Link())})
+			} else if medium.IsVideo() {
+				album = append(album, &telebot.Video{
+					Caption: medium.Caption(),
+					File:    telebot.FromURL(medium.Link()),
+				})
+			}
 		}
 
 		err := c.SendAlbum(album, telebot.Silent)
 		if err != nil {
-			// Group send failed - sending images manually as seperate messages
+			// Group send failed - sending media manually as seperate messages
 			log.Err(err).Msg("Error while sending album")
-			for _, image := range images {
-				_ = c.Notify(telebot.UploadingPhoto)
+			msg, err := c.Bot().Reply(c.Message(),
+				"<i>🕒 Medien werden heruntergeladen und gesendet...</i>",
+				utils.DefaultSendOptions,
+			)
+			if err != nil {
+				// This would be very awkward
+				log.Err(err).Msg("Could not send initial 'download' message")
+			}
+
+			for _, medium := range media {
+				if medium.IsPhoto() {
+					_ = c.Notify(telebot.UploadingPhoto)
+				} else {
+					_ = c.Notify(telebot.UploadingVideo)
+				}
 
 				func() {
-					resp, err := httpUtils.HttpClient.Get(image.Url)
-					log.Info().Str("url", image.Url).Msg("Downloading image")
+					resp, err := httpUtils.HttpClient.Get(medium.Link())
+					log.Info().Str("url", medium.Link()).Msg("Downloading")
 					if err != nil {
-						log.Err(err).Str("url", image.Url).Msg("Error while downloading image")
-						err := c.Reply(image.Url, telebot.Silent, telebot.AllowWithoutReply)
+						log.Err(err).Str("url", medium.Link()).Msg("Error while downloading")
+						err := c.Reply(medium.Caption(), telebot.Silent, telebot.AllowWithoutReply)
 						if err != nil {
-							log.Err(err).Str("url", image.Url).Msg("Error while replying with image link")
+							log.Err(err).Str("url", medium.Link()).Msg("Error while replying with link")
 						}
 						return
 					}
@@ -582,22 +452,86 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 					defer func(Body io.ReadCloser) {
 						err := Body.Close()
 						if err != nil {
-							log.Err(err).Msg("Error while closing image body")
+							log.Err(err).Msg("Error while closing body")
 						}
 					}(resp.Body)
 
-					err = c.Reply(&telebot.Photo{File: telebot.FromReader(resp.Body)}, telebot.Silent)
+					if medium.IsPhoto() {
+						err = c.Reply(&telebot.Photo{File: telebot.FromReader(resp.Body)},
+							telebot.Silent, telebot.AllowWithoutReply)
+					} else {
+						err = c.Reply(&telebot.Video{
+							Caption:   medium.Caption(),
+							File:      telebot.FromReader(resp.Body),
+							Streaming: true,
+						}, telebot.Silent, telebot.AllowWithoutReply)
+					}
 					if err != nil {
-						// Last resort: Send image URL as text
-						log.Err(err).Str("url", image.Url).Msg("Error while replying with downloaded image")
-						err := c.Reply(image.Url, telebot.Silent, telebot.AllowWithoutReply)
+						// Last resort: Send URL as text
+						log.Err(err).Str("url", medium.Link()).Msg("Error while replying with downloaded medium")
+						err := c.Reply(medium.Caption(), telebot.Silent, telebot.AllowWithoutReply)
 						if err != nil {
-							log.Err(err).Str("url", image.Url).Msg("Error while sending image link")
+							log.Err(err).Str("url", medium.Link()).Msg("Error while sending medium link")
+						}
+					}
+				}()
+			}
+
+			_ = c.Bot().Delete(msg)
+		}
+	}
+
+	// Now to GIFs...
+	if len(gifs) > 0 {
+		_ = c.Notify(telebot.UploadingVideo)
+		for _, gif := range gifs {
+
+			err = c.Reply(&telebot.Animation{
+				Caption: gif.Caption(),
+				File:    telebot.FromURL(gif.Link()),
+			}, telebot.Silent, telebot.AllowWithoutReply)
+
+			if err != nil {
+				func() {
+					_ = c.Notify(telebot.UploadingVideo)
+
+					log.Err(err).Str("url", gif.Link()).Msg("Error while sending gif through Telegram")
+
+					resp, err := httpUtils.HttpClient.Get(gif.Link())
+					log.Info().Str("url", gif.Link()).Msg("Downloading gif")
+					if err != nil {
+						log.Err(err).Str("url", gif.Link()).Msg("Error while downloading gif")
+						err := c.Reply(gif.Caption(), telebot.Silent, telebot.AllowWithoutReply)
+						if err != nil {
+							log.Err(err).Str("url", gif.Link()).Msg("Error while replying with link")
+						}
+						return
+					}
+
+					defer func(Body io.ReadCloser) {
+						err := Body.Close()
+						if err != nil {
+							log.Err(err).Msg("Error while closing body")
+						}
+					}(resp.Body)
+
+					err = c.Reply(&telebot.Animation{
+						Caption: gif.Caption(),
+						File:    telebot.FromReader(resp.Body),
+					}, telebot.Silent, telebot.AllowWithoutReply)
+
+					if err != nil {
+						// Last resort: Send URL as text
+						log.Err(err).Str("url", gif.Link()).Msg("Error while replying with downloaded gif")
+						err := c.Reply(gif.Caption(), telebot.Silent, telebot.AllowWithoutReply)
+						if err != nil {
+							log.Err(err).Str("url", gif.Link()).Msg("Error while sending gif link")
 						}
 					}
 				}()
 			}
 		}
+
 	}
 
 	return nil
