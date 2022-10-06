@@ -61,7 +61,7 @@ func (p *Plugin) OnMedia(c plugin.GobotContext) error {
 	var fileID string
 	var uniqueID string
 	var subFolder string
-	var fileSize int
+	var fileSize int64
 
 	if c.Message().Media() != nil {
 		fileID = c.Message().Media().MediaFile().FileID

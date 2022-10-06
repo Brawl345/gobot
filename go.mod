@@ -10,9 +10,9 @@ require (
 	github.com/rs/zerolog v1.28.0
 	github.com/rubenv/sql-migrate v1.2.0
 	github.com/sosodev/duration v1.0.1
-	golang.org/x/exp v0.0.0-20221002003631-540bb7301a08
+	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
 	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0
-	gopkg.in/telebot.v3 v3.0.1
+	gopkg.in/telebot.v3 v3.1.0
 )
 
 require (
