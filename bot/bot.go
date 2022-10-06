@@ -226,9 +226,16 @@ func GetPoller() telebot.Poller {
 		Str("webhook_public_url", webhookURL).
 		Msg("Using webhook")
 
+	webhookSecret := strings.TrimSpace(os.Getenv("WEBHOOK_SECRET"))
+
+	if webhookSecret == "" {
+		log.Warn().Msg("WEBHOOK_SECRET not set, it's STRONGLY RECOMMENDED to set one!")
+	}
+
 	return &telebot.Webhook{
 		Listen:         ":" + webhookPort,
 		AllowedUpdates: allowedUpdates,
+		SecretToken:    webhookSecret,
 		MaxConnections: 50,
 		DropUpdates:    true,
 		Endpoint: &telebot.WebhookEndpoint{
