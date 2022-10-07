@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -150,6 +151,18 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 				}
 
 				go func() {
+					defer func() {
+						if r := recover(); r != nil {
+							guid := xid.New().String()
+							log.Err(errors.New("panic")).
+								Str("guid", guid).
+								Int64("chat_id", c.Sender().ID).
+								Str("text", c.Text()).
+								Str("component", plg.Name()).
+								Msgf("%s", r)
+							_ = c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+						}
+					}()
 					err := handler.Run(plugin.GobotContext{
 						Context:      c,
 						Matches:      matches,
@@ -269,6 +282,15 @@ func (d *Dispatcher) OnCallback(c telebot.Context) error {
 				}
 
 				go func() {
+					defer func() {
+						if r := recover(); r != nil {
+							log.Err(errors.New("panic")).
+								Int64("chat_id", c.Sender().ID).
+								Str("text", c.Text()).
+								Str("component", plg.Name()).
+								Msgf("%s", r)
+						}
+					}()
 					err := handler.Run(plugin.GobotContext{
 						Context:      c,
 						Matches:      matches,
@@ -349,6 +371,15 @@ func (d *Dispatcher) OnInlineQuery(c telebot.Context) error {
 				}
 
 				go func() {
+					defer func() {
+						if r := recover(); r != nil {
+							log.Err(errors.New("panic")).
+								Int64("chat_id", c.Sender().ID).
+								Str("text", c.Text()).
+								Str("component", plg.Name()).
+								Msgf("%s", r)
+						}
+					}()
 					err := handler.Run(plugin.GobotContext{
 						Context:      c,
 						Matches:      matches,
