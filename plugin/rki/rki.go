@@ -45,6 +45,10 @@ func (p *Plugin) Commands() []telebot.Command {
 			Text:        "rki",
 			Description: "<Stadt> - COVID-19-Fälle in dieser deutschen Stadt",
 		},
+		{
+			Text:        "myrki",
+			Description: "COVID-19-Fälle in deinem Heimatort",
+		},
 	}
 }
 
