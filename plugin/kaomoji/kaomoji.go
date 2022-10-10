@@ -47,15 +47,15 @@ func (p *Plugin) Commands() []telebot.Command {
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/(?:shrug|nbc|idc)(?:@%s)?$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)/(?:shrug|nbc|idc)(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: onShrug,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/lf(?:@%s)?$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)/lf(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: onLennyFace,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/lod(?:@%s)?$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)/lod(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: onLookOfDisapproval,
 		},
 		&plugin.InlineHandler{
