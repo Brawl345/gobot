@@ -90,8 +90,8 @@ func (p *Plugin) addRandom(c plugin.GobotContext) error {
 	}
 
 	example := strings.NewReplacer(
-		"{user}", c.Sender().FirstName,
-		"{other_user}", c.Bot().Me.FirstName,
+		"{user}", "<b>"+utils.Escape(c.Sender().FirstName)+"</b>",
+		"{other_user}", "<b>"+utils.Escape(c.Bot().Me.FirstName)+"</b>",
 	).Replace(random)
 
 	return c.Reply(fmt.Sprintf("<b>✅ Gespeichert!</b> Beispiel:\n%s", utils.Escape(example)),
@@ -132,12 +132,8 @@ func (p *Plugin) random(c plugin.GobotContext) error {
 	}
 
 	random = strings.NewReplacer(
-		"{user}", c.Sender().FirstName,
-		"{other_user}", c.Matches[1],
+		"{user}", "<b>"+utils.Escape(c.Sender().FirstName)+"</b>",
+		"{other_user}", "<b>"+utils.Escape(c.Matches[1])+"</b>",
 	).Replace(random)
-	return c.Reply(random, &telebot.SendOptions{
-		AllowWithoutReply:     true,
-		DisableWebPagePreview: true,
-		DisableNotification:   true,
-	})
+	return c.Reply(random, utils.DefaultSendOptions)
 }
