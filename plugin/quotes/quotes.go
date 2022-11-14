@@ -64,6 +64,11 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/save(?:@%s)? ([\s\S]+)$`, botInfo.Username)),
+			HandlerFunc: p.addQuote,
+			GroupOnly:   true,
+		},
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/delquote(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: p.deleteQuote,
 			GroupOnly:   true,
