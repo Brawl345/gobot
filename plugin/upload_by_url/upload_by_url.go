@@ -18,7 +18,7 @@ import (
 
 var (
 	log      = logger.New("upload_by_url")
-	audioExt = []string{"mp3", "ogg", "ogv", "flac"}
+	audioExt = []string{"mp3", "ogg", "ogv", "flac", "wav"}
 	imageExt = []string{"jpg", "jpeg", "png"}
 	videoExt = []string{"mp4", "avi"}
 )
@@ -40,7 +40,7 @@ func (p *Plugin) Commands() []telebot.Command {
 func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(`(https?://.+\.(zip|7z|rar|tar\.(?:gz|bzip2)|jpe?g|png|gif|apk|avi|mp[34]|webp|og[gv]))`),
+			Trigger:     regexp.MustCompile(`(https?://.+\.(zip|7z|rar|tar\.(?:gz|bzip2)|jpe?g|png|gif|apk|avi|wav|mp[34]|webp|og[gv]))`),
 			HandlerFunc: onFileLink,
 		},
 	}
