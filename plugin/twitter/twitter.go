@@ -38,7 +38,7 @@ func New(credentialService model.CredentialService) *Plugin {
 	}
 }
 
-func doTwitterRequest(url string, bearerToken string, result any) error {
+func doTwitterRequest(url string, bearerToken string, result *Response) error {
 	log.Debug().
 		Str("url", url).
 		Send()
@@ -86,19 +86,23 @@ func doTwitterRequest(url string, bearerToken string, result any) error {
 		return &twitterError
 	}
 
-	var partialError PartialError
-
-	err = json.Unmarshal(body, &partialError)
-	if err == nil && partialError.Errors != nil {
-		log.Error().
-			Str("url", url).
-			Interface("response", partialError).
-			Msg("Got partial Twitter error")
-		return &partialError
-	}
-
 	if err := json.Unmarshal(body, result); err != nil {
 		return err
+	}
+
+	var partialError PartialError
+	err = json.Unmarshal(body, &partialError)
+	if err == nil && partialError.Errors != nil {
+		for _, pe := range partialError.Errors {
+			// Ignore partial errors for tweets that are not the requested one
+			if pe.ResourceId == result.Tweet.ID || result.Tweet.ID == "" {
+				log.Error().
+					Str("url", url).
+					Interface("response", partialError).
+					Msg("Got partial Twitter error")
+				return &partialError
+			}
+		}
 	}
 
 	log.Debug().

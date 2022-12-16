@@ -114,9 +114,10 @@ type (
 
 	PartialError struct {
 		Errors []struct {
-			Type   string `json:"type"`
-			Title  string `json:"title"`
-			Detail string `json:"detail"`
+			ResourceId string `json:"resource_id"`
+			Type       string `json:"type"`
+			Title      string `json:"title"`
+			Detail     string `json:"detail"`
 		} `json:"errors"`
 	}
 )
