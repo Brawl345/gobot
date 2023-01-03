@@ -114,7 +114,7 @@ func (a *Anime) GetStatus() string {
 	case "currently_airing":
 		return "Läuft zurzeit"
 	case "not_yet_aired":
-		return "Bald"
+		return "In Zukunft"
 	default:
 		return a.Status
 	}
