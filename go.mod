@@ -8,7 +8,7 @@ require (
 	github.com/joho/godotenv v1.4.0
 	github.com/rs/xid v1.4.0
 	github.com/rs/zerolog v1.28.0
-	github.com/rubenv/sql-migrate v1.2.0
+	github.com/rubenv/sql-migrate v1.3.0
 	github.com/sosodev/duration v1.0.1
 	golang.org/x/exp v0.0.0-20221004215720-b9f4876ce741
 	golang.org/x/sync v0.0.0-20220929204114-8fcdb60fdcc0
@@ -18,6 +18,6 @@ require (
 require (
 	github.com/go-gorp/gorp/v3 v3.0.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
-	github.com/mattn/go-isatty v0.0.16 // indirect
-	golang.org/x/sys v0.0.0-20220928140112-f11e5e49a4ec // indirect
+	github.com/mattn/go-isatty v0.0.17 // indirect
+	golang.org/x/sys v0.4.0 // indirect
 )
