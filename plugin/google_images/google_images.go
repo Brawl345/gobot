@@ -3,6 +3,7 @@ package google_images
 import (
 	"errors"
 	"fmt"
+	"github.com/Brawl345/gobot/logger"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -13,9 +14,10 @@ import (
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
-	"github.com/rs/zerolog/log"
 	"gopkg.in/telebot.v3"
 )
+
+var log = logger.New("google_images")
 
 type (
 	Plugin struct {
