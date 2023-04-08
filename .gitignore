@@ -2,4 +2,6 @@
 *.iml
 .env
 tmp/
+result/
+.direnv/
 http-client.private.env.json
