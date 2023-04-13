@@ -6,7 +6,7 @@ require (
 	github.com/go-sql-driver/mysql v1.7.0
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/joho/godotenv v1.5.1
-	github.com/rs/xid v1.4.0
+	github.com/rs/xid v1.5.0
 	github.com/rs/zerolog v1.29.0
 	github.com/rubenv/sql-migrate v1.4.0
 	github.com/sosodev/duration v1.0.1
