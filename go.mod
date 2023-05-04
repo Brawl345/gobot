@@ -11,7 +11,7 @@ require (
 	github.com/rubenv/sql-migrate v1.4.0
 	github.com/sosodev/duration v1.0.1
 	golang.org/x/exp v0.0.0-20230310171629-522b1b587ee0
-	golang.org/x/sync v0.1.0
+	golang.org/x/sync v0.2.0
 	gopkg.in/telebot.v3 v3.1.3
 )
 
