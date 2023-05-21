@@ -100,7 +100,7 @@ func (a *Anime) GetMediaType() string {
 		return "Special"
 	case "music":
 		return "Musik"
-	case "unknwown":
+	case "unknown":
 		return "Unbekannt"
 	default:
 		return a.MediaType

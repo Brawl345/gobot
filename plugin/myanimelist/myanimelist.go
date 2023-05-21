@@ -18,6 +18,10 @@ import (
 
 var log = logger.New("myanimelist")
 
+const (
+	SynopsisThreshold = 250
+)
+
 type Plugin struct {
 	clientID string
 }
@@ -374,8 +378,8 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 	// Synopsis
 	if anime.Synopsis != "" {
 		sb.WriteString("\n")
-		if len(anime.Synopsis) > 250 {
-			sb.WriteString(utils.Escape(anime.Synopsis[:250]))
+		if len(anime.Synopsis) > SynopsisThreshold {
+			sb.WriteString(utils.Escape(anime.Synopsis[:SynopsisThreshold]))
 			sb.WriteString("...")
 		} else {
 			sb.WriteString(utils.Escape(anime.Synopsis))
