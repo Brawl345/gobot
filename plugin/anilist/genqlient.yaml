@@ -1,0 +1,11 @@
+# Default genqlient config; for full documentation see:
+# https://github.com/Khan/genqlient/blob/main/docs/genqlient.yaml
+
+# genqlient does not support remote schemas: https://github.com/Khan/genqlient/issues/207
+# Download the schema with `apollo client:download-schema --endpoint=https://graphql.anilist.co schema.graphql`
+schema: schema.graphql
+operations:
+  - genqlient.graphql
+
+# To update the generated go file: `go run github.com/Khan/genqlient`
+generated: generated.go

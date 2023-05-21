@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"github.com/Brawl345/gobot/plugin/anilist"
 	"net/http"
 	"os"
 	"sort"
@@ -116,6 +117,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		afk.New(afkService),
 		alive.New(),
 		allow.New(allowService),
+		anilist.New(),
 		amazon_ref_cleaner.New(),
 		birthdays.New(bot, birthdayService),
 		calc.New(),

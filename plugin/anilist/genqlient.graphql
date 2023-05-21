@@ -1,0 +1,69 @@
+query MediaById($id: Int!) {
+    Media(id: $id, type: ANIME) {
+        id
+        idMal
+        isAdult
+        siteUrl
+        title {
+            romaji
+            english
+            native
+        }
+        format
+        status(version: 2)
+        description(asHtml: false)
+        startDate {
+            year
+            month
+            day
+        }
+        endDate {
+            year
+            month
+            day
+        }
+        nextAiringEpisode {
+            id
+            episode
+            airingAt
+        }
+        season
+        seasonYear
+        episodes
+        duration
+        source(version: 3)
+        hashtag
+        coverImage {
+            extraLarge
+        }
+        genres
+        synonyms
+        averageScore
+        popularity
+        tags {
+            id
+            name
+            isGeneralSpoiler
+            rank
+        }
+        relations {
+            edges {
+                id
+                relationType
+                node {
+                    type
+                    id
+                    title {
+                        romaji
+                    }
+                }
+            }
+        }
+        studios(isMain: true) {
+            nodes {
+                id
+                name
+            }
+        }
+    }
+}
