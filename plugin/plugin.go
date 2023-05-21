@@ -10,7 +10,11 @@ import (
 type (
 	Plugin interface {
 		Name() string
+
+		// Commands will be shown in the menu button
 		Commands() []telebot.Command
+
+		// Handlers are used to react to specific strings & entities in a message
 		Handlers(botInfo *telebot.User) []Handler
 	}
 
