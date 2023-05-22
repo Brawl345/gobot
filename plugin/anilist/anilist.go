@@ -9,7 +9,6 @@ import (
 	"github.com/Khan/genqlient/graphql"
 	"github.com/rs/xid"
 	"gopkg.in/telebot.v3"
-	"html"
 	"net/http"
 	"net/url"
 	"regexp"
@@ -36,16 +35,74 @@ func (*Plugin) Name() string {
 }
 
 func (p *Plugin) Commands() []telebot.Command {
-	return nil
+	return []telebot.Command{
+		{
+			Text:        "al",
+			Description: "<Suchbegriff> - Anime auf AniList suchen",
+		},
+	}
 }
 
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/al(?:@%s)? (.+)$`, botInfo.Username)),
+			HandlerFunc: p.onSearch,
+		},
+		&plugin.CommandHandler{
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/al_(\d+)(?:@%s)?$`, botInfo.Username)),
+			HandlerFunc: p.onAnime,
+		},
+		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(`anilist\.co/anime/(\d+)`),
 			HandlerFunc: p.onAnime,
 		},
 	}
+}
+
+func (p *Plugin) onSearch(c plugin.GobotContext) error {
+	_ = c.Notify(telebot.Typing)
+	query := c.Matches[1]
+
+	ctx := context.Background()
+	client := graphql.NewClient(ApiUrl, http.DefaultClient)
+	resp, err := SearchMediaByTitle(ctx, client, query)
+
+	if err != nil {
+		guid := xid.New().String()
+		log.Error().
+			Err(err).
+			Str("guid", guid).
+			Str("query", query).
+			Msg("error while contacting AniList GraphQL server")
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions)
+	}
+
+	results := resp.Page.Media
+
+	if len(results) == 0 {
+		return c.Reply("❌ Es wurde kein Anime gefunden.", utils.DefaultSendOptions)
+	}
+
+	var sb strings.Builder
+
+	for _, result := range results {
+		sb.WriteString(
+			fmt.Sprintf(
+				"/al_%d - <a href=\"%s\"><b>%s</b></a>",
+				result.Id,
+				result.SiteUrl,
+				utils.Escape(result.Title.Romaji),
+			),
+		)
+		if result.IsAdult {
+			sb.WriteString(" <i>(NSFW)</i>")
+		}
+		sb.WriteString("\n")
+	}
+
+	return c.Reply(sb.String(), utils.DefaultSendOptions)
 }
 
 func (p *Plugin) onAnime(c plugin.GobotContext) error {
@@ -308,7 +365,7 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 	// Synopsis/Description
 	if anime.Description != "" {
 		sb.WriteString("\n")
-		description := html.UnescapeString(anime.Description)
+		description := anime.DescriptionCleaned()
 		if len(description) > DescriptionThreshold {
 			sb.WriteString(utils.Escape(description[:DescriptionThreshold]))
 			sb.WriteString("...")

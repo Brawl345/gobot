@@ -67,3 +67,17 @@ query MediaById($id: Int!) {
         }
     }
 }
+
+query SearchMediaByTitle($search: String!) {
+    Page(page: 1, perPage: 5) {
+        media(search: $search, type: ANIME) {
+            id
+            isAdult
+            siteUrl
+            title {
+                romaji
+            }
+        }
+    }
+}
+

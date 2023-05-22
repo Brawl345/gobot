@@ -45,7 +45,7 @@ func (p *Plugin) Commands() []telebot.Command {
 	return []telebot.Command{
 		{
 			Text:        "mal",
-			Description: "<Suchbegriff> - Anime suchen",
+			Description: "<Suchbegriff> - Anime auf MyAnimeList suchen",
 		},
 	}
 }

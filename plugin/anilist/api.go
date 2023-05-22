@@ -2,13 +2,24 @@ package anilist
 
 import (
 	"fmt"
-	"strconv"
+	"github.com/Brawl345/gobot/utils"
+	"html"
+	"regexp"
 	"strings"
+	"time"
 )
 
 const (
 	RankThreshold = 60
 )
+
+var descriptionRegex = regexp.MustCompile(`<.*?>`)
+
+func (anime *MediaByIdMedia) DescriptionCleaned() string {
+	description := html.UnescapeString(anime.Description)
+	description = descriptionRegex.ReplaceAllString(description, "")
+	return description
+}
 
 // RelevantTags returns all tags that are not spoilers and ranked with more than RankThreshold points
 func (anime *MediaByIdMedia) RelevantTags() []MediaByIdMediaTagsMediaTag {
@@ -75,17 +86,21 @@ func (startDate *MediaByIdMediaStartDateFuzzyDate) Formatted() string {
 		return ""
 	}
 
-	if startDate.Year != 0 && startDate.Month != 0 && startDate.Day != 0 { // All
-		return fmt.Sprintf("%02d.%02d.%d", startDate.Day, startDate.Month, startDate.Year)
-	} else if startDate.Day == 0 && startDate.Month == 0 { // Only year
-		return strconv.Itoa(startDate.Year)
-	} else if startDate.Day == 0 { // Only month and year
-		return fmt.Sprintf("%s %d", getMonthName(startDate.Month), startDate.Year)
+	day := startDate.Day
+	if day == 0 {
+		day = 1
 	}
 
-	return ""
-}
+	date := time.Date(startDate.Year, time.Month(startDate.Month), day, 0, 0, 0, 0, time.UTC)
 
+	if startDate.Day != 0 { // All
+		return date.Format("02.01.2006")
+	} else if startDate.Month != 0 { // Only month and year
+		return utils.LocalizeDatestring(date.Format("January 2006"))
+	}
+
+	return date.Format("2006")
+}
 func (endDate *MediaByIdMediaEndDateFuzzyDate) Formatted() string {
 	if endDate.Year != 0 && endDate.Month != 0 && endDate.Day != 0 {
 		return fmt.Sprintf("%02d.%02d.%d", endDate.Day, endDate.Month, endDate.Year)

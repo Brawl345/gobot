@@ -510,6 +510,64 @@ const (
 	MediaTypeManga MediaType = "MANGA"
 )
 
+// SearchMediaByTitlePage includes the requested fields of the GraphQL type Page.
+// The GraphQL type's documentation follows.
+//
+// Page of data
+type SearchMediaByTitlePage struct {
+	Media []SearchMediaByTitlePageMedia `json:"media"`
+}
+
+// GetMedia returns SearchMediaByTitlePage.Media, and is useful for accessing the field via an interface.
+func (v *SearchMediaByTitlePage) GetMedia() []SearchMediaByTitlePageMedia { return v.Media }
+
+// SearchMediaByTitlePageMedia includes the requested fields of the GraphQL type Media.
+// The GraphQL type's documentation follows.
+//
+// Anime or Manga
+type SearchMediaByTitlePageMedia struct {
+	// The id of the media
+	Id int `json:"id"`
+	// If the media is intended only for 18+ adult audiences
+	IsAdult bool `json:"isAdult"`
+	// The url for the media page on the AniList website
+	SiteUrl string `json:"siteUrl"`
+	// The official titles of the media in various languages
+	Title SearchMediaByTitlePageMediaTitle `json:"title"`
+}
+
+// GetId returns SearchMediaByTitlePageMedia.Id, and is useful for accessing the field via an interface.
+func (v *SearchMediaByTitlePageMedia) GetId() int { return v.Id }
+
+// GetIsAdult returns SearchMediaByTitlePageMedia.IsAdult, and is useful for accessing the field via an interface.
+func (v *SearchMediaByTitlePageMedia) GetIsAdult() bool { return v.IsAdult }
+
+// GetSiteUrl returns SearchMediaByTitlePageMedia.SiteUrl, and is useful for accessing the field via an interface.
+func (v *SearchMediaByTitlePageMedia) GetSiteUrl() string { return v.SiteUrl }
+
+// GetTitle returns SearchMediaByTitlePageMedia.Title, and is useful for accessing the field via an interface.
+func (v *SearchMediaByTitlePageMedia) GetTitle() SearchMediaByTitlePageMediaTitle { return v.Title }
+
+// SearchMediaByTitlePageMediaTitle includes the requested fields of the GraphQL type MediaTitle.
+// The GraphQL type's documentation follows.
+//
+// The official titles of the media in various languages
+type SearchMediaByTitlePageMediaTitle struct {
+	// The romanization of the native language title
+	Romaji string `json:"romaji"`
+}
+
+// GetRomaji returns SearchMediaByTitlePageMediaTitle.Romaji, and is useful for accessing the field via an interface.
+func (v *SearchMediaByTitlePageMediaTitle) GetRomaji() string { return v.Romaji }
+
+// SearchMediaByTitleResponse is returned by SearchMediaByTitle on success.
+type SearchMediaByTitleResponse struct {
+	Page SearchMediaByTitlePage `json:"Page"`
+}
+
+// GetPage returns SearchMediaByTitleResponse.Page, and is useful for accessing the field via an interface.
+func (v *SearchMediaByTitleResponse) GetPage() SearchMediaByTitlePage { return v.Page }
+
 // __MediaByIdInput is used internally by genqlient
 type __MediaByIdInput struct {
 	Id int `json:"id"`
@@ -517,6 +575,14 @@ type __MediaByIdInput struct {
 
 // GetId returns __MediaByIdInput.Id, and is useful for accessing the field via an interface.
 func (v *__MediaByIdInput) GetId() int { return v.Id }
+
+// __SearchMediaByTitleInput is used internally by genqlient
+type __SearchMediaByTitleInput struct {
+	Search string `json:"search"`
+}
+
+// GetSearch returns __SearchMediaByTitleInput.Search, and is useful for accessing the field via an interface.
+func (v *__SearchMediaByTitleInput) GetSearch() string { return v.Search }
 
 // The query or mutation executed by MediaById.
 const MediaById_Operation = `
@@ -606,6 +672,48 @@ func MediaById(
 	var err error
 
 	var data MediaByIdResponse
+	resp := &graphql.Response{Data: &data}
+
+	err = client.MakeRequest(
+		ctx,
+		req,
+		resp,
+	)
+
+	return &data, err
+}
+
+// The query or mutation executed by SearchMediaByTitle.
+const SearchMediaByTitle_Operation = `
+query SearchMediaByTitle ($search: String!) {
+	Page(page: 1, perPage: 5) {
+		media(search: $search, type: ANIME) {
+			id
+			isAdult
+			siteUrl
+			title {
+				romaji
+			}
+		}
+	}
+}
+`
+
+func SearchMediaByTitle(
+	ctx context.Context,
+	client graphql.Client,
+	search string,
+) (*SearchMediaByTitleResponse, error) {
+	req := &graphql.Request{
+		OpName: "SearchMediaByTitle",
+		Query:  SearchMediaByTitle_Operation,
+		Variables: &__SearchMediaByTitleInput{
+			Search: search,
+		},
+	}
+	var err error
+
+	var data SearchMediaByTitleResponse
 	resp := &graphql.Response{Data: &data}
 
 	err = client.MakeRequest(
