@@ -66,21 +66,6 @@ func (anime *MediaByIdMedia) StatusFormatted() string {
 	}
 }
 
-func getMonthName(month int) string {
-	months := []string{
-		"Januar", "Februar", "März",
-		"April", "Mai", "Juni",
-		"Juli", "August", "September",
-		"Oktober", "November", "Dezember",
-	}
-
-	if month < 1 || month > 12 {
-		return "Da ist ein Bug in deinem Code"
-	}
-
-	return months[month-1]
-}
-
 func (startDate *MediaByIdMediaStartDateFuzzyDate) Formatted() string {
 	if startDate.Day == 0 && startDate.Month == 0 && startDate.Year == 0 { // // Not yet aired and no date known
 		return ""
