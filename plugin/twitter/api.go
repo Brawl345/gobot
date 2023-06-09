@@ -193,8 +193,9 @@ type (
 	}
 
 	TweetInfo struct {
-		RestId string `json:"rest_id"`
-		Core   struct {
+		RestId         string         `json:"rest_id"`
+		BirdwatchPivot BirdwatchPivot `json:"birdwatch_pivot"`
+		Core           struct {
 			UserResults UserResult `json:"user_results"`
 		} `json:"core"`
 		UnmentionInfo struct {
@@ -203,8 +204,9 @@ type (
 		Legacy             Legacy `json:"legacy"`
 		QuotedStatusResult struct {
 			Result struct {
-				Typename string `json:"__typename"`
-				Core     struct {
+				Typename       string         `json:"__typename"`
+				BirdwatchPivot BirdwatchPivot `json:"birdwatch_pivot"`
+				Core           struct {
 					UserResults UserResult `json:"user_results"`
 				} `json:"core"`
 				Source    string    `json:"source"`
@@ -221,6 +223,65 @@ type (
 		Typename  string    `json:"__typename"`
 		Tombstone Tombstone `json:"tombstone"`
 		Card      Card      `json:"card"`
+	}
+
+	BirdwatchPivot struct {
+		DestinationUrl string `json:"destinationUrl"`
+		Footer         struct {
+			Text     string `json:"text"`
+			Entities []struct {
+				FromIndex int `json:"fromIndex"`
+				ToIndex   int `json:"toIndex"`
+				Ref       struct {
+					Type    string `json:"type"`
+					Url     string `json:"url"`
+					UrlType string `json:"urlType"`
+				} `json:"ref"`
+			} `json:"entities"`
+		} `json:"footer"`
+		Note struct {
+			RestId string `json:"rest_id"`
+			DataV1 struct {
+				Classification string `json:"classification"`
+				Summary        struct {
+					Text     string `json:"text"`
+					Entities []struct {
+						FromIndex int `json:"fromIndex"`
+						ToIndex   int `json:"toIndex"`
+						Ref       struct {
+							Type    string `json:"type"`
+							Url     string `json:"url"`
+							UrlType string `json:"urlType"`
+						} `json:"ref"`
+					} `json:"entities"`
+				} `json:"summary"`
+				MisleadingTags     []string `json:"misleading_tags"`
+				TrustworthySources bool     `json:"trustworthy_sources"`
+			} `json:"data_v1"`
+			DecidedBy    string   `json:"decided_by"`
+			RatingStatus string   `json:"rating_status"`
+			HelpfulTags  []string `json:"helpful_tags"`
+			TweetResults struct {
+				Result struct {
+					RestId string `json:"rest_id"`
+				} `json:"result"`
+			} `json:"tweet_results"`
+			CreatedAt int64 `json:"created_at"`
+		} `json:"note"`
+		Subtitle struct {
+			Text     string `json:"text"`
+			Entities []struct {
+				FromIndex int `json:"fromIndex"`
+				ToIndex   int `json:"toIndex"`
+				Ref       struct {
+					Type    string `json:"type"`
+					Url     string `json:"url"`
+					UrlType string `json:"urlType"`
+				} `json:"ref"`
+			} `json:"entities"`
+		} `json:"subtitle"`
+		Title    string `json:"title"`
+		IconType string `json:"iconType"`
 	}
 
 	Tombstone struct {

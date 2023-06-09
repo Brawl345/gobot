@@ -236,8 +236,6 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		sb.WriteString(pollText(poll))
 	}
 
-	// TODO: Community Notes / Birdwatch?
-
 	//	Created + Metrics (RT, Quotes, Likes, Bookmarks)
 	createdAt, err := time.Parse(time.RubyDate, result.Legacy.CreatedAt)
 	if err != nil {
@@ -256,6 +254,12 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		),
 	)
 	sb.WriteString(result.Legacy.Metrics())
+
+	// Community Notes / "Birdwatch"
+	if result.BirdwatchPivot.DestinationUrl != "" {
+		sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre:</b>\n", result.BirdwatchPivot.DestinationUrl))
+		sb.WriteString(utils.Escape(result.BirdwatchPivot.Note.DataV1.Summary.Text))
+	}
 
 	// Quote
 	quoteResult := result.QuotedStatusResult.Result
@@ -331,6 +335,11 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		)
 		sb.WriteString(quoteResult.Legacy.Metrics())
 
+		// Community Notes / "Birdwatch"
+		if quoteResult.BirdwatchPivot.DestinationUrl != "" {
+			sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre:</b>\n", quoteResult.BirdwatchPivot.DestinationUrl))
+			sb.WriteString(utils.Escape(quoteResult.BirdwatchPivot.Note.DataV1.Summary.Text))
+		}
 	}
 
 	// Media
