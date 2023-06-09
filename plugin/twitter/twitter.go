@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
@@ -21,20 +20,11 @@ import (
 var log = logger.New("twitter")
 
 type (
-	Plugin struct {
-		bearerToken string
-	}
+	Plugin struct{}
 )
 
-func New(credentialService model.CredentialService) *Plugin {
-	bearerToken, err := credentialService.GetKey("twitter_bearer_token")
-	if err != nil {
-		log.Warn().Msg("twitter_bearer_token not found")
-	}
-
-	return &Plugin{
-		bearerToken: bearerToken,
-	}
+func New() *Plugin {
+	return &Plugin{}
 }
 
 func (*Plugin) Name() string {
@@ -67,6 +57,8 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 }
 
 func (p *Plugin) OnStatus(c plugin.GobotContext) error {
+	_ = c.Notify(telebot.Typing)
+
 	// Get Guest Token first
 	var tokenResponse TokenResponse
 	req, err := http.NewRequest("POST", activateUrl, nil)
@@ -139,6 +131,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	guestToken := tokenResponse.GuestToken
 
 	// Now we get the tweet
+	_ = c.Notify(telebot.Typing)
 	tweetID := c.Matches[1]
 	requestUrl := url.URL{
 		Scheme: "https",

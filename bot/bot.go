@@ -144,7 +144,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		replace.New(),
 		rki.New(rkiService),
 		stats.New(chatsUsersService),
-		twitter.New(credentialService),
+		twitter.New(),
 		upload_by_url.New(),
 		urbandictionary.New(),
 		weather.New(geocodingService, homeService),
