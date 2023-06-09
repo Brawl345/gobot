@@ -199,58 +199,73 @@ type (
 		} `json:"core"`
 		UnmentionInfo struct {
 		} `json:"unmention_info"`
-		Source string `json:"source"`
-		Legacy Legacy `json:"legacy"`
+		Source             string `json:"source"`
+		Legacy             Legacy `json:"legacy"`
+		QuotedStatusResult struct {
+			Result struct {
+				Typename string `json:"__typename"`
+				Core     struct {
+					UserResults UserResult `json:"user_results"`
+				} `json:"core"`
+				Source    string    `json:"source"`
+				Legacy    Legacy    `json:"legacy"`
+				Tombstone Tombstone `json:"tombstone"`
+				Card      Card      `json:"card"`
+			} `json:"result"`
+		} `json:"quoted_status_result"`
 	}
 
 	Result struct {
-		TweetInfo           // TODO: Bei Withheld sind Infos unter "Tweet"
+		TweetInfo           // TODO: On Withheld, TweetInfo is under "Tweet"
 		Tweet     TweetInfo `json:"tweet"`
 		Typename  string    `json:"__typename"`
-		Tombstone struct {
-			Typename string `json:"__typename"`
-			Text     struct {
-				Text     string `json:"text"`
-				Entities []struct {
-					FromIndex int `json:"fromIndex"`
-					ToIndex   int `json:"toIndex"`
-					Ref       struct {
-						Type    string `json:"type"`
-						Url     string `json:"url"`
-						UrlType string `json:"urlType"`
-					} `json:"ref"`
-				} `json:"entities"`
-			} `json:"text"`
-		} `json:"tombstone"`
+		Tombstone Tombstone `json:"tombstone"`
+		Card      Card      `json:"card"`
+	}
 
-		Card struct {
-			RestId string `json:"rest_id"`
-			Legacy struct {
-				BindingValues []struct {
-					Key   string `json:"key"`
-					Value struct {
-						StringValue  string `json:"string_value,omitempty"`
-						Type         string `json:"type"`
-						BooleanValue bool   `json:"boolean_value,omitempty"`
-						ScribeKey    string `json:"scribe_key,omitempty"`
-					} `json:"value"`
-				} `json:"binding_values"`
-				CardPlatform struct {
-					Platform struct {
-						Audience struct {
-							Name string `json:"name"`
-						} `json:"audience"`
-						Device struct {
-							Name    string `json:"name"`
-							Version string `json:"version"`
-						} `json:"device"`
-					} `json:"platform"`
-				} `json:"card_platform"`
-				Name            string        `json:"name"`
-				Url             string        `json:"url"`
-				UserRefsResults []interface{} `json:"user_refs_results"`
-			} `json:"legacy"`
-		} `json:"card"`
+	Tombstone struct {
+		Typename string `json:"__typename"`
+		Text     struct {
+			Text     string `json:"text"`
+			Entities []struct {
+				FromIndex int `json:"fromIndex"`
+				ToIndex   int `json:"toIndex"`
+				Ref       struct {
+					Type    string `json:"type"`
+					Url     string `json:"url"`
+					UrlType string `json:"urlType"`
+				} `json:"ref"`
+			} `json:"entities"`
+		} `json:"text"`
+	}
+
+	Card struct {
+		RestId string `json:"rest_id"`
+		Legacy struct {
+			BindingValues []struct {
+				Key   string `json:"key"`
+				Value struct {
+					StringValue  string `json:"string_value,omitempty"`
+					Type         string `json:"type"`
+					BooleanValue bool   `json:"boolean_value,omitempty"`
+					ScribeKey    string `json:"scribe_key,omitempty"`
+				} `json:"value"`
+			} `json:"binding_values"`
+			CardPlatform struct {
+				Platform struct {
+					Audience struct {
+						Name string `json:"name"`
+					} `json:"audience"`
+					Device struct {
+						Name    string `json:"name"`
+						Version string `json:"version"`
+					} `json:"device"`
+				} `json:"platform"`
+			} `json:"card_platform"`
+			Name            string        `json:"name"`
+			Url             string        `json:"url"`
+			UserRefsResults []interface{} `json:"user_refs_results"`
+		} `json:"legacy"`
 	}
 
 	TweetResponse struct {
@@ -283,6 +298,10 @@ type (
 )
 
 func (t *TweetResponse) Tweet(tweetID string) Result {
+	if len(t.Data.ThreadedConversationWithInjectionsV2.Instructions) == 0 {
+		return Result{}
+	}
+
 	for _, entry := range t.Data.ThreadedConversationWithInjectionsV2.Instructions[0].Entries {
 		if entry.EntryId == fmt.Sprintf("tweet-%s", tweetID) {
 			return entry.Content.ItemContent.TweetResults.Result
@@ -401,30 +420,21 @@ func (l *Legacy) Metrics() string {
 		)
 	}
 
-	if l.BookmarkCount > 0 {
-		sb.WriteString(
-			fmt.Sprintf(
-				" | 📕 %s",
-				utils.FormatThousand(l.BookmarkCount),
-			),
-		)
-	}
-
 	return sb.String()
 }
 
-func (r *Result) HasPoll() bool {
-	return strings.Contains(r.Card.Legacy.Name, "poll")
+func (c *Card) HasPoll() bool {
+	return strings.Contains(c.Legacy.Name, "poll")
 }
 
-func (r *Result) Poll() (Poll, error) {
+func (c *Card) Poll() (Poll, error) {
 	var poll Poll
 
-	if !r.HasPoll() {
+	if !c.HasPoll() {
 		return poll, nil
 	}
 
-	choiceCount, err := strconv.Atoi(r.Card.Legacy.Name[4:5])
+	choiceCount, err := strconv.Atoi(c.Legacy.Name[4:5])
 	if err != nil {
 		return poll, err
 	}
@@ -434,7 +444,7 @@ func (r *Result) Poll() (Poll, error) {
 		var option Option
 		option.Position = i
 
-		for _, bindingValue := range r.Card.Legacy.BindingValues {
+		for _, bindingValue := range c.Legacy.BindingValues {
 			if bindingValue.Key == fmt.Sprintf("choice%d_label", i) {
 				option.Label = bindingValue.Value.StringValue
 			}
@@ -452,7 +462,7 @@ func (r *Result) Poll() (Poll, error) {
 
 	poll.Options = options
 
-	for _, bindingValue := range r.Card.Legacy.BindingValues {
+	for _, bindingValue := range c.Legacy.BindingValues {
 		if bindingValue.Key == "end_datetime_utc" {
 			poll.EndDatetime, err = time.Parse("2006-01-02T15:04:05Z", bindingValue.Value.StringValue)
 			if err != nil {
