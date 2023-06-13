@@ -180,6 +180,11 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	if result.Typename != "Tweet" && result.Typename != "TweetWithVisibilityResults" {
 		if result.Typename == "TweetTombstone" {
 			tombstoneText := result.Tombstone.Text.Text
+
+			if strings.HasPrefix(tombstoneText, "Nicht jugendfreier Inhalt") {
+				return c.Reply(fmt.Sprintf("❌ Tweets mit sensiblen Medien können nicht angezeigt werden."), utils.DefaultSendOptions)
+			}
+
 			var sb strings.Builder
 			for _, entity := range result.Tombstone.Text.Entities {
 				sb.WriteString(tombstoneText[:entity.FromIndex])
