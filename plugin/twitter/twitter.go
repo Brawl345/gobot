@@ -182,7 +182,12 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 			tombstoneText := result.Tombstone.Text.Text
 
 			if strings.HasPrefix(tombstoneText, "Nicht jugendfreier Inhalt") {
-				return c.Reply(fmt.Sprintf("❌ Tweets mit sensiblen Medien können nicht angezeigt werden."), utils.DefaultSendOptions)
+				return c.Reply(fmt.Sprintf("https://fxtwitter.com/_/status/%s", tweetID), &telebot.SendOptions{
+					AllowWithoutReply:     true,
+					DisableWebPagePreview: false,
+					DisableNotification:   true,
+					ParseMode:             telebot.ModeHTML,
+				})
 			}
 
 			var sb strings.Builder
