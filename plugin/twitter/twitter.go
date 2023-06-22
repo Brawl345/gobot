@@ -71,16 +71,13 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	}
 
 	req.Header.Set("Authorization", bearerToken)
-	client := &http.Client{
-		Timeout: 10 * time.Second,
-	}
 
 	log.Debug().
 		Str("url", activateUrl).
 		Interface("headers", req.Header).
 		Send()
 
-	resp, err := client.Do(req)
+	resp, err := httpUtils.HttpClient.Do(req)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).

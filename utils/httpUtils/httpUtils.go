@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"io"
 	"mime/multipart"
+	"net"
 	"net/http"
 	"time"
 
@@ -21,11 +22,18 @@ func init() {
 }
 
 func createHTTPClient() *http.Client {
+	transport := http.DefaultTransport.(*http.Transport).Clone()
+	transport.DialContext = (&net.Dialer{
+		Timeout:   30 * time.Second,
+		KeepAlive: 30 * time.Second,
+	}).DialContext
+	transport.TLSHandshakeTimeout = 7 * time.Second
+	transport.ResponseHeaderTimeout = 10 * time.Second
+	transport.MaxIdleConnsPerHost = 20
+	transport.IdleConnTimeout = 5 * time.Minute
+
 	client := &http.Client{
-		Transport: &http.Transport{
-			MaxIdleConnsPerHost: 20,
-		},
-		Timeout: 10 * time.Second,
+		Transport: transport,
 	}
 
 	return client
