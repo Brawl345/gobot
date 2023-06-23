@@ -66,6 +66,27 @@ type (
 		Indices     []int  `json:"indices"`
 	}
 
+	NoteTweet struct {
+		IsExpandable     bool `json:"is_expandable"`
+		NoteTweetResults struct {
+			Result struct {
+				Id        string `json:"id"`
+				Text      string `json:"text"`
+				EntitySet struct {
+					UserMentions []interface{} `json:"user_mentions"`
+					Urls         []struct {
+						DisplayUrl  string `json:"display_url"`
+						ExpandedUrl string `json:"expanded_url"`
+						Url         string `json:"url"`
+						Indices     []int  `json:"indices"`
+					} `json:"urls"`
+					Hashtags []interface{} `json:"hashtags"`
+					Symbols  []interface{} `json:"symbols"`
+				} `json:"entity_set"`
+			} `json:"result"`
+		} `json:"note_tweet_results"`
+	}
+
 	Legacy struct {
 		BookmarkCount     int    `json:"bookmark_count"`
 		CreatedAt         string `json:"created_at"`
@@ -200,8 +221,10 @@ type (
 		} `json:"core"`
 		UnmentionInfo struct {
 		} `json:"unmention_info"`
-		Source             string `json:"source"`
-		Legacy             Legacy `json:"legacy"`
+		Source string `json:"source"`
+
+		NoteTweet          NoteTweet `json:"note_tweet"`
+		Legacy             Legacy    `json:"legacy"`
 		QuotedStatusResult struct {
 			Result struct {
 				Typename       string         `json:"__typename"`

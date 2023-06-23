@@ -212,7 +212,15 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	sb.WriteString(fmt.Sprintf("%s\n", result.Core.UserResults.Author()))
 
 	// Text
-	if result.Legacy.FullText != "" {
+	if result.NoteTweet.NoteTweetResults.Result.Text != "" {
+		tweet := result.NoteTweet.NoteTweetResults.Result.Text
+
+		for _, entity := range result.NoteTweet.NoteTweetResults.Result.EntitySet.Urls {
+			tweet = strings.ReplaceAll(tweet, entity.Url, entity.ExpandedUrl)
+		}
+
+		sb.WriteString(fmt.Sprintf("%s\n", utils.Escape(tweet)))
+	} else if result.Legacy.FullText != "" {
 		// TODO: Withheld
 		tweet := result.Legacy.FullText
 
