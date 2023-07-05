@@ -13,10 +13,11 @@ const (
 
 	apiBase          = "https://api.twitter.com"
 	activateUrl      = apiBase + "/1.1/guest/activate.json"
-	tweetDetailsPath = "/graphql/wTXkouwCKcMNQtY-NcDgAA/TweetDetail"
+	tweetDetailsPath = "/i/api/graphql/NmCeCgkVlsRGS1cAwqtgmw/TweetDetail"
 
-	tweetVariables = `{"focalTweetId":"%s","with_rux_injections":false,"includePromotedContent":true,"withCommunity":true,"withQuickPromoteEligibilityTweetFields":true,"withBirdwatchNotes":true,"withDownvotePerspective":false,"withReactionsMetadata":false,"withReactionsPerspective":false,"withVoice":true,"withV2Timeline":true}`
-	tweetFeatures  = `{"responsive_web_twitter_blue_verified_badge_is_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"vibe_api_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":false,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":false,"interactive_text_enabled":true,"responsive_web_text_conversations_enabled":false,"longform_notetweets_richtext_consumption_enabled":false,"responsive_web_enhance_cards_enabled":false}`
+	tweetVariables = `{"focalTweetId":"%s","with_rux_injections":false,"includePromotedContent":true,"withCommunity":true,"withQuickPromoteEligibilityTweetFields":true,"withBirdwatchNotes":true,"withVoice":true,"withV2Timeline":true}`
+	tweetFeatures  = `{"rweb_lists_timeline_redesign_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":false,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_media_download_video_enabled":false,"responsive_web_enhance_cards_enabled":false}`
+	fieldToggles   = `{"withArticleRichContentState":false}`
 )
 
 type (
@@ -264,32 +265,6 @@ type (
 		} `json:"footer"`
 		Note struct {
 			RestId string `json:"rest_id"`
-			DataV1 struct {
-				Classification string `json:"classification"`
-				Summary        struct {
-					Text     string `json:"text"`
-					Entities []struct {
-						FromIndex int `json:"fromIndex"`
-						ToIndex   int `json:"toIndex"`
-						Ref       struct {
-							Type    string `json:"type"`
-							Url     string `json:"url"`
-							UrlType string `json:"urlType"`
-						} `json:"ref"`
-					} `json:"entities"`
-				} `json:"summary"`
-				MisleadingTags     []string `json:"misleading_tags"`
-				TrustworthySources bool     `json:"trustworthy_sources"`
-			} `json:"data_v1"`
-			DecidedBy    string   `json:"decided_by"`
-			RatingStatus string   `json:"rating_status"`
-			HelpfulTags  []string `json:"helpful_tags"`
-			TweetResults struct {
-				Result struct {
-					RestId string `json:"rest_id"`
-				} `json:"result"`
-			} `json:"tweet_results"`
-			CreatedAt int64 `json:"created_at"`
 		} `json:"note"`
 		Subtitle struct {
 			Text     string `json:"text"`

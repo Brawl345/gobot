@@ -132,7 +132,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	tweetID := c.Matches[1]
 	requestUrl := url.URL{
 		Scheme: "https",
-		Host:   "api.twitter.com",
+		Host:   "twitter.com",
 		Path:   tweetDetailsPath,
 	}
 
@@ -148,6 +148,11 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		tweetFeatures,
 	)
 
+	q.Set(
+		"fieldToggles",
+		fieldToggles,
+	)
+
 	requestUrl.RawQuery = q.Encode()
 
 	var tweetResponse TweetResponse
@@ -155,11 +160,10 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		requestUrl.String(),
 		map[string]string{
 			"Authorization":             bearerToken,
-			"User-Agent":                utils.UserAgent,
+			"User-Agent":                "Googlebot",
 			"X-Guest-Token":             guestToken,
 			"X-Twitter-Active-User":     "yes",
 			"X-Twitter-Client-Language": "de",
-			"Authority":                 "api.twitter.com",
 		},
 		&tweetResponse,
 	)
@@ -272,8 +276,10 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 
 	// Community Notes / "Birdwatch"
 	if result.BirdwatchPivot.DestinationUrl != "" {
-		sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre:</b>\n", result.BirdwatchPivot.DestinationUrl))
-		sb.WriteString(utils.Escape(result.BirdwatchPivot.Note.DataV1.Summary.Text))
+		sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre.</b>", result.BirdwatchPivot.DestinationUrl))
+
+		// TODO: Links need to be replaced and it's kinda annoying
+		//sb.WriteString(utils.Escape(result.BirdwatchPivot.Subtitle.Text))
 	}
 
 	// Quote
@@ -352,8 +358,10 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 
 		// Community Notes / "Birdwatch"
 		if quoteResult.BirdwatchPivot.DestinationUrl != "" {
-			sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre:</b>\n", quoteResult.BirdwatchPivot.DestinationUrl))
-			sb.WriteString(utils.Escape(quoteResult.BirdwatchPivot.Note.DataV1.Summary.Text))
+			sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre.</b>", quoteResult.BirdwatchPivot.DestinationUrl))
+
+			// TODO: Links need to be replaced and it's kinda annoying
+			//sb.WriteString(utils.Escape(quoteResult.BirdwatchPivot.Subtitle.Text))
 		}
 	}
 
