@@ -40,7 +40,7 @@ func (p *Plugin) Commands() []telebot.Command {
 func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(`(https?://.+\.(zip|7z|rar|tar\.(?:gz|bzip2)|jpe?g|png|gif|apk|avi|wav|mp[34]|webp|og[gv]))`),
+			Trigger:     regexp.MustCompile(`(https?://.+\.(zip|7z|rar|tar\.(?:gz|bzip2)|jpe?g|png|gif|apk|avi|wav|mp[34]|og[gv]))`),
 			HandlerFunc: onFileLink,
 		},
 	}
