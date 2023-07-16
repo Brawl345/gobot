@@ -89,7 +89,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-			log.Error().Err(err).Msg("error closing body")
+			log.Err(err).Msg("error closing body")
 		}
 	}(resp.Body)
 
