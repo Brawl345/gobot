@@ -19,6 +19,10 @@ import (
 
 var log = logger.New("twitter")
 
+const (
+	MaxNoteLength = 500
+)
+
 type (
 	Plugin struct{}
 )
@@ -223,7 +227,15 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 			tweet = strings.ReplaceAll(tweet, entity.Url, entity.ExpandedUrl)
 		}
 
-		sb.WriteString(fmt.Sprintf("%s\n", utils.Escape(tweet)))
+		if len(tweet) > MaxNoteLength {
+			tweet = fmt.Sprintf("%s...\n<a href=\"https://twitter.com/%s/status/%s\">Weiterlesen...</a>\n",
+				utils.Escape(tweet[:MaxNoteLength]),
+				result.Core.UserResults.Result.Legacy.ScreenName,
+				tweetID,
+			)
+		}
+
+		sb.WriteString(tweet)
 	} else if result.Legacy.FullText != "" {
 		// TODO: Withheld
 		tweet := result.Legacy.FullText
