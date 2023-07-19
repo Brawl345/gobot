@@ -231,7 +231,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 			tweet = fmt.Sprintf("%s...\n<a href=\"https://twitter.com/%s/status/%s\">Weiterlesen...</a>\n",
 				utils.Escape(tweet[:MaxNoteLength]),
 				result.Core.UserResults.Result.Legacy.ScreenName,
-				tweetID,
+				result.RestId,
 			)
 		}
 
@@ -309,25 +309,46 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	if quoteResult.Typename == "Tweet" || quoteResult.Typename == "TweetWithVisibilityResults" {
 		sb.WriteString("\n\n")
 
+		quoteResultSub := quoteResult.Tweet
+		if quoteResult.TweetSub.RestId != "" {
+			quoteResultSub = quoteResult.TweetSub
+		}
+
 		// Quote author
 		sb.WriteString(
 			fmt.Sprintf(
 				"<b>Zitat von</b> %s\n",
-				quoteResult.Core.UserResults.Author(),
+				quoteResultSub.Core.UserResults.Author(),
 			),
 		)
 
 		// Quote Text
-		if quoteResult.Legacy.FullText != "" {
-			// TODO: Withheld
-			tweet := quoteResult.Legacy.FullText
+		if quoteResultSub.NoteTweet.NoteTweetResults.Result.Text != "" {
+			tweet := quoteResultSub.NoteTweet.NoteTweetResults.Result.Text
 
-			for _, entity := range quoteResult.Legacy.Entities.Urls {
+			for _, entity := range quoteResultSub.NoteTweet.NoteTweetResults.Result.EntitySet.Urls {
+				tweet = strings.ReplaceAll(tweet, entity.Url, entity.ExpandedUrl)
+			}
+
+			if len(tweet) > MaxNoteLength {
+				tweet = fmt.Sprintf("%s...\n<a href=\"https://twitter.com/%s/status/%s\">Zitat Weiterlesen...</a>\n",
+					utils.Escape(tweet[:MaxNoteLength]),
+					quoteResultSub.Core.UserResults.Result.Legacy.ScreenName,
+					quoteResultSub.RestId,
+				)
+			}
+
+			sb.WriteString(tweet)
+		} else if quoteResultSub.Legacy.FullText != "" {
+			// TODO: Withheld
+			tweet := quoteResultSub.Legacy.FullText
+
+			for _, entity := range quoteResultSub.Legacy.Entities.Urls {
 				tweet = strings.ReplaceAll(tweet, entity.Url, entity.ExpandedUrl)
 			}
 
 			// Above loop doesn't include e.g. GIFs
-			for _, extendedEntity := range quoteResult.Legacy.ExtendedEntities.Media {
+			for _, extendedEntity := range quoteResultSub.Legacy.ExtendedEntities.Media {
 				tweet = strings.ReplaceAll(tweet, extendedEntity.Url, extendedEntity.ExpandedUrl)
 			}
 
@@ -335,8 +356,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		}
 
 		// Quote Poll
-		if quoteResult.Card.HasPoll() {
-			quotePoll, err := quoteResult.Card.Poll()
+		if quoteResultSub.Card.HasPoll() {
+			quotePoll, err := quoteResultSub.Card.Poll()
 			if err != nil {
 				guid := xid.New().String()
 				log.Err(err).
@@ -350,13 +371,13 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		}
 
 		//	Quote Created + Metrics (RT, Quotes, Likes)
-		createdAt, err := time.Parse(time.RubyDate, quoteResult.Legacy.CreatedAt)
+		createdAt, err := time.Parse(time.RubyDate, quoteResultSub.Legacy.CreatedAt)
 		if err != nil {
 			guid := xid.New().String()
 			log.Err(err).
 				Str("guid", guid).
 				Str("tweetID", tweetID).
-				Str("createdAt", quoteResult.Legacy.CreatedAt).
+				Str("createdAt", quoteResultSub.Legacy.CreatedAt).
 				Msg("Failed to parse quote tweet created at")
 			return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 		}
@@ -366,14 +387,14 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 				createdAt.In(timezone).Format("02.01.2006, 15:04:05 Uhr"),
 			),
 		)
-		sb.WriteString(quoteResult.Legacy.Metrics())
+		sb.WriteString(quoteResultSub.Legacy.Metrics())
 
 		// Community Notes / "Birdwatch"
-		if quoteResult.BirdwatchPivot.DestinationUrl != "" {
-			sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre.</b>", quoteResult.BirdwatchPivot.DestinationUrl))
+		if quoteResultSub.BirdwatchPivot.DestinationUrl != "" {
+			sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre.</b>", quoteResultSub.BirdwatchPivot.DestinationUrl))
 
 			// TODO: Links need to be replaced and it's kinda annoying
-			//sb.WriteString(utils.Escape(quoteResult.BirdwatchPivot.Subtitle.Text))
+			//sb.WriteString(utils.Escape(quoteResultSub.BirdwatchPivot.Subtitle.Text))
 		}
 	}
 

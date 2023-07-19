@@ -228,17 +228,25 @@ type (
 		Legacy             Legacy    `json:"legacy"`
 		QuotedStatusResult struct {
 			Result struct {
-				Typename       string         `json:"__typename"`
-				BirdwatchPivot BirdwatchPivot `json:"birdwatch_pivot"`
-				Core           struct {
-					UserResults UserResult `json:"user_results"`
-				} `json:"core"`
-				Source    string    `json:"source"`
-				Legacy    Legacy    `json:"legacy"`
-				Tombstone Tombstone `json:"tombstone"`
-				Card      Card      `json:"card"`
+				Tweet
+				Typename string `json:"__typename"`
+
+				TweetSub Tweet `json:"tweet"`
 			} `json:"result"`
 		} `json:"quoted_status_result"`
+	}
+
+	Tweet struct {
+		RestId         string         `json:"rest_id"`
+		BirdwatchPivot BirdwatchPivot `json:"birdwatch_pivot"`
+		Core           struct {
+			UserResults UserResult `json:"user_results"`
+		} `json:"core"`
+		NoteTweet NoteTweet `json:"note_tweet"`
+		Source    string    `json:"source"`
+		Legacy    Legacy    `json:"legacy"`
+		Tombstone Tombstone `json:"tombstone"`
+		Card      Card      `json:"card"`
 	}
 
 	Result struct {
