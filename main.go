@@ -36,8 +36,7 @@ func main() {
 	log.Info().Msgf("Logged in as @%s (%d)", b.Telebot.Me.Username, b.Telebot.Me.ID)
 
 	channel := make(chan os.Signal)
-	signal.Notify(channel, os.Interrupt, syscall.SIGTERM)
-	signal.Notify(channel, os.Interrupt, syscall.SIGINT)
+	signal.Notify(channel, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		<-channel
 		log.Info().Msg("Stopping...")
