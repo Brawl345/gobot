@@ -42,15 +42,15 @@ func (p *Plugin) Commands() []telebot.Command {
 func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(`(?i)twitter\.com/\w+/status(?:es)?/(\d+)`),
+			Trigger:     regexp.MustCompile(`(?i)(?:x|twitter)\.com/\w+/status(?:es)?/(\d+)`),
 			HandlerFunc: p.OnStatus,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(`(?i)twitter\.com/i/web/status(?:es)?/(\d+)`),
+			Trigger:     regexp.MustCompile(`(?i)(?:x|twitter)\.com/i/web/status(?:es)?/(\d+)`),
 			HandlerFunc: p.OnStatus,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(`(?i)twitter\.com/status(?:es)?/(\d+)`),
+			Trigger:     regexp.MustCompile(`(?i)(?:x|twitter)\.com/status(?:es)?/(\d+)`),
 			HandlerFunc: p.OnStatus,
 		},
 		&plugin.CommandHandler{
