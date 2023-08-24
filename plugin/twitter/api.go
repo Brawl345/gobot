@@ -209,6 +209,7 @@ type (
 				TranslatorType          string        `json:"translator_type"`
 				Url                     string        `json:"url"`
 				Verified                bool          `json:"verified"`
+				VerifiedType            string        `json:"verified_type"`
 				WithheldInCountries     []interface{} `json:"withheld_in_countries"`
 			} `json:"legacy"`
 		} `json:"result"`
@@ -390,8 +391,11 @@ func (u *UserResult) Author() string {
 		),
 	)
 
-	if u.Result.Legacy.Verified {
-		sb.WriteString(" ✅")
+	if u.Result.Legacy.VerifiedType == "Government" {
+		sb.WriteString(" ✅🏛")
+	}
+	if u.Result.Legacy.VerifiedType == "Business" {
+		sb.WriteString(" ✅🏢")
 	}
 
 	if u.Result.Legacy.Protected {
