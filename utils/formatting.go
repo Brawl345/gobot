@@ -1,6 +1,7 @@
 package utils
 
 import (
+	"fmt"
 	"math"
 	"strconv"
 	"strings"
@@ -50,6 +51,21 @@ func FormatThousand[T constraints.Integer](n T) string {
 			out[j] = '.'
 		}
 	}
+}
+
+func FormatFloat(f float64) string {
+	wholePart := int(f)
+	fractionalPart := int((f - float64(wholePart)) * 100)
+
+	wholeStr := fmt.Sprintf("%d", wholePart)
+	var result strings.Builder
+	for i, v := range wholeStr {
+		if i > 0 && (len(wholeStr)-i)%3 == 0 {
+			result.WriteRune('.')
+		}
+		result.WriteRune(v)
+	}
+	return fmt.Sprintf("%s,%02d", result.String(), fractionalPart)
 }
 
 func EmbedImage(url string) string {
