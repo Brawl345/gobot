@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"github.com/Brawl345/gobot/plugin/summarize"
 	"net/http"
 	"os"
 	"sort"
@@ -144,6 +145,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		replace.New(),
 		rki.New(rkiService),
 		stats.New(chatsUsersService),
+		summarize.New(credentialService),
 		twitter.New(),
 		upload_by_url.New(),
 		urbandictionary.New(),

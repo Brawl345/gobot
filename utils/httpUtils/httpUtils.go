@@ -91,6 +91,62 @@ func GetRequest(url string, result any) error {
 	return nil
 }
 
+func PostRequest(url string, headers map[string]string, input any, result any) error {
+	log.Debug().
+		Str("url", url).
+		Interface("input", input).
+		Send()
+
+	jsonData, err := json.Marshal(input)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		return err
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	for key, value := range headers {
+		req.Header.Set(key, value)
+	}
+
+	resp, err := HttpClient.Do(req)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return &HttpError{
+			StatusCode: resp.StatusCode,
+			Status:     resp.Status,
+		}
+	}
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Err(err).Msg("Failed to close response body")
+		}
+	}(resp.Body)
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if err := json.Unmarshal(body, result); err != nil {
+		return err
+	}
+
+	log.Debug().
+		Str("url", url).
+		Interface("result", result).
+		Send()
+	return nil
+}
+
 func GetRequestWithHeader(url string, headers map[string]string, result any) error {
 	log.Debug().
 		Str("url", url).
@@ -103,8 +159,8 @@ func GetRequestWithHeader(url string, headers map[string]string, result any) err
 		return err
 	}
 
-	for k, v := range headers {
-		req.Header.Add(k, v)
+	for key, value := range headers {
+		req.Header.Set(key, value)
 	}
 
 	resp, err := HttpClient.Do(req)
