@@ -58,10 +58,12 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/su(?:mmarize)?(?:@%s)? .+$`, botInfo.Username)),
 			HandlerFunc: p.onSummarize,
+			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/su(?:mmarize)?(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: p.onReply,
+			GroupOnly:   true,
 		},
 	}
 }
