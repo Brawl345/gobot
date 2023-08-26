@@ -69,14 +69,10 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 }
 
 func (p *Plugin) onSummarize(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
-
 	return p.summarize(c, c.Message())
 }
 
 func (p *Plugin) onReply(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
-
 	if !c.Message().IsReply() {
 		log.Debug().
 			Int64("chat_id", c.Chat().ID).
@@ -98,6 +94,8 @@ func (p *Plugin) onReply(c plugin.GobotContext) error {
 }
 
 func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
+	_ = c.Notify(telebot.Typing)
+
 	var urls []string
 	for _, entity := range utils.AnyEntities(msg) {
 		if entity.Type == telebot.EntityURL {
