@@ -228,14 +228,14 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		}
 
 		if len(tweet) > MaxNoteLength {
-			tweet = fmt.Sprintf("%s...\n<a href=\"https://twitter.com/%s/status/%s\">Weiterlesen...</a>\n",
+			tweet = fmt.Sprintf("%s...\n<a href=\"https://twitter.com/%s/status/%s\">Weiterlesen...</a>",
 				utils.Escape(tweet[:MaxNoteLength]),
 				result.Core.UserResults.Result.Legacy.ScreenName,
 				result.RestId,
 			)
 		}
 
-		sb.WriteString(tweet)
+		sb.WriteString(fmt.Sprintf("%s\n", tweet))
 	} else if result.Legacy.FullText != "" {
 		// TODO: Withheld
 		tweet := result.Legacy.FullText
@@ -331,14 +331,14 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 			}
 
 			if len(tweet) > MaxNoteLength {
-				tweet = fmt.Sprintf("%s...\n<a href=\"https://twitter.com/%s/status/%s\">Zitat Weiterlesen...</a>\n",
+				tweet = fmt.Sprintf("%s...\n<a href=\"https://twitter.com/%s/status/%s\">Zitat Weiterlesen...</a>",
 					utils.Escape(tweet[:MaxNoteLength]),
 					quoteResultSub.Core.UserResults.Result.Legacy.ScreenName,
 					quoteResultSub.RestId,
 				)
 			}
 
-			sb.WriteString(tweet)
+			sb.WriteString(fmt.Sprintf("%s\n", tweet))
 		} else if quoteResultSub.Legacy.FullText != "" {
 			// TODO: Withheld
 			tweet := quoteResultSub.Legacy.FullText
