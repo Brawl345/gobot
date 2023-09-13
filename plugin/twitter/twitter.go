@@ -181,29 +181,24 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 	}
 
-	result := tweetResponse.Tweet(tweetID)
-	if result.Typename != "Tweet" && result.Typename != "TweetWithVisibilityResults" {
-		if result.Typename == "TweetTombstone" {
-			tombstoneText := result.Tombstone.Text.Text
+	result := tweetResponse.Data.TweetResult.Result
 
-			if strings.HasPrefix(tombstoneText, "Nicht jugendfreier Inhalt") {
-				return c.Reply(fmt.Sprintf("https://vxtwitter.com/_/status/%s", tweetID), &telebot.SendOptions{
-					AllowWithoutReply:     true,
-					DisableWebPagePreview: false,
-					DisableNotification:   true,
-					ParseMode:             telebot.ModeHTML,
-				})
-			}
-
-			var sb strings.Builder
-			for _, entity := range result.Tombstone.Text.Entities {
-				sb.WriteString(tombstoneText[:entity.FromIndex])
-				sb.WriteString(fmt.Sprintf(`<a href="%s">%s</a>`, entity.Ref.Url, tombstoneText[entity.FromIndex:entity.ToIndex+1]))
-			}
-
-			return c.Reply(fmt.Sprintf("❌ %s", sb.String()), utils.DefaultSendOptions)
+	if result.Typename == "TweetUnavailable" {
+		if result.Reason == "NsfwLoggedOut" {
+			return c.Reply(fmt.Sprintf("https://vxtwitter.com/_/status/%s", tweetID), &telebot.SendOptions{
+				AllowWithoutReply:     true,
+				DisableWebPagePreview: false,
+				DisableNotification:   true,
+				ParseMode:             telebot.ModeHTML,
+			})
+		} else if result.Reason == "Protected" {
+			return c.Reply("🔓 Der Account-Inhaber hat beschränkt, wer seine Tweets ansehen kann.", utils.DefaultSendOptions)
+		} else {
+			return c.Reply(fmt.Sprintf("❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code>", result.Reason), utils.DefaultSendOptions)
 		}
+	}
 
+	if result.Typename != "Tweet" && result.Typename != "TweetWithVisibilityResults" && result.Typename != "tweetResult" {
 		return c.Reply("❌ Dieser Tweet existiert nicht.", utils.DefaultSendOptions)
 	}
 
@@ -296,13 +291,14 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 
 	// Quote
 	quoteResult := result.QuotedStatusResult.Result
-	if quoteResult.Typename == "TweetTombstone" {
-		sb.WriteString("\n\n<b>Zitat:</b>\n")
 
-		tombstoneText := quoteResult.Tombstone.Text.Text
-		for _, entity := range quoteResult.Tombstone.Text.Entities {
-			sb.WriteString(tombstoneText[:entity.FromIndex])
-			sb.WriteString(fmt.Sprintf(`<a href="%s">%s</a>`, entity.Ref.Url, tombstoneText[entity.FromIndex:entity.ToIndex+1]))
+	if quoteResult.Typename == "TweetUnavailable" {
+		if quoteResult.Reason == "NsfwLoggedOut" {
+			sb.WriteString("<i>Tweet kann nicht angezeigt werden, weil er sensible Inhalte enthält.</i>")
+		} else if quoteResult.Reason == "Protected" {
+			sb.WriteString("\"<i>🔓 Der Account-Inhaber hat beschränkt, wer seine Tweets ansehen kann.</i>")
+		} else {
+			sb.WriteString(fmt.Sprintf("<i>❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code></i>", result.Reason))
 		}
 	}
 

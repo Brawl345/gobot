@@ -13,9 +13,9 @@ const (
 
 	apiBase          = "https://api.twitter.com"
 	activateUrl      = apiBase + "/1.1/guest/activate.json"
-	tweetDetailsPath = "/i/api/graphql/NmCeCgkVlsRGS1cAwqtgmw/TweetDetail"
+	tweetDetailsPath = "/i/api/graphql/DJS3BdhUhcaEpZ7B7irJDg/TweetResultByRestId"
 
-	tweetVariables = `{"focalTweetId":"%s","with_rux_injections":false,"includePromotedContent":true,"withCommunity":true,"withQuickPromoteEligibilityTweetFields":true,"withBirdwatchNotes":true,"withVoice":true,"withV2Timeline":true}`
+	tweetVariables = `{"tweetId":"%s","with_rux_injections":false,"includePromotedContent":true,"withCommunity":true,"withQuickPromoteEligibilityTweetFields":true,"withBirdwatchNotes":true,"withVoice":true,"withV2Timeline":true}`
 	tweetFeatures  = `{"rweb_lists_timeline_redesign_enabled":true,"responsive_web_graphql_exclude_directive_enabled":true,"verified_phone_label_enabled":false,"creator_subscriptions_tweet_preview_api_enabled":true,"responsive_web_graphql_timeline_navigation_enabled":true,"responsive_web_graphql_skip_user_profile_image_extensions_enabled":false,"tweetypie_unmention_optimization_enabled":true,"responsive_web_edit_tweet_api_enabled":true,"graphql_is_translatable_rweb_tweet_is_translatable_enabled":true,"view_counts_everywhere_api_enabled":true,"longform_notetweets_consumption_enabled":true,"responsive_web_twitter_article_tweet_consumption_enabled":false,"tweet_awards_web_tipping_enabled":false,"freedom_of_speech_not_reach_fetch_enabled":true,"standardized_nudges_misinfo":true,"tweet_with_visibility_results_prefer_gql_limited_actions_policy_enabled":true,"longform_notetweets_rich_text_read_enabled":true,"longform_notetweets_inline_media_enabled":true,"responsive_web_media_download_video_enabled":false,"responsive_web_enhance_cards_enabled":false}`
 	fieldToggles   = `{"withArticleRichContentState":false}`
 )
@@ -230,6 +230,7 @@ type (
 		QuotedStatusResult struct {
 			Result struct {
 				Tweet
+				Reason   string `json:"reason"`
 				Typename string `json:"__typename"`
 
 				TweetSub Tweet `json:"tweet"`
@@ -246,7 +247,6 @@ type (
 		NoteTweet NoteTweet `json:"note_tweet"`
 		Source    string    `json:"source"`
 		Legacy    Legacy    `json:"legacy"`
-		Tombstone Tombstone `json:"tombstone"`
 		Card      Card      `json:"card"`
 	}
 
@@ -254,7 +254,7 @@ type (
 		TweetInfo           // TODO: On Withheld, TweetInfo is under "Tweet"
 		Tweet     TweetInfo `json:"tweet"`
 		Typename  string    `json:"__typename"`
-		Tombstone Tombstone `json:"tombstone"`
+		Reason    string    `json:"reason"`
 		Card      Card      `json:"card"`
 	}
 
@@ -338,46 +338,12 @@ type (
 
 	TweetResponse struct {
 		Data struct {
-			ThreadedConversationWithInjectionsV2 struct {
-				Instructions []struct {
-					Type    string `json:"type"`
-					Entries []struct {
-						EntryId   string `json:"entryId"`
-						SortIndex string `json:"sortIndex"`
-						Content   struct {
-							EntryType   string `json:"entryType"`
-							Typename    string `json:"__typename"`
-							ItemContent struct {
-								ItemType     string `json:"itemType"`
-								Typename     string `json:"__typename"`
-								TweetResults struct {
-									Result Result `json:"result"`
-								} `json:"tweet_results"`
-								TweetDisplayType    string `json:"tweetDisplayType"`
-								HasModeratedReplies bool   `json:"hasModeratedReplies"`
-							} `json:"itemContent"`
-						} `json:"content"`
-					} `json:"entries,omitempty"`
-					Direction string `json:"direction,omitempty"`
-				} `json:"instructions"`
-			} `json:"threaded_conversation_with_injections_v2"`
+			TweetResult struct {
+				Result Result `json:"result"`
+			} `json:"tweetResult"`
 		} `json:"data"`
 	}
 )
-
-func (t *TweetResponse) Tweet(tweetID string) Result {
-	if len(t.Data.ThreadedConversationWithInjectionsV2.Instructions) == 0 {
-		return Result{}
-	}
-
-	for _, entry := range t.Data.ThreadedConversationWithInjectionsV2.Instructions[0].Entries {
-		if entry.EntryId == fmt.Sprintf("tweet-%s", tweetID) {
-			return entry.Content.ItemContent.TweetResults.Result
-		}
-	}
-
-	return Result{}
-}
 
 func (u *UserResult) Author() string {
 	var sb strings.Builder
