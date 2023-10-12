@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"github.com/Brawl345/gobot/plugin/speech_to_text"
 	"github.com/Brawl345/gobot/plugin/summarize"
 	"net/http"
 	"os"
@@ -144,6 +145,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		reminders.New(bot, reminderService),
 		replace.New(),
 		rki.New(rkiService),
+		speech_to_text.New(credentialService),
 		stats.New(chatsUsersService),
 		summarize.New(credentialService),
 		twitter.New(),

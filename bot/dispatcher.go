@@ -108,6 +108,8 @@ func (d *Dispatcher) OnText(c telebot.Context) error {
 					matched = command == telebot.OnLocation
 				case msg.Venue != nil:
 					matched = command == telebot.OnVenue
+				case msg.Voice != nil:
+					matched = command == telebot.OnVoice
 				}
 
 				if !matched && msg.Media() != nil {

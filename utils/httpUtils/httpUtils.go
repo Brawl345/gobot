@@ -95,6 +95,7 @@ func PostRequest(url string, headers map[string]string, input any, result any) e
 	log.Debug().
 		Str("url", url).
 		Interface("input", input).
+		Interface("headers", headers).
 		Send()
 
 	jsonData, err := json.Marshal(input)
@@ -201,9 +202,14 @@ func GetRequestWithHeader(url string, headers map[string]string, result any) err
 }
 
 func MultiPartFormRequest(url string, params []MultiPartParam, files []MultiPartFile) (*http.Response, error) {
+	return MultiPartFormRequestWithHeaders(url, nil, params, files)
+}
+
+func MultiPartFormRequestWithHeaders(url string, headers map[string]string, params []MultiPartParam, files []MultiPartFile) (*http.Response, error) {
 	log.Debug().
 		Str("url", url).
 		Interface("params", params).
+		Interface("headers", headers).
 		Send()
 
 	var b bytes.Buffer
@@ -244,6 +250,11 @@ func MultiPartFormRequest(url string, params []MultiPartParam, files []MultiPart
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
+	if headers != nil {
+		for key, value := range headers {
+			req.Header.Set(key, value)
+		}
+	}
 
 	return HttpClient.Do(req)
 }

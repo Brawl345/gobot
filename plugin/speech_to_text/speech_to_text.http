@@ -1,0 +1,15 @@
+### Voice message file
+POST https://api.openai.com/v1/audio/transcriptions
+Authorization: Bearer {{openai_api_key}}
+Content-Type: multipart/form-data; boundary=Boundary
+
+--Boundary
+Content-Disposition: form-data; name="model"
+Content-Type: text/plain
+
+whisper-1
+--Boundary
+Content-Disposition: form-data; name="file"; filename="voice.ogg"
+
+< ./example-voice.ogg
+--Boundary--

@@ -10,6 +10,7 @@ const (
 
 	InlineQueryFailureCacheTime = 2 // In seconds
 
+	MaxMessageLength            = 4096
 	MaxFilesizeDownload         = 20000000 // Max filesize that can be downloaded from Telegram = 20MB
 	MaxFilesizeUpload           = 50000000 // Max filesize that can be uploaded to Telegram = 50MB
 	MaxPhotosizeUpload          = 10000000 // Max filesize of photos that can be uploaded to Telegram = 10 MB
