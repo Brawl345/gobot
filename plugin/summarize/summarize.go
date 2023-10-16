@@ -1,6 +1,7 @@
 package summarize
 
 import (
+	"errors"
 	"fmt"
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
@@ -26,7 +27,9 @@ const (
 var log = logger.New("summarize")
 
 type Plugin struct {
-	openAIApiKey string
+	apiUrl                   string
+	openAIApiKey             string
+	cloudflareApiGatewayPath string
 }
 
 func New(credentialService model.CredentialService) *Plugin {
@@ -35,8 +38,26 @@ func New(credentialService model.CredentialService) *Plugin {
 		log.Warn().Msg("openai_api_key not found")
 	}
 
+	apiUrl := OpenAIApiUrl
+
+	// In the format "accountTag/gateway"
+	cloudflareApiGatewayPath, _ := credentialService.GetKey("openai_cloudflare_ai_gateway")
+	if cloudflareApiGatewayPath != "" {
+		if strings.HasPrefix(cloudflareApiGatewayPath, "/") {
+			cloudflareApiGatewayPath = cloudflareApiGatewayPath[1:]
+		}
+		if strings.HasSuffix(cloudflareApiGatewayPath, "/") {
+			cloudflareApiGatewayPath = cloudflareApiGatewayPath[:len(cloudflareApiGatewayPath)-1]
+		}
+
+		apiUrl = fmt.Sprintf(CloudflareGatewayUrl, cloudflareApiGatewayPath)
+		log.Debug().Msg("Using Cloudflare AI Gateway")
+	}
+
 	return &Plugin{
-		openAIApiKey: openAIApiKey,
+		apiUrl:                   apiUrl,
+		openAIApiKey:             openAIApiKey,
+		cloudflareApiGatewayPath: cloudflareApiGatewayPath,
 	}
 }
 
@@ -155,22 +176,28 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 	}
 
 	var response Response
-	err = httpUtils.PostRequest(ApiUrl,
+	var httpError *httpUtils.HttpError
+	err = httpUtils.PostRequest(p.apiUrl,
 		map[string]string{
 			"Authorization": fmt.Sprintf("Bearer %s", p.openAIApiKey),
 		},
 		&request,
 		&response)
 	if err != nil {
+
+		if errors.As(err, &httpError) {
+			if httpError.StatusCode == 429 {
+				return c.Reply("❌ Rate-Limit erreicht.", utils.DefaultSendOptions)
+			}
+		}
+
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
 			Str("url", url).
 			Msg("Failed to send POST request")
-		_, err := c.Bot().Reply(msg,
-			fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions)
-		return err
 	}
 
 	if response.Error.Type != "" {
@@ -181,20 +208,15 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 			Str("message", response.Error.Message).
 			Str("type", response.Error.Type).
 			Msg("Got error from OpenAI API")
-		_, err := c.Bot().Reply(msg,
-			fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions)
-		return err
 	}
 
 	if len(response.Choices) == 0 || (len(response.Choices) > 0 && response.Choices[0].Message.Content == "") {
 		log.Error().
 			Str("url", url).
 			Msg("Got no answer from ChatGPT")
-		_, err := c.Bot().Reply(msg,
-			"❌ Keine Antwort von ChatGPT erhalten",
-			utils.DefaultSendOptions)
-		return err
+		return c.Reply("❌ Keine Antwort von ChatGPT erhalten", utils.DefaultSendOptions)
 	}
 
 	var sb strings.Builder

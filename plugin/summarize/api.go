@@ -1,10 +1,11 @@
 package summarize
 
 const (
-	ApiUrl = "https://api.openai.com/v1/chat/completions"
-	Model  = "gpt-3.5-turbo"
-	User   = "user"
-	System = "system"
+	OpenAIApiUrl         = "https://api.openai.com/v1/chat/completions"
+	CloudflareGatewayUrl = "https://gateway.ai.cloudflare.com/v1/%s/openai/chat/completions"
+	Model                = "gpt-3.5-turbo"
+	User                 = "user"
+	System               = "system"
 )
 
 type (
