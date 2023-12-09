@@ -18,14 +18,8 @@ var htmlTelegramEscaper = strings.NewReplacer(
 	`"`, "&#34;",
 )
 
-// Some characters lead to an "unsupported characters" message
-var invalidCharacterRemover = strings.NewReplacer(
-	"\u0020", "",
-)
-
 func Escape(s string) string {
-	text := htmlTelegramEscaper.Replace(s)
-	return invalidCharacterRemover.Replace(text)
+	return htmlTelegramEscaper.Replace(s)
 }
 
 func RoundAndFormatThousand(n float64) string {
