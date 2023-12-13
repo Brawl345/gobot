@@ -62,7 +62,7 @@ func (p *Plugin) onIds(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Int64("chat_id", c.Chat().ID).
-			Msg("Failed to enable plugin")
+			Msg("Failed to get all users in chat")
 		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 	}
 
@@ -72,7 +72,7 @@ func (p *Plugin) onIds(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Int64("chat_id", c.Chat().ID).
-			Msg("Failed to enable plugin")
+			Msg("Failed to count members in chat")
 		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 	}
 
@@ -82,7 +82,7 @@ func (p *Plugin) onIds(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Int64("chat_id", c.Chat().ID).
-			Msg("Failed to enable plugin")
+			Msg("Failed to get admins and creators in chat")
 		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 	}
 
