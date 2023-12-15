@@ -3,7 +3,7 @@ package summarize
 const (
 	OpenAIApiUrl         = "https://api.openai.com/v1/chat/completions"
 	CloudflareGatewayUrl = "https://gateway.ai.cloudflare.com/v1/%s/openai/chat/completions"
-	Model                = "gpt-3.5-turbo"
+	Model                = "gpt-3.5-turbo-1106"
 	User                 = "user"
 	System               = "system"
 )

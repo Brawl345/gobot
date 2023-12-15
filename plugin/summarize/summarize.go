@@ -19,8 +19,10 @@ import (
 
 const (
 	MinArticleLength = 500
-	MaxArticleLength = 12000
-	MaxTokens        = 600
+	MaxArticleLength = 60000 // ~12,000 tokens
+	MaxTokens        = 1000
+	PresencePenalty  = 1.0
+	Temperature      = 0.3
 	SystemPrompt     = "Summarize the following article in five short bullet points. Always speak in German. If the website needs JavaScript and has a cookie consent banner, reply with a clown emoji."
 )
 
@@ -170,9 +172,9 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 				Content: article.TextContent,
 			},
 		},
-		PresencePenalty: 1.0,
+		PresencePenalty: PresencePenalty,
 		MaxTokens:       MaxTokens,
-		Temperature:     0.3,
+		Temperature:     Temperature,
 	}
 
 	var response Response
