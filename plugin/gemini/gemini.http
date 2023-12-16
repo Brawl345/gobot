@@ -1,0 +1,42 @@
+# Chat prompt
+# NOTE: Set "google_gemini_proxy" either to a proxy that routes requests from a supported country to the API
+# or use "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent" directly
+POST {{google_gemini_proxy}}?key={{google_vertex_ai_key}}
+Content-Type: application/json
+
+{
+  "contents": [
+    {
+      "role": "user",
+      "parts": [
+        {
+          "text": "Erzähle mir einen Witz."
+        }
+      ]
+    }
+  ],
+  "safetySettings": [
+    {
+      "category": "HARM_CATEGORY_HARASSMENT",
+      "threshold": "BLOCK_NONE"
+    },
+    {
+      "category": "HARM_CATEGORY_HATE_SPEECH",
+      "threshold": "BLOCK_NONE"
+    },
+    {
+      "category": "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+      "threshold": "BLOCK_NONE"
+    },
+    {
+      "category": "HARM_CATEGORY_DANGEROUS_CONTENT",
+      "threshold": "BLOCK_NONE"
+    }
+  ],
+  "generationConfig": {
+    "temperature": 0.7,
+    "topK": 1,
+    "topP": 1,
+    "maxOutputTokens": 1200
+  }
+}

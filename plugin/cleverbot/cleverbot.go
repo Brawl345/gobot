@@ -63,11 +63,6 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(`(?i)^Bot, (.+)$`),
-			HandlerFunc: p.onCleverbot,
-			GroupOnly:   true,
-		},
-		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/cbotreset(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: p.onReset,
 			GroupOnly:   true,

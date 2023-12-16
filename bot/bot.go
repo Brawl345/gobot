@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"github.com/Brawl345/gobot/plugin/gemini"
 	"github.com/Brawl345/gobot/plugin/speech_to_text"
 	"github.com/Brawl345/gobot/plugin/summarize"
 	"net/http"
@@ -94,6 +95,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 	birthdayService := sql.NewBirthdayService(db)
 	cleverbotService := sql.NewCleverbotService(db)
 	fileService := sql.NewFileService(db)
+	geminiService := sql.NewGeminiService(db)
 	googleImagesService := sql.NewGoogleImagesService(db)
 	googleImagesCleanupService := sql.NewGoogleImagesCleanupService(db)
 	homeService := sql.NewHomeService(db)
@@ -129,6 +131,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		delmsg.New(),
 		echo.New(),
 		expand.New(),
+		gemini.New(credentialService, geminiService),
 		getfile.New(credentialService, fileService),
 		google_images.New(credentialService, googleImagesService, googleImagesCleanupService),
 		google_search.New(credentialService),
