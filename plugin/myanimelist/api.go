@@ -38,7 +38,8 @@ type (
 			Year   int    `json:"year"`
 			Season string `json:"season"`
 		} `json:"start_season"`
-		AverageEpisodeDuration int `json:"average_episode_duration"`
+		AverageEpisodeDuration int    `json:"average_episode_duration"`
+		Rating                 string `json:"rating"`
 		Studios                []struct {
 			ID   int    `json:"id"`
 			Name string `json:"name"`
@@ -53,14 +54,15 @@ type (
 
 	// AnimeResult is an extra struct because we don't need all the fields
 	AnimeResult struct {
-		ID    int    `json:"id"`
-		Title string `json:"title"`
-		Nsfw  string `json:"nsfw"`
+		ID     int    `json:"id"`
+		Title  string `json:"title"`
+		Nsfw   string `json:"nsfw"`
+		Rating string `json:"rating"`
 	}
 )
 
 func (a *AnimeResult) NSFW() bool {
-	return a.Nsfw == "black"
+	return a.Rating == "r+" || a.Rating == "rx"
 }
 
 func (a *Anime) GetMainPicture() string {
@@ -71,7 +73,7 @@ func (a *Anime) GetMainPicture() string {
 }
 
 func (a *Anime) NSFW() bool {
-	return a.Nsfw == "black"
+	return a.Rating == "r+" || a.Rating == "rx"
 }
 
 func (a *Anime) GetAlternativeTitles() []string {

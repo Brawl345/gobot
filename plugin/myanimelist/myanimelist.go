@@ -78,7 +78,7 @@ func (p *Plugin) onSearch(c plugin.GobotContext) error {
 	}
 	q := requestUrl.Query()
 	q.Set("q", c.Matches[1])
-	q.Set("fields", "id,title,nsfw")
+	q.Set("fields", "id,title,nsfw,rating")
 	q.Set("limit", "5")
 	q.Set("nsfw", "true")
 	requestUrl.RawQuery = q.Encode()
@@ -137,7 +137,7 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 		Path:   fmt.Sprintf("/v2/anime/%s", c.Matches[1]),
 	}
 	q := requestUrl.Query()
-	q.Set("fields", "id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,nsfw,media_type,status,genres,num_episodes,start_season,average_episode_duration,studios")
+	q.Set("fields", "id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,nsfw,media_type,status,genres,num_episodes,start_season,average_episode_duration,rating,studios")
 	requestUrl.RawQuery = q.Encode()
 
 	err := httpUtils.GetRequestWithHeader(
