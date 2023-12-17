@@ -60,7 +60,7 @@ type (
 )
 
 func (a *AnimeResult) NSFW() bool {
-	return a.Nsfw == "gray" || a.Nsfw == "black"
+	return a.Nsfw == "black"
 }
 
 func (a *Anime) GetMainPicture() string {
@@ -71,7 +71,7 @@ func (a *Anime) GetMainPicture() string {
 }
 
 func (a *Anime) NSFW() bool {
-	return a.Nsfw == "gray" || a.Nsfw == "black"
+	return a.Nsfw == "black"
 }
 
 func (a *Anime) GetAlternativeTitles() []string {
