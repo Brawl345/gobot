@@ -19,7 +19,7 @@ const (
 	Temperature        = 0.7
 	TopK               = 1
 	TopP               = 1
-	MaxOutputTokens    = 1200
+	MaxOutputTokens    = 700
 	MaxInputCharacters = 132000 // Should be roughly 30,000 tokens, max input tokens are 30,720
 )
 
