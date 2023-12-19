@@ -58,7 +58,7 @@ func (p *Plugin) Commands() []telebot.Command {
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/cbot(?:@%s)? (.+)$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/cbot(?:@%s)? ([\s\S]+)$`, botInfo.Username)),
 			HandlerFunc: p.onCleverbot,
 			GroupOnly:   true,
 		},

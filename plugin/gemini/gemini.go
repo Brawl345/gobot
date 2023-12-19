@@ -70,7 +70,7 @@ func (p *Plugin) Commands() []telebot.Command {
 func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(`(?i)^Bot, (.+)$`),
+			Trigger:     regexp.MustCompile(`(?i)^Bot, ([\s\S]+)$`),
 			HandlerFunc: p.onGemini,
 			GroupOnly:   true,
 		},
@@ -80,7 +80,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/geminireset(?:@%s)? (.+)$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/geminireset(?:@%s)? ([\s\S]+)$`, botInfo.Username)),
 			HandlerFunc: p.onResetAndRun,
 			GroupOnly:   true,
 		},
