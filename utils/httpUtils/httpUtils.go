@@ -28,7 +28,7 @@ func createHTTPClient() *http.Client {
 		KeepAlive: 30 * time.Second,
 	}).DialContext
 	transport.TLSHandshakeTimeout = 7 * time.Second
-	transport.ResponseHeaderTimeout = 10 * time.Second
+	transport.ResponseHeaderTimeout = 15 * time.Second
 	transport.MaxIdleConnsPerHost = 20
 	transport.IdleConnTimeout = 5 * time.Minute
 
