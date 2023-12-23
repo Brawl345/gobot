@@ -35,6 +35,10 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 func onAliveCheck(c plugin.GobotContext) error {
 	return c.Reply(
 		fmt.Sprintf("<b>Ich bin da, %s!</b>", utils.Escape(c.Sender().FirstName)),
-		utils.DefaultSendOptions,
+		&telebot.SendOptions{
+			AllowWithoutReply:     true,
+			DisableWebPagePreview: true,
+			ParseMode:             telebot.ModeHTML,
+		},
 	)
 }
