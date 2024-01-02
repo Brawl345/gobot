@@ -17,19 +17,21 @@ import (
 )
 
 type Plugin struct {
-	apiKey string // https://www.bingmapsportal.com/
+	apiKey           string // https://www.bingmapsportal.com/
+	geocodingService model.GeocodingService
 }
 
 var log = logger.New("worldclock")
 
-func New(credentialService model.CredentialService) *Plugin {
+func New(credentialService model.CredentialService, geocodingService model.GeocodingService) *Plugin {
 	apiKey, err := credentialService.GetKey("bing_maps_api_key")
 	if err != nil {
 		log.Warn().Msg("bing_maps_api_key not found")
 	}
 
 	return &Plugin{
-		apiKey: apiKey,
+		apiKey:           apiKey,
+		geocodingService: geocodingService,
 	}
 }
 
@@ -62,29 +64,42 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 func (p *Plugin) onTime(c plugin.GobotContext) error {
 	_ = c.Notify(telebot.Typing)
 
-	requestUrl := url.URL{
-		Scheme: "https",
-		Host:   "dev.virtualearth.net",
-		Path:   "/REST/v1/TimeZone/",
-	}
-
-	q := requestUrl.Query()
-	q.Set("key", p.apiKey)
-
 	var location string
 	if len(c.Matches) > 1 {
 		location = c.Matches[1]
 	} else {
-		location = "Berlin"
+		location = "Berlin, Deutschland"
 	}
-	q.Set("query", location)
+	venue, err := p.geocodingService.Geocode(location)
+	if err != nil {
+		if errors.Is(err, model.ErrAddressNotFound) {
+			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+		}
+
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Str("location", c.Matches[1]).
+			Msg("Failed to get coordinates for location")
+		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Koordinaten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions)
+	}
+
+	requestUrl := url.URL{
+		Scheme: "https",
+		Host:   "dev.virtualearth.net",
+		Path:   fmt.Sprintf("/REST/v1/TimeZone/%f,%f", venue.Location.Lat, venue.Location.Lng),
+	}
+
+	q := requestUrl.Query()
+	q.Set("key", p.apiKey)
 	q.Set("culture", "de-de")
 
 	requestUrl.RawQuery = q.Encode()
 
 	var response Response
 	var httpError *httpUtils.HttpError
-	err := httpUtils.GetRequest(requestUrl.String(), &response)
+	err = httpUtils.GetRequest(requestUrl.String(), &response)
 	if err != nil {
 		if errors.As(err, &httpError) && httpError.StatusCode == 404 {
 			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
@@ -100,15 +115,12 @@ func (p *Plugin) onTime(c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	if len(response.ResourceSets) == 0 ||
-		len(response.ResourceSets[0].Resources) == 0 ||
-		len(response.ResourceSets[0].Resources[0].TimeZoneAtLocation) == 0 ||
-		len(response.ResourceSets[0].Resources[0].TimeZoneAtLocation[0].TimeZone) == 0 {
+	if len(response.ResourceSets) == 0 || len(response.ResourceSets[0].Resources) == 0 {
 		return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
 	}
 
 	var sb strings.Builder
-	timezone := response.ResourceSets[0].Resources[0].TimeZoneAtLocation[0].TimeZone[0]
+	timezone := response.ResourceSets[0].Resources[0].TimeZone
 
 	sb.WriteString(
 		fmt.Sprintf(

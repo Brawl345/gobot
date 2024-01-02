@@ -156,7 +156,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		urbandictionary.New(),
 		weather.New(geocodingService, homeService),
 		wikipedia.New(),
-		worldclock.New(credentialService),
+		worldclock.New(credentialService, geocodingService),
 		youtube.New(credentialService),
 	}
 	managerService.SetPlugins(plugins)

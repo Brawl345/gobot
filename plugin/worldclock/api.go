@@ -10,14 +10,11 @@ type (
 		ResourceSets []struct {
 			EstimatedTotal int `json:"estimatedTotal"`
 			Resources      []struct {
-				TimeZoneAtLocation []struct {
-					PlaceName string `json:"placeName"`
-					TimeZone  []struct {
-						Abbreviation   string        `json:"abbreviation"`
-						IanaTimeZoneId string        `json:"ianaTimeZoneId"`
-						ConvertedTime  ConvertedTime `json:"convertedTime"`
-					} `json:"timeZone"`
-				} `json:"timeZoneAtLocation"`
+				TimeZone struct {
+					Abbreviation   string        `json:"abbreviation"`
+					IanaTimeZoneId string        `json:"ianaTimeZoneId"`
+					ConvertedTime  ConvertedTime `json:"convertedTime"`
+				} `json:"timeZone"`
 			} `json:"resources"`
 		} `json:"resourceSets"`
 		StatusCode        int    `json:"statusCode"`
