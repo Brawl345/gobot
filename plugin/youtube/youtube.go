@@ -382,10 +382,29 @@ func (p *Plugin) onYouTubeSearch(c plugin.GobotContext) error {
 	var sb strings.Builder
 	sb.WriteString(fmt.Sprintf("https://www.youtube.com/watch?v=%s\n", video.ID))
 	sb.WriteString(constructText(&video))
+	text := sb.String()
 
-	return c.Reply(sb.String(), &telebot.SendOptions{
+	msg, err := c.Bot().Reply(c.Message(), text, &telebot.SendOptions{
 		AllowWithoutReply:   true,
 		DisableNotification: true,
 		ParseMode:           telebot.ModeHTML,
 	})
+
+	if err == nil {
+		modifiedText, err := deArrow(text, &video)
+		if err != nil {
+			log.Err(err).
+				Str("videoID", videoID).
+				Msg("Error while contacting DeArrow API")
+			return nil
+		}
+
+		_, err = c.Bot().Edit(msg, modifiedText, &telebot.SendOptions{
+			AllowWithoutReply:   true,
+			DisableNotification: true,
+			ParseMode:           telebot.ModeHTML,
+		})
+	}
+
+	return err
 }
