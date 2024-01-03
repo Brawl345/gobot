@@ -53,6 +53,15 @@ type (
 			Blocked []string `json:"blocked"`
 		} `json:"regionRestriction"`
 	}
+
+	DeArrowResponse struct {
+		Titles []struct {
+			Title    string `json:"title"`
+			Original bool   `json:"original"`
+			Votes    int    `json:"votes"`
+			Locked   bool   `json:"locked"`
+		} `json:"titles"`
+	}
 )
 
 func (v *Video) BlockedInGermany() bool {
@@ -90,4 +99,34 @@ func (v *Video) WasLive() bool {
 
 func (c *ContentDetails) ParseDuration() (*duration.Duration, error) {
 	return duration.Parse(c.Duration)
+}
+
+func (d *DeArrowResponse) GetBestTitle() string {
+	// From the API docs:
+	// "Data is returned ordered. You can use the first element. However, you should make sure the first element
+	// has either locked = true or votes >= 0. If not, it is considered untrusted and is only to be shown
+	// in the voting box until it has been confirmed by another user."
+
+	if len(d.Titles) == 0 {
+		return ""
+	}
+
+	if d.Titles[0].Locked && !d.Titles[0].Original {
+		return d.Titles[0].Title
+	}
+
+	// Will check for the highest number of votes instead of just taking the first one.
+	// API docs say that you should not use titles without votes but the browser extension does it anyway.
+	// So we will do it too!
+	maxVotes := -1
+	var title string
+	for _, t := range d.Titles {
+		t := t
+		if t.Votes > maxVotes && !t.Original {
+			maxVotes = t.Votes
+			title = t.Title
+		}
+	}
+
+	return title
 }

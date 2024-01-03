@@ -27,3 +27,7 @@ GET https://www.googleapis.com/youtube/v3/search
     &maxResults=1
     &type=video
     &fields=items/id/videoId
+
+### DeArrow
+GET https://sponsor.ajay.app/api/branding/
+    ?videoID=7DKv5H5Frt0

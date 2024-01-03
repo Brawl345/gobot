@@ -103,6 +103,42 @@ func (p *Plugin) getVideoInfo(videoID string) (Video, error) {
 	return response.Items[0], nil
 }
 
+func deArrow(originalText string, video *Video) (string, error) {
+	// https://wiki.sponsor.ajay.app/w/API_Docs/DeArrow#GET_/api/branding
+	deArrowUrl := fmt.Sprintf("https://sponsor.ajay.app/api/branding/?videoID=%s", video.ID)
+	var deArrowResponse DeArrowResponse
+	var httpError *httpUtils.HttpError
+	err := httpUtils.GetRequest(
+		deArrowUrl,
+		&deArrowResponse,
+	)
+
+	if err != nil {
+		if errors.As(err, &httpError) {
+			if httpError.StatusCode == 500 { // API seems to throw 500 for every empty response
+				return "", nil
+			}
+		}
+		return "", err
+	}
+
+	alternativeTitle := deArrowResponse.GetBestTitle()
+	if alternativeTitle != "" {
+		modifiedText := strings.Replace(
+			originalText,
+			fmt.Sprintf("<b>%s</b>\n", utils.Escape(video.Snippet.Title)),
+			fmt.Sprintf("<b>%s</b>\n<i>Alternativer Titel: <b>%s</b>\n</i>",
+				utils.Escape(video.Snippet.Title),
+				utils.Escape(alternativeTitle),
+			),
+			1,
+		)
+		return modifiedText, nil
+	}
+
+	return "", nil
+}
+
 func constructText(video *Video) string {
 	var sb strings.Builder
 
@@ -276,7 +312,20 @@ func (p *Plugin) OnYouTubeLink(c plugin.GobotContext) error {
 
 	text := constructText(&video)
 
-	return c.Reply(text, utils.DefaultSendOptions)
+	msg, err := c.Bot().Reply(c.Message(), text, utils.DefaultSendOptions)
+	if err == nil {
+		modifiedText, err := deArrow(text, &video)
+		if err != nil {
+			log.Err(err).
+				Str("videoID", videoID).
+				Msg("Error while contacting DeArrow API")
+			return nil
+		}
+
+		_, err = c.Bot().Edit(msg, modifiedText, utils.DefaultSendOptions)
+	}
+
+	return err
 }
 
 func (p *Plugin) onYouTubeSearch(c plugin.GobotContext) error {
