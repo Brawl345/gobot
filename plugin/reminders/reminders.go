@@ -271,6 +271,10 @@ func (p *Plugin) onAddDeltaReminder(c plugin.GobotContext) error {
 		return c.Reply("❌ Bitte wähle als Zeitangabe entweder 's', 'm' oder 'h'.", utils.DefaultSendOptions)
 	}
 
+	if remindTime.After(time.Now().AddDate(1, 0, 0)) {
+		return c.Reply("❌ Bitte wähle eine kürzere Dauer.", utils.DefaultSendOptions)
+	}
+
 	id, err := p.reminderService.SaveReminder(c.Chat(), c.Sender(), remindTime, text)
 	if err != nil {
 		guid := xid.New().String()
