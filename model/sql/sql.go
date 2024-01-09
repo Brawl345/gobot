@@ -18,7 +18,13 @@ var embeddedMigrations embed.FS
 
 func New() (*sqlx.DB, error) {
 	host := strings.TrimSpace(os.Getenv("MYSQL_HOST"))
+	if host == "" {
+		host = "localhost"
+	}
 	port := strings.TrimSpace(os.Getenv("MYSQL_PORT"))
+	if port == "" {
+		port = "3306"
+	}
 	user := strings.TrimSpace(os.Getenv("MYSQL_USER"))
 	password := strings.TrimSpace(os.Getenv("MYSQL_PASSWORD"))
 	dbname := strings.TrimSpace(os.Getenv("MYSQL_DB"))
