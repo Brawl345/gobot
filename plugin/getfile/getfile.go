@@ -31,7 +31,7 @@ type (
 func New(credentialService model.CredentialService, fileService Service) *Plugin {
 	dir, err := credentialService.GetKey("getfile_dir")
 	if err != nil {
-		dir = "tmp"
+		dir = "files"
 	}
 	return &Plugin{
 		fileService: fileService,
