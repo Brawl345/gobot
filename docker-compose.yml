@@ -1,0 +1,37 @@
+version: '3.8'
+
+name: gobot
+services:
+  bot:
+    build: .
+    restart: always
+    user: '${DOCKER_UID}:${DOCKER_GID}'
+    env_file: .env
+    volumes:
+      - 'gobot-files:/gobot/files'
+
+  db:
+    image: mariadb
+    restart: always
+    environment:
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DB}
+      MYSQL_RANDOM_ROOT_PASSWORD: true
+    ports:
+      - '33060:3306'
+    volumes:
+      - 'gobot-db:/var/lib/mysql'
+    healthcheck:
+      test: ['CMD', 'healthcheck.sh', '--connect', '--innodb_initialized']
+      start_period: 1m
+      start_interval: 10s
+      interval: 1m
+      timeout: 5s
+      retries: 3
+
+volumes:
+  gobot-files:
+    name: gobot-files
+  gobot-db:
+    name: gobot-db
