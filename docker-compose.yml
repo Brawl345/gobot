@@ -7,6 +7,7 @@ services:
     pull_policy: always
     image: ghcr.io/brawl345/gobot:latest
     restart: always
+    # TODO: Does not work, idk why, volume is still not writeable
     user: '${DOCKER_UID}:${DOCKER_GID}'
     env_file: .env
     volumes:
