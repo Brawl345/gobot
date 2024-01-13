@@ -1,24 +1,9 @@
-# IDE folders
-.idea/
-.vscode/
-./src-ui/.vscode
-# OS turds
-.DS_Store
-# VCS
-.git
-.github
-# App files
-*.http
-*.sql
-.env
-.env.example
-.gitignore
-app.json
-flake.lock
-flake.nix
-fly.toml
-http-client.private.env.json
-LICENSE
-Procfile
-README.md
-docker-compose.yml
+*
+!bot/
+!logger/
+!model/
+!plugin/
+!utils/
+!go.mod
+!go.sum
+!main.go

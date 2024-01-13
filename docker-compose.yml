@@ -3,7 +3,9 @@ version: '3.8'
 name: gobot
 services:
   bot:
-    build: .
+    # build: .
+    pull_policy: always
+    image: ghcr.io/brawl345/gobot:latest
     restart: always
     user: '${DOCKER_UID}:${DOCKER_GID}'
     env_file: .env
