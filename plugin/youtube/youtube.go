@@ -115,7 +115,7 @@ func deArrow(originalText string, video *Video) (string, error) {
 
 	if err != nil {
 		if errors.As(err, &httpError) {
-			if httpError.StatusCode == 500 { // API seems to throw 500 for every empty response
+			if httpError.StatusCode == 500 || httpError.StatusCode == 404 { // API seems to throw 500 for some empty responses
 				return "", nil
 			}
 		}
