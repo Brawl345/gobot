@@ -7,16 +7,21 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/PaulSonOfLars/gotgbot/v2"
+
 	"github.com/Brawl345/gobot/logger"
-	"gopkg.in/telebot.v3"
 )
 
 var (
-	DefaultSendOptions = &telebot.SendOptions{
-		AllowWithoutReply:     true,
-		DisableWebPagePreview: true,
-		DisableNotification:   true,
-		ParseMode:             telebot.ModeHTML,
+	DefaultSendOptions = &gotgbot.SendMessageOpts{
+		ReplyParameters: &gotgbot.ReplyParameters{
+			AllowSendingWithoutReply: true,
+		},
+		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+			IsDisabled: true,
+		},
+		DisableNotification: true,
+		ParseMode:           gotgbot.ParseModeHTML,
 	}
 	log = logger.New("utils")
 )
@@ -41,7 +46,7 @@ func GermanTimezone() *time.Location {
 	return timezone
 }
 
-func AnyEntities(message *telebot.Message) telebot.Entities {
+func AnyEntities(message *gotgbot.Message) []gotgbot.MessageEntity {
 	entities := message.Entities
 	if message.Entities == nil {
 		entities = message.CaptionEntities
@@ -78,7 +83,15 @@ func ReadVersionInfo() (VersionInfo, error) {
 	return versionInfo, nil
 }
 
-func IsAdmin(user *telebot.User) bool {
+func IsAdmin(user *gotgbot.User) bool {
 	adminId, _ := strconv.ParseInt(os.Getenv("ADMIN_ID"), 10, 64)
-	return adminId == user.ID
+	return adminId == user.Id
+}
+
+func FromGroup(message gotgbot.MaybeInaccessibleMessage) bool {
+	return message.GetChat().Type == gotgbot.ChatTypeGroup || message.GetChat().Type == gotgbot.ChatTypeSupergroup
+}
+
+func IsPrivate(message *gotgbot.Message) bool {
+	return message.Chat.Type == gotgbot.ChatTypePrivate
 }

@@ -2,14 +2,13 @@ package model
 
 import (
 	"errors"
-
-	"gopkg.in/telebot.v3"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 var ErrAddressNotFound = errors.New("address not found")
 
 type (
 	GeocodingService interface {
-		Geocode(address string) (telebot.Venue, error)
+		Geocode(address string) (gotgbot.Venue, error)
 	}
 )

@@ -3,6 +3,7 @@ module github.com/Brawl345/gobot
 go 1.18
 
 require (
+	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.24
 	github.com/go-shiori/go-readability v0.0.0-20230421032831-c66949dfc0ad
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/jmoiron/sqlx v1.3.5
@@ -12,8 +13,7 @@ require (
 	github.com/rubenv/sql-migrate v1.5.2
 	github.com/sosodev/duration v1.2.0
 	golang.org/x/exp v0.0.0-20231006140011-7918f672742d
-	golang.org/x/sync v0.4.0
-	gopkg.in/telebot.v3 v3.1.3
+	golang.org/x/sync v0.6.0
 )
 
 require (

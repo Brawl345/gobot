@@ -3,11 +3,11 @@ package sql
 import (
 	"database/sql"
 	"errors"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/jmoiron/sqlx"
-	"gopkg.in/telebot.v3"
 )
 
 type quoteService struct {
@@ -22,19 +22,19 @@ func NewQuoteService(db *sqlx.DB) *quoteService {
 	}
 }
 
-func (db *quoteService) GetQuote(chat *telebot.Chat) (string, error) {
+func (db *quoteService) GetQuote(chat *gotgbot.Chat) (string, error) {
 	var quote string
-	err := db.Get(&quote, "SELECT quote FROM quotes WHERE chat_id = ? ORDER BY RAND() LIMIT 1", chat.ID)
+	err := db.Get(&quote, "SELECT quote FROM quotes WHERE chat_id = ? ORDER BY RAND() LIMIT 1", chat.Id)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", model.ErrNotFound
 	}
 	return quote, err
 }
 
-func (db *quoteService) exists(chat *telebot.Chat, quote string) (bool, error) {
+func (db *quoteService) exists(chat *gotgbot.Chat, quote string) (bool, error) {
 	const query = `SELECT 1 FROM quotes WHERE chat_id = ? AND quote = ?`
 	var exists bool
-	err := db.Get(&exists, query, chat.ID, quote)
+	err := db.Get(&exists, query, chat.Id, quote)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return false, nil
@@ -44,7 +44,7 @@ func (db *quoteService) exists(chat *telebot.Chat, quote string) (bool, error) {
 	return exists, nil
 }
 
-func (db *quoteService) SaveQuote(chat *telebot.Chat, quote string) error {
+func (db *quoteService) SaveQuote(chat *gotgbot.Chat, quote string) error {
 	exists, err := db.exists(chat, quote)
 	if err != nil {
 		return err
@@ -55,11 +55,11 @@ func (db *quoteService) SaveQuote(chat *telebot.Chat, quote string) error {
 
 	const query = `INSERT INTO quotes (chat_id, quote) VALUES (?, ?)`
 
-	_, err = db.Exec(query, chat.ID, quote)
+	_, err = db.Exec(query, chat.Id, quote)
 	return err
 }
 
-func (db *quoteService) DeleteQuote(chat *telebot.Chat, quote string) error {
+func (db *quoteService) DeleteQuote(chat *gotgbot.Chat, quote string) error {
 	exists, err := db.exists(chat, quote)
 	if err != nil {
 		return err
@@ -70,6 +70,6 @@ func (db *quoteService) DeleteQuote(chat *telebot.Chat, quote string) error {
 
 	const query = `DELETE FROM quotes WHERE chat_id = ? AND quote = ?`
 
-	_, err = db.Exec(query, chat.ID, quote)
+	_, err = db.Exec(query, chat.Id, quote)
 	return err
 }

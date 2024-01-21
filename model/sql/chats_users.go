@@ -4,12 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/jmoiron/sqlx"
-	"gopkg.in/telebot.v3"
 )
 
 type chatsUsersService struct {
@@ -28,7 +28,7 @@ func NewChatsUsersService(db *sqlx.DB, chatService model.ChatService, userServic
 	}
 }
 
-func (db *chatsUsersService) Create(chat *telebot.Chat, user *telebot.User) error {
+func (db *chatsUsersService) Create(chat *gotgbot.Chat, user *gotgbot.User) error {
 	tx, err := db.BeginTxx(context.Background(), nil)
 	if err != nil {
 		return err
@@ -51,7 +51,7 @@ func (db *chatsUsersService) Create(chat *telebot.Chat, user *telebot.User) erro
 		return err
 	}
 
-	err = db.insertRelationship(tx, chat.ID, user.ID)
+	err = db.insertRelationship(tx, chat.Id, user.Id)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (db *chatsUsersService) Create(chat *telebot.Chat, user *telebot.User) erro
 	return nil
 }
 
-func (db *chatsUsersService) CreateBatch(chat *telebot.Chat, users *[]telebot.User) error {
+func (db *chatsUsersService) CreateBatch(chat *gotgbot.Chat, users *[]gotgbot.User) error {
 	const insertRelationshipQuery = `INSERT INTO 
     chats_users (chat_id, user_id, msg_count, in_group) 
     VALUES (?, ?, 0, true)
@@ -98,7 +98,7 @@ func (db *chatsUsersService) CreateBatch(chat *telebot.Chat, users *[]telebot.Us
 			return err
 		}
 
-		_, err := tx.Exec(insertRelationshipQuery, chat.ID, user.ID)
+		_, err := tx.Exec(insertRelationshipQuery, chat.Id, user.Id)
 		if err != nil {
 			return err
 		}
@@ -111,13 +111,13 @@ func (db *chatsUsersService) CreateBatch(chat *telebot.Chat, users *[]telebot.Us
 	return nil
 }
 
-func (db *chatsUsersService) GetAllUsersWithMsgCount(chat *telebot.Chat) ([]model.User, error) {
+func (db *chatsUsersService) GetAllUsersWithMsgCount(chat *gotgbot.Chat) ([]model.User, error) {
 	const query = `SELECT u.first_name, u.last_name, msg_count, in_group FROM chats_users
 JOIN users u on u.id = chats_users.user_id
 WHERE chat_id = ?
 ORDER BY msg_count DESC`
 	var users []model.User
-	err := db.Select(&users, query, chat.ID)
+	err := db.Select(&users, query, chat.Id)
 	return users, err
 }
 
@@ -130,7 +130,7 @@ func (db *chatsUsersService) insertRelationship(tx *sqlx.Tx, chatId int64, userI
 	return err
 }
 
-func (db *chatsUsersService) IsAllowed(chat *telebot.Chat, user *telebot.User) bool {
+func (db *chatsUsersService) IsAllowed(chat *gotgbot.Chat, user *gotgbot.User) bool {
 	if utils.IsAdmin(user) {
 		return true
 	}
@@ -141,29 +141,29 @@ func (db *chatsUsersService) IsAllowed(chat *telebot.Chat, user *telebot.User) b
 	OR (users.id = ? AND users.allowed = true);`
 
 	var isAllowed bool
-	err := db.Get(&isAllowed, query, chat.ID, user.ID)
+	err := db.Get(&isAllowed, query, chat.Id, user.Id)
 	if err != nil {
 		return false
 	}
 	return isAllowed
 }
 
-func (db *chatsUsersService) Leave(chat *telebot.Chat, user *telebot.User) error {
+func (db *chatsUsersService) Leave(chat *gotgbot.Chat, user *gotgbot.User) error {
 	const query = `UPDATE chats_users SET in_group = false
 	WHERE chat_id = ?
 	  AND user_id = ?`
 
-	_, err := db.Exec(query, chat.ID, user.ID)
+	_, err := db.Exec(query, chat.Id, user.Id)
 	return err
 }
 
-func (db *chatsUsersService) GetAllUsersInChat(chat *telebot.Chat) ([]model.User, error) {
+func (db *chatsUsersService) GetAllUsersInChat(chat *gotgbot.Chat) ([]model.User, error) {
 	const query = `SELECT u.id, u.first_name, u.last_name FROM chats_users
 	JOIN users u on u.id = chats_users.user_id
 	WHERE chat_id = ?
 	AND in_group = true
 	ORDER BY u.first_name, u.last_name`
 	var users []model.User
-	err := db.Select(&users, query, chat.ID)
+	err := db.Select(&users, query, chat.Id)
 	return users, err
 }

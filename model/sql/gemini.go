@@ -5,8 +5,8 @@ import (
 	"errors"
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/jmoiron/sqlx"
-	"gopkg.in/telebot.v3"
 )
 
 type (
@@ -23,10 +23,10 @@ func NewGeminiService(db *sqlx.DB) *geminiService {
 	}
 }
 
-func (db *geminiService) GetHistory(chat *telebot.Chat) (model.GeminiData, error) {
+func (db *geminiService) GetHistory(chat *gotgbot.Chat) (model.GeminiData, error) {
 	const query = `SELECT gemini_history, gemini_history_expires_on FROM chats WHERE id = ?`
 	var geminiData model.GeminiData
-	err := db.Get(&geminiData, query, chat.ID)
+	err := db.Get(&geminiData, query, chat.Id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return geminiData, nil
@@ -35,17 +35,17 @@ func (db *geminiService) GetHistory(chat *telebot.Chat) (model.GeminiData, error
 	return geminiData, err
 }
 
-func (db *geminiService) ResetHistory(chat *telebot.Chat) error {
+func (db *geminiService) ResetHistory(chat *gotgbot.Chat) error {
 	const query = `UPDATE chats SET gemini_history = NULL, gemini_history_expires_on = NULL WHERE id = ?`
-	_, err := db.Exec(query, chat.ID)
+	_, err := db.Exec(query, chat.Id)
 	return err
 }
 
-func (db *geminiService) SetHistory(chat *telebot.Chat, history string) error {
+func (db *geminiService) SetHistory(chat *gotgbot.Chat, history string) error {
 	const query = `UPDATE chats
 	SET gemini_history = ?,
 	    gemini_history_expires_on = NOW() + INTERVAL 10 MINUTE 
 	WHERE id = ?`
-	_, err := db.Exec(query, history, chat.ID)
+	_, err := db.Exec(query, history, chat.Id)
 	return err
 }

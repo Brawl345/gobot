@@ -1,10 +1,10 @@
 package plugin
 
 import (
+	"github.com/PaulSonOfLars/gotgbot/v2"
+	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"regexp"
 	"time"
-
-	"gopkg.in/telebot.v3"
 )
 
 type (
@@ -12,24 +12,24 @@ type (
 		Name() string
 
 		// Commands will be shown in the menu button
-		Commands() []telebot.Command
+		Commands() []gotgbot.BotCommand
 
 		// Handlers are used to react to specific strings & entities in a message
-		Handlers(botInfo *telebot.User) []Handler
+		Handlers(botInfo *gotgbot.User) []Handler
 	}
 
 	Handler interface {
 		Command() any
-		Run(c GobotContext) error
+		Run(b *gotgbot.Bot, c GobotContext) error
 	}
 
 	GobotContext struct {
-		telebot.Context
+		*ext.Context
 		Matches      []string          // Regex matches
 		NamedMatches map[string]string // Named Regex matches
 	}
 
-	GobotHandlerFunc func(c GobotContext) error
+	GobotHandlerFunc func(b *gotgbot.Bot, c GobotContext) error
 
 	CommandHandler struct {
 		Trigger     any
@@ -59,22 +59,22 @@ func (h *CommandHandler) Command() any {
 	return h.Trigger
 }
 
-func (h *CommandHandler) Run(c GobotContext) error {
-	return h.HandlerFunc(c)
+func (h *CommandHandler) Run(b *gotgbot.Bot, c GobotContext) error {
+	return h.HandlerFunc(b, c)
 }
 
 func (h *CallbackHandler) Command() any {
 	return h.Trigger
 }
 
-func (h *CallbackHandler) Run(c GobotContext) error {
-	return h.HandlerFunc(c)
+func (h *CallbackHandler) Run(b *gotgbot.Bot, c GobotContext) error {
+	return h.HandlerFunc(b, c)
 }
 
 func (h *InlineHandler) Command() any {
 	return h.Trigger
 }
 
-func (h *InlineHandler) Run(c GobotContext) error {
-	return h.HandlerFunc(c)
+func (h *InlineHandler) Run(b *gotgbot.Bot, c GobotContext) error {
+	return h.HandlerFunc(b, c)
 }

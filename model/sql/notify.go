@@ -3,10 +3,10 @@ package sql
 import (
 	"database/sql"
 	"errors"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/jmoiron/sqlx"
-	"gopkg.in/telebot.v3"
 )
 
 type notifyService struct {
@@ -21,13 +21,13 @@ func NewNotifyService(db *sqlx.DB) *notifyService {
 	}
 }
 
-func (db *notifyService) Enabled(chat *telebot.Chat, user *telebot.User) (bool, error) {
+func (db *notifyService) Enabled(chat *gotgbot.Chat, user *gotgbot.User) (bool, error) {
 	const query = `SELECT notify
 	FROM chats_users
 	WHERE chat_id = ?
 	  AND user_id = ?;`
 	var enabled bool
-	err := db.Get(&enabled, query, chat.ID, user.ID)
+	err := db.Get(&enabled, query, chat.Id, user.Id)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
@@ -39,32 +39,32 @@ func (db *notifyService) Enabled(chat *telebot.Chat, user *telebot.User) (bool, 
 	return enabled, err
 }
 
-func (db *notifyService) Enable(chat *telebot.Chat, user *telebot.User) error {
+func (db *notifyService) Enable(chat *gotgbot.Chat, user *gotgbot.User) error {
 	const query = `UPDATE chats_users
 	SET notify = true
 	WHERE chat_id = ?
 	  AND user_id = ?;`
-	_, err := db.Exec(query, chat.ID, user.ID)
+	_, err := db.Exec(query, chat.Id, user.Id)
 	return err
 }
 
-func (db *notifyService) Disable(chat *telebot.Chat, user *telebot.User) error {
+func (db *notifyService) Disable(chat *gotgbot.Chat, user *gotgbot.User) error {
 	const query = `UPDATE chats_users
 	SET notify = false
 	WHERE chat_id = ?
 	  AND user_id = ?;`
-	_, err := db.Exec(query, chat.ID, user.ID)
+	_, err := db.Exec(query, chat.Id, user.Id)
 	return err
 }
 
-func (db *notifyService) GetAllToBeNotifiedUsers(chat *telebot.Chat, mentionedUsernames []string) ([]int64, error) {
+func (db *notifyService) GetAllToBeNotifiedUsers(chat *gotgbot.Chat, mentionedUsernames []string) ([]int64, error) {
 	query := `SELECT u.id FROM chats_users cu
 	LEFT JOIN users u ON cu.user_id = u.id
 	WHERE cu.notify = TRUE
 	  AND cu.chat_id = ?
 	  AND cu.in_group = TRUE
 	  AND u.username IN (?);`
-	query, args, err := sqlx.In(query, chat.ID, mentionedUsernames)
+	query, args, err := sqlx.In(query, chat.Id, mentionedUsernames)
 	if err != nil {
 		return nil, err
 	}

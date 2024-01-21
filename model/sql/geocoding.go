@@ -2,11 +2,11 @@ package sql
 
 import (
 	"fmt"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"net/url"
 
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/utils/httpUtils"
-	"gopkg.in/telebot.v3"
 )
 
 type (
@@ -16,8 +16,8 @@ type (
 		PlaceId     int     `json:"place_id"`
 		OsmType     string  `json:"osm_type"`
 		OsmId       int     `json:"osm_id"`
-		Lat         float32 `json:"lat,string"`
-		Lng         float32 `json:"lon,string"`
+		Lat         float64 `json:"lat,string"`
+		Lng         float64 `json:"lon,string"`
 		DisplayName string  `json:"display_name"`
 		Category    string  `json:"category"`
 		Type        string  `json:"type"`
@@ -28,7 +28,7 @@ func NewGeocodingService() *geocodingService {
 	return &geocodingService{}
 }
 
-func (db *geocodingService) Geocode(address string) (telebot.Venue, error) {
+func (db *geocodingService) Geocode(address string) (gotgbot.Venue, error) {
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "nominatim.openstreetmap.org",
@@ -53,19 +53,19 @@ func (db *geocodingService) Geocode(address string) (telebot.Venue, error) {
 	)
 
 	if err != nil {
-		return telebot.Venue{}, fmt.Errorf("error while geocoding: %w, url: %s", err, requestUrl.String())
+		return gotgbot.Venue{}, fmt.Errorf("error while geocoding: %w, url: %s", err, requestUrl.String())
 	}
 
 	if len(response) == 0 {
-		return telebot.Venue{}, model.ErrAddressNotFound
+		return gotgbot.Venue{}, model.ErrAddressNotFound
 	}
 
-	return telebot.Venue{
+	return gotgbot.Venue{
 		Title:   response[0].DisplayName,
 		Address: response[0].DisplayName,
-		Location: telebot.Location{
-			Lat: response[0].Lat,
-			Lng: response[0].Lng,
+		Location: gotgbot.Location{
+			Latitude:  response[0].Lat,
+			Longitude: response[0].Lng,
 		},
 	}, nil
 }
