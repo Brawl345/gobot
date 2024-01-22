@@ -3,28 +3,18 @@ package bot
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/Brawl345/gobot/utils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 )
 
-// TODO
-
-// import (
-//
-//	"fmt"
-//	"strings"
-//	"time"
-//
-//	"gopkg.in/telebot.v3"
-//
-// )
-//
-// // https://twin.sh/articles/35/how-to-add-colors-to-your-console-terminal-output-in-go
+// https://twin.sh/articles/35/how-to-add-colors-to-your-console-terminal-output-in-go
 var (
 	reset  = "\033[0m"
 	bold   = "\033[1m"
+	italic = "\033[3m"
 	red    = "\033[31m"
 	green  = "\033[32m"
 	yellow = "\033[33m"
@@ -63,6 +53,7 @@ func printUser(user *gotgbot.User) string {
 
 	return sb.String()
 }
+
 func onMessage(msg *gotgbot.Message) string {
 	var sb strings.Builder
 
@@ -614,122 +605,162 @@ func onMessage(msg *gotgbot.Message) string {
 	return sb.String()
 }
 
-//	func onCallback(callback *telebot.Callback) string {
-//		var sb strings.Builder
-//
-//		// Time
-//		sb.WriteString(
-//			fmt.Sprintf(
-//				"%s[%v]",
-//				cyan,
-//				callback.Message.Time().Format("15:04:05"),
-//			),
-//		)
-//
-//		// Chat Title
-//		if callback.Message.Chat.Title != "" {
-//			sb.WriteString(
-//				fmt.Sprintf(
-//					" %s:",
-//					callback.Message.Chat.Title,
-//				),
-//			)
-//		}
-//
-//		sb.WriteString(reset)
-//
-//		// Sender
-//		if callback.Sender != nil {
-//			sb.WriteString(
-//				fmt.Sprintf(
-//					" %s",
-//					printUser(callback.Sender),
-//				),
-//			)
-//		}
-//
-//		// Begin message
-//		sb.WriteString(
-//			fmt.Sprintf(
-//				"%s >>> %s%s(CallbackQuery)%s ",
-//				cyan,
-//				reset,
-//				green,
-//				reset,
-//			),
-//		)
-//
-//		if callback.Data != "" {
-//			sb.WriteString(
-//				fmt.Sprintf(
-//					"%s%s%s",
-//					purple,
-//					callback.Data,
-//					reset,
-//				),
-//			)
-//		}
-//
-//		return sb.String()
-//	}
-//
-//	func onInlineQuery(query *telebot.Query) string {
-//		var sb strings.Builder
-//
-//		// Time
-//		sb.WriteString(
-//			fmt.Sprintf(
-//				"%s[%v]%s",
-//				cyan,
-//				time.Now().Format("15:04:05"),
-//				reset,
-//			),
-//		)
-//
-//		// Sender
-//		if query.Sender != nil {
-//			sb.WriteString(
-//				fmt.Sprintf(
-//					" %s",
-//					printUser(query.Sender),
-//				),
-//			)
-//		}
-//
-//		// Begin message
-//		sb.WriteString(
-//			fmt.Sprintf(
-//				"%s >>> %s%s(InlineQuery)%s ",
-//				cyan,
-//				reset,
-//				green,
-//				reset,
-//			),
-//		)
-//
-//		if query.Text != "" {
-//			sb.WriteString(
-//				fmt.Sprintf(
-//					"%s%s%s",
-//					purple,
-//					query.Text,
-//					reset,
-//				),
-//			)
-//		}
-//
-//		return sb.String()
-//	}
+func onCallback(callback *gotgbot.CallbackQuery) string {
+	var sb strings.Builder
+
+	if callback.Message != nil {
+		// Time
+		if callback.Message.GetDate() != 0 {
+			sb.WriteString(
+				fmt.Sprintf(
+					"%s[%v]%s",
+					cyan,
+					utils.TimestampToTime(callback.Message.GetDate()).Format("15:04:05"),
+					reset,
+				),
+			)
+		}
+
+		// Chat Title
+		if callback.Message.GetChat().Title != "" {
+			if callback.Message.GetDate() != 0 {
+				sb.WriteString(" ")
+			}
+			sb.WriteString(
+				fmt.Sprintf(
+					"%s%s%s",
+					cyan,
+					callback.Message.GetChat().Title,
+					reset,
+				),
+			)
+		}
+
+		if callback.Message.GetChat().Title != "" || callback.Message.GetDate() != 0 {
+			sb.WriteString(
+				fmt.Sprintf(
+					"%s:%s ",
+					cyan,
+					reset,
+				),
+			)
+		}
+	}
+
+	// Sender
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s",
+			printUser(&callback.From),
+		),
+	)
+
+	// Begin message
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s >>> %s%s(CallbackQuery)%s ",
+			cyan,
+			reset,
+			green,
+			reset,
+		),
+	)
+
+	if callback.Data != "" {
+		sb.WriteString(
+			fmt.Sprintf(
+				"%s%s%s",
+				purple,
+				callback.Data,
+				reset,
+			),
+		)
+	}
+
+	return sb.String()
+}
+
+func onInlineQuery(query *gotgbot.InlineQuery) string {
+	var sb strings.Builder
+
+	// Time
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s[%v]%s ",
+			cyan,
+			time.Now().Format("15:04:05"),
+			reset,
+		),
+	)
+
+	if query.ChatType != "" {
+		chatType := ""
+		switch query.ChatType {
+		case "channel":
+			chatType = "In Kanal"
+		case "group":
+			chatType = "In Gruppe"
+		case "supergroup":
+			chatType = "In Supergruppe"
+		case "private":
+			chatType = "In Privatchat"
+		case "sender":
+			chatType = "In Bot-Chat"
+		}
+		sb.WriteString(
+			fmt.Sprintf(
+				"%s%s%s%s: ",
+				italic,
+				cyan,
+				chatType,
+				reset,
+			),
+		)
+	}
+
+	// Sender
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s",
+			printUser(&query.From),
+		),
+	)
+
+	// Begin message
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s >>> %s%s(InlineQuery)%s ",
+			cyan,
+			reset,
+			green,
+			reset,
+		),
+	)
+
+	if query.Query != "" {
+		sb.WriteString(
+			fmt.Sprintf(
+				"%s%s%s",
+				purple,
+				query.Query,
+				reset,
+			),
+		)
+	}
+
+	return sb.String()
+}
+
 func PrintMessage(c *ext.Context) {
 	var text string
 	if c.Message != nil {
 		text = onMessage(c.Message)
 	}
 	if c.CallbackQuery != nil {
-		//text = onCallback(c.CallbackQuery)
+		text = onCallback(c.CallbackQuery)
 	}
 	if c.InlineQuery != nil {
-		//text = onInlineQuery(c.InlineQuery)
+		text = onInlineQuery(c.InlineQuery)
 	}
 
 	println(text)
