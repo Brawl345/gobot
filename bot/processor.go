@@ -123,7 +123,32 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 						namedMatches[command.SubexpNames()[i]] = name
 					}
 				}
-			// TODO: Other handler types
+			case utils.MessageType:
+				switch {
+				// More to be added when needed
+				case msg.Photo != nil:
+					matched = command == utils.OnPhoto
+				}
+
+				if !matched && utils.ContainsMedia(msg) {
+					matched = command == utils.OnMedia
+				}
+
+				if !matched {
+					matched = command == utils.OnMsg
+				}
+			case utils.EntityType:
+				entities := msg.Entities
+				if entities == nil {
+					entities = msg.CaptionEntities
+				}
+
+				for _, entity := range entities {
+					matched = utils.EntityType(entity.Type) == command
+					if matched {
+						break
+					}
+				}
 			default:
 				panic("Unspported handler type!!")
 			}

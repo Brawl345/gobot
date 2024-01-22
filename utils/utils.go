@@ -54,6 +54,37 @@ func AnyEntities(message *gotgbot.Message) []gotgbot.MessageEntity {
 	return entities
 }
 
+func AnyText(message *gotgbot.Message) string {
+	text := message.Text
+	if message.Text == "" {
+		text = message.Caption
+	}
+	return text
+}
+
+func ContainsMedia(m *gotgbot.Message) bool {
+	switch {
+	case m.Photo != nil:
+		return true
+	case m.Voice != nil:
+		return true
+	case m.Audio != nil:
+		return true
+	case m.Animation != nil:
+		return true
+	case m.Sticker != nil:
+		return true
+	case m.Document != nil:
+		return true
+	case m.Video != nil:
+		return true
+	case m.VideoNote != nil:
+		return true
+	default:
+		return false
+	}
+}
+
 func ReadVersionInfo() (VersionInfo, error) {
 	buildInfo, ok := debug.ReadBuildInfo()
 

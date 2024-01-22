@@ -10,7 +10,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
-	"gopkg.in/telebot.v3"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 var log = logger.New("amazon_ref_cleaner")
@@ -25,11 +25,11 @@ func (p *Plugin) Name() string {
 	return "amazon_ref_cleaner"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil
 }
 
-func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(`(?i)(?:amzn\.to/[A-Za-z\d]+|amazon\.[\w.]+/\S+)`),
@@ -38,15 +38,15 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	}
 }
 
-func onAmazonLink(c plugin.GobotContext) error {
+func onAmazonLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var links []string
-	for _, entity := range utils.AnyEntities(c.Message()) {
-		if entity.Type == telebot.EntityURL {
-			amazonUrl, err := url.Parse(c.Message().EntityText(entity))
+	for _, entity := range utils.AnyEntities(c.EffectiveMessage) {
+		if utils.EntityType(entity.Type) == utils.EntityTypeURL {
+			amazonUrl, err := url.Parse(c.EffectiveMessage.ParseEntity(entity).Url)
 
 			if err != nil {
 				log.Err(err).
-					Str("url", c.Message().EntityText(entity)).
+					Str("url", c.EffectiveMessage.ParseEntity(entity).Url).
 					Msg("Failed to parse amazon url")
 				continue
 			}
@@ -112,10 +112,11 @@ func onAmazonLink(c plugin.GobotContext) error {
 		sb.WriteString(link + "\n")
 	}
 
-	return c.Reply(sb.String(), &telebot.SendOptions{
-		AllowWithoutReply:     true,
-		DisableNotification:   true,
-		DisableWebPagePreview: true,
-		ParseMode:             telebot.ModeHTML,
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+		DisableNotification: true,
+		ParseMode:           gotgbot.ParseModeHTML,
+		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+		LinkPreviewOptions:  &gotgbot.LinkPreviewOptions{IsDisabled: true},
 	})
+	return err
 }

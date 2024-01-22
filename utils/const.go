@@ -2,8 +2,15 @@ package utils
 
 import "time"
 
+// EntityType is one of https://core.telegram.org/bots/api#messageentity
+type EntityType string
+
+type MessageType string
+
 const (
-	OnMsg = "\agobot_msg" // Shortcut for handling any message
+	OnMsg   MessageType = "\agobot_msg" // Shortcut for handling any message
+	OnPhoto MessageType = "\agobot_photo"
+	OnMedia MessageType = "\agobot_media"
 
 	Day  = 24 * time.Hour
 	Week = 7 * Day
@@ -17,6 +24,9 @@ const (
 	MaxPhotosizeThroughTelegram = 5000000  // Max filesize of photos that Telegram can send automatically = 5 MB
 
 	ChatActionUploadPhoto = "upload_photo"
+
+	EntityTypeMention EntityType = "mention"
+	EntityTypeURL     EntityType = "url"
 
 	UserAgent = "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
 )
