@@ -37,6 +37,35 @@ type (
 	}
 )
 
+func ReadVersionInfo() (VersionInfo, error) {
+	buildInfo, ok := debug.ReadBuildInfo()
+
+	if !ok {
+		return VersionInfo{}, errors.New("could not read build info")
+	}
+
+	versionInfo := VersionInfo{
+		GoVersion: buildInfo.GoVersion,
+	}
+
+	for _, kv := range buildInfo.Settings {
+		switch kv.Key {
+		case "GOOS":
+			versionInfo.GoOS = kv.Value
+		case "GOARCH":
+			versionInfo.GoArch = kv.Value
+		case "vcs.revision":
+			versionInfo.Revision = kv.Value
+		case "vcs.time":
+			versionInfo.LastCommit, _ = time.Parse(time.RFC3339, kv.Value)
+		case "vcs.modified":
+			versionInfo.DirtyBuild = kv.Value == "true"
+		}
+	}
+
+	return versionInfo, nil
+}
+
 func GermanTimezone() *time.Location {
 	timezone, err := time.LoadLocation("Europe/Berlin")
 	if err != nil {
@@ -85,33 +114,25 @@ func ContainsMedia(m *gotgbot.Message) bool {
 	}
 }
 
-func ReadVersionInfo() (VersionInfo, error) {
-	buildInfo, ok := debug.ReadBuildInfo()
+func TimestampToTime(timestamp int64) time.Time {
+	return time.Unix(timestamp, 0)
+}
 
-	if !ok {
-		return VersionInfo{}, errors.New("could not read build info")
+func GetBestResolution(photo []gotgbot.PhotoSize) *gotgbot.PhotoSize {
+	if photo == nil {
+		return nil
 	}
-
-	versionInfo := VersionInfo{
-		GoVersion: buildInfo.GoVersion,
-	}
-
-	for _, kv := range buildInfo.Settings {
-		switch kv.Key {
-		case "GOOS":
-			versionInfo.GoOS = kv.Value
-		case "GOARCH":
-			versionInfo.GoArch = kv.Value
-		case "vcs.revision":
-			versionInfo.Revision = kv.Value
-		case "vcs.time":
-			versionInfo.LastCommit, _ = time.Parse(time.RFC3339, kv.Value)
-		case "vcs.modified":
-			versionInfo.DirtyBuild = kv.Value == "true"
+	var filesize int64
+	var bestResolution *gotgbot.PhotoSize
+	for _, photoSize := range photo {
+		photoSize := photoSize
+		if photoSize.FileSize > filesize {
+			filesize = photoSize.FileSize
+			bestResolution = &photoSize
 		}
 	}
 
-	return versionInfo, nil
+	return bestResolution
 }
 
 func IsAdmin(user *gotgbot.User) bool {

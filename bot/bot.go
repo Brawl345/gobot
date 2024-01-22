@@ -16,7 +16,6 @@ import (
 	"github.com/Brawl345/gobot/plugin/google_images"
 	"github.com/Brawl345/gobot/plugin/kaomoji"
 	"github.com/Brawl345/gobot/plugin/manager"
-
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/jmoiron/sqlx"
@@ -141,12 +140,6 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		if err != nil {
 			log.Err(err).Msg("Failed to set commands")
 		}
-	}
-
-	_, shouldPrintMsgs := os.LookupEnv("PRINT_MSGS")
-	if shouldPrintMsgs {
-		// TODO
-		//b.Telebot.Use(PrintMessage)
 	}
 
 	webhookPort := strings.TrimSpace(os.Getenv("PORT"))

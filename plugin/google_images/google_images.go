@@ -272,7 +272,7 @@ func (p *Plugin) onImageSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 func (p *Plugin) onImageSearchCallback(b *gotgbot.Bot, c plugin.GobotContext) error {
 	// ignore callback queries older than 7 days
-	callbackTime := time.Unix(c.CallbackQuery.Message.GetDate(), 0)
+	callbackTime := utils.TimestampToTime(c.CallbackQuery.Message.GetDate())
 	if callbackTime.Add(utils.Week).Before(time.Now()) {
 		_, err := c.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
 			Text:      "❌ Bitte sende den Befehl erneut ab.",

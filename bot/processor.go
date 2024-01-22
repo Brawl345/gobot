@@ -3,6 +3,7 @@ package bot
 import (
 	"errors"
 	"fmt"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -20,18 +21,26 @@ type Processor struct {
 	chatsUsersService model.ChatsUsersService
 	managerService    model.ManagerService
 	userService       model.UserService
+	shouldPrintMsgs   bool
 }
 
 func NewProcessor(allowService model.AllowService, chatsUsersService model.ChatsUsersService, managerService model.ManagerService, userService model.UserService) *Processor {
+	_, shouldPrintMsgs := os.LookupEnv("PRINT_MSGS")
 	return &Processor{
 		allowService:      allowService,
 		chatsUsersService: chatsUsersService,
 		managerService:    managerService,
 		userService:       userService,
+		shouldPrintMsgs:   shouldPrintMsgs,
 	}
 }
 
 func (p *Processor) ProcessUpdate(d *ext.Dispatcher, b *gotgbot.Bot, ctx *ext.Context) error {
+
+	if p.shouldPrintMsgs {
+		PrintMessage(ctx)
+	}
+
 	if ctx.Message != nil {
 
 		if ctx.Message.LeftChatMember != nil {
@@ -126,7 +135,7 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 			case utils.MessageTrigger:
 				switch {
 				// More to be added when needed
-				case msg.Photo != nil:
+				case msg.Photo != nil && len(msg.Photo) > 0:
 					matched = command == utils.PhotoMsg
 				}
 
@@ -280,7 +289,7 @@ func (p *Processor) onCallback(b *gotgbot.Bot, ctx *ext.Context) error {
 				}
 
 				if handler.Cooldown > 0 {
-					callbackTime := time.Unix(ctx.CallbackQuery.Message.GetDate(), 0)
+					callbackTime := utils.TimestampToTime(ctx.CallbackQuery.Message.GetDate())
 					currentTime := time.Now()
 					waitTime := handler.Cooldown - currentTime.Sub(callbackTime)
 
