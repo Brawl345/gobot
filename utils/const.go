@@ -5,12 +5,12 @@ import "time"
 // EntityType is one of https://core.telegram.org/bots/api#messageentity
 type EntityType string
 
-type MessageType string
+type MessageTrigger string
 
 const (
-	OnMsg   MessageType = "\agobot_msg" // Shortcut for handling any message
-	OnPhoto MessageType = "\agobot_photo"
-	OnMedia MessageType = "\agobot_media"
+	AnyMsg   MessageTrigger = "\agobot_msg"
+	PhotoMsg MessageTrigger = "\agobot_photo"
+	AnyMedia MessageTrigger = "\agobot_media"
 
 	Day  = 24 * time.Hour
 	Week = 7 * Day

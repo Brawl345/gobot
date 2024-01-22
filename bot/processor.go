@@ -123,19 +123,19 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 						namedMatches[command.SubexpNames()[i]] = name
 					}
 				}
-			case utils.MessageType:
+			case utils.MessageTrigger:
 				switch {
 				// More to be added when needed
 				case msg.Photo != nil:
-					matched = command == utils.OnPhoto
+					matched = command == utils.PhotoMsg
 				}
 
 				if !matched && utils.ContainsMedia(msg) {
-					matched = command == utils.OnMedia
+					matched = command == utils.AnyMedia
 				}
 
 				if !matched {
-					matched = command == utils.OnMsg
+					matched = command == utils.AnyMsg
 				}
 			case utils.EntityType:
 				entities := msg.Entities

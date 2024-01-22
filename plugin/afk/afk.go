@@ -62,7 +62,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     utils.OnMsg,
+			Trigger:     utils.AnyMsg,
 			HandlerFunc: p.checkAFK,
 			GroupOnly:   true,
 		},
