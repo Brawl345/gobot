@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"fmt"
 	"os"
 	"sort"
 	"strings"
@@ -146,18 +147,60 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		//b.Telebot.Use(PrintMessage)
 	}
 
-	err = updater.StartPolling(bot, &ext.PollingOpts{
-		DropPendingUpdates: true,
-		GetUpdatesOpts: &gotgbot.GetUpdatesOpts{
-			AllowedUpdates: []string{"message", "edited_message", "callback_query", "inline_query"},
-			Timeout:        10,
-			RequestOpts: &gotgbot.RequestOpts{
-				Timeout: time.Second * 15,
+	webhookPort := strings.TrimSpace(os.Getenv("PORT"))
+	webhookURL := strings.TrimSpace(os.Getenv("WEBHOOK_PUBLIC_URL"))
+	webhookUrlPath := os.Getenv("WEBHOOK_URL_PATH")
+
+	allowedUpdates := []string{"message", "edited_message", "callback_query", "inline_query"}
+
+	if webhookPort == "" || webhookURL == "" || webhookUrlPath == "" {
+		log.Debug().Msg("Using long polling")
+		err = updater.StartPolling(bot, &ext.PollingOpts{
+			DropPendingUpdates: true,
+			GetUpdatesOpts: &gotgbot.GetUpdatesOpts{
+				AllowedUpdates: allowedUpdates,
+				Timeout:        10,
+				RequestOpts: &gotgbot.RequestOpts{
+					Timeout: time.Second * 15,
+				},
 			},
-		},
-	})
-	if err != nil {
-		return nil, err
+		})
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		log.Debug().
+			Str("port", webhookPort).
+			Str("webhook_public_url", webhookURL).
+			Str("webhook_url_path", webhookUrlPath).
+			Msg("Using webhook")
+
+		webhookSecret := strings.TrimSpace(os.Getenv("WEBHOOK_SECRET"))
+		if webhookSecret == "" {
+			log.Warn().Msg("WEBHOOK_SECRET not set, it's STRONGLY RECOMMENDED to set one!")
+		}
+
+		webhookOpts := ext.WebhookOpts{
+			ListenAddr:  fmt.Sprintf(":%s", webhookPort),
+			SecretToken: webhookSecret,
+		}
+		err = updater.StartWebhook(bot, webhookUrlPath, webhookOpts)
+		if err != nil {
+			return nil, err
+		}
+
+		ok, err := bot.SetWebhook(webhookURL, &gotgbot.SetWebhookOpts{
+			AllowedUpdates:     allowedUpdates,
+			MaxConnections:     50,
+			DropPendingUpdates: true,
+			SecretToken:        webhookSecret,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, fmt.Errorf("failed to set webhook")
+		}
 	}
 
 	b := &Gobot{
@@ -171,41 +214,3 @@ func New(db *sqlx.DB) (*Gobot, error) {
 func (b *Gobot) Start() {
 	b.updater.Idle()
 }
-
-// TODO: Webhook
-//func GetPoller() telebot.Poller {
-//	allowedUpdates := []string{"message", "edited_message", "callback_query", "inline_query"}
-//
-//	webhookPort := strings.TrimSpace(os.Getenv("PORT"))
-//	webhookURL := strings.TrimSpace(os.Getenv("WEBHOOK_PUBLIC_URL"))
-//
-//	if webhookPort == "" || webhookURL == "" {
-//		log.Debug().Msg("Using long polling")
-//		return &telebot.LongPoller{
-//			AllowedUpdates: allowedUpdates,
-//			Timeout:        10 * time.Second,
-//		}
-//	}
-//
-//	log.Debug().
-//		Str("port", webhookPort).
-//		Str("webhook_public_url", webhookURL).
-//		Msg("Using webhook")
-//
-//	webhookSecret := strings.TrimSpace(os.Getenv("WEBHOOK_SECRET"))
-//
-//	if webhookSecret == "" {
-//		log.Warn().Msg("WEBHOOK_SECRET not set, it's STRONGLY RECOMMENDED to set one!")
-//	}
-//
-//	return &telebot.Webhook{
-//		Listen:         ":" + webhookPort,
-//		AllowedUpdates: allowedUpdates,
-//		SecretToken:    webhookSecret,
-//		MaxConnections: 50,
-//		DropUpdates:    true,
-//		Endpoint: &telebot.WebhookEndpoint{
-//			PublicURL: webhookURL,
-//		},
-//	}
-//}
