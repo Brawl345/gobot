@@ -4,7 +4,7 @@
 
 
 
-Multi-purpose bot for the Telegram Messenger based on [Telebot](https://github.com/tucnak/telebot/) and inspired
+Multi-purpose bot for the Telegram Messenger based on [gotgbot](https://github.com/PaulSonOfLars/gotgbot) and inspired
 by [Python-Telegram-Bot](https://github.com/python-telegram-bot/python-telegram-bot).
 
 **The source code is here so YOU can do what you want with it - don't ask questions about it nor ask for help on how to use
