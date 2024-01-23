@@ -24,6 +24,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/dcrypt"
 	"github.com/Brawl345/gobot/plugin/delmsg"
 	"github.com/Brawl345/gobot/plugin/echo"
+	"github.com/Brawl345/gobot/plugin/expand"
 	"github.com/Brawl345/gobot/plugin/google_images"
 	"github.com/Brawl345/gobot/plugin/kaomoji"
 	"github.com/Brawl345/gobot/plugin/manager"
@@ -102,7 +103,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		dcrypt.New(),
 		delmsg.New(),
 		echo.New(),
-		//expand.New(),
+		expand.New(),
 		//gemini.New(credentialService, geminiService),
 		//getfile.New(credentialService, fileService),
 		google_images.New(credentialService, googleImagesService, googleImagesCleanupService),

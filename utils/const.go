@@ -28,6 +28,7 @@ const (
 	ChatActionUploadPhoto    = "upload_photo"
 	ChatActionTyping         = "typing"
 
+	EntityTextLink    EntityType = "text_link"
 	EntityTypeMention EntityType = "mention"
 	EntityTypeURL     EntityType = "url"
 
