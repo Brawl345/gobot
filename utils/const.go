@@ -38,5 +38,9 @@ const (
 	EntityTypeMention EntityType = "mention"
 	EntityTypeURL     EntityType = "url"
 
+	ErrBlockedByUser     = "Forbidden: bot was blocked by the user"
+	ErrNotStartedByUser  = "Forbidden: bot can't initiate conversation with a user"
+	ErrUserIsDeactivated = "Forbidden: user is deactivated"
+
 	UserAgent = "Mozilla/5.0 (Windows NT 11.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
 )
