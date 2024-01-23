@@ -3,18 +3,18 @@ package twitter
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/plugin"
-	"github.com/Brawl345/gobot/utils"
-	"github.com/Brawl345/gobot/utils/httpUtils"
-	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 	"io"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/plugin"
+	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/rs/xid"
 )
 
 var log = logger.New("twitter")
@@ -35,11 +35,11 @@ func (*Plugin) Name() string {
 	return "twitter"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil
 }
 
-func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(`(?i)(?:x|twitter)\.com/\w+/status(?:es)?/(\d+)`),
@@ -60,8 +60,8 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) OnStatus(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 
 	// Get Guest Token first
 	var tokenResponse TokenResponse
@@ -71,7 +71,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to get guest token")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	req.Header.Set("Authorization", bearerToken)
@@ -87,7 +88,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to get guest token")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -103,7 +105,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to read guest token body")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	if resp.StatusCode != 200 {
@@ -113,7 +116,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 			Int("status", resp.StatusCode).
 			Interface("response", body).
 			Msg("Got Twitter HTTP error")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	if err := json.Unmarshal(body, &tokenResponse); err != nil {
@@ -121,7 +125,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to get guest token")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	log.Debug().
@@ -132,7 +137,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	guestToken := tokenResponse.GuestToken
 
 	// Now we get the tweet
-	_ = c.Notify(telebot.Typing)
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 	tweetID := c.Matches[1]
 	requestUrl := url.URL{
 		Scheme: "https",
@@ -178,7 +183,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("tweetID", tweetID).
 			Msg("Failed to get tweet")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	result := tweetResponse.Data.TweetResult.Result
@@ -192,14 +198,17 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 				ParseMode:             telebot.ModeHTML,
 			})
 		} else if result.Reason == "Protected" {
-			return c.Reply("🔓 Der Account-Inhaber hat beschränkt, wer seine Tweets ansehen kann.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "🔓 Der Account-Inhaber hat beschränkt, wer seine Tweets ansehen kann.", utils.DefaultSendOptions)
+			return err
 		} else {
-			return c.Reply(fmt.Sprintf("❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code>", result.Reason), utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code>", result.Reason), utils.DefaultSendOptions)
+			return err
 		}
 	}
 
 	if result.Typename != "Tweet" && result.Typename != "TweetWithVisibilityResults" && result.Typename != "tweetResult" {
-		return c.Reply("❌ Dieser Tweet existiert nicht.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Dieser Tweet existiert nicht.", utils.DefaultSendOptions)
+		return err
 	}
 
 	sendOptions := &telebot.SendOptions{
@@ -256,7 +265,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 				Str("guid", guid).
 				Str("tweetID", tweetID).
 				Msg("Failed to parse poll")
-			return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			return err
 		}
 
 		sb.WriteString(pollText(poll))
@@ -271,7 +281,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 			Str("tweetID", tweetID).
 			Str("createdAt", result.Legacy.CreatedAt).
 			Msg("Failed to parse tweet created at")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 	sb.WriteString(
 		fmt.Sprintf(
@@ -360,7 +371,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 					Str("guid", guid).
 					Str("tweetID", tweetID).
 					Msg("Failed to parse quote poll")
-				return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+				_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+				return err
 			}
 
 			sb.WriteString(pollText(quotePoll))
@@ -375,7 +387,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 				Str("tweetID", tweetID).
 				Str("createdAt", quoteResultSub.Legacy.CreatedAt).
 				Msg("Failed to parse quote tweet created at")
-			return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			return err
 		}
 		sb.WriteString(
 			fmt.Sprintf(

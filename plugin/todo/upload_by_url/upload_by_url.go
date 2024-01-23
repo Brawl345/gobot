@@ -13,7 +13,6 @@ import (
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"golang.org/x/exp/slices"
-	"gopkg.in/telebot.v3"
 )
 
 var (
@@ -33,11 +32,11 @@ func (p *Plugin) Name() string {
 	return "upload_by_url"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil
 }
 
-func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(`(https?://.+\.(zip|7z|rar|tar\.(?:gz|bzip2)|jpe?g|png|gif|apk|avi|wav|mp[34]|og[gv]))`),
@@ -46,7 +45,7 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	}
 }
 
-func onFileLink(c plugin.GobotContext) error {
+func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 	url := c.Matches[1]
 	ext := c.Matches[2]
 

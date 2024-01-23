@@ -3,16 +3,16 @@ package summarize
 import (
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
-	"regexp"
-	"strings"
-	"time"
 
 	"github.com/go-shiori/go-readability"
 )
@@ -67,16 +67,16 @@ func (p *Plugin) Name() string {
 	return "summarize"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "su",
+			Command:     "su",
 			Description: "<URL> - Artikel zusammenfassen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/su(?:mmarize)?(?:@%s)? .+$`, botInfo.Username)),
@@ -90,11 +90,11 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onSummarize(c plugin.GobotContext) error {
+func (p *Plugin) onSummarize(b *gotgbot.Bot, c plugin.GobotContext) error {
 	return p.summarize(c, c.Message())
 }
 
-func (p *Plugin) onReply(c plugin.GobotContext) error {
+func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if !c.Message().IsReply() {
 		log.Debug().
 			Int64("chat_id", c.Chat().ID).
@@ -105,18 +105,20 @@ func (p *Plugin) onReply(c plugin.GobotContext) error {
 
 	if strings.HasPrefix(c.Message().ReplyTo.Text, "/su") ||
 		strings.HasPrefix(c.Message().ReplyTo.Caption, "/su") {
-		return c.Reply("😠", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions)
+		return err
 	}
 
 	if c.Message().ReplyTo.Sender.IsBot {
-		return c.Reply("😠", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions)
+		return err
 	}
 
 	return p.summarize(c, c.Message().ReplyTo)
 }
 
 func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
-	_ = c.Notify(telebot.Typing)
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 
 	var urls []string
 	for _, entity := range utils.AnyEntities(msg) {
@@ -189,7 +191,8 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == 429 {
-				return c.Reply("❌ Rate-Limit erreicht.", utils.DefaultSendOptions)
+				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions)
+				return err
 			}
 		}
 
@@ -218,7 +221,8 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 		log.Error().
 			Str("url", url).
 			Msg("Got no answer from ChatGPT")
-		return c.Reply("❌ Keine Antwort von ChatGPT erhalten", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von ChatGPT erhalten", utils.DefaultSendOptions)
+		return err
 	}
 
 	var sb strings.Builder

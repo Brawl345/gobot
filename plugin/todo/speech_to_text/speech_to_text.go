@@ -3,14 +3,14 @@ package speech_to_text
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"strings"
+
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
-	"gopkg.in/telebot.v3"
-	"io"
-	"strings"
 )
 
 var log = logger.New("speech_to_text")
@@ -42,11 +42,11 @@ func (p *Plugin) Name() string {
 	return "speech_to_text"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil
 }
 
-func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     telebot.OnVoice,
@@ -55,7 +55,7 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) OnVoice(c plugin.GobotContext) error {
+func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if c.Message().Voice.FileSize > utils.MaxFilesizeDownload {
 		log.Warn().
 			Int64("filesize", c.Message().Voice.FileSize).

@@ -11,7 +11,6 @@ import (
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("urbandictionary")
@@ -26,16 +25,16 @@ func (p *Plugin) Name() string {
 	return "urbandictionary"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "ud",
+			Command:     "ud",
 			Description: "<Begriff> - Im Urban Dictionary suchen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/ud(?:@%s)? (.+)$`, botInfo.Username)),
@@ -44,8 +43,8 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func onUrbanDictionary(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func onUrbanDictionary(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 	query := c.Matches[1]
 
 	var response Response
@@ -56,11 +55,13 @@ func onUrbanDictionary(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("query", query).
 			Msg("Failed to search urban dictionary")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	if len(response.List) == 0 {
-		return c.Reply("❌ Nichts gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Nichts gefunden.", utils.DefaultSendOptions)
+		return err
 	}
 
 	var sb strings.Builder
@@ -103,5 +104,6 @@ func onUrbanDictionary(c plugin.GobotContext) error {
 		sb.WriteString(fmt.Sprintf(" - 👎 %s", utils.FormatThousand(term.Downvotes)))
 	}
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	return err
 }

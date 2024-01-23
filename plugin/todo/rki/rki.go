@@ -10,7 +10,6 @@ import (
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("rki")
@@ -39,20 +38,20 @@ func (p *Plugin) Name() string {
 	return "rki"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "rki",
+			Command:     "rki",
 			Description: "<Stadt> - COVID-19-Fälle in dieser deutschen Stadt",
 		},
 		{
-			Text:        "myrki",
+			Command:     "myrki",
 			Description: "COVID-19-Fälle in deinem Heimatort",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/rki(?:@%s)?$`, botInfo.Username)),
@@ -81,8 +80,8 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func onNational(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func onNational(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 	var response Nationwide
 
 	url := fmt.Sprintf("%s/germany", BaseUrl)
@@ -179,11 +178,12 @@ func onNational(c plugin.GobotContext) error {
 		),
 	)
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	return err
 }
 
-func onDistrictSearch(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func onDistrictSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 	var response DistrictResponse
 
 	url := fmt.Sprintf("%s/districts", BaseUrl)
@@ -211,7 +211,8 @@ func onDistrictSearch(c plugin.GobotContext) error {
 	}
 
 	if len(foundDistricts) == 0 {
-		return c.Reply("❌ Keine Stadt gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Stadt gefunden.", utils.DefaultSendOptions)
+		return err
 	}
 
 	var sb strings.Builder
@@ -230,7 +231,8 @@ func onDistrictSearch(c plugin.GobotContext) error {
 		)
 	}
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	return err
 }
 
 func districtText(ags string) string {
@@ -327,13 +329,14 @@ func districtText(ags string) string {
 	return sb.String()
 }
 
-func onDistrict(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
-	return c.Reply(districtText(c.Matches[1]), utils.DefaultSendOptions)
+func onDistrict(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, err := c.EffectiveMessage.Reply(b, districtText(c.Matches[1]), utils.DefaultSendOptions)
+	return err
 }
 
-func (p *Plugin) setRkiAGS(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func (p *Plugin) setRkiAGS(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 	ags := c.Matches[1]
 
 	if len(ags) > 8 {
@@ -360,7 +363,8 @@ func (p *Plugin) setRkiAGS(c plugin.GobotContext) error {
 	}
 
 	if len(response.Districts) == 0 {
-		return c.Reply("❌ Stadt nicht gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Stadt nicht gefunden.", utils.DefaultSendOptions)
+		return err
 	}
 
 	err = p.rkiService.SetAGS(c.Sender(), ags)
@@ -376,11 +380,12 @@ func (p *Plugin) setRkiAGS(c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	return c.Reply("✅ Du kannst jetzt /myrki nutzen.", utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, "✅ Du kannst jetzt /myrki nutzen.", utils.DefaultSendOptions)
+	return err
 }
 
-func (p *Plugin) onMyRKI(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func (p *Plugin) onMyRKI(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 	ags, err := p.rkiService.GetAGS(c.Sender())
 	if err != nil {
 		guid := xid.New().String()
@@ -399,10 +404,11 @@ func (p *Plugin) onMyRKI(c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	return c.Reply(districtText(ags), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, districtText(ags), utils.DefaultSendOptions)
+	return err
 }
 
-func (p *Plugin) delRKI(c plugin.GobotContext) error {
+func (p *Plugin) delRKI(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err := p.rkiService.DelAGS(c.Sender())
 	if err != nil {
 		guid := xid.New().String()
@@ -415,5 +421,6 @@ func (p *Plugin) delRKI(c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	return c.Reply("✅", utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, "✅", utils.DefaultSendOptions)
+	return err
 }

@@ -29,11 +29,11 @@ func (*Plugin) Name() string {
 	return "creds"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil // Because it's a superuser plugin
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/creds(?:@%s)?$`, botInfo.Username)),
@@ -58,7 +58,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) OnGet(c plugin.GobotContext) error {
+func (p *Plugin) OnGet(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
@@ -75,7 +75,8 @@ func (p *Plugin) OnGet(c plugin.GobotContext) error {
 	}
 
 	if len(creds) == 0 {
-		return c.Reply("<i>Noch keine Schlüssel eingetragen</i>", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "<i>Noch keine Schlüssel eingetragen</i>", utils.DefaultSendOptions)
+		return err
 	}
 
 	var sb strings.Builder
@@ -102,7 +103,7 @@ func (p *Plugin) OnGet(c plugin.GobotContext) error {
 
 }
 
-func (p *Plugin) OnAdd(c plugin.GobotContext) error {
+func (p *Plugin) OnAdd(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
@@ -116,13 +117,15 @@ func (p *Plugin) OnAdd(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Error adding key")
-		return c.Reply("❌ Fehler beim Speichern des Schlüssels", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Fehler beim Speichern des Schlüssels", utils.DefaultSendOptions)
+		return err
 	}
 
-	return c.Reply("✅ Schlüssel gespeichert. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, "✅ Schlüssel gespeichert. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions)
+	return err
 }
 
-func (p *Plugin) OnDelete(c plugin.GobotContext) error {
+func (p *Plugin) OnDelete(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if c.Message().FromGroup() {
 		return nil
 	}
@@ -138,10 +141,11 @@ func (p *Plugin) OnDelete(c plugin.GobotContext) error {
 		return c.Reply(err.Error())
 	}
 
-	return c.Reply("✅ Schlüssel gelöscht. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, "✅ Schlüssel gelöscht. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions)
+	return err
 }
 
-func (p *Plugin) OnHide(c plugin.GobotContext) error {
+func (p *Plugin) OnHide(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err := c.Bot().Delete(c.Callback().Message)
 	if err != nil {
 		log.Err(err).Send()

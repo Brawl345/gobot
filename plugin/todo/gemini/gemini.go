@@ -4,15 +4,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"regexp"
+	"time"
+
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
-	"regexp"
-	"time"
 )
 
 const (
@@ -63,11 +63,11 @@ func (p *Plugin) Name() string {
 	return "gemini"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(`(?i)^Bot, ([\s\S]+)$`),
@@ -87,8 +87,8 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onGemini(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 
 	var contents []Content
 	geminiData, err := p.geminiService.GetHistory(c.Chat())
@@ -177,7 +177,8 @@ func (p *Plugin) onGemini(c plugin.GobotContext) error {
 			}
 
 			if httpError.StatusCode == 429 {
-				return c.Reply("❌ Rate-Limit erreicht.", utils.DefaultSendOptions)
+				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions)
+				return err
 			}
 		}
 
@@ -196,7 +197,8 @@ func (p *Plugin) onGemini(c plugin.GobotContext) error {
 		log.Error().
 			Str("url", p.apiUrl).
 			Msg("Got no answer from Gemini")
-		return c.Reply("❌ Keine Antwort von Gemini erhalten (eventuell gefiltert).", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von Gemini erhalten (eventuell gefiltert).", utils.DefaultSendOptions)
+		return err
 	}
 
 	output := response.Candidates[0].Content.Parts[0].Text
@@ -261,7 +263,7 @@ func (p *Plugin) onGemini(c plugin.GobotContext) error {
 	return err
 }
 
-func (p *Plugin) reset(c plugin.GobotContext) error {
+func (p *Plugin) reset(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err := p.geminiService.ResetHistory(c.Chat())
 	if err != nil {
 		guid := xid.New().String()
@@ -276,15 +278,16 @@ func (p *Plugin) reset(c plugin.GobotContext) error {
 	return nil
 }
 
-func (p *Plugin) onReset(c plugin.GobotContext) error {
+func (p *Plugin) onReset(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err := p.reset(c)
 	if err != nil {
 		return err
 	}
-	return c.Reply("✅", utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, "✅", utils.DefaultSendOptions)
+	return err
 }
 
-func (p *Plugin) onResetAndRun(c plugin.GobotContext) error {
+func (p *Plugin) onResetAndRun(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err := p.reset(c)
 	if err != nil {
 		return err

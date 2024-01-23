@@ -11,7 +11,6 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("getfile")
@@ -43,11 +42,11 @@ func (*Plugin) Name() string {
 	return "getfile"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil
 }
 
-func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     telebot.OnMedia,
@@ -57,7 +56,7 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) OnMedia(c plugin.GobotContext) error {
+func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var fileID string
 	var uniqueID string
 	var subFolder string

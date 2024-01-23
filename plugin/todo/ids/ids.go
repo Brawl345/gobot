@@ -36,16 +36,16 @@ func (p *Plugin) Name() string {
 	return "ids"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "ids",
+			Command:     "ids",
 			Description: "Zeigt die IDs der User in diesem Chat an",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/ids(?:@%s)?$`, botInfo.Username)),
@@ -55,7 +55,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onIds(c plugin.GobotContext) error {
+func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 	users, err := p.idsService.GetAllUsersInChat(c.Message().Chat)
 	if err != nil {
 		guid := xid.New().String()
@@ -63,7 +63,8 @@ func (p *Plugin) onIds(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.Chat().ID).
 			Msg("Failed to get all users in chat")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	memberCount, err := c.Bot().Len(c.Message().Chat)
@@ -73,7 +74,8 @@ func (p *Plugin) onIds(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.Chat().ID).
 			Msg("Failed to count members in chat")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	adminsAndCreators, err := c.Bot().AdminsOf(c.Message().Chat)
@@ -83,7 +85,8 @@ func (p *Plugin) onIds(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.Chat().ID).
 			Msg("Failed to get admins and creators in chat")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	var admins []int64
@@ -140,5 +143,6 @@ func (p *Plugin) onIds(c plugin.GobotContext) error {
 
 	sb.WriteString("<i>(Bots sind nicht gelistet)</i>")
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	return err
 }

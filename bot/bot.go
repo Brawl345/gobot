@@ -10,8 +10,13 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model/sql"
 	"github.com/Brawl345/gobot/plugin"
+	"github.com/Brawl345/gobot/plugin/about"
 	"github.com/Brawl345/gobot/plugin/afk"
+	"github.com/Brawl345/gobot/plugin/alive"
+	"github.com/Brawl345/gobot/plugin/allow"
 	"github.com/Brawl345/gobot/plugin/amazon_ref_cleaner"
+	"github.com/Brawl345/gobot/plugin/birthdays"
+	"github.com/Brawl345/gobot/plugin/calc"
 	"github.com/Brawl345/gobot/plugin/echo"
 	"github.com/Brawl345/gobot/plugin/google_images"
 	"github.com/Brawl345/gobot/plugin/kaomoji"
@@ -63,7 +68,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 
 	// Plugin-specific services
 	afkService := sql.NewAfkService(db)
-	//birthdayService := sql.NewBirthdayService(db)
+	birthdayService := sql.NewBirthdayService(db)
 	//cleverbotService := sql.NewCleverbotService(db)
 	//fileService := sql.NewFileService(db)
 	//geminiService := sql.NewGeminiService(db)
@@ -77,13 +82,13 @@ func New(db *sqlx.DB) (*Gobot, error) {
 	//rkiService := sql.NewRKIService(db)
 
 	plugins := []plugin.Plugin{
-		//about.New(),
+		about.New(),
 		afk.New(afkService),
-		//alive.New(),
-		//allow.New(allowService),
+		alive.New(),
+		allow.New(allowService),
 		amazon_ref_cleaner.New(),
-		//birthdays.New(bot, birthdayService),
-		//calc.New(),
+		birthdays.New(bot, birthdayService),
+		calc.New(),
 		//cleverbot.New(credentialService, cleverbotService),
 		//covid.New(),
 		//creds.New(credentialService),

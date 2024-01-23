@@ -11,7 +11,6 @@ import (
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 const BaseUrl = "https://www.cleverbot.com/getreply"
@@ -46,16 +45,16 @@ func (p *Plugin) Name() string {
 	return "cleverbot"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "cbot",
+			Command:     "cbot",
 			Description: "<Text> - Befrag den Cleverbot",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/cbot(?:@%s)? ([\s\S]+)$`, botInfo.Username)),
@@ -71,8 +70,8 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onCleverbot(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func (p *Plugin) onCleverbot(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 
 	state, err := p.cleverbotService.GetState(c.Chat())
 	if err != nil {
@@ -145,7 +144,7 @@ func (p *Plugin) onCleverbot(c plugin.GobotContext) error {
 	})
 }
 
-func (p *Plugin) onReset(c plugin.GobotContext) error {
+func (p *Plugin) onReset(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err := p.cleverbotService.ResetState(c.Chat())
 	if err != nil {
 		guid := xid.New().String()
@@ -158,5 +157,6 @@ func (p *Plugin) onReset(c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	return c.Reply("✅", utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, "✅", utils.DefaultSendOptions)
+	return err
 }

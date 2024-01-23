@@ -21,11 +21,11 @@ func (p *Plugin) Name() string {
 	return "delmsg"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/del(?:ete)?(?:@%s)?$`, botInfo.Username)),
@@ -36,7 +36,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func deleteMsg(c plugin.GobotContext) error {
+func deleteMsg(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if !c.Message().IsReply() {
 		log.Debug().Msg("Message is not a reply")
 		return nil

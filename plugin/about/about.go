@@ -7,7 +7,7 @@ import (
 
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
-	"gopkg.in/telebot.v3"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 type Plugin struct {
@@ -65,16 +65,16 @@ func (*Plugin) Name() string {
 	return "about"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "about",
+			Command:     "about",
 			Description: "Informationen über den Bot",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/(?:about|start)(?:@%s)?$`, botInfo.Username)),
@@ -83,6 +83,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) OnAbout(c plugin.GobotContext) error {
-	return c.Reply(p.aboutText, utils.DefaultSendOptions)
+func (p *Plugin) OnAbout(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, err := c.EffectiveMessage.Reply(b, p.aboutText, utils.DefaultSendOptions)
+	return err
 }

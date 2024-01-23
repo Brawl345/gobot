@@ -12,7 +12,6 @@ import (
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("dcrypt")
@@ -27,11 +26,11 @@ func (*Plugin) Name() string {
 	return "dcrypt"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil
 }
 
-func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     telebot.OnDocument,
@@ -40,7 +39,7 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) OnFile(c plugin.GobotContext) error {
+func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if c.Message().Document.MIME != "text/plain" ||
 		!strings.HasSuffix(c.Message().Document.FileName, ".dlc") {
 		return nil
@@ -49,7 +48,8 @@ func (p *Plugin) OnFile(c plugin.GobotContext) error {
 	_ = c.Notify(telebot.UploadingDocument)
 
 	if c.Message().Document.FileSize > utils.MaxFilesizeDownload {
-		return c.Reply("❌ DLC-Container ist größer als 20 MB.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ DLC-Container ist größer als 20 MB.", utils.DefaultSendOptions)
+		return err
 	}
 
 	file, err := c.Bot().File(&telebot.File{FileID: c.Message().Document.FileID})
@@ -57,7 +57,8 @@ func (p *Plugin) OnFile(c plugin.GobotContext) error {
 		log.Err(err).
 			Interface("file", c.Message().Document).
 			Msg("Failed to download file")
-		return c.Reply("❌ Konnte Datei nicht von Telegram herunterladen.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Konnte Datei nicht von Telegram herunterladen.", utils.DefaultSendOptions)
+		return err
 	}
 
 	defer func(file io.ReadCloser) {
@@ -89,7 +90,8 @@ func (p *Plugin) OnFile(c plugin.GobotContext) error {
 
 	if resp.StatusCode == 413 {
 		log.Error().Msg("File is too big")
-		return c.Reply("❌ Container ist zum Entschlüsseln zu groß.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Container ist zum Entschlüsseln zu groß.", utils.DefaultSendOptions)
+		return err
 	}
 
 	if resp.StatusCode != 200 {
@@ -120,7 +122,8 @@ func (p *Plugin) OnFile(c plugin.GobotContext) error {
 
 	matches := textRegex.FindStringSubmatch(string(body))
 	if matches == nil {
-		return c.Reply("❌ dcrypt.it hat keine Links gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ dcrypt.it hat keine Links gefunden.", utils.DefaultSendOptions)
+		return err
 	}
 
 	var data Response
@@ -166,5 +169,6 @@ func (p *Plugin) OnFile(c plugin.GobotContext) error {
 		FileName: filename,
 	}
 
-	return c.Reply(document, utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, document, utils.DefaultSendOptions)
+	return err
 }

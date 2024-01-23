@@ -7,7 +7,6 @@ import (
 
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
-	"gopkg.in/telebot.v3"
 )
 
 type Plugin struct{}
@@ -20,11 +19,11 @@ func (p *Plugin) Name() string {
 	return "replace"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil
 }
 
-func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile("^/?s/(.*[^/])/(.*[^/])?/?$"),
@@ -37,7 +36,7 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	}
 }
 
-func onReplace(c plugin.GobotContext) error {
+func onReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if !c.Message().IsReply() {
 		return nil
 	}
@@ -66,7 +65,7 @@ func onReplace(c plugin.GobotContext) error {
 	return err
 }
 
-func onRegexReplace(c plugin.GobotContext) error {
+func onRegexReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if !c.Message().IsReply() {
 		return nil
 	}

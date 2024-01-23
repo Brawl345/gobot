@@ -34,24 +34,24 @@ func (p *Plugin) Name() string {
 	return "weather"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "f",
+			Command:     "f",
 			Description: "[Ort] - Wettervorhersage",
 		},
 		{
-			Text:        "fh",
+			Command:     "fh",
 			Description: "[Ort] - 24-Stunden-Wettervorhersage",
 		},
 		{
-			Text:        "w",
+			Command:     "w",
 			Description: "[Ort] - Aktuelles Wetter",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/w(?:@%s)? (.+)$`, botInfo.Username)),
@@ -80,7 +80,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onWeather(c plugin.GobotContext) error {
+func (p *Plugin) onWeather(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_ = c.Notify(telebot.FindingLocation)
 
 	var err error
@@ -97,7 +97,8 @@ func (p *Plugin) onWeather(c plugin.GobotContext) error {
 				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions)
 		}
 		if errors.Is(err, model.ErrAddressNotFound) {
-			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			return err
 		}
 		guid := xid.New().String()
 		log.Error().
@@ -251,10 +252,11 @@ func (p *Plugin) onWeather(c plugin.GobotContext) error {
 		),
 	)
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	return err
 }
 
-func (p *Plugin) onForecast(c plugin.GobotContext) error {
+func (p *Plugin) onForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_ = c.Notify(telebot.FindingLocation)
 
 	var err error
@@ -271,7 +273,8 @@ func (p *Plugin) onForecast(c plugin.GobotContext) error {
 				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions)
 		}
 		if errors.Is(err, model.ErrAddressNotFound) {
-			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			return err
 		}
 		guid := xid.New().String()
 		log.Error().
@@ -321,10 +324,11 @@ func (p *Plugin) onForecast(c plugin.GobotContext) error {
 		sb.WriteString("\n")
 	}
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	return err
 }
 
-func (p *Plugin) onHourlyForecast(c plugin.GobotContext) error {
+func (p *Plugin) onHourlyForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_ = c.Notify(telebot.FindingLocation)
 
 	var err error
@@ -341,7 +345,8 @@ func (p *Plugin) onHourlyForecast(c plugin.GobotContext) error {
 				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions)
 		}
 		if errors.Is(err, model.ErrAddressNotFound) {
-			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			return err
 		}
 		guid := xid.New().String()
 		log.Error().
@@ -397,5 +402,6 @@ func (p *Plugin) onHourlyForecast(c plugin.GobotContext) error {
 		}
 	}
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	return err
 }

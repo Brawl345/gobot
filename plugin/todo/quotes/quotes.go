@@ -38,20 +38,20 @@ func (p *Plugin) Name() string {
 	return "quotes"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "quote",
+			Command:     "quote",
 			Description: "Zitat anzeigen",
 		},
 		{
-			Text:        "addquote",
+			Command:     "addquote",
 			Description: "<Zitat> - Zitat hinzufügen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/quote(?:@%s)?$`, botInfo.Username)),
@@ -87,7 +87,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) getQuote(c plugin.GobotContext) error {
+func (p *Plugin) getQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	quote, err := p.quoteService.GetQuote(c.Chat())
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
@@ -101,7 +101,8 @@ func (p *Plugin) getQuote(c plugin.GobotContext) error {
 			Int64("chat_id", c.Chat().ID).
 			Str("quote", quote).
 			Msg("failed to save quote")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	return c.Send(quote, &telebot.SendOptions{
@@ -120,7 +121,7 @@ func (p *Plugin) getQuote(c plugin.GobotContext) error {
 	})
 }
 
-func (p *Plugin) addQuote(c plugin.GobotContext) error {
+func (p *Plugin) addQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var quote string
 	if c.Message().IsReply() &&
 		!c.Message().Sender.IsBot {
@@ -139,7 +140,8 @@ func (p *Plugin) addQuote(c plugin.GobotContext) error {
 
 	if err != nil {
 		if errors.Is(err, model.ErrAlreadyExists) {
-			return c.Reply("<b>💡 Zitat existiert bereits!</b>", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "<b>💡 Zitat existiert bereits!</b>", utils.DefaultSendOptions)
+			return err
 		}
 
 		guid := xid.New().String()
@@ -148,13 +150,15 @@ func (p *Plugin) addQuote(c plugin.GobotContext) error {
 			Int64("chat_id", c.Chat().ID).
 			Str("quote", quote).
 			Msg("failed to save quote")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
-	return c.Reply("<b>✅ Gespeichert!</b>", utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, "<b>✅ Gespeichert!</b>", utils.DefaultSendOptions)
+	return err
 }
 
-func (p *Plugin) deleteQuote(c plugin.GobotContext) error {
+func (p *Plugin) deleteQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var quote string
 	if len(c.Matches) > 1 {
 		quote = c.Matches[1]
@@ -172,7 +176,8 @@ func (p *Plugin) deleteQuote(c plugin.GobotContext) error {
 	err := p.quoteService.DeleteQuote(c.Chat(), quote)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
-			return c.Reply("<b>❌ Zitat nicht gefunden!</b>", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "<b>❌ Zitat nicht gefunden!</b>", utils.DefaultSendOptions)
+			return err
 		}
 
 		guid := xid.New().String()
@@ -181,8 +186,10 @@ func (p *Plugin) deleteQuote(c plugin.GobotContext) error {
 			Int64("chat_id", c.Chat().ID).
 			Str("quote", quote).
 			Msg("failed to delete quote")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
-	return c.Reply("<b>✅ Zitat gelöscht!</b>", utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, "<b>✅ Zitat gelöscht!</b>", utils.DefaultSendOptions)
+	return err
 }

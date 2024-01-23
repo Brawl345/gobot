@@ -12,7 +12,6 @@ import (
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("google_search")
@@ -43,16 +42,16 @@ func (p *Plugin) Name() string {
 	return "google_search"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "g",
+			Command:     "g",
 			Description: "<Suchbegriff> - Auf Google suchen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/g(?:@%s)? (.+)$`, botInfo.Username)),
@@ -61,10 +60,10 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onGoogleSearch(c plugin.GobotContext) error {
+func (p *Plugin) onGoogleSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	query := c.Matches[1]
 
-	_ = c.Notify(telebot.Typing)
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "customsearch.googleapis.com",
@@ -92,11 +91,13 @@ func (p *Plugin) onGoogleSearch(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("query", query).
 			Msg("Error while requesting google search")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	if len(response.Items) == 0 {
-		return c.Reply("❌ Es wurden keine Ergebnisse gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Es wurden keine Ergebnisse gefunden.", utils.DefaultSendOptions)
+		return err
 	}
 
 	var sb strings.Builder

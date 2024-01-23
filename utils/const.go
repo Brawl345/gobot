@@ -24,6 +24,7 @@ const (
 	MaxPhotosizeThroughTelegram = 5000000  // Max filesize of photos that Telegram can send automatically = 5 MB
 
 	ChatActionUploadPhoto = "upload_photo"
+	ChatActionTyping      = "typing"
 
 	EntityTypeMention EntityType = "mention"
 	EntityTypeURL     EntityType = "url"

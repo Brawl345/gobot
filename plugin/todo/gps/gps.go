@@ -37,16 +37,16 @@ func (p *Plugin) Name() string {
 	return "gps"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "map",
+			Command:     "map",
 			Description: "<Ort> - Ort auf der Karte anzeigen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/(?:gps|map)(?:@%s)? (.+)$`, botInfo.Username)),
@@ -63,12 +63,13 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onGPS(c plugin.GobotContext) error {
+func (p *Plugin) onGPS(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_ = c.Notify(telebot.FindingLocation)
 	venue, err := p.geocodingService.Geocode(c.Matches[1])
 	if err != nil {
 		if errors.Is(err, model.ErrAddressNotFound) {
-			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			return err
 		}
 
 		guid := xid.New().String()
@@ -80,10 +81,11 @@ func (p *Plugin) onGPS(c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	return c.Reply(&venue, utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, &venue, utils.DefaultSendOptions)
+	return err
 }
 
-func (p *Plugin) onLocation(c plugin.GobotContext) error {
+func (p *Plugin) onLocation(b *gotgbot.Bot, c plugin.GobotContext) error {
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "nominatim.openstreetmap.org",

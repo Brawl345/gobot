@@ -147,3 +147,7 @@ func FromGroup(message gotgbot.MaybeInaccessibleMessage) bool {
 func IsPrivate(message *gotgbot.Message) bool {
 	return message.Chat.Type == gotgbot.ChatTypePrivate
 }
+
+func IsReply(message *gotgbot.Message) bool {
+	return message.ReplyToMessage != nil
+}

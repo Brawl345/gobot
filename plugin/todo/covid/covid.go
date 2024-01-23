@@ -15,7 +15,6 @@ import (
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/telebot.v3"
 )
 
 const (
@@ -36,20 +35,20 @@ func (*Plugin) Name() string {
 	return "covid"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "covid",
+			Command:     "covid",
 			Description: "[Ort] - COVID-19-Statistik",
 		},
 		{
-			Text:        "covid_germany",
+			Command:     "covid_germany",
 			Description: "COVID-19-Statistik für Deutschland",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/covid(?:@%s)?$`, botInfo.Username)),
@@ -65,8 +64,8 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func OnCountry(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func OnCountry(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 
 	var httpError *httpUtils.HttpError
 	var result countryResult
@@ -105,7 +104,8 @@ func OnCountry(c plugin.GobotContext) error {
 
 	if result.Message != "" {
 		log.Error().Str("message", result.Message).Msg("Error message found in data")
-		return c.Reply(fmt.Sprintf("❌ %s", result.Message), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ %s", result.Message), utils.DefaultSendOptions)
+		return err
 	}
 
 	var sb strings.Builder
@@ -160,7 +160,7 @@ func OnCountry(c plugin.GobotContext) error {
 		),
 	)
 
-	_ = c.Notify(telebot.Typing)
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 	var vaccine vaccineResult
 	err = httpUtils.GetRequest(
 		fmt.Sprintf(
@@ -202,8 +202,8 @@ func OnCountry(c plugin.GobotContext) error {
 
 }
 
-func OnRun(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func OnRun(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -235,7 +235,8 @@ func OnRun(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("on", "all").
 			Msg("Failed to get 'all' data")
-		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	var sb strings.Builder

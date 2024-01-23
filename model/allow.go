@@ -8,6 +8,5 @@ type AllowService interface {
 	DenyChat(chat *gotgbot.Chat) error
 	DenyUser(user *gotgbot.User) error
 	IsChatAllowed(chat *gotgbot.Chat) bool
-	// TODO: Use Sender
 	IsUserAllowed(user *gotgbot.User) bool
 }

@@ -39,20 +39,20 @@ func (p *Plugin) Name() string {
 	return "notify"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "notify",
+			Command:     "notify",
 			Description: "Über neue Erwähnungen informiert werden",
 		},
 		{
-			Text:        "notify_disable",
+			Command:     "notify_disable",
 			Description: "Nicht mehr über neue Erwähnungen informiert werden",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/notify(?:@%s)?$`, botInfo.Username)),
@@ -72,7 +72,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) notify(c plugin.GobotContext) error {
+func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var mentionedUsernames []string
 	for _, entity := range utils.AnyEntities(c.Message()) {
 		if entity.Type == telebot.EntityMention {
@@ -150,17 +150,20 @@ func (p *Plugin) notify(c plugin.GobotContext) error {
 	return nil
 }
 
-func (p *Plugin) enableNotify(c plugin.GobotContext) error {
+func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if c.Sender().Username == "" {
-		return c.Reply("😕 Du benötigst einen Benutzernamen um dieses Feature zu nutzen.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "😕 Du benötigst einen Benutzernamen um dieses Feature zu nutzen.", utils.DefaultSendOptions)
+		return err
 	}
 
 	testMsg, err := c.Bot().Send(c.Sender(), "✅", utils.DefaultSendOptions)
 	if err != nil {
 		if errors.Is(err, telebot.ErrBlockedByUser) {
-			return c.Reply("😭 Du hast mich blockiert T__T", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "😭 Du hast mich blockiert T__T", utils.DefaultSendOptions)
+			return err
 		} else if errors.Is(err, telebot.ErrNotStartedByUser) {
-			return c.Reply("ℹ Bitte starte mich vor dem Aktivieren zuerst privat.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "ℹ Bitte starte mich vor dem Aktivieren zuerst privat.", utils.DefaultSendOptions)
+			return err
 		}
 		guid := xid.New().String()
 		log.Err(err).
@@ -210,7 +213,7 @@ func (p *Plugin) enableNotify(c plugin.GobotContext) error {
 		"Nutze <code>/notify_disable</code> zum Deaktivieren.", utils.DefaultSendOptions)
 }
 
-func (p *Plugin) disableNotify(c plugin.GobotContext) error {
+func (p *Plugin) disableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 	enabled, err := p.notifyService.Enabled(c.Chat(), c.Sender())
 	if err != nil {
 		guid := xid.New().String()

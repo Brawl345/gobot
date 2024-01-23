@@ -23,16 +23,16 @@ func (p *Plugin) Name() string {
 	return "id"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "whoami",
+			Command:     "whoami",
 			Description: "Deine Telegram-Informationen anzeigen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/(?:(?:whoami)|(?:id))(?:@%s)?$`, botInfo.Username)),
@@ -45,7 +45,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 		},
 	}
 }
-func onId(c plugin.GobotContext) error {
+func onId(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("Du bist <b>%s", utils.Escape(c.Sender().FirstName)))
@@ -66,10 +66,11 @@ func onId(c plugin.GobotContext) error {
 		))
 	}
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	return err
 }
 
-func onIdInline(c plugin.GobotContext) error {
+func onIdInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var sb strings.Builder
 
 	sb.WriteString(fmt.Sprintf("<b>%s", utils.Escape(c.Sender().FirstName)))

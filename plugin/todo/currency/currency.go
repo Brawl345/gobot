@@ -12,7 +12,6 @@ import (
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("currency")
@@ -32,16 +31,16 @@ func (p *Plugin) Name() string {
 	return "currency"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "cash",
+			Command:     "cash",
 			Description: "<Wert> <Basis> [Zu] - Währung umrechnen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/cash(?:@%s)? ([\d,]+) ([A-Za-z]{3}) (?:in )?([A-Za-z]{3})$`, botInfo.Username)),
@@ -93,54 +92,64 @@ func convertCurrency(amount, from, to string) (string, error) {
 	return fmt.Sprintf("💶 %s %s = <b>%s %s</b>", amountStr, from, toStr, to), nil
 }
 
-func onConvertFromTo(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func onConvertFromTo(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 
 	text, err := convertCurrency(c.Matches[1], c.Matches[2], c.Matches[3])
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrBadAmount):
-			return c.Reply("❌ Ungültiger Betrag", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ungültiger Betrag", utils.DefaultSendOptions)
+			return err
 		case errors.Is(err, ErrBadCurrency):
-			return c.Reply("❌ Bitte gib eine <a href=\"https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.de.html\">gültige Währung</a> an.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib eine <a href=\"https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.de.html\">gültige Währung</a> an.", utils.DefaultSendOptions)
+			return err
 		case errors.Is(err, ErrSameCurrency):
-			return c.Reply("❌ Die beiden Währungen sind identisch.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Die beiden Währungen sind identisch.", utils.DefaultSendOptions)
+			return err
 		default:
 			guid := xid.New().String()
 			log.Err(err).
 				Str("guid", guid).
 				Msg("Failed to convert currency")
-			return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			return err
 		}
 	}
 
-	return c.Reply(text, utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, text, utils.DefaultSendOptions)
+	return err
 }
 
-func onConvertToEUR(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func onConvertToEUR(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 	text, err := convertCurrency(c.Matches[1], c.Matches[2], "EUR")
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrBadAmount):
-			return c.Reply("❌ Ungültiger Betrag", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ungültiger Betrag", utils.DefaultSendOptions)
+			return err
 		case errors.Is(err, ErrBadCurrency):
-			return c.Reply("❌ Bitte gib eine <a href=\"https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.de.html\">gültige Zielwährung</a> an.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib eine <a href=\"https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.de.html\">gültige Zielwährung</a> an.", utils.DefaultSendOptions)
+			return err
 		case errors.Is(err, ErrSameCurrency):
-			return c.Reply("❌ Mit diesem Befehl rechnest du bereits in Euro um.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Mit diesem Befehl rechnest du bereits in Euro um.", utils.DefaultSendOptions)
+			return err
 		default:
 			guid := xid.New().String()
 			log.Err(err).
 				Str("guid", guid).
 				Msg("Failed to convert currency")
-			return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			return err
 		}
 	}
 
-	return c.Reply(text, utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, text, utils.DefaultSendOptions)
+	return err
 }
 
-func onConvertFromToInline(c plugin.GobotContext) error {
+func onConvertFromToInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 	text, err := convertCurrency(c.Matches[1], c.Matches[2], c.Matches[3])
 
 	if err != nil {
@@ -171,7 +180,7 @@ func onConvertFromToInline(c plugin.GobotContext) error {
 	})
 }
 
-func onConvertToEURInline(c plugin.GobotContext) error {
+func onConvertToEURInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 	text, err := convertCurrency(c.Matches[1], c.Matches[2], "EUR")
 
 	if err != nil {

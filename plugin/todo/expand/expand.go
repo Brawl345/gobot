@@ -12,7 +12,6 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("expand")
@@ -32,16 +31,16 @@ func (p *Plugin) Name() string {
 	return "expand"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "expand",
+			Command:     "expand",
 			Description: "<URL> - Link entkürzen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/expand(?:@%s)? .+$`, botInfo.Username)),
@@ -108,8 +107,8 @@ func loop(sb *strings.Builder, url string, depth int) {
 	}
 }
 
-func onExpand(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func onExpand(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 
 	var shortUrls []string
 	for _, entity := range utils.AnyEntities(c.Message()) {
@@ -121,7 +120,8 @@ func onExpand(c plugin.GobotContext) error {
 	}
 
 	if len(shortUrls) == 0 {
-		return c.Reply("Keine Links gefunden", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "Keine Links gefunden", utils.DefaultSendOptions)
+		return err
 	}
 
 	var limitExceeded bool
@@ -142,10 +142,11 @@ func onExpand(c plugin.GobotContext) error {
 		sb.WriteString("💡 <i>...weitere Links ignoriert</i>\n")
 	}
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	return err
 }
 
-func onExpandFromReply(c plugin.GobotContext) error {
+func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if !c.Message().IsReply() {
 		log.Debug().
 			Int64("chat_id", c.Chat().ID).
@@ -156,7 +157,8 @@ func onExpandFromReply(c plugin.GobotContext) error {
 
 	if strings.HasPrefix(c.Message().ReplyTo.Text, "/expand") ||
 		strings.HasPrefix(c.Message().ReplyTo.Caption, "/expand") {
-		return c.Reply("😠", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions)
+		return err
 	}
 
 	var shortUrls []string
@@ -179,7 +181,7 @@ func onExpandFromReply(c plugin.GobotContext) error {
 		limitExceeded = true
 	}
 
-	_ = c.Notify(telebot.Typing)
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 	var sb strings.Builder
 
 	for _, url := range shortUrls {

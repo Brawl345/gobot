@@ -29,16 +29,16 @@ func (*Plugin) Name() string {
 	return "stats"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "stats",
+			Command:     "stats",
 			Description: "Chat-Statistiken anzeigen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/stats(?:@%s)?$`, botInfo.Username)),
@@ -48,7 +48,7 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) OnStats(c plugin.GobotContext) error {
+func (p *Plugin) OnStats(b *gotgbot.Bot, c plugin.GobotContext) error {
 	users, err := p.chatsUsersService.GetAllUsersWithMsgCount(c.Chat())
 	if err != nil {
 		guid := xid.New().String()
@@ -61,7 +61,8 @@ func (p *Plugin) OnStats(c plugin.GobotContext) error {
 	}
 
 	if len(users) == 0 {
-		return c.Reply("<i>Es wurden noch keine Statistiken erstellt.</i>", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "<i>Es wurden noch keine Statistiken erstellt.</i>", utils.DefaultSendOptions)
+		return err
 	}
 
 	var sb strings.Builder
@@ -102,5 +103,6 @@ func (p *Plugin) OnStats(c plugin.GobotContext) error {
 	}
 	sb.WriteString(fmt.Sprintf("<b>GESAMT:</b> %s", utils.FormatThousand(totalCount)))
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	return err
 }
