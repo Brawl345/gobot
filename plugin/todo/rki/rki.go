@@ -367,13 +367,13 @@ func (p *Plugin) setRkiAGS(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	err = p.rkiService.SetAGS(c.Sender(), ags)
+	err = p.rkiService.SetAGS(c.EffectiveUser, ags)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
 			Str("guid", guid).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("ags", ags).
 			Msg("error while saving AGS")
 		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(xid.New().String())),
@@ -386,13 +386,13 @@ func (p *Plugin) setRkiAGS(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 func (p *Plugin) onMyRKI(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
-	ags, err := p.rkiService.GetAGS(c.Sender())
+	ags, err := p.rkiService.GetAGS(c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
 			Str("guid", guid).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Msg("error while getting AGS")
 		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions)
@@ -409,13 +409,13 @@ func (p *Plugin) onMyRKI(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) delRKI(b *gotgbot.Bot, c plugin.GobotContext) error {
-	err := p.rkiService.DelAGS(c.Sender())
+	err := p.rkiService.DelAGS(c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
 			Str("guid", guid).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Msg("error while deleting AGS")
 		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions)

@@ -13,6 +13,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 	"golang.org/x/sync/errgroup"
 )
@@ -82,10 +83,13 @@ func OnCountry(b *gotgbot.Bot, c plugin.GobotContext) error {
 		guid := xid.New().String()
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == 404 {
-				return c.Reply("❌ Das gesuchte Land existiert nicht oder hat keine COVID-Fälle gemeldet.\n"+
-					"Bitte darauf achten das Land in <b>Englisch</b> anzugeben!",
+				_, err := c.EffectiveMessage.Reply(
+					b,
+					fmt.Sprintf("❌ Das gesuchte Land existiert nicht oder hat keine COVID-Fälle gemeldet.\n"+
+						"Bitte darauf achten das Land in <b>Englisch</b> anzugeben!%s", utils.EmbedGUID(guid)),
 					utils.DefaultSendOptions,
 				)
+				return err
 			} else {
 				log.Error().
 					Str("guid", guid).
@@ -98,8 +102,9 @@ func OnCountry(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Send()
 		}
 
-		return c.Reply(fmt.Sprintf("❌ Bei der Anfrage ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Bei der Anfrage ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions)
+		return err
 	}
 
 	if result.Message != "" {
@@ -195,10 +200,11 @@ func OnCountry(b *gotgbot.Bot, c plugin.GobotContext) error {
 		),
 	)
 
-	return c.Reply(sb.String(), &telebot.SendOptions{
-		AllowWithoutReply: true,
-		ParseMode:         telebot.ModeHTML,
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+		ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+		ParseMode:       gotgbot.ParseModeHTML,
 	})
+	return err
 
 }
 
@@ -290,10 +296,11 @@ func OnRun(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Msg("Failed to get 'all countries' data")
 		sb.WriteString(fmt.Sprintf("❌ Fehler beim Abrufen aller Länder.%s", utils.EmbedGUID(guid)))
 
-		return c.Reply(sb.String(), &telebot.SendOptions{
-			AllowWithoutReply: true,
-			ParseMode:         telebot.ModeHTML,
+		_, err := c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+			ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+			ParseMode:       gotgbot.ParseModeHTML,
 		})
+		return err
 	}
 
 	myCountryIndex := 0
@@ -331,8 +338,9 @@ func OnRun(b *gotgbot.Bot, c plugin.GobotContext) error {
 		),
 	)
 
-	return c.Reply(sb.String(), &telebot.SendOptions{
-		AllowWithoutReply: true,
-		ParseMode:         telebot.ModeHTML,
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+		ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+		ParseMode:       gotgbot.ParseModeHTML,
 	})
+	return err
 }

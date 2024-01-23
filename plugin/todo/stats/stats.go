@@ -10,7 +10,6 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("stats")
@@ -49,12 +48,12 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) OnStats(b *gotgbot.Bot, c plugin.GobotContext) error {
-	users, err := p.chatsUsersService.GetAllUsersWithMsgCount(c.Chat())
+	users, err := p.chatsUsersService.GetAllUsersWithMsgCount(c.EffectiveChat)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to get statistics")
 		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Statistiken.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions)

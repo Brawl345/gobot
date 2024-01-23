@@ -11,7 +11,6 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("randoms")
@@ -93,7 +92,7 @@ func (p *Plugin) addRandom(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	example := strings.NewReplacer(
-		"{user}", "<b>"+utils.Escape(c.Sender().FirstName)+"</b>",
+		"{user}", "<b>"+utils.Escape(c.EffectiveUser.FirstName)+"</b>",
 		"{other_user}", "<b>"+utils.Escape(c.Bot().Me.FirstName)+"</b>",
 	).Replace(random)
 
@@ -140,7 +139,7 @@ func (p *Plugin) random(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	random = strings.NewReplacer(
-		"{user}", "<b>"+utils.Escape(c.Sender().FirstName)+"</b>",
+		"{user}", "<b>"+utils.Escape(c.EffectiveUser.FirstName)+"</b>",
 		"{other_user}", "<b>"+utils.Escape(c.Matches[1])+"</b>",
 	).Replace(random)
 	_, err := c.EffectiveMessage.Reply(b, random, utils.DefaultSendOptions)

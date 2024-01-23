@@ -9,8 +9,8 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("creds")
@@ -59,7 +59,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) OnGet(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if c.Message().FromGroup() {
+	if utils.FromGroup(c.EffectiveMessage) {
 		return nil
 	}
 
@@ -70,8 +70,11 @@ func (p *Plugin) OnGet(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Send()
-		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Schlüssel.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b,
+			fmt.Sprintf("❌ Fehler beim Abrufen der Schlüssel.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions,
+		)
+		return err
 	}
 
 	if len(creds) == 0 {
@@ -85,26 +88,24 @@ func (p *Plugin) OnGet(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString(fmt.Sprintf("<b>%s</b>:\n<code>%s</code>\n", cred.Name, cred.Value))
 	}
 
-	return c.Reply(sb.String(), &telebot.SendOptions{
-		AllowWithoutReply:     true,
-		DisableWebPagePreview: true,
-		ParseMode:             telebot.ModeHTML,
-		ReplyMarkup: &telebot.ReplyMarkup{
-			InlineKeyboard: [][]telebot.InlineButton{
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+		ParseMode: gotgbot.ParseModeHTML,
+		ReplyMarkup: &gotgbot.InlineKeyboardMarkup{
+			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 				{
 					{
-						Text: "Verbergen",
-						Data: "creds_hide",
+						Text:         "Verbergen",
+						CallbackData: "creds_hide",
 					},
 				},
 			},
 		},
 	})
-
+	return err
 }
 
 func (p *Plugin) OnAdd(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if c.Message().FromGroup() {
+	if utils.FromGroup(c.EffectiveMessage) {
 		return nil
 	}
 
@@ -121,12 +122,12 @@ func (p *Plugin) OnAdd(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	_, err := c.EffectiveMessage.Reply(b, "✅ Schlüssel gespeichert. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅ Schlüssel gespeichert. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions)
 	return err
 }
 
 func (p *Plugin) OnDelete(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if c.Message().FromGroup() {
+	if utils.FromGroup(c.EffectiveMessage) {
 		return nil
 	}
 
@@ -138,17 +139,24 @@ func (p *Plugin) OnDelete(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Error deleting key")
-		return c.Reply(err.Error())
+
+		_, err := c.EffectiveMessage.Reply(
+			b,
+			fmt.Sprintf("❌ Fehler beim Löschen des Schlüssels.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions,
+		)
+		return err
 	}
 
-	_, err := c.EffectiveMessage.Reply(b, "✅ Schlüssel gelöscht. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅ Schlüssel gelöscht. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions)
 	return err
 }
 
 func (p *Plugin) OnHide(b *gotgbot.Bot, c plugin.GobotContext) error {
-	err := c.Bot().Delete(c.Callback().Message)
+	_, err := b.DeleteMessage(c.EffectiveChat.Id, c.EffectiveMessage.MessageId, nil)
 	if err != nil {
 		log.Err(err).Send()
 	}
-	return c.Respond()
+	_, err = c.CallbackQuery.Answer(b, nil)
+	return err
 }

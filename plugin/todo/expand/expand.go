@@ -149,8 +149,8 @@ func onExpand(b *gotgbot.Bot, c plugin.GobotContext) error {
 func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if !c.Message().IsReply() {
 		log.Debug().
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Msg("Message is not a reply")
 		return nil
 	}

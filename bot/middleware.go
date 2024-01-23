@@ -199,6 +199,7 @@ func onMessage(msg *gotgbot.Message) string {
 	}
 
 	// Reply
+	// TODO: Not working with "reply in other chat"
 	if msg.ReplyToMessage != nil {
 		sb.WriteString(
 			fmt.Sprintf(

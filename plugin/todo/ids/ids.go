@@ -11,7 +11,6 @@ import (
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
 	"golang.org/x/exp/slices"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("ids")
@@ -61,7 +60,7 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to get all users in chat")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 		return err
@@ -72,7 +71,7 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to count members in chat")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 		return err
@@ -83,7 +82,7 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to get admins and creators in chat")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
 		return err
@@ -104,8 +103,8 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"👥 <b>%s</b> <code>%d</code>\n",
-			utils.Escape(c.Chat().Title),
-			c.Chat().ID,
+			utils.Escape(c.EffectiveChat.Title),
+			c.EffectiveChat.Id,
 		),
 	)
 

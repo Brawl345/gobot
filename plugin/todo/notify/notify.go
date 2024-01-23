@@ -11,7 +11,6 @@ import (
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
 	"golang.org/x/exp/slices"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("notify")
@@ -79,7 +78,7 @@ func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			username := strings.TrimPrefix(c.Message().EntityText(entity), "@")
 			username = strings.ToLower(username)
 			if !slices.Contains(mentionedUsernames, username) && username !=
-				strings.ToLower(c.Sender().Username) {
+				strings.ToLower(c.EffectiveUser.Username) {
 				mentionedUsernames = append(mentionedUsernames, username)
 			}
 		}
@@ -89,11 +88,11 @@ func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	userIDs, err := p.notifyService.GetAllToBeNotifiedUsers(c.Chat(), mentionedUsernames)
+	userIDs, err := p.notifyService.GetAllToBeNotifiedUsers(c.EffectiveChat, mentionedUsernames)
 	if err != nil {
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Msg("error while getting all usernames that should be notified")
 		return nil
 	}
@@ -107,13 +106,13 @@ func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"🔔 <b>%s</b> hat dich erwähnt:\n",
-			utils.Escape(utils.FullName(c.Sender().FirstName, c.Sender().LastName)),
+			utils.Escape(utils.FullName(c.EffectiveUser.FirstName, c.EffectiveUser.LastName)),
 		),
 	)
 	sb.WriteString(
 		fmt.Sprintf(
 			"👥 <b>%s</b> | 📅 %s | 🕒 %s Uhr\n",
-			utils.Escape(c.Chat().Title),
+			utils.Escape(c.EffectiveChat.Title),
 			c.Message().Time().Format("02.01.2006"),
 			c.Message().Time().Format("15:04:05"),
 		),
@@ -151,12 +150,12 @@ func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if c.Sender().Username == "" {
+	if c.EffectiveUser.Username == "" {
 		_, err := c.EffectiveMessage.Reply(b, "😕 Du benötigst einen Benutzernamen um dieses Feature zu nutzen.", utils.DefaultSendOptions)
 		return err
 	}
 
-	testMsg, err := c.Bot().Send(c.Sender(), "✅", utils.DefaultSendOptions)
+	testMsg, err := c.Bot().Send(c.EffectiveUser, "✅", utils.DefaultSendOptions)
 	if err != nil {
 		if errors.Is(err, telebot.ErrBlockedByUser) {
 			_, err := c.EffectiveMessage.Reply(b, "😭 Du hast mich blockiert T__T", utils.DefaultSendOptions)
@@ -167,8 +166,8 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 		guid := xid.New().String()
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error while sending test message")
 		return c.Reply(fmt.Sprintf("❌ Ich wollte dir eine Nachricht senden, aber das hat nicht funktioniert Bitte den Administrator des Bots um Hilfe und sende ihm folgenden Fehler-Code:%s", utils.EmbedGUID(guid)),
@@ -181,12 +180,12 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Msg("error while deleting test message, lmao")
 	}
 
-	enabled, err := p.notifyService.Enabled(c.Chat(), c.Sender())
+	enabled, err := p.notifyService.Enabled(c.EffectiveChat, c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error during enabled check")
 		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
@@ -197,12 +196,12 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return c.Reply("💡 Du wirst in dieser Gruppe schon über neue Erwähnungen informiert.")
 	}
 
-	err = p.notifyService.Enable(c.Chat(), c.Sender())
+	err = p.notifyService.Enable(c.EffectiveChat, c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error while enabling notifications")
 		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
@@ -214,12 +213,12 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) disableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
-	enabled, err := p.notifyService.Enabled(c.Chat(), c.Sender())
+	enabled, err := p.notifyService.Enabled(c.EffectiveChat, c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error during enabled check")
 		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
@@ -231,12 +230,12 @@ func (p *Plugin) disableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	err = p.notifyService.Disable(c.Chat(), c.Sender())
+	err = p.notifyService.Disable(c.EffectiveChat, c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error while disabling notifications")
 		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),

@@ -13,7 +13,6 @@ import (
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("weather")
@@ -88,7 +87,7 @@ func (p *Plugin) onWeather(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if len(c.Matches) > 1 {
 		venue, err = p.geocodingService.Geocode(c.Matches[1])
 	} else {
-		venue, err = p.homeService.GetHome(c.Sender())
+		venue, err = p.homeService.GetHome(c.EffectiveUser)
 	}
 
 	if err != nil {
@@ -103,7 +102,7 @@ func (p *Plugin) onWeather(b *gotgbot.Bot, c plugin.GobotContext) error {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error getting location")
 		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
@@ -264,7 +263,7 @@ func (p *Plugin) onForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if len(c.Matches) > 1 {
 		venue, err = p.geocodingService.Geocode(c.Matches[1])
 	} else {
-		venue, err = p.homeService.GetHome(c.Sender())
+		venue, err = p.homeService.GetHome(c.EffectiveUser)
 	}
 
 	if err != nil {
@@ -279,7 +278,7 @@ func (p *Plugin) onForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error getting location")
 		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
@@ -336,7 +335,7 @@ func (p *Plugin) onHourlyForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if len(c.Matches) > 1 {
 		venue, err = p.geocodingService.Geocode(c.Matches[1])
 	} else {
-		venue, err = p.homeService.GetHome(c.Sender())
+		venue, err = p.homeService.GetHome(c.EffectiveUser)
 	}
 
 	if err != nil {
@@ -351,7 +350,7 @@ func (p *Plugin) onHourlyForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error getting location")
 		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),

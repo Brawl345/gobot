@@ -17,6 +17,9 @@ import (
 	"github.com/Brawl345/gobot/plugin/amazon_ref_cleaner"
 	"github.com/Brawl345/gobot/plugin/birthdays"
 	"github.com/Brawl345/gobot/plugin/calc"
+	"github.com/Brawl345/gobot/plugin/cleverbot"
+	"github.com/Brawl345/gobot/plugin/covid"
+	"github.com/Brawl345/gobot/plugin/creds"
 	"github.com/Brawl345/gobot/plugin/echo"
 	"github.com/Brawl345/gobot/plugin/google_images"
 	"github.com/Brawl345/gobot/plugin/kaomoji"
@@ -69,7 +72,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 	// Plugin-specific services
 	afkService := sql.NewAfkService(db)
 	birthdayService := sql.NewBirthdayService(db)
-	//cleverbotService := sql.NewCleverbotService(db)
+	cleverbotService := sql.NewCleverbotService(db)
 	//fileService := sql.NewFileService(db)
 	//geminiService := sql.NewGeminiService(db)
 	googleImagesService := sql.NewGoogleImagesService(db)
@@ -89,9 +92,9 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		amazon_ref_cleaner.New(),
 		birthdays.New(bot, birthdayService),
 		calc.New(),
-		//cleverbot.New(credentialService, cleverbotService),
-		//covid.New(),
-		//creds.New(credentialService),
+		cleverbot.New(credentialService, cleverbotService),
+		covid.New(),
+		creds.New(credentialService),
 		//currency.New(),
 		//dcrypt.New(),
 		//delmsg.New(),

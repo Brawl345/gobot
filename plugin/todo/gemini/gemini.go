@@ -91,11 +91,11 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 
 	var contents []Content
-	geminiData, err := p.geminiService.GetHistory(c.Chat())
+	geminiData, err := p.geminiService.GetHistory(c.EffectiveChat)
 	if err != nil {
 		log.Error().
 			Err(err).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("error getting Gemini data")
 	}
 
@@ -106,7 +106,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 			if err != nil {
 				log.Error().
 					Err(err).
-					Int64("chat_id", c.Chat().ID).
+					Int64("chat_id", c.EffectiveChat.Id).
 					Msg("error unmarshaling Gemini data from DB")
 			}
 			contents = history
@@ -164,11 +164,11 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 					Str("url", p.apiUrl).
 					Msg("Failed to send POST request, got HTTP code 400")
 
-				err := p.geminiService.ResetHistory(c.Chat())
+				err := p.geminiService.ResetHistory(c.EffectiveChat)
 				if err != nil {
 					log.Error().
 						Err(err).
-						Int64("chat_id", c.Chat().ID).
+						Int64("chat_id", c.EffectiveChat.Id).
 						Msg("error resetting Gemini data")
 				}
 
@@ -218,11 +218,11 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	if inputChars > MaxInputCharacters {
-		err = p.geminiService.ResetHistory(c.Chat())
+		err = p.geminiService.ResetHistory(c.EffectiveChat)
 		if err != nil {
 			log.Error().
 				Err(err).
-				Int64("chat_id", c.Chat().ID).
+				Int64("chat_id", c.EffectiveChat.Id).
 				Msg("error resetting Gemini data")
 		}
 	} else {
@@ -230,14 +230,14 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		if err != nil {
 			log.Error().
 				Err(err).
-				Int64("chat_id", c.Chat().ID).
+				Int64("chat_id", c.EffectiveChat.Id).
 				Msg("error marshalling Gemini data")
 		} else {
-			err = p.geminiService.SetHistory(c.Chat(), string(jsonData))
+			err = p.geminiService.SetHistory(c.EffectiveChat, string(jsonData))
 			if err != nil {
 				log.Error().
 					Err(err).
-					Int64("chat_id", c.Chat().ID).
+					Int64("chat_id", c.EffectiveChat.Id).
 					Msg("error saving Gemini data")
 			}
 		}
@@ -264,13 +264,13 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) reset(b *gotgbot.Bot, c plugin.GobotContext) error {
-	err := p.geminiService.ResetHistory(c.Chat())
+	err := p.geminiService.ResetHistory(c.EffectiveChat)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("error resetting history")
 		return c.Reply(fmt.Sprintf("❌ Fehler beim Zurücksetzen der Gemini-History.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions)

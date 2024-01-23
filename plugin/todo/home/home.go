@@ -10,7 +10,6 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("home")
@@ -65,7 +64,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 
 func (p *Plugin) onGetHome(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_ = c.Notify(telebot.FindingLocation)
-	venue, err := p.homeService.GetHome(c.Sender())
+	venue, err := p.homeService.GetHome(c.EffectiveUser)
 	if err != nil {
 		if errors.Is(err, model.ErrHomeAddressNotSet) {
 			return c.Reply("🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
@@ -75,7 +74,7 @@ func (p *Plugin) onGetHome(b *gotgbot.Bot, c plugin.GobotContext) error {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error getting home")
 		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
@@ -105,12 +104,12 @@ func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
 			utils.DefaultSendOptions)
 	}
 
-	err = p.homeService.SetHome(c.Sender(), &venue)
+	err = p.homeService.SetHome(c.EffectiveUser, &venue)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error setting home")
 		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
@@ -122,12 +121,12 @@ func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) onDeleteHome(b *gotgbot.Bot, c plugin.GobotContext) error {
-	err := p.homeService.DeleteHome(c.Sender())
+	err := p.homeService.DeleteHome(c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error deleting home")
 		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),

@@ -13,7 +13,6 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("reminders")
@@ -166,7 +165,7 @@ func (p *Plugin) onAddDateTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) er
 		remindTime = remindTime.AddDate(1, 0, 0)
 	}
 
-	id, err := p.reminderService.SaveReminder(c.Chat(), c.Sender(), remindTime, text)
+	id, err := p.reminderService.SaveReminder(c.EffectiveChat, c.EffectiveUser, remindTime, text)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
@@ -233,7 +232,7 @@ func (p *Plugin) onAddTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) error 
 		remindTime = remindTime.AddDate(0, 0, 1)
 	}
 
-	id, err := p.reminderService.SaveReminder(c.Chat(), c.Sender(), remindTime, text)
+	id, err := p.reminderService.SaveReminder(c.EffectiveChat, c.EffectiveUser, remindTime, text)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
@@ -288,7 +287,7 @@ func (p *Plugin) onAddDeltaReminder(b *gotgbot.Bot, c plugin.GobotContext) error
 		return err
 	}
 
-	id, err := p.reminderService.SaveReminder(c.Chat(), c.Sender(), remindTime, text)
+	id, err := p.reminderService.SaveReminder(c.EffectiveChat, c.EffectiveUser, remindTime, text)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
@@ -311,7 +310,7 @@ func (p *Plugin) onAddDeltaReminder(b *gotgbot.Bot, c plugin.GobotContext) error
 
 func (p *Plugin) onDeleteReminder(b *gotgbot.Bot, c plugin.GobotContext) error {
 	id := c.Matches[1]
-	err := p.reminderService.DeleteReminder(c.Chat(), c.Sender(), id)
+	err := p.reminderService.DeleteReminder(c.EffectiveChat, c.EffectiveUser, id)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
 			_, err := c.EffectiveMessage.Reply(b, "❌ Diese Erinnerung existiert nicht.", utils.DefaultSendOptions)
@@ -331,7 +330,7 @@ func (p *Plugin) onDeleteReminder(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) onGetReminders(b *gotgbot.Bot, c plugin.GobotContext) error {
-	reminders, err := p.reminderService.GetReminders(c.Chat(), c.Sender())
+	reminders, err := p.reminderService.GetReminders(c.EffectiveChat, c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
