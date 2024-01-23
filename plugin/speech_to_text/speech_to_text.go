@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 var log = logger.New("speech_to_text")
@@ -49,7 +50,7 @@ func (p *Plugin) Commands() []gotgbot.BotCommand {
 func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     telebot.OnVoice,
+			Trigger:     utils.VoiceMsg,
 			HandlerFunc: p.OnVoice,
 		},
 	}
@@ -72,12 +73,12 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if c.EffectiveMessage.Voice.Duration > MaxDuration {
 		log.Warn().
-			Int("duration", c.EffectiveMessage.Voice.Duration).
+			Int64("duration", c.EffectiveMessage.Voice.Duration).
 			Msg(fmt.Sprintf("Voice message is longer than %d seconds", MaxDuration))
 		return nil
 	}
 
-	file, err := c.Bot().File(&telebot.File{FileID: c.EffectiveMessage.Voice.FileID})
+	file, err := httpUtils.DownloadFile(b, c.EffectiveMessage.Voice.FileId)
 	if err != nil {
 		log.Err(err).
 			Interface("file", c.EffectiveMessage.Voice).
@@ -169,9 +170,10 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString(apiResponse.Text)
 	}
 
-	return c.Reply(sb.String(), &telebot.SendOptions{
-		AllowWithoutReply:     true,
-		DisableWebPagePreview: true,
-		DisableNotification:   true,
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+		LinkPreviewOptions:  &gotgbot.LinkPreviewOptions{IsDisabled: true},
+		DisableNotification: true,
 	})
+	return err
 }

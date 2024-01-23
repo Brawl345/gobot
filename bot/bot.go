@@ -41,7 +41,10 @@ import (
 	"github.com/Brawl345/gobot/plugin/randoms"
 	"github.com/Brawl345/gobot/plugin/reminders"
 	"github.com/Brawl345/gobot/plugin/replace"
+	"github.com/Brawl345/gobot/plugin/rki"
+	"github.com/Brawl345/gobot/plugin/speech_to_text"
 	"github.com/Brawl345/gobot/plugin/stats"
+	"github.com/Brawl345/gobot/plugin/summarize"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/jmoiron/sqlx"
@@ -100,7 +103,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 	quoteService := sql.NewQuoteService(db)
 	randomService := sql.NewRandomService(db)
 	reminderService := sql.NewReminderService(db)
-	//rkiService := sql.NewRKIService(db)
+	rkiService := sql.NewRKIService(db)
 
 	plugins := []plugin.Plugin{
 		about.New(),
@@ -134,10 +137,10 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		randoms.New(randomService),
 		reminders.New(bot, reminderService),
 		replace.New(),
-		//rki.New(rkiService),
-		//speech_to_text.New(credentialService),
+		rki.New(rkiService),
+		speech_to_text.New(credentialService),
 		stats.New(chatsUsersService),
-		//summarize.New(credentialService),
+		summarize.New(credentialService),
 		//twitter.New(),
 		//upload_by_url.New(),
 		//urbandictionary.New(),

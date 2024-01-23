@@ -13,6 +13,7 @@ const (
 	LocationMsg MessageTrigger = "\agobot_location"
 	PhotoMsg    MessageTrigger = "\agobot_photo"
 	VenueMsg    MessageTrigger = "\agobot_venue"
+	VoiceMsg    MessageTrigger = "\agobot_voice"
 	AnyMedia    MessageTrigger = "\agobot_media"
 
 	Day  = 24 * time.Hour

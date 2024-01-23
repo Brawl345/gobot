@@ -143,6 +143,8 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 					matched = command == utils.LocationMsg
 				case msg.Venue != nil:
 					matched = command == utils.VenueMsg
+				case msg.Voice != nil:
+					matched = command == utils.VoiceMsg
 				}
 
 				if !matched && utils.ContainsMedia(msg) {

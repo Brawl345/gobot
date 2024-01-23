@@ -12,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 
 	"github.com/go-shiori/go-readability"
@@ -91,7 +92,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) onSummarize(b *gotgbot.Bot, c plugin.GobotContext) error {
-	return p.summarize(c, c.EffectiveMessage)
+	return p.summarize(b, c, c.EffectiveMessage)
 }
 
 func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
@@ -103,34 +104,34 @@ func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	if strings.HasPrefix(c.EffectiveMessage.ReplyTo.Text, "/su") ||
-		strings.HasPrefix(c.EffectiveMessage.ReplyTo.Caption, "/su") {
+	if strings.HasPrefix(c.EffectiveMessage.ReplyToMessage.Text, "/su") ||
+		strings.HasPrefix(c.EffectiveMessage.ReplyToMessage.Caption, "/su") {
 		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions())
 		return err
 	}
 
-	if c.EffectiveMessage.ReplyTo.Sender.IsBot {
+	if c.EffectiveMessage.ReplyToMessage.From.IsBot {
 		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions())
 		return err
 	}
 
-	return p.summarize(c, c.EffectiveMessage.ReplyTo)
+	return p.summarize(b, c, c.EffectiveMessage.ReplyToMessage)
 }
 
-func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
+func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.Message) error {
 	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 
 	var urls []string
 	for _, entity := range utils.AnyEntities(msg) {
-		if entity.Type == telebot.EntityURL {
-			urls = append(urls, msg.EntityText(entity))
-		} else if entity.Type == telebot.EntityTextLink {
-			urls = append(urls, entity.URL)
+		if utils.EntityType(entity.Type) == utils.EntityTypeURL {
+			urls = append(urls, msg.ParseEntity(entity).Url)
+		} else if utils.EntityType(entity.Type) == utils.EntityTextLink {
+			urls = append(urls, entity.Url)
 		}
 	}
 
 	if len(urls) == 0 {
-		_, err := c.Bot().Reply(msg, "❌ Keine Links gefunden", utils.DefaultSendOptions())
+		_, err := msg.Reply(b, "❌ Keine Links gefunden", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -142,21 +143,21 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 			Str("url", url).
 			Msg("Failed to extract text content from URL")
 
-		_, err := c.Bot().Reply(msg,
+		_, err := msg.Reply(b,
 			fmt.Sprintf("❌ Text konnte nicht extrahiert werden: <code>%v</code>", utils.Escape(err.Error())),
 			utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(article.TextContent) < MinArticleLength {
-		_, err := c.Bot().Reply(msg,
+		_, err := msg.Reply(b,
 			"❌ Artikel-Inhalt ist zu kurz.",
 			utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(article.TextContent) > MaxArticleLength {
-		_, err := c.Bot().Reply(msg,
+		_, err := msg.Reply(b,
 			"❌ Artikel-Inhalt ist zu lang.",
 			utils.DefaultSendOptions())
 		return err
@@ -201,8 +202,9 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 			Str("guid", guid).
 			Str("url", url).
 			Msg("Failed to send POST request")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
+		return err
 	}
 
 	if response.Error.Type != "" {
@@ -213,8 +215,9 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 			Str("message", response.Error.Message).
 			Str("type", response.Error.Type).
 			Msg("Got error from OpenAI API")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
+		return err
 	}
 
 	if len(response.Choices) == 0 || (len(response.Choices) > 0 && response.Choices[0].Message.Content == "") {
@@ -229,6 +232,6 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 	sb.WriteString("<b>Zusammenfassung:</b>\n")
 	sb.WriteString(utils.Escape(response.Choices[0].Message.Content))
 
-	_, err = c.Bot().Reply(msg, sb.String(), utils.DefaultSendOptions())
+	_, err = msg.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }
