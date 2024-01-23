@@ -28,8 +28,14 @@ import (
 	"github.com/Brawl345/gobot/plugin/gemini"
 	"github.com/Brawl345/gobot/plugin/getfile"
 	"github.com/Brawl345/gobot/plugin/google_images"
+	"github.com/Brawl345/gobot/plugin/google_search"
+	"github.com/Brawl345/gobot/plugin/gps"
+	"github.com/Brawl345/gobot/plugin/home"
+	"github.com/Brawl345/gobot/plugin/id"
+	"github.com/Brawl345/gobot/plugin/ids"
 	"github.com/Brawl345/gobot/plugin/kaomoji"
 	"github.com/Brawl345/gobot/plugin/manager"
+	"github.com/Brawl345/gobot/plugin/stats"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/jmoiron/sqlx"
@@ -48,7 +54,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 	// General services
 	chatService := sql.NewChatService(db)
 	credentialService := sql.NewCredentialService(db)
-	//geocodingService := sql.NewGeocodingService()
+	geocodingService := sql.NewGeocodingService()
 	pluginService := sql.NewPluginService(db)
 	userService := sql.NewUserService(db)
 	chatsPluginsService := sql.NewChatsPluginsService(db, chatService, pluginService)
@@ -83,7 +89,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 	geminiService := sql.NewGeminiService(db)
 	googleImagesService := sql.NewGoogleImagesService(db)
 	googleImagesCleanupService := sql.NewGoogleImagesCleanupService(db)
-	//homeService := sql.NewHomeService(db)
+	homeService := sql.NewHomeService(db)
 	//notifyService := sql.NewNotifyService(db)
 	//quoteService := sql.NewQuoteService(db)
 	//randomService := sql.NewRandomService(db)
@@ -109,11 +115,11 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		gemini.New(credentialService, geminiService),
 		getfile.New(credentialService, fileService),
 		google_images.New(credentialService, googleImagesService, googleImagesCleanupService),
-		//google_search.New(credentialService),
-		//gps.New(geocodingService),
-		//home.New(geocodingService, homeService),
-		//id.New(),
-		//ids.New(chatsUsersService),
+		google_search.New(credentialService),
+		gps.New(geocodingService),
+		home.New(geocodingService, homeService),
+		id.New(),
+		ids.New(chatsUsersService),
 		kaomoji.New(),
 		manager.New(managerSrvce),
 		//myanimelist.New(credentialService),
@@ -124,7 +130,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		//replace.New(),
 		//rki.New(rkiService),
 		//speech_to_text.New(credentialService),
-		//stats.New(chatsUsersService),
+		stats.New(chatsUsersService),
 		//summarize.New(credentialService),
 		//twitter.New(),
 		//upload_by_url.New(),

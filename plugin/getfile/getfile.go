@@ -80,9 +80,10 @@ func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 		uniqueID = c.EffectiveMessage.Document.FileUniqueId
 		subFolder = "document"
 	} else if c.EffectiveMessage.Photo != nil {
-		fileID = c.EffectiveMessage.Photo[len(c.EffectiveMessage.Photo)-1].FileId
-		fileSize = c.EffectiveMessage.Photo[len(c.EffectiveMessage.Photo)-1].FileSize
-		uniqueID = c.EffectiveMessage.Photo[len(c.EffectiveMessage.Photo)-1].FileUniqueId
+		bestResolution := utils.GetBestResolution(c.EffectiveMessage.Photo)
+		fileID = bestResolution.FileId
+		fileSize = bestResolution.FileSize
+		uniqueID = bestResolution.FileUniqueId
 		subFolder = "photo"
 	} else if c.EffectiveMessage.Sticker != nil {
 		fileID = c.EffectiveMessage.Sticker.FileId

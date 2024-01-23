@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
 
@@ -112,20 +113,22 @@ func (p *Plugin) onGoogleSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 		)
 	}
 
-	return c.Reply(sb.String(), &telebot.SendOptions{
-		AllowWithoutReply:     true,
-		DisableWebPagePreview: true,
-		DisableNotification:   true,
-		ParseMode:             telebot.ModeHTML,
-		ReplyMarkup: &telebot.ReplyMarkup{
-			InlineKeyboard: [][]telebot.InlineButton{
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+		LinkPreviewOptions:  &gotgbot.LinkPreviewOptions{IsDisabled: true},
+		DisableNotification: true,
+		ParseMode:           gotgbot.ParseModeHTML,
+		ReplyMarkup: &gotgbot.InlineKeyboardMarkup{
+			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 				{
 					{
 						Text: fmt.Sprintf("%s Ergebnisse", strings.ReplaceAll(response.SearchInformation.FormattedTotalResults, ",", ".")),
-						URL:  fmt.Sprintf("https://www.google.com/search?q=%s", url.QueryEscape(query)),
+						Url:  fmt.Sprintf("https://www.google.com/search?q=%s", url.QueryEscape(query)),
 					},
 				},
 			},
 		},
 	})
+
+	return err
 }

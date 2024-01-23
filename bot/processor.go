@@ -135,10 +135,14 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 			case utils.MessageTrigger:
 				switch {
 				// More to be added when needed
-				case msg.Photo != nil && len(msg.Photo) > 0:
-					matched = command == utils.PhotoMsg
 				case msg.Document != nil:
 					matched = command == utils.DocumentMsg
+				case msg.Photo != nil && len(msg.Photo) > 0:
+					matched = command == utils.PhotoMsg
+				case msg.Location != nil:
+					matched = command == utils.LocationMsg
+				case msg.Venue != nil:
+					matched = command == utils.VenueMsg
 				}
 
 				if !matched && utils.ContainsMedia(msg) {

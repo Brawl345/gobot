@@ -2,12 +2,14 @@ package id
 
 import (
 	"fmt"
+	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 const InlineQueryCacheTime = 7200
@@ -58,7 +60,7 @@ func onId(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString(fmt.Sprintf(" <b>(@%s)</b>", c.EffectiveUser.Username))
 	}
 
-	if c.EffectiveMessage.FromGroup() {
+	if utils.FromGroup(c.EffectiveMessage) {
 		sb.WriteString(fmt.Sprintf("\nGruppe: <b>%s</b> <code>[%d]</code>",
 			utils.Escape(c.EffectiveChat.Title),
 			c.EffectiveChat.Id,
@@ -83,19 +85,20 @@ func onIdInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString(fmt.Sprintf(" <b>(@%s)</b>", c.EffectiveUser.Username))
 	}
 
-	result := &telebot.ArticleResult{
-		Title: strconv.FormatInt(c.EffectiveUser.Id, 10),
-		Text:  sb.String(),
-	}
-	result.SetContent(&telebot.InputTextMessageContent{
-		Text:           sb.String(),
-		ParseMode:      telebot.ModeHTML,
-		DisablePreview: true,
-	})
-
-	return c.Answer(&telebot.QueryResponse{
-		Results:    telebot.Results{result},
-		CacheTime:  InlineQueryCacheTime,
-		IsPersonal: true,
-	})
+	_, err := c.InlineQuery.Answer(
+		b,
+		[]gotgbot.InlineQueryResult{
+			gotgbot.InlineQueryResultArticle{
+				Id:    strconv.Itoa(rand.Int()),
+				Title: strconv.FormatInt(c.EffectiveUser.Id, 10),
+				InputMessageContent: gotgbot.InputTextMessageContent{
+					MessageText:        sb.String(),
+					ParseMode:          gotgbot.ParseModeHTML,
+					LinkPreviewOptions: &gotgbot.LinkPreviewOptions{IsDisabled: true},
+				},
+			},
+		},
+		&gotgbot.AnswerInlineQueryOpts{CacheTime: InlineQueryCacheTime, IsPersonal: true},
+	)
+	return err
 }
