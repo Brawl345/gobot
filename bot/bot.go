@@ -36,8 +36,9 @@ import (
 	"github.com/Brawl345/gobot/plugin/kaomoji"
 	"github.com/Brawl345/gobot/plugin/manager"
 	"github.com/Brawl345/gobot/plugin/myanimelist"
+	"github.com/Brawl345/gobot/plugin/notify"
+	"github.com/Brawl345/gobot/plugin/quotes"
 	"github.com/Brawl345/gobot/plugin/stats"
-	"github.com/Brawl345/gobot/plugin/todo/notify"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/jmoiron/sqlx"
@@ -93,7 +94,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 	googleImagesCleanupService := sql.NewGoogleImagesCleanupService(db)
 	homeService := sql.NewHomeService(db)
 	notifyService := sql.NewNotifyService(db)
-	//quoteService := sql.NewQuoteService(db)
+	quoteService := sql.NewQuoteService(db)
 	//randomService := sql.NewRandomService(db)
 	//reminderService := sql.NewReminderService(db)
 	//rkiService := sql.NewRKIService(db)
@@ -126,7 +127,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		manager.New(managerSrvce),
 		myanimelist.New(credentialService),
 		notify.New(notifyService),
-		//quotes.New(quoteService),
+		quotes.New(quoteService),
 		//randoms.New(randomService),
 		//reminders.New(bot, reminderService),
 		//replace.New(),

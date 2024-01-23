@@ -10,6 +10,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
 
@@ -19,9 +20,9 @@ type (
 	}
 
 	Service interface {
-		GetQuote(chat *telebot.Chat) (string, error)
-		SaveQuote(chat *telebot.Chat, quote string) error
-		DeleteQuote(chat *telebot.Chat, quote string) error
+		GetQuote(chat *gotgbot.Chat) (string, error)
+		SaveQuote(chat *gotgbot.Chat, quote string) error
+		DeleteQuote(chat *gotgbot.Chat, quote string) error
 	}
 )
 
@@ -90,8 +91,9 @@ func (p *Plugin) getQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	quote, err := p.quoteService.GetQuote(c.EffectiveChat)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
-			return c.Reply("<b>Es wurden noch keine Zitate eingespeichert!</b>\n"+
+			_, err := c.EffectiveMessage.Reply(b, "<b>Es wurden noch keine Zitate eingespeichert!</b>\n"+
 				"Füge welche mit <code>/addquote ZITAT</code> hinzu.", utils.DefaultSendOptions)
+			return err
 		}
 
 		guid := xid.New().String()
@@ -104,30 +106,31 @@ func (p *Plugin) getQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	return c.Send(quote, &telebot.SendOptions{
-		DisableWebPagePreview: true,
-		DisableNotification:   true,
-		ReplyMarkup: &telebot.ReplyMarkup{
-			InlineKeyboard: [][]telebot.InlineButton{
+	_, err = c.EffectiveChat.SendMessage(b, quote, &gotgbot.SendMessageOpts{
+		LinkPreviewOptions:  &gotgbot.LinkPreviewOptions{IsDisabled: true},
+		DisableNotification: true,
+		ReplyMarkup: &gotgbot.InlineKeyboardMarkup{
+			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 				{
 					{
-						Text: "Nochmal",
-						Data: "quotes_again",
+						Text:         "Nochmal",
+						CallbackData: "quotes_again",
 					},
 				},
 			},
 		},
 	})
+	return err
 }
 
 func (p *Plugin) addQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var quote string
 	if utils.IsReply(c.EffectiveMessage) &&
-		!c.EffectiveMessage.Sender.IsBot {
-		if c.EffectiveMessage.ReplyTo.Text != "" {
-			quote = fmt.Sprintf("\"%s\" —%s", c.EffectiveMessage.ReplyTo.Text, c.Matches[1])
-		} else if c.EffectiveMessage.ReplyTo.Caption != "" {
-			quote = fmt.Sprintf("\"%s\" —%s", c.EffectiveMessage.ReplyTo.Caption, c.Matches[1])
+		!c.EffectiveSender.IsBot() {
+		if c.EffectiveMessage.ReplyToMessage.Text != "" {
+			quote = fmt.Sprintf("\"%s\" —%s", c.EffectiveMessage.ReplyToMessage.Text, c.Matches[1])
+		} else if c.EffectiveMessage.ReplyToMessage.Caption != "" {
+			quote = fmt.Sprintf("\"%s\" —%s", c.EffectiveMessage.ReplyToMessage.Caption, c.Matches[1])
 		}
 	}
 
@@ -153,7 +156,7 @@ func (p *Plugin) addQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	_, err := c.EffectiveMessage.Reply(b, "<b>✅ Gespeichert!</b>", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "<b>✅ Gespeichert!</b>", utils.DefaultSendOptions)
 	return err
 }
 
@@ -162,10 +165,10 @@ func (p *Plugin) deleteQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if len(c.Matches) > 1 {
 		quote = c.Matches[1]
 	} else {
-		if !utils.IsReply(c.EffectiveMessage) || c.EffectiveMessage.ReplyTo.Text == "" {
+		if !utils.IsReply(c.EffectiveMessage) || c.EffectiveMessage.ReplyToMessage.Text == "" {
 			return nil
 		}
-		quoteMatches := regexp.MustCompile(fmt.Sprintf(`(?i)^(?:/addquote(?:@%s)? )?([\s\S]+)$`, c.Bot().Me.Username)).FindStringSubmatch(c.EffectiveMessage.ReplyTo.Text)
+		quoteMatches := regexp.MustCompile(fmt.Sprintf(`(?i)^(?:/addquote(?:@%s)? )?([\s\S]+)$`, b.Username)).FindStringSubmatch(c.EffectiveMessage.ReplyToMessage.Text)
 		if len(quoteMatches) < 2 {
 			return nil
 		}
@@ -189,6 +192,6 @@ func (p *Plugin) deleteQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	_, err := c.EffectiveMessage.Reply(b, "<b>✅ Zitat gelöscht!</b>", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "<b>✅ Zitat gelöscht!</b>", utils.DefaultSendOptions)
 	return err
 }
