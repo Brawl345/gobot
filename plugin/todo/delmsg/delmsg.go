@@ -6,7 +6,6 @@ import (
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("delmsg")
@@ -37,7 +36,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func deleteMsg(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if !c.Message().IsReply() {
+	if !utils.IsReply(c.EffectiveMessage) {
 		log.Debug().Msg("Message is not a reply")
 		return nil
 	}

@@ -95,7 +95,7 @@ func (p *Plugin) onSummarize(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if !c.Message().IsReply() {
+	if !utils.IsReply(c.EffectiveMessage) {
 		log.Debug().
 			Int64("chat_id", c.EffectiveChat.Id).
 			Int64("user_id", c.EffectiveUser.Id).

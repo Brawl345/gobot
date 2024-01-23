@@ -122,7 +122,7 @@ func (p *Plugin) getQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 func (p *Plugin) addQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var quote string
-	if c.Message().IsReply() &&
+	if utils.IsReply(c.EffectiveMessage) &&
 		!c.Message().Sender.IsBot {
 		if c.Message().ReplyTo.Text != "" {
 			quote = fmt.Sprintf("\"%s\" —%s", c.Message().ReplyTo.Text, c.Matches[1])
@@ -162,7 +162,7 @@ func (p *Plugin) deleteQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if len(c.Matches) > 1 {
 		quote = c.Matches[1]
 	} else {
-		if !c.Message().IsReply() || c.Message().ReplyTo.Text == "" {
+		if !utils.IsReply(c.EffectiveMessage) || c.Message().ReplyTo.Text == "" {
 			return nil
 		}
 		quoteMatches := regexp.MustCompile(fmt.Sprintf(`(?i)^(?:/addquote(?:@%s)? )?([\s\S]+)$`, c.Bot().Me.Username)).FindStringSubmatch(c.Message().ReplyTo.Text)

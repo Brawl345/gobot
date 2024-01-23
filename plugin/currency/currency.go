@@ -3,6 +3,7 @@ package currency
 import (
 	"errors"
 	"fmt"
+	"math/rand"
 	"regexp"
 	"strconv"
 	"strings"
@@ -11,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
 
@@ -117,7 +119,7 @@ func onConvertFromTo(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}
 
-	_, err := c.EffectiveMessage.Reply(b, text, utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, text, utils.DefaultSendOptions)
 	return err
 }
 
@@ -145,7 +147,7 @@ func onConvertToEUR(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}
 
-	_, err := c.EffectiveMessage.Reply(b, text, utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, text, utils.DefaultSendOptions)
 	return err
 }
 
@@ -155,29 +157,35 @@ func onConvertFromToInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err != nil {
 		log.Err(err).
 			Msg("Failed to convert currency (inline mode)")
-		return c.Answer(&telebot.QueryResponse{
-			Results:    telebot.Results{},
-			CacheTime:  utils.InlineQueryFailureCacheTime,
-			IsPersonal: true,
-		})
+		_, err := c.InlineQuery.Answer(
+			b,
+			nil,
+			&gotgbot.AnswerInlineQueryOpts{
+				CacheTime:  utils.InlineQueryFailureCacheTime,
+				IsPersonal: true,
+			},
+		)
+		return err
 	}
 
 	title := strings.NewReplacer("💶 ", "", "<b>", "", "</b>", "").Replace(text)
-	result := &telebot.ArticleResult{
-		Title: title,
-		Text:  text,
-	}
-	result.SetContent(&telebot.InputTextMessageContent{
-		Text:           text,
-		ParseMode:      telebot.ModeHTML,
-		DisablePreview: true,
-	})
 
-	return c.Answer(&telebot.QueryResponse{
-		Results:    telebot.Results{result},
-		CacheTime:  InlineQueryCacheTime,
-		IsPersonal: false,
-	})
+	_, err = c.InlineQuery.Answer(
+		b,
+		[]gotgbot.InlineQueryResult{
+			gotgbot.InlineQueryResultArticle{
+				Id:    strconv.Itoa(rand.Int()),
+				Title: title,
+				InputMessageContent: gotgbot.InputTextMessageContent{
+					MessageText:        text,
+					ParseMode:          gotgbot.ParseModeHTML,
+					LinkPreviewOptions: &gotgbot.LinkPreviewOptions{IsDisabled: true},
+				},
+			},
+		},
+		&gotgbot.AnswerInlineQueryOpts{CacheTime: InlineQueryCacheTime},
+	)
+	return err
 }
 
 func onConvertToEURInline(b *gotgbot.Bot, c plugin.GobotContext) error {
@@ -186,27 +194,32 @@ func onConvertToEURInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err != nil {
 		log.Err(err).
 			Msg("Failed to convert currency (inline mode)")
-		return c.Answer(&telebot.QueryResponse{
-			Results:    telebot.Results{},
-			CacheTime:  utils.InlineQueryFailureCacheTime,
-			IsPersonal: true,
-		})
+		_, err := c.InlineQuery.Answer(
+			b,
+			nil,
+			&gotgbot.AnswerInlineQueryOpts{
+				CacheTime:  utils.InlineQueryFailureCacheTime,
+				IsPersonal: true,
+			},
+		)
+		return err
 	}
 
 	title := strings.NewReplacer("💶 ", "", "<b>", "", "</b>", "").Replace(text)
-	result := &telebot.ArticleResult{
-		Title: title,
-		Text:  text,
-	}
-	result.SetContent(&telebot.InputTextMessageContent{
-		Text:           text,
-		ParseMode:      telebot.ModeHTML,
-		DisablePreview: true,
-	})
-
-	return c.Answer(&telebot.QueryResponse{
-		Results:    telebot.Results{result},
-		CacheTime:  InlineQueryCacheTime,
-		IsPersonal: false,
-	})
+	_, err = c.InlineQuery.Answer(
+		b,
+		[]gotgbot.InlineQueryResult{
+			gotgbot.InlineQueryResultArticle{
+				Id:    strconv.Itoa(rand.Int()),
+				Title: title,
+				InputMessageContent: gotgbot.InputTextMessageContent{
+					MessageText:        text,
+					ParseMode:          gotgbot.ParseModeHTML,
+					LinkPreviewOptions: &gotgbot.LinkPreviewOptions{IsDisabled: true},
+				},
+			},
+		},
+		&gotgbot.AnswerInlineQueryOpts{CacheTime: InlineQueryCacheTime},
+	)
+	return err
 }

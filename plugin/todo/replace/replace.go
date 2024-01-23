@@ -37,7 +37,7 @@ func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 }
 
 func onReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if !c.Message().IsReply() {
+	if !utils.IsReply(c.EffectiveMessage) {
 		return nil
 	}
 
@@ -66,7 +66,7 @@ func onReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func onRegexReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if !c.Message().IsReply() {
+	if !utils.IsReply(c.EffectiveMessage) {
 		return nil
 	}
 
