@@ -12,19 +12,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 )
 
-var (
-	DefaultSendOptions = &gotgbot.SendMessageOpts{
-		ReplyParameters: &gotgbot.ReplyParameters{
-			AllowSendingWithoutReply: true,
-		},
-		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
-			IsDisabled: true,
-		},
-		DisableNotification: true,
-		ParseMode:           gotgbot.ParseModeHTML,
-	}
-	log = logger.New("utils")
-)
+var log = logger.New("utils")
 
 type (
 	VersionInfo struct {
@@ -36,6 +24,19 @@ type (
 		DirtyBuild bool
 	}
 )
+
+func DefaultSendOptions() *gotgbot.SendMessageOpts {
+	return &gotgbot.SendMessageOpts{
+		ReplyParameters: &gotgbot.ReplyParameters{
+			AllowSendingWithoutReply: true,
+		},
+		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+			IsDisabled: true,
+		},
+		DisableNotification: true,
+		ParseMode:           gotgbot.ParseModeHTML,
+	}
+}
 
 func ReadVersionInfo() (VersionInfo, error) {
 	buildInfo, ok := debug.ReadBuildInfo()

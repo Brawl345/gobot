@@ -101,25 +101,25 @@ func onConvertFromTo(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrBadAmount):
-			_, err := c.EffectiveMessage.Reply(b, "❌ Ungültiger Betrag", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ungültiger Betrag", utils.DefaultSendOptions())
 			return err
 		case errors.Is(err, ErrBadCurrency):
-			_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib eine <a href=\"https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.de.html\">gültige Währung</a> an.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib eine <a href=\"https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.de.html\">gültige Währung</a> an.", utils.DefaultSendOptions())
 			return err
 		case errors.Is(err, ErrSameCurrency):
-			_, err := c.EffectiveMessage.Reply(b, "❌ Die beiden Währungen sind identisch.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Die beiden Währungen sind identisch.", utils.DefaultSendOptions())
 			return err
 		default:
 			guid := xid.New().String()
 			log.Err(err).
 				Str("guid", guid).
 				Msg("Failed to convert currency")
-			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 			return err
 		}
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, text, utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, text, utils.DefaultSendOptions())
 	return err
 }
 
@@ -129,25 +129,25 @@ func onConvertToEUR(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err != nil {
 		switch {
 		case errors.Is(err, ErrBadAmount):
-			_, err := c.EffectiveMessage.Reply(b, "❌ Ungültiger Betrag", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ungültiger Betrag", utils.DefaultSendOptions())
 			return err
 		case errors.Is(err, ErrBadCurrency):
-			_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib eine <a href=\"https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.de.html\">gültige Zielwährung</a> an.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib eine <a href=\"https://www.ecb.europa.eu/stats/policy_and_exchange_rates/euro_reference_exchange_rates/html/index.de.html\">gültige Zielwährung</a> an.", utils.DefaultSendOptions())
 			return err
 		case errors.Is(err, ErrSameCurrency):
-			_, err := c.EffectiveMessage.Reply(b, "❌ Mit diesem Befehl rechnest du bereits in Euro um.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Mit diesem Befehl rechnest du bereits in Euro um.", utils.DefaultSendOptions())
 			return err
 		default:
 			guid := xid.New().String()
 			log.Err(err).
 				Str("guid", guid).
 				Msg("Failed to convert currency")
-			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 			return err
 		}
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, text, utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, text, utils.DefaultSendOptions())
 	return err
 }
 

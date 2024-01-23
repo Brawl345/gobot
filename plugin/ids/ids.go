@@ -63,7 +63,7 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to get all users in chat")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -74,7 +74,7 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to count members in chat")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -85,7 +85,7 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to get admins and creators in chat")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -143,6 +143,6 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	sb.WriteString("<i>(Bots sind nicht gelistet)</i>")
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

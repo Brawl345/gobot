@@ -84,6 +84,6 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) OnAbout(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, err := c.EffectiveMessage.Reply(b, p.aboutText, utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, p.aboutText, utils.DefaultSendOptions())
 	return err
 }

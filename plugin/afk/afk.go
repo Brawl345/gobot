@@ -95,7 +95,7 @@ func (p *Plugin) goAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveSender.Id()).
 			Str("reason", reason).
 			Msg("Failure to go AFK")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -119,7 +119,7 @@ func (p *Plugin) goAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	sb.WriteString(".")
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }
 
@@ -149,7 +149,7 @@ func (p *Plugin) checkAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("chat_id", c.EffectiveChat.Id).
 			Int64("user_id", c.EffectiveSender.Id()).
 			Msg("Failure to set back again")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -172,7 +172,7 @@ func (p *Plugin) checkAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 	sb.WriteString(")</i>")
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }
 
@@ -227,6 +227,6 @@ func (p *Plugin) notifyIfAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	sb.WriteString(")</i>")
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

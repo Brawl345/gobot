@@ -306,13 +306,13 @@ func (p *Plugin) OnYouTubeLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("videoID", videoID).
 			Msg("Error while getting video info")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
 	text := constructText(&video)
 
-	msg, err := c.Bot().Reply(c.EffectiveMessage, text, utils.DefaultSendOptions)
+	msg, err := c.Bot().Reply(c.EffectiveMessage, text, utils.DefaultSendOptions())
 	if err == nil {
 		modifiedText, err := deArrow(text, &video)
 		if err != nil {
@@ -322,7 +322,7 @@ func (p *Plugin) OnYouTubeLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 			return nil
 		}
 
-		_, err = c.Bot().Edit(msg, modifiedText, utils.DefaultSendOptions)
+		_, err = c.Bot().Edit(msg, modifiedText, utils.DefaultSendOptions())
 	}
 
 	return err
@@ -356,12 +356,12 @@ func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("query", query).
 			Msg("error getting youtube search results")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(response.Items) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Ergebnisse gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Ergebnisse gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -378,7 +378,7 @@ func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("videoID", videoID).
 			Msg("Error while getting video info")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 

@@ -67,7 +67,7 @@ func onId(b *gotgbot.Bot, c plugin.GobotContext) error {
 		))
 	}
 
-	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }
 

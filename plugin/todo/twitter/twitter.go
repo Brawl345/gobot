@@ -71,7 +71,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to get guest token")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -88,7 +88,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to get guest token")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -105,7 +105,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to read guest token body")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -116,7 +116,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int("status", resp.StatusCode).
 			Interface("response", body).
 			Msg("Got Twitter HTTP error")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -125,7 +125,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to get guest token")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -183,7 +183,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("tweetID", tweetID).
 			Msg("Failed to get tweet")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -198,16 +198,16 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 				ParseMode:             telebot.ModeHTML,
 			})
 		} else if result.Reason == "Protected" {
-			_, err := c.EffectiveMessage.Reply(b, "🔓 Der Account-Inhaber hat beschränkt, wer seine Tweets ansehen kann.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "🔓 Der Account-Inhaber hat beschränkt, wer seine Tweets ansehen kann.", utils.DefaultSendOptions())
 			return err
 		} else {
-			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code>", result.Reason), utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code>", result.Reason), utils.DefaultSendOptions())
 			return err
 		}
 	}
 
 	if result.Typename != "Tweet" && result.Typename != "TweetWithVisibilityResults" && result.Typename != "tweetResult" {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Dieser Tweet existiert nicht.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Dieser Tweet existiert nicht.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -265,7 +265,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Str("guid", guid).
 				Str("tweetID", tweetID).
 				Msg("Failed to parse poll")
-			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 			return err
 		}
 
@@ -281,7 +281,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("tweetID", tweetID).
 			Str("createdAt", result.Legacy.CreatedAt).
 			Msg("Failed to parse tweet created at")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 	sb.WriteString(
@@ -371,7 +371,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 					Str("guid", guid).
 					Str("tweetID", tweetID).
 					Msg("Failed to parse quote poll")
-				_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+				_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 				return err
 			}
 
@@ -387,7 +387,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Str("tweetID", tweetID).
 				Str("createdAt", quoteResultSub.Legacy.CreatedAt).
 				Msg("Failed to parse quote tweet created at")
-			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 			return err
 		}
 		sb.WriteString(
@@ -454,7 +454,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 			log.Err(err).Msg("Error while sending album")
 			msg, err := c.Bot().Reply(c.EffectiveMessage,
 				"<i>🕒 Medien werden heruntergeladen und gesendet...</i>",
-				utils.DefaultSendOptions,
+				utils.DefaultSendOptions(),
 			)
 			if err != nil {
 				// This would be very awkward

@@ -105,7 +105,7 @@ func (p *Plugin) onCleverbot(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Msg("error contacting cleverbot")
 		_, err = c.EffectiveMessage.Reply(b,
 			fmt.Sprintf("❌ Fehler bei der Kommunikation mit dem Cleverbot.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions,
+			utils.DefaultSendOptions(),
 		)
 		return err
 	}
@@ -165,10 +165,10 @@ func (p *Plugin) onReset(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("error resetting state")
 		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Zurücksetzen des Cleverbot-Status.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "✅", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅", utils.DefaultSendOptions())
 	return err
 }

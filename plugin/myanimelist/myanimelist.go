@@ -98,12 +98,12 @@ func (p *Plugin) onSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", requestUrl.String()).
 			Msg("error getting myanimelist search results")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(response.Results) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Es wurde kein Anime gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Es wurde kein Anime gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -124,7 +124,7 @@ func (p *Plugin) onSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString("\n")
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }
 
@@ -153,7 +153,7 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err != nil {
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == 404 {
-				_, err := c.EffectiveMessage.Reply(b, "❌ Anime nicht gefunden.", utils.DefaultSendOptions)
+				_, err := c.EffectiveMessage.Reply(b, "❌ Anime nicht gefunden.", utils.DefaultSendOptions())
 				return err
 			}
 		}
@@ -164,7 +164,7 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", requestUrl.String()).
 			Msg("error getting myanimelist result")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 

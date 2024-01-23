@@ -72,7 +72,7 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	venue, err := p.geocodingService.Geocode(location)
 	if err != nil {
 		if errors.Is(err, model.ErrAddressNotFound) {
-			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
 			return err
 		}
 
@@ -82,7 +82,7 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("location", c.Matches[1]).
 			Msg("Failed to get coordinates for location")
 		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Koordinaten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 	}
 
 	requestUrl := url.URL{
@@ -102,7 +102,7 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err = httpUtils.GetRequest(requestUrl.String(), &response)
 	if err != nil {
 		if errors.As(err, &httpError) && httpError.StatusCode == 404 {
-			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
 			return err
 		}
 
@@ -113,11 +113,11 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("url", requestUrl.String()).
 			Msg("error requesting API")
 		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 	}
 
 	if len(response.ResourceSets) == 0 || len(response.ResourceSets[0].Resources) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -158,6 +158,6 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 		),
 	)
 
-	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

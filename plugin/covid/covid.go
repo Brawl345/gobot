@@ -87,7 +87,7 @@ func OnCountry(b *gotgbot.Bot, c plugin.GobotContext) error {
 					b,
 					fmt.Sprintf("❌ Das gesuchte Land existiert nicht oder hat keine COVID-Fälle gemeldet.\n"+
 						"Bitte darauf achten das Land in <b>Englisch</b> anzugeben!%s", utils.EmbedGUID(guid)),
-					utils.DefaultSendOptions,
+					utils.DefaultSendOptions(),
 				)
 				return err
 			} else {
@@ -103,13 +103,13 @@ func OnCountry(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 
 		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Bei der Anfrage ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 		return err
 	}
 
 	if result.Message != "" {
 		log.Error().Str("message", result.Message).Msg("Error message found in data")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ %s", result.Message), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ %s", result.Message), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -241,7 +241,7 @@ func OnRun(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("on", "all").
 			Msg("Failed to get 'all' data")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 

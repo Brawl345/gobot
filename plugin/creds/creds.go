@@ -72,13 +72,13 @@ func (p *Plugin) OnGet(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Send()
 		_, err := c.EffectiveMessage.Reply(b,
 			fmt.Sprintf("❌ Fehler beim Abrufen der Schlüssel.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions,
+			utils.DefaultSendOptions(),
 		)
 		return err
 	}
 
 	if len(creds) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "<i>Noch keine Schlüssel eingetragen</i>", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "<i>Noch keine Schlüssel eingetragen</i>", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -118,11 +118,11 @@ func (p *Plugin) OnAdd(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Error adding key")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Fehler beim Speichern des Schlüssels", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Fehler beim Speichern des Schlüssels", utils.DefaultSendOptions())
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "✅ Schlüssel gespeichert. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅ Schlüssel gespeichert. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions())
 	return err
 }
 
@@ -143,12 +143,12 @@ func (p *Plugin) OnDelete(b *gotgbot.Bot, c plugin.GobotContext) error {
 		_, err := c.EffectiveMessage.Reply(
 			b,
 			fmt.Sprintf("❌ Fehler beim Löschen des Schlüssels.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions,
+			utils.DefaultSendOptions(),
 		)
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "✅ Schlüssel gelöscht. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅ Schlüssel gelöscht. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions())
 	return err
 }
 

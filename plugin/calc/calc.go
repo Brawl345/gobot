@@ -115,7 +115,7 @@ func onCalc(b *gotgbot.Bot, c plugin.GobotContext) error {
 		if errors.As(err, &apiError) {
 			_, err = c.EffectiveMessage.Reply(b,
 				fmt.Sprintf("❌ <b>Fehler:</b> <i>%s</i>", utils.Escape(apiError.Error())),
-				utils.DefaultSendOptions,
+				utils.DefaultSendOptions(),
 			)
 		}
 
@@ -123,7 +123,7 @@ func onCalc(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("failed to calculate")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 

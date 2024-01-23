@@ -197,7 +197,7 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 								Str("text", ctx.EffectiveMessage.Text).
 								Str("component", plg.Name()).
 								Msgf("%s", r)
-							_, _ = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+							_, _ = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 						}
 					}()
 					err := handler.Run(b, plugin.GobotContext{
@@ -214,7 +214,7 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 							Str("text", ctx.EffectiveMessage.Text).
 							Str("component", plg.Name()).
 							Send()
-						_, _ = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+						_, _ = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 					}
 				}()
 

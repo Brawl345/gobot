@@ -105,12 +105,12 @@ func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if strings.HasPrefix(c.EffectiveMessage.ReplyTo.Text, "/su") ||
 		strings.HasPrefix(c.EffectiveMessage.ReplyTo.Caption, "/su") {
-		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions())
 		return err
 	}
 
 	if c.EffectiveMessage.ReplyTo.Sender.IsBot {
-		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -130,7 +130,7 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 	}
 
 	if len(urls) == 0 {
-		_, err := c.Bot().Reply(msg, "❌ Keine Links gefunden", utils.DefaultSendOptions)
+		_, err := c.Bot().Reply(msg, "❌ Keine Links gefunden", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -144,21 +144,21 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 
 		_, err := c.Bot().Reply(msg,
 			fmt.Sprintf("❌ Text konnte nicht extrahiert werden: <code>%v</code>", utils.Escape(err.Error())),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(article.TextContent) < MinArticleLength {
 		_, err := c.Bot().Reply(msg,
 			"❌ Artikel-Inhalt ist zu kurz.",
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(article.TextContent) > MaxArticleLength {
 		_, err := c.Bot().Reply(msg,
 			"❌ Artikel-Inhalt ist zu lang.",
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 		return err
 	}
 
@@ -191,7 +191,7 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == 429 {
-				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions)
+				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())
 				return err
 			}
 		}
@@ -202,7 +202,7 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 			Str("url", url).
 			Msg("Failed to send POST request")
 		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 	}
 
 	if response.Error.Type != "" {
@@ -214,14 +214,14 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 			Str("type", response.Error.Type).
 			Msg("Got error from OpenAI API")
 		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 	}
 
 	if len(response.Choices) == 0 || (len(response.Choices) > 0 && response.Choices[0].Message.Content == "") {
 		log.Error().
 			Str("url", url).
 			Msg("Got no answer from ChatGPT")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von ChatGPT erhalten", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von ChatGPT erhalten", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -229,6 +229,6 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 	sb.WriteString("<b>Zusammenfassung:</b>\n")
 	sb.WriteString(utils.Escape(response.Choices[0].Message.Content))
 
-	_, err = c.Bot().Reply(msg, sb.String(), utils.DefaultSendOptions)
+	_, err = c.Bot().Reply(msg, sb.String(), utils.DefaultSendOptions())
 	return err
 }

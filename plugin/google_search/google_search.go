@@ -92,12 +92,12 @@ func (p *Plugin) onGoogleSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("query", query).
 			Msg("Error while requesting google search")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(response.Items) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Es wurden keine Ergebnisse gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Es wurden keine Ergebnisse gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 

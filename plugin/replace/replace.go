@@ -7,6 +7,7 @@ import (
 
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 type Plugin struct{}
@@ -41,16 +42,16 @@ func onReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	text := c.EffectiveMessage.ReplyTo.Text
+	text := c.EffectiveMessage.ReplyToMessage.Text
 	if text == "" {
-		text = c.EffectiveMessage.ReplyTo.Caption
+		text = c.EffectiveMessage.ReplyToMessage.Caption
 	}
 
 	if text == "" {
 		return nil
 	}
 
-	if c.EffectiveMessage.ReplyTo.Sender.ID == c.Bot().Me.ID && strings.HasPrefix(text, "Du meintest wohl:") {
+	if c.EffectiveMessage.ReplyToMessage.From.Id == b.Id && strings.HasPrefix(text, "Du meintest wohl:") {
 		text = strings.Replace(text, "Du meintest wohl:\n", "", 1)
 	}
 
@@ -61,7 +62,16 @@ func onReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	text = strings.ReplaceAll(text, c.Matches[1], replacement)
 
-	_, err := c.Bot().Reply(c.EffectiveMessage.ReplyTo, "<b>Du meintest wohl:</b>\n"+text, utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.ReplyToMessage.Reply(b, "<b>Du meintest wohl:</b>\n"+text, &gotgbot.SendMessageOpts{
+		ReplyParameters: &gotgbot.ReplyParameters{
+			AllowSendingWithoutReply: true,
+		},
+		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+			IsDisabled: true,
+		},
+		DisableNotification: true,
+		ParseMode:           gotgbot.ParseModeHTML,
+	})
 	return err
 }
 
@@ -70,26 +80,29 @@ func onRegexReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	text := c.EffectiveMessage.ReplyTo.Text
+	text := c.EffectiveMessage.ReplyToMessage.Text
 	if text == "" {
-		text = c.EffectiveMessage.ReplyTo.Caption
+		text = c.EffectiveMessage.ReplyToMessage.Caption
 	}
 
 	if text == "" {
 		return nil
 	}
 
-	if c.EffectiveMessage.ReplyTo.Sender.ID == c.Bot().Me.ID && strings.HasPrefix(text, "Du meintest wohl:") {
+	if c.EffectiveMessage.ReplyToMessage.From.Id == b.Id && strings.HasPrefix(text, "Du meintest wohl:") {
 		text = strings.Replace(text, "Du meintest wohl:\n", "", 1)
 	}
 
 	re, err := regexp.Compile(c.Matches[1])
 	if err != nil {
-		return c.Reply(fmt.Sprintf("❌ Fehler beim Erstellen des regulären Ausdrucks: <code>%v</code>", err),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b,
+			fmt.Sprintf("❌ Fehler beim Erstellen des regulären Ausdrucks: <code>%v</code>", err),
+			utils.DefaultSendOptions(),
+		)
+		return err
 	}
 
 	text = re.ReplaceAllString(text, c.Matches[2])
-	_, err = c.Bot().Reply(c.EffectiveMessage.ReplyTo, "<b>Du meintest wohl:</b>\n"+text, utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.ReplyToMessage.Reply(b, "<b>Du meintest wohl:</b>\n"+text, utils.DefaultSendOptions())
 	return err
 }

@@ -79,7 +79,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func onShrug(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, err := b.SendMessage(c.EffectiveChat.Id, shrug, utils.DefaultSendOptions)
+	_, err := b.SendMessage(c.EffectiveChat.Id, shrug, utils.DefaultSendOptions())
 	return err
 }
 
@@ -101,7 +101,7 @@ func onShrugInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func onLennyFace(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, err := b.SendMessage(c.EffectiveChat.Id, lennyFace, utils.DefaultSendOptions)
+	_, err := b.SendMessage(c.EffectiveChat.Id, lennyFace, utils.DefaultSendOptions())
 	return err
 }
 
@@ -123,7 +123,7 @@ func onLennyFaceInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func onLookOfDisapproval(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, err := b.SendMessage(c.EffectiveChat.Id, lookOfDisapproval, utils.DefaultSendOptions)
+	_, err := b.SendMessage(c.EffectiveChat.Id, lookOfDisapproval, utils.DefaultSendOptions())
 	return err
 }
 

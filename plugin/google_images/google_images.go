@@ -253,17 +253,17 @@ func (p *Plugin) onImageSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var httpError *httpUtils.HttpError
 	if err != nil {
 		if errors.Is(err, ErrNoImagesFound) {
-			_, err = c.EffectiveMessage.Reply(b, "❌ Keine Bilder gefunden.", utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b, "❌ Keine Bilder gefunden.", utils.DefaultSendOptions())
 		} else if errors.Is(err, ErrCouldNotDownloadAnyImage) {
-			_, err = c.EffectiveMessage.Reply(b, "❌ Es konnte kein Bild heruntergeladen werden.", utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b, "❌ Es konnte kein Bild heruntergeladen werden.", utils.DefaultSendOptions())
 		} else if errors.As(err, &httpError) && httpError.StatusCode == 429 {
-			_, err = c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht. Bitte versuche es morgen erneut.", utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht. Bitte versuche es morgen erneut.", utils.DefaultSendOptions())
 		} else {
 			guid := xid.New().String()
 			log.Err(err).
 				Str("guid", guid).
 				Msg("error doing image search")
-			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		}
 		return err
 	}

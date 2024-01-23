@@ -83,7 +83,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("query", query).
 			Msg("Failed to unescape query")
 		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 	}
 
 	requestUrl := url.URL{
@@ -122,17 +122,17 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("query", query).
 			Msg("Failed to get Wikipedia response")
 		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 	}
 
 	if len(response.Query.Pages) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Artikel nicht gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Artikel nicht gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
 	article := response.Query.Pages[0]
 	if article.Missing {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Artikel nicht gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Artikel nicht gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -141,7 +141,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("query", query).
 			Str("invalid_reason", article.InvalidReason).
 			Msg("Invalid article")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Artikel nicht gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Artikel nicht gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -184,7 +184,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Str("query", query).
 				Msg("Failed to get disambiugation response")
 			return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-				utils.DefaultSendOptions)
+				utils.DefaultSendOptions())
 		}
 
 		matches := regexDisambiguation.FindAllStringSubmatch(response.Query.Pages[0].Text, -1)
@@ -229,7 +229,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Str("section", section).
 				Msg("Failed to unescape section")
 			return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-				utils.DefaultSendOptions)
+				utils.DefaultSendOptions())
 		}
 		matches := regexSection.FindAllStringSubmatch(article.Text, -1)
 		for _, match := range matches {
@@ -262,6 +262,6 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 		),
 	)
 
-	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

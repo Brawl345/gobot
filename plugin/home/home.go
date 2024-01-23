@@ -69,7 +69,7 @@ func (p *Plugin) onGetHome(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err != nil {
 		if errors.Is(err, model.ErrHomeAddressNotSet) {
 			_, err = c.EffectiveMessage.Reply(b, "🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
-				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions)
+				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions())
 			return err
 		}
 
@@ -80,7 +80,7 @@ func (p *Plugin) onGetHome(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Msg("error getting home")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 		return err
 	}
 
@@ -100,7 +100,7 @@ func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if err != nil {
 		if errors.Is(err, model.ErrAddressNotFound) {
-			_, err := c.EffectiveMessage.Reply(b, "❌ Es wurde kein Ort gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Es wurde kein Ort gefunden.", utils.DefaultSendOptions())
 			return err
 		}
 		guid := xid.New().String()
@@ -109,7 +109,7 @@ func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Msg("error getting location")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 		return err
 	}
 
@@ -122,7 +122,7 @@ func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Msg("error setting home")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 		return err
 	}
 	venue.Title = "✅ Wohnort festgelegt"
@@ -146,9 +146,9 @@ func (p *Plugin) onDeleteHome(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Msg("error deleting home")
 		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 		return err
 	}
-	_, err = c.EffectiveMessage.Reply(b, "✅ Wohnort gelöscht", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅ Wohnort gelöscht", utils.DefaultSendOptions())
 	return err
 }

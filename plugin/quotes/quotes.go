@@ -92,7 +92,7 @@ func (p *Plugin) getQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
 			_, err := c.EffectiveMessage.Reply(b, "<b>Es wurden noch keine Zitate eingespeichert!</b>\n"+
-				"Füge welche mit <code>/addquote ZITAT</code> hinzu.", utils.DefaultSendOptions)
+				"Füge welche mit <code>/addquote ZITAT</code> hinzu.", utils.DefaultSendOptions())
 			return err
 		}
 
@@ -102,7 +102,7 @@ func (p *Plugin) getQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("chat_id", c.EffectiveChat.Id).
 			Str("quote", quote).
 			Msg("failed to save quote")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -142,7 +142,7 @@ func (p *Plugin) addQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if err != nil {
 		if errors.Is(err, model.ErrAlreadyExists) {
-			_, err := c.EffectiveMessage.Reply(b, "<b>💡 Zitat existiert bereits!</b>", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "<b>💡 Zitat existiert bereits!</b>", utils.DefaultSendOptions())
 			return err
 		}
 
@@ -152,11 +152,11 @@ func (p *Plugin) addQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("chat_id", c.EffectiveChat.Id).
 			Str("quote", quote).
 			Msg("failed to save quote")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "<b>✅ Gespeichert!</b>", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "<b>✅ Gespeichert!</b>", utils.DefaultSendOptions())
 	return err
 }
 
@@ -178,7 +178,7 @@ func (p *Plugin) deleteQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err := p.quoteService.DeleteQuote(c.EffectiveChat, quote)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
-			_, err := c.EffectiveMessage.Reply(b, "<b>❌ Zitat nicht gefunden!</b>", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "<b>❌ Zitat nicht gefunden!</b>", utils.DefaultSendOptions())
 			return err
 		}
 
@@ -188,10 +188,10 @@ func (p *Plugin) deleteQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("chat_id", c.EffectiveChat.Id).
 			Str("quote", quote).
 			Msg("failed to delete quote")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "<b>✅ Zitat gelöscht!</b>", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "<b>✅ Zitat gelöscht!</b>", utils.DefaultSendOptions())
 	return err
 }

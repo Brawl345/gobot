@@ -173,12 +173,12 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 						Msg("error resetting Gemini data")
 				}
 
-				_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten, Konversation wird zurückgesetzt.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+				_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten, Konversation wird zurückgesetzt.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 				return err
 			}
 
 			if httpError.StatusCode == 429 {
-				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions)
+				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())
 				return err
 			}
 		}
@@ -188,7 +188,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", p.apiUrl).
 			Msg("Failed to send POST request")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -198,7 +198,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Error().
 			Str("url", p.apiUrl).
 			Msg("Got no answer from Gemini")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von Gemini erhalten (eventuell gefiltert).", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von Gemini erhalten (eventuell gefiltert).", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -278,7 +278,7 @@ func (p *Plugin) reset(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("error resetting history")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Zurücksetzen der Gemini-History.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 		return err
 	}
 	return nil
@@ -289,7 +289,7 @@ func (p *Plugin) onReset(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.EffectiveMessage.Reply(b, "✅", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅", utils.DefaultSendOptions())
 	return err
 }
 
