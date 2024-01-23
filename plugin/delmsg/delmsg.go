@@ -6,6 +6,8 @@ import (
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
+	"github.com/Brawl345/gobot/utils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 var log = logger.New("delmsg")
@@ -41,19 +43,18 @@ func deleteMsg(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	if c.EffectiveMessage.ReplyTo.Sender == nil || c.EffectiveMessage.ReplyTo.Sender.ID != c.Bot().Me.ID {
+	if c.EffectiveMessage.ReplyToMessage.From == nil || c.EffectiveMessage.ReplyToMessage.From.Id != b.Id {
 		log.Debug().Msg("Message is not a reply to bot")
 		return nil
 	}
 
-	err := c.Bot().Delete(c.EffectiveMessage.ReplyTo)
-	if err != nil {
-		log.Error().Err(err).Msg("Failed to delete message")
-	}
+	_, err := b.DeleteMessages(c.EffectiveChat.Id, []int64{
+		c.EffectiveMessage.ReplyToMessage.MessageId,
+		c.EffectiveMessage.MessageId,
+	}, nil)
 
-	err = c.Delete()
 	if err != nil {
-		log.Warn().Err(err).Msg("Failed to delete command, probably older than 48 hours or no privileges")
+		log.Error().Err(err).Msg("Failed to delete the messages")
 	}
 
 	return nil
