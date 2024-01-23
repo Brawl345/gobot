@@ -12,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
 
@@ -33,9 +34,9 @@ type (
 	}
 
 	Service interface {
-		GetHistory(chat *telebot.Chat) (model.GeminiData, error)
-		ResetHistory(chat *telebot.Chat) error
-		SetHistory(chat *telebot.Chat, history string) error
+		GetHistory(chat *gotgbot.Chat) (model.GeminiData, error)
+		ResetHistory(chat *gotgbot.Chat) error
+		SetHistory(chat *gotgbot.Chat, history string) error
 	}
 )
 
@@ -172,8 +173,8 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 						Msg("error resetting Gemini data")
 				}
 
-				return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten, Konversation wird zurückgesetzt.%s", utils.EmbedGUID(guid)),
-					utils.DefaultSendOptions)
+				_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten, Konversation wird zurückgesetzt.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+				return err
 			}
 
 			if httpError.StatusCode == 429 {
@@ -187,8 +188,8 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", p.apiUrl).
 			Msg("Failed to send POST request")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		return err
 	}
 
 	if len(response.Candidates) == 0 ||
@@ -255,9 +256,13 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		output += "\n\n(Token-Limit fast erreicht, Konversation wurde zurückgesetzt)"
 	}
 
-	_, err = c.Bot().Reply(c.EffectiveMessage, output, &telebot.SendOptions{
-		AllowWithoutReply:     true,
-		DisableWebPagePreview: true,
+	_, err = c.EffectiveMessage.Reply(b, output, &gotgbot.SendMessageOpts{
+		ReplyParameters: &gotgbot.ReplyParameters{
+			AllowSendingWithoutReply: true,
+		},
+		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+			IsDisabled: true,
+		},
 	})
 
 	return err
@@ -272,25 +277,26 @@ func (p *Plugin) reset(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("error resetting history")
-		return c.Reply(fmt.Sprintf("❌ Fehler beim Zurücksetzen der Gemini-History.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Zurücksetzen der Gemini-History.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions)
+		return err
 	}
 	return nil
 }
 
 func (p *Plugin) onReset(b *gotgbot.Bot, c plugin.GobotContext) error {
-	err := p.reset(c)
+	err := p.reset(b, c)
 	if err != nil {
 		return err
 	}
-	_, err := c.EffectiveMessage.Reply(b, "✅", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅", utils.DefaultSendOptions)
 	return err
 }
 
 func (p *Plugin) onResetAndRun(b *gotgbot.Bot, c plugin.GobotContext) error {
-	err := p.reset(c)
+	err := p.reset(b, c)
 	if err != nil {
 		return err
 	}
-	return p.onGemini(c)
+	return p.onGemini(b, c)
 }

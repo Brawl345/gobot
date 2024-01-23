@@ -267,6 +267,10 @@ func DownloadFile(b *gotgbot.Bot, fileID string) (io.ReadCloser, error) {
 		return nil, fmt.Errorf("failed to get file from Telegram: %w", err)
 	}
 
+	return DownloadFileFromGetFile(b, file)
+}
+
+func DownloadFileFromGetFile(b *gotgbot.Bot, file *gotgbot.File) (io.ReadCloser, error) {
 	fileUrl := file.URL(b, nil)
 	log.Debug().
 		Str("url", fileUrl).

@@ -11,6 +11,8 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 var log = logger.New("getfile")
@@ -49,7 +51,7 @@ func (p *Plugin) Commands() []gotgbot.BotCommand {
 func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     telebot.OnMedia,
+			Trigger:     utils.AnyMedia,
 			HandlerFunc: p.OnMedia,
 			HandleEdits: true,
 		},
@@ -62,16 +64,46 @@ func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var subFolder string
 	var fileSize int64
 
-	if c.EffectiveMessage.Media() != nil {
-		fileID = c.EffectiveMessage.Media().MediaFile().FileID
-		fileSize = c.EffectiveMessage.Media().MediaFile().FileSize
-		uniqueID = c.EffectiveMessage.Media().MediaFile().UniqueID
-		subFolder = c.EffectiveMessage.Media().MediaType()
-	} else {
-		fileID = c.EffectiveMessage.Sticker.FileID
+	if c.EffectiveMessage.Animation != nil {
+		fileID = c.EffectiveMessage.Animation.FileId
+		fileSize = c.EffectiveMessage.Animation.FileSize
+		uniqueID = c.EffectiveMessage.Animation.FileUniqueId
+		subFolder = "animation"
+	} else if c.EffectiveMessage.Audio != nil {
+		fileID = c.EffectiveMessage.Audio.FileId
+		fileSize = c.EffectiveMessage.Audio.FileSize
+		uniqueID = c.EffectiveMessage.Audio.FileUniqueId
+		subFolder = "audio"
+	} else if c.EffectiveMessage.Document != nil {
+		fileID = c.EffectiveMessage.Document.FileId
+		fileSize = c.EffectiveMessage.Document.FileSize
+		uniqueID = c.EffectiveMessage.Document.FileUniqueId
+		subFolder = "document"
+	} else if c.EffectiveMessage.Photo != nil {
+		fileID = c.EffectiveMessage.Photo[len(c.EffectiveMessage.Photo)-1].FileId
+		fileSize = c.EffectiveMessage.Photo[len(c.EffectiveMessage.Photo)-1].FileSize
+		uniqueID = c.EffectiveMessage.Photo[len(c.EffectiveMessage.Photo)-1].FileUniqueId
+		subFolder = "photo"
+	} else if c.EffectiveMessage.Sticker != nil {
+		fileID = c.EffectiveMessage.Sticker.FileId
 		fileSize = c.EffectiveMessage.Sticker.FileSize
-		uniqueID = c.EffectiveMessage.Sticker.UniqueID
-		subFolder = c.EffectiveMessage.Sticker.MediaType()
+		uniqueID = c.EffectiveMessage.Sticker.FileUniqueId
+		subFolder = "sticker"
+	} else if c.EffectiveMessage.Video != nil {
+		fileID = c.EffectiveMessage.Video.FileId
+		fileSize = c.EffectiveMessage.Video.FileSize
+		uniqueID = c.EffectiveMessage.Video.FileUniqueId
+		subFolder = "video"
+	} else if c.EffectiveMessage.VideoNote != nil {
+		fileID = c.EffectiveMessage.VideoNote.FileId
+		fileSize = c.EffectiveMessage.VideoNote.FileSize
+		uniqueID = c.EffectiveMessage.VideoNote.FileUniqueId
+		subFolder = "videoNote"
+	} else if c.EffectiveMessage.Voice != nil {
+		fileID = c.EffectiveMessage.Voice.FileId
+		fileSize = c.EffectiveMessage.Voice.FileSize
+		uniqueID = c.EffectiveMessage.Voice.FileUniqueId
+		subFolder = "voice"
 	}
 
 	if fileSize > utils.MaxFilesizeDownload {
@@ -97,9 +129,23 @@ func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	file := &telebot.File{FileID: fileID}
-	reader, err := c.Bot().File(file)
+	file, err := b.GetFile(fileID, nil)
 	if err != nil {
+		log.Err(err).
+			Str("fileID", fileID).
+			Str("uniqueID", uniqueID).
+			Str("mediaType", subFolder).
+			Msg("Failed to get file from Telegram")
+		return err
+	}
+
+	reader, err := httpUtils.DownloadFileFromGetFile(b, file)
+	if err != nil {
+		log.Err(err).
+			Str("fileID", fileID).
+			Str("uniqueID", uniqueID).
+			Str("mediaType", subFolder).
+			Msg("Failed to download file")
 		return err
 	}
 	defer func(reader io.ReadCloser) {
@@ -124,7 +170,7 @@ func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	// Fix file endings
 	if c.EffectiveMessage.Sticker != nil &&
-		!c.EffectiveMessage.Sticker.Animated {
+		!c.EffectiveMessage.Sticker.IsAnimated {
 		if !strings.HasSuffix(fileName, ".webp") && !strings.HasSuffix(fileName, ".webm") {
 			fileName += ".webp"
 		}
