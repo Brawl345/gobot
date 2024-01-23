@@ -111,9 +111,9 @@ func onExpand(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
 
 	var shortUrls []string
-	for _, entity := range utils.AnyEntities(c.Message()) {
+	for _, entity := range utils.AnyEntities(c.EffectiveMessage) {
 		if entity.Type == telebot.EntityURL {
-			shortUrls = append(shortUrls, c.Message().EntityText(entity))
+			shortUrls = append(shortUrls, c.EffectiveMessage.EntityText(entity))
 		} else if entity.Type == telebot.EntityTextLink {
 			shortUrls = append(shortUrls, entity.URL)
 		}
@@ -155,23 +155,23 @@ func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	if strings.HasPrefix(c.Message().ReplyTo.Text, "/expand") ||
-		strings.HasPrefix(c.Message().ReplyTo.Caption, "/expand") {
+	if strings.HasPrefix(c.EffectiveMessage.ReplyTo.Text, "/expand") ||
+		strings.HasPrefix(c.EffectiveMessage.ReplyTo.Caption, "/expand") {
 		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions)
 		return err
 	}
 
 	var shortUrls []string
-	for _, entity := range utils.AnyEntities(c.Message().ReplyTo) {
+	for _, entity := range utils.AnyEntities(c.EffectiveMessage.ReplyTo) {
 		if entity.Type == telebot.EntityURL {
-			shortUrls = append(shortUrls, c.Message().ReplyTo.EntityText(entity))
+			shortUrls = append(shortUrls, c.EffectiveMessage.ReplyTo.EntityText(entity))
 		} else if entity.Type == telebot.EntityTextLink {
 			shortUrls = append(shortUrls, entity.URL)
 		}
 	}
 
 	if len(shortUrls) == 0 {
-		_, err := c.Bot().Reply(c.Message().ReplyTo, "Keine Links gefunden", utils.DefaultSendOptions)
+		_, err := c.Bot().Reply(c.EffectiveMessage.ReplyTo, "Keine Links gefunden", utils.DefaultSendOptions)
 		return err
 	}
 
@@ -194,6 +194,6 @@ func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString("💡 <i>...weitere Links ignoriert</i>\n")
 	}
 
-	_, err := c.Bot().Reply(c.Message().ReplyTo, sb.String(), utils.DefaultSendOptions)
+	_, err := c.Bot().Reply(c.EffectiveMessage.ReplyTo, sb.String(), utils.DefaultSendOptions)
 	return err
 }

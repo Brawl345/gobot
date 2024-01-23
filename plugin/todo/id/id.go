@@ -58,7 +58,7 @@ func onId(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString(fmt.Sprintf(" <b>(@%s)</b>", c.EffectiveUser.Username))
 	}
 
-	if c.Message().FromGroup() {
+	if c.EffectiveMessage.FromGroup() {
 		sb.WriteString(fmt.Sprintf("\nGruppe: <b>%s</b> <code>[%d]</code>",
 			utils.Escape(c.EffectiveChat.Title),
 			c.EffectiveChat.Id,

@@ -255,7 +255,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		output += "\n\n(Token-Limit fast erreicht, Konversation wurde zurückgesetzt)"
 	}
 
-	_, err = c.Bot().Reply(c.Message(), output, &telebot.SendOptions{
+	_, err = c.Bot().Reply(c.EffectiveMessage, output, &telebot.SendOptions{
 		AllowWithoutReply:     true,
 		DisableWebPagePreview: true,
 	})

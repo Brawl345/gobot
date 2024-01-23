@@ -91,7 +91,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) onSummarize(b *gotgbot.Bot, c plugin.GobotContext) error {
-	return p.summarize(c, c.Message())
+	return p.summarize(c, c.EffectiveMessage)
 }
 
 func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
@@ -103,18 +103,18 @@ func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	if strings.HasPrefix(c.Message().ReplyTo.Text, "/su") ||
-		strings.HasPrefix(c.Message().ReplyTo.Caption, "/su") {
+	if strings.HasPrefix(c.EffectiveMessage.ReplyTo.Text, "/su") ||
+		strings.HasPrefix(c.EffectiveMessage.ReplyTo.Caption, "/su") {
 		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions)
 		return err
 	}
 
-	if c.Message().ReplyTo.Sender.IsBot {
+	if c.EffectiveMessage.ReplyTo.Sender.IsBot {
 		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions)
 		return err
 	}
 
-	return p.summarize(c, c.Message().ReplyTo)
+	return p.summarize(c, c.EffectiveMessage.ReplyTo)
 }
 
 func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {

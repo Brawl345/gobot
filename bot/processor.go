@@ -137,6 +137,8 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 				// More to be added when needed
 				case msg.Photo != nil && len(msg.Photo) > 0:
 					matched = command == utils.PhotoMsg
+				case msg.Document != nil:
+					matched = command == utils.DocumentMsg
 				}
 
 				if !matched && utils.ContainsMedia(msg) {

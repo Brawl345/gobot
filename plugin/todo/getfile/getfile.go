@@ -62,16 +62,16 @@ func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var subFolder string
 	var fileSize int64
 
-	if c.Message().Media() != nil {
-		fileID = c.Message().Media().MediaFile().FileID
-		fileSize = c.Message().Media().MediaFile().FileSize
-		uniqueID = c.Message().Media().MediaFile().UniqueID
-		subFolder = c.Message().Media().MediaType()
+	if c.EffectiveMessage.Media() != nil {
+		fileID = c.EffectiveMessage.Media().MediaFile().FileID
+		fileSize = c.EffectiveMessage.Media().MediaFile().FileSize
+		uniqueID = c.EffectiveMessage.Media().MediaFile().UniqueID
+		subFolder = c.EffectiveMessage.Media().MediaType()
 	} else {
-		fileID = c.Message().Sticker.FileID
-		fileSize = c.Message().Sticker.FileSize
-		uniqueID = c.Message().Sticker.UniqueID
-		subFolder = c.Message().Sticker.MediaType()
+		fileID = c.EffectiveMessage.Sticker.FileID
+		fileSize = c.EffectiveMessage.Sticker.FileSize
+		uniqueID = c.EffectiveMessage.Sticker.UniqueID
+		subFolder = c.EffectiveMessage.Sticker.MediaType()
 	}
 
 	if fileSize > utils.MaxFilesizeDownload {
@@ -110,30 +110,30 @@ func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}(reader)
 
 	var fileName string
-	if c.Message().Animation != nil && c.Message().Animation.FileName != "" {
-		fileName = uniqueID + "_" + c.Message().Animation.FileName
-	} else if c.Message().Audio != nil && c.Message().Audio.FileName != "" {
-		fileName = uniqueID + "_" + c.Message().Audio.FileName
-	} else if c.Message().Document != nil && c.Message().Document.FileName != "" {
-		fileName = uniqueID + "_" + c.Message().Document.FileName
-	} else if c.Message().Video != nil && c.Message().Video.FileName != "" {
-		fileName = uniqueID + "_" + c.Message().Video.FileName
+	if c.EffectiveMessage.Animation != nil && c.EffectiveMessage.Animation.FileName != "" {
+		fileName = uniqueID + "_" + c.EffectiveMessage.Animation.FileName
+	} else if c.EffectiveMessage.Audio != nil && c.EffectiveMessage.Audio.FileName != "" {
+		fileName = uniqueID + "_" + c.EffectiveMessage.Audio.FileName
+	} else if c.EffectiveMessage.Document != nil && c.EffectiveMessage.Document.FileName != "" {
+		fileName = uniqueID + "_" + c.EffectiveMessage.Document.FileName
+	} else if c.EffectiveMessage.Video != nil && c.EffectiveMessage.Video.FileName != "" {
+		fileName = uniqueID + "_" + c.EffectiveMessage.Video.FileName
 	} else {
 		fileName = path.Base(file.FilePath)
 	}
 
 	// Fix file endings
-	if c.Message().Sticker != nil &&
-		!c.Message().Sticker.Animated {
+	if c.EffectiveMessage.Sticker != nil &&
+		!c.EffectiveMessage.Sticker.Animated {
 		if !strings.HasSuffix(fileName, ".webp") && !strings.HasSuffix(fileName, ".webm") {
 			fileName += ".webp"
 		}
 	}
-	if c.Message().Voice != nil &&
+	if c.EffectiveMessage.Voice != nil &&
 		!strings.HasSuffix(fileName, ".oga") {
 		fileName += ".oga"
 	}
-	if c.Message().VideoNote != nil &&
+	if c.EffectiveMessage.VideoNote != nil &&
 		!strings.HasSuffix(fileName, ".mp4") {
 		fileName += ".mp4"
 	}

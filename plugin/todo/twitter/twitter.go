@@ -452,7 +452,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		if err != nil {
 			// Group send failed - sending media manually as seperate messages
 			log.Err(err).Msg("Error while sending album")
-			msg, err := c.Bot().Reply(c.Message(),
+			msg, err := c.Bot().Reply(c.EffectiveMessage,
 				"<i>🕒 Medien werden heruntergeladen und gesendet...</i>",
 				utils.DefaultSendOptions,
 			)

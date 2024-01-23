@@ -73,9 +73,9 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 
 func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var mentionedUsernames []string
-	for _, entity := range utils.AnyEntities(c.Message()) {
+	for _, entity := range utils.AnyEntities(c.EffectiveMessage) {
 		if entity.Type == telebot.EntityMention {
-			username := strings.TrimPrefix(c.Message().EntityText(entity), "@")
+			username := strings.TrimPrefix(c.EffectiveMessage.EntityText(entity), "@")
 			username = strings.ToLower(username)
 			if !slices.Contains(mentionedUsernames, username) && username !=
 				strings.ToLower(c.EffectiveUser.Username) {
@@ -113,13 +113,13 @@ func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 		fmt.Sprintf(
 			"👥 <b>%s</b> | 📅 %s | 🕒 %s Uhr\n",
 			utils.Escape(c.EffectiveChat.Title),
-			c.Message().Time().Format("02.01.2006"),
-			c.Message().Time().Format("15:04:05"),
+			c.EffectiveMessage.Time().Format("02.01.2006"),
+			c.EffectiveMessage.Time().Format("15:04:05"),
 		),
 	)
-	sb.WriteString(utils.Escape(c.Message().Text))
-	if c.Message().Text == "" {
-		sb.WriteString(utils.Escape(c.Message().Caption))
+	sb.WriteString(utils.Escape(c.EffectiveMessage.Text))
+	if c.EffectiveMessage.Text == "" {
+		sb.WriteString(utils.Escape(c.EffectiveMessage.Caption))
 	}
 
 	for _, userID := range userIDs {

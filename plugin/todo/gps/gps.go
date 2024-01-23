@@ -13,7 +13,6 @@ import (
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("gps")
@@ -101,12 +100,12 @@ func (p *Plugin) onLocation(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var lat string
 	var lon string
 
-	if c.Message().Location != nil {
-		lat = strconv.FormatFloat(float64(c.Message().Location.Lat), 'f', -1, 32)
-		lon = strconv.FormatFloat(float64(c.Message().Location.Lng), 'f', -1, 32)
+	if c.EffectiveMessage.Location != nil {
+		lat = strconv.FormatFloat(float64(c.EffectiveMessage.Location.Lat), 'f', -1, 32)
+		lon = strconv.FormatFloat(float64(c.EffectiveMessage.Location.Lng), 'f', -1, 32)
 	} else {
-		lat = strconv.FormatFloat(float64(c.Message().Venue.Location.Lat), 'f', -1, 32)
-		lon = strconv.FormatFloat(float64(c.Message().Venue.Location.Lng), 'f', -1, 32)
+		lat = strconv.FormatFloat(float64(c.EffectiveMessage.Venue.Location.Lat), 'f', -1, 32)
+		lon = strconv.FormatFloat(float64(c.EffectiveMessage.Venue.Location.Lng), 'f', -1, 32)
 	}
 
 	q.Set("lat", lat)

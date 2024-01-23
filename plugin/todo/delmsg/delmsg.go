@@ -41,12 +41,12 @@ func deleteMsg(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	if c.Message().ReplyTo.Sender == nil || c.Message().ReplyTo.Sender.ID != c.Bot().Me.ID {
+	if c.EffectiveMessage.ReplyTo.Sender == nil || c.EffectiveMessage.ReplyTo.Sender.ID != c.Bot().Me.ID {
 		log.Debug().Msg("Message is not a reply to bot")
 		return nil
 	}
 
-	err := c.Bot().Delete(c.Message().ReplyTo)
+	err := c.Bot().Delete(c.EffectiveMessage.ReplyTo)
 	if err != nil {
 		log.Error().Err(err).Msg("Failed to delete message")
 	}

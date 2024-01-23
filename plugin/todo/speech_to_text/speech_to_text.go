@@ -56,31 +56,31 @@ func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if c.Message().Voice.FileSize > utils.MaxFilesizeDownload {
+	if c.EffectiveMessage.Voice.FileSize > utils.MaxFilesizeDownload {
 		log.Warn().
-			Int64("filesize", c.Message().Voice.FileSize).
+			Int64("filesize", c.EffectiveMessage.Voice.FileSize).
 			Msg("Voice file is too big to download")
 		return nil
 	}
 
-	if c.Message().Voice.FileSize > MaxVoiceSize {
+	if c.EffectiveMessage.Voice.FileSize > MaxVoiceSize {
 		log.Warn().
-			Int64("filesize", c.Message().Voice.FileSize).
+			Int64("filesize", c.EffectiveMessage.Voice.FileSize).
 			Msg(fmt.Sprintf("Voice file is bigger than %d bytes", MaxVoiceSize))
 		return nil
 	}
 
-	if c.Message().Voice.Duration > MaxDuration {
+	if c.EffectiveMessage.Voice.Duration > MaxDuration {
 		log.Warn().
-			Int("duration", c.Message().Voice.Duration).
+			Int("duration", c.EffectiveMessage.Voice.Duration).
 			Msg(fmt.Sprintf("Voice message is longer than %d seconds", MaxDuration))
 		return nil
 	}
 
-	file, err := c.Bot().File(&telebot.File{FileID: c.Message().Voice.FileID})
+	file, err := c.Bot().File(&telebot.File{FileID: c.EffectiveMessage.Voice.FileID})
 	if err != nil {
 		log.Err(err).
-			Interface("file", c.Message().Voice).
+			Interface("file", c.EffectiveMessage.Voice).
 			Msg("Failed to download file")
 		return nil
 	}

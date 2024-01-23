@@ -123,11 +123,11 @@ func (p *Plugin) getQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 func (p *Plugin) addQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var quote string
 	if utils.IsReply(c.EffectiveMessage) &&
-		!c.Message().Sender.IsBot {
-		if c.Message().ReplyTo.Text != "" {
-			quote = fmt.Sprintf("\"%s\" —%s", c.Message().ReplyTo.Text, c.Matches[1])
-		} else if c.Message().ReplyTo.Caption != "" {
-			quote = fmt.Sprintf("\"%s\" —%s", c.Message().ReplyTo.Caption, c.Matches[1])
+		!c.EffectiveMessage.Sender.IsBot {
+		if c.EffectiveMessage.ReplyTo.Text != "" {
+			quote = fmt.Sprintf("\"%s\" —%s", c.EffectiveMessage.ReplyTo.Text, c.Matches[1])
+		} else if c.EffectiveMessage.ReplyTo.Caption != "" {
+			quote = fmt.Sprintf("\"%s\" —%s", c.EffectiveMessage.ReplyTo.Caption, c.Matches[1])
 		}
 	}
 
@@ -162,10 +162,10 @@ func (p *Plugin) deleteQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if len(c.Matches) > 1 {
 		quote = c.Matches[1]
 	} else {
-		if !utils.IsReply(c.EffectiveMessage) || c.Message().ReplyTo.Text == "" {
+		if !utils.IsReply(c.EffectiveMessage) || c.EffectiveMessage.ReplyTo.Text == "" {
 			return nil
 		}
-		quoteMatches := regexp.MustCompile(fmt.Sprintf(`(?i)^(?:/addquote(?:@%s)? )?([\s\S]+)$`, c.Bot().Me.Username)).FindStringSubmatch(c.Message().ReplyTo.Text)
+		quoteMatches := regexp.MustCompile(fmt.Sprintf(`(?i)^(?:/addquote(?:@%s)? )?([\s\S]+)$`, c.Bot().Me.Username)).FindStringSubmatch(c.EffectiveMessage.ReplyTo.Text)
 		if len(quoteMatches) < 2 {
 			return nil
 		}

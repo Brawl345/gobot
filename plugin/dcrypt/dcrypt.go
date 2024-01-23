@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
 
@@ -33,29 +34,29 @@ func (p *Plugin) Commands() []gotgbot.BotCommand {
 func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     telebot.OnDocument,
+			Trigger:     utils.DocumentMsg,
 			HandlerFunc: p.OnFile,
 		},
 	}
 }
 
 func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if c.Message().Document.MIME != "text/plain" ||
-		!strings.HasSuffix(c.Message().Document.FileName, ".dlc") {
+	if c.EffectiveMessage.Document.MimeType != "text/plain" ||
+		!strings.HasSuffix(c.EffectiveMessage.Document.FileName, ".dlc") {
 		return nil
 	}
 
-	_ = c.Notify(telebot.UploadingDocument)
+	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionUploadDocument, nil)
 
-	if c.Message().Document.FileSize > utils.MaxFilesizeDownload {
+	if c.EffectiveMessage.Document.FileSize > utils.MaxFilesizeDownload {
 		_, err := c.EffectiveMessage.Reply(b, "❌ DLC-Container ist größer als 20 MB.", utils.DefaultSendOptions)
 		return err
 	}
 
-	file, err := c.Bot().File(&telebot.File{FileID: c.Message().Document.FileID})
+	file, err := httpUtils.DownloadFile(b, c.EffectiveMessage.Document.FileId)
 	if err != nil {
 		log.Err(err).
-			Interface("file", c.Message().Document).
+			Interface("file", c.EffectiveMessage.Document).
 			Msg("Failed to download file")
 		_, err := c.EffectiveMessage.Reply(b, "❌ Konnte Datei nicht von Telegram herunterladen.", utils.DefaultSendOptions)
 		return err
@@ -84,8 +85,11 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to upload file")
-		return c.Reply(fmt.Sprintf("❌ Konnte Datei nicht zu dcrypt.it hochladen.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b,
+			fmt.Sprintf("❌ Konnte Datei nicht zu dcrypt.it hochladen.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions,
+		)
+		return err
 	}
 
 	if resp.StatusCode == 413 {
@@ -96,11 +100,14 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if resp.StatusCode != 200 {
 		log.Error().Int("status_code", resp.StatusCode).Msg("Failed to upload file")
-		return c.Reply(fmt.Sprintf(
-			"❌ dcrypt.it konnte nicht erreicht werden: HTTP-Fehler %d",
-			resp.StatusCode,
-		),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b,
+			fmt.Sprintf(
+				"❌ dcrypt.it konnte nicht erreicht werden: HTTP-Fehler %d",
+				resp.StatusCode,
+			),
+			utils.DefaultSendOptions,
+		)
+		return err
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -116,8 +123,9 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to read response body")
-		return c.Reply(fmt.Sprintf("❌ Konnte Antwort von dcrypt.it nicht lesen.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Konnte Antwort von dcrypt.it nicht lesen.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions)
+		return err
 	}
 
 	matches := textRegex.FindStringSubmatch(string(body))
@@ -132,8 +140,9 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to unmarshal response body")
-		return c.Reply(fmt.Sprintf("❌ Konnte Antwort von dcrypt.it nicht lesen.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Konnte Antwort von dcrypt.it nicht lesen.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions)
+		return err
 	}
 
 	if data.Success.Message == "" {
@@ -143,15 +152,16 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Strs("form_errors", data.FormErrors.Dlcfile).
 			Msg("Failed to decrypt DLC")
-		return c.Reply(fmt.Sprintf("❌ DLC-Container konnte nicht gelesen werden.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ DLC-Container konnte nicht gelesen werden.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions)
+		return err
 	}
 
 	var filename string
-	if c.Message().Document.FileName == "" {
+	if c.EffectiveMessage.Document.FileName == "" {
 		filename = "Links.txt"
 	} else {
-		filename = strings.TrimSuffix(c.Message().Document.FileName, ".dlc")
+		filename = strings.TrimSuffix(c.EffectiveMessage.Document.FileName, ".dlc")
 		filename = filename + ".txt"
 	}
 
@@ -162,13 +172,18 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	buf := bytes.NewBufferString(sb.String())
-
-	document := &telebot.Document{
-		File:     telebot.FromReader(buf),
-		Caption:  "🔑 Hier sind deine entschlüsselten Links!",
+	document := &gotgbot.NamedFile{
+		File:     buf,
 		FileName: filename,
 	}
 
-	_, err := c.EffectiveMessage.Reply(b, document, utils.DefaultSendOptions)
+	_, err = b.SendDocument(c.EffectiveChat.Id, document, &gotgbot.SendDocumentOpts{
+		Caption: "🔑 Hier sind deine entschlüsselten Links!",
+		ReplyParameters: &gotgbot.ReplyParameters{
+			AllowSendingWithoutReply: true,
+		},
+		DisableNotification: true,
+		ParseMode:           gotgbot.ParseModeHTML,
+	})
 	return err
 }

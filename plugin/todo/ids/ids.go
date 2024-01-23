@@ -55,7 +55,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
-	users, err := p.idsService.GetAllUsersInChat(c.Message().Chat)
+	users, err := p.idsService.GetAllUsersInChat(c.EffectiveMessage.Chat)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
@@ -66,7 +66,7 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	memberCount, err := c.Bot().Len(c.Message().Chat)
+	memberCount, err := c.Bot().Len(c.EffectiveMessage.Chat)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
@@ -77,7 +77,7 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	adminsAndCreators, err := c.Bot().AdminsOf(c.Message().Chat)
+	adminsAndCreators, err := c.Bot().AdminsOf(c.EffectiveMessage.Chat)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).

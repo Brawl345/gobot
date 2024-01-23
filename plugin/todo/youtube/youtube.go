@@ -312,7 +312,7 @@ func (p *Plugin) OnYouTubeLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	text := constructText(&video)
 
-	msg, err := c.Bot().Reply(c.Message(), text, utils.DefaultSendOptions)
+	msg, err := c.Bot().Reply(c.EffectiveMessage, text, utils.DefaultSendOptions)
 	if err == nil {
 		modifiedText, err := deArrow(text, &video)
 		if err != nil {
@@ -387,7 +387,7 @@ func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	sb.WriteString(constructText(&video))
 	text := sb.String()
 
-	msg, err := c.Bot().Reply(c.Message(), text, &telebot.SendOptions{
+	msg, err := c.Bot().Reply(c.EffectiveMessage, text, &telebot.SendOptions{
 		AllowWithoutReply:   true,
 		DisableNotification: true,
 		ParseMode:           telebot.ModeHTML,
