@@ -19,7 +19,6 @@ import (
 	"github.com/Brawl345/gobot/plugin/birthdays"
 	"github.com/Brawl345/gobot/plugin/calc"
 	"github.com/Brawl345/gobot/plugin/cleverbot"
-	"github.com/Brawl345/gobot/plugin/covid"
 	"github.com/Brawl345/gobot/plugin/creds"
 	"github.com/Brawl345/gobot/plugin/currency"
 	"github.com/Brawl345/gobot/plugin/dcrypt"
@@ -127,7 +126,6 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		birthdays.New(bot, birthdayService),
 		calc.New(),
 		cleverbot.New(credentialService, cleverbotService),
-		covid.New(),
 		creds.New(credentialService),
 		currency.New(),
 		dcrypt.New(),
