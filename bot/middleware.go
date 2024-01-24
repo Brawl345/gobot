@@ -5,13 +5,17 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/telebot.v3"
+	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
+	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 )
 
 // https://twin.sh/articles/35/how-to-add-colors-to-your-console-terminal-output-in-go
 var (
 	reset  = "\033[0m"
 	bold   = "\033[1m"
+	italic = "\033[3m"
 	red    = "\033[31m"
 	green  = "\033[32m"
 	yellow = "\033[33m"
@@ -19,7 +23,7 @@ var (
 	cyan   = "\033[36m"
 )
 
-func printUser(user *telebot.User) string {
+func printUser(user *gotgbot.User) string {
 	var sb strings.Builder
 	sb.WriteString(
 		fmt.Sprintf(
@@ -51,15 +55,15 @@ func printUser(user *telebot.User) string {
 	return sb.String()
 }
 
-func onMessage(msg *telebot.Message) string {
+func onMessage(msg *gotgbot.Message) string {
 	var sb strings.Builder
 
 	// Time
 	var msgTime string
-	if msg.LastEdit != 0 {
-		msgTime = msg.LastEdited().Format("15:04:05")
+	if msg.EditDate != 0 {
+		msgTime = utils.TimestampToTime(msg.EditDate).Format("15:04:05")
 	} else {
-		msgTime = msg.Time().Format("15:04:05")
+		msgTime = utils.TimestampToTime(msg.Date).Format("15:04:05")
 	}
 
 	sb.WriteString(
@@ -83,11 +87,11 @@ func onMessage(msg *telebot.Message) string {
 	sb.WriteString(reset)
 
 	// Sender
-	if msg.Sender != nil {
+	if msg.GetSender() != nil {
 		sb.WriteString(
 			fmt.Sprintf(
 				" %s",
-				printUser(msg.Sender),
+				printUser(msg.From),
 			),
 		)
 	}
@@ -102,7 +106,7 @@ func onMessage(msg *telebot.Message) string {
 	)
 
 	// Was edited
-	if msg.LastEdit != 0 {
+	if msg.EditDate != 0 {
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s(editiert) %s",
@@ -113,54 +117,109 @@ func onMessage(msg *telebot.Message) string {
 	}
 
 	// Forwards
-	if msg.IsForwarded() || msg.OriginalSenderName != "" {
+	if msg.ForwardOrigin != nil {
 		sb.WriteString(
 			fmt.Sprintf(
-				"%sWeitergeleitet von ",
+				"%sWeitergeleitet von %s",
 				green,
+				reset,
 			),
 		)
 
-		if msg.OriginalSender != nil {
+		mergedMessageOrigin := msg.ForwardOrigin.MergeMessageOrigin()
+
+		if mergedMessageOrigin.SenderUser != nil { // User is visible
 			sb.WriteString(
 				fmt.Sprintf(
 					"%s: ",
-					printUser(msg.OriginalSender),
+					printUser(mergedMessageOrigin.SenderUser),
 				),
 			)
-		} else { // User disallows linking to their profile on forwarding
+		} else if mergedMessageOrigin.SenderUserName != "" { // User disallows linking to their profile on forwarding
 			sb.WriteString(
 				fmt.Sprintf(
 					"%s%s%s:%s ",
 					bold,
 					red,
-					msg.OriginalSenderName,
+					mergedMessageOrigin.SenderUserName,
+					reset,
+				),
+			)
+		} else if mergedMessageOrigin.SenderChat != nil { // Message was originally sent on behalf of a group chat
+			sb.WriteString(
+				fmt.Sprintf(
+					"%s%s%s",
+					bold,
+					red,
+					mergedMessageOrigin.SenderChat.Title,
+				),
+			)
+
+			if mergedMessageOrigin.AuthorSignature != "" {
+				sb.WriteString(
+					fmt.Sprintf(
+						" (signiert von %s)",
+						mergedMessageOrigin.AuthorSignature,
+					),
+				)
+			}
+
+			sb.WriteString(
+				fmt.Sprintf(
+					":%s ",
+					reset,
+				),
+			)
+		} else if mergedMessageOrigin.Chat != nil { // Message was originally sent to a channel
+			sb.WriteString(
+				fmt.Sprintf(
+					"%s%s%s",
+					bold,
+					red,
+					mergedMessageOrigin.Chat.Title,
+				),
+			)
+
+			if mergedMessageOrigin.AuthorSignature != "" {
+				sb.WriteString(
+					fmt.Sprintf(
+						" (signiert von %s)",
+						mergedMessageOrigin.AuthorSignature,
+					),
+				)
+			}
+
+			sb.WriteString(
+				fmt.Sprintf(
+					":%s ",
 					reset,
 				),
 			)
 		}
+
 	}
 
 	// Reply
-	if msg.IsReply() {
+	// TODO: Not working with "reply in other chat"
+	if msg.ReplyToMessage != nil {
 		sb.WriteString(
 			fmt.Sprintf(
 				"%sAntwort an %s%s: ",
 				green,
 				reset,
-				printUser(msg.ReplyTo.Sender),
+				printUser(msg.ReplyToMessage.From),
 			),
 		)
 	}
 
 	// Via bot
-	if msg.Via != nil {
+	if msg.ViaBot != nil {
 		sb.WriteString(
 			fmt.Sprintf(
 				"%svia %s%s: ",
 				green,
 				reset,
-				printUser(msg.Via),
+				printUser(msg.ViaBot),
 			),
 		)
 	}
@@ -260,7 +319,7 @@ func onMessage(msg *telebot.Message) string {
 			fmt.Sprintf(
 				"%s[Zufallszahl: '%s' - '%d']%s ",
 				purple,
-				msg.Dice.Type,
+				msg.Dice.Emoji,
 				msg.Dice.Value,
 				reset,
 			),
@@ -303,18 +362,19 @@ func onMessage(msg *telebot.Message) string {
 			fmt.Sprintf(
 				"%s[Standort: '%f' Länge - '%f' Breite]%s ",
 				purple,
-				msg.Location.Lng,
-				msg.Location.Lat,
+				msg.Location.Longitude,
+				msg.Location.Latitude,
 				reset,
 			),
 		)
-	} else if msg.Photo != nil { // Photo: https://core.telegram.org/bots/api#photosize
+	} else if msg.Photo != nil && len(msg.Photo) > 0 { // Photo: https://core.telegram.org/bots/api#photosize
+		bestResolutionPhoto := tgUtils.GetBestResolution(msg.Photo)
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[Foto: %dx%d px]%s ",
 				purple,
-				msg.Photo.Width,
-				msg.Photo.Height,
+				bestResolutionPhoto.Width,
+				bestResolutionPhoto.Height,
 				reset,
 			),
 		)
@@ -326,7 +386,7 @@ func onMessage(msg *telebot.Message) string {
 			),
 		)
 
-		if msg.Sticker.Animated {
+		if msg.Sticker.IsAnimated {
 			sb.WriteString("Animierter ")
 		}
 
@@ -355,8 +415,8 @@ func onMessage(msg *telebot.Message) string {
 				purple,
 				msg.Venue.Title,
 				msg.Venue.Address,
-				msg.Venue.Location.Lng,
-				msg.Venue.Location.Lat,
+				msg.Venue.Location.Longitude,
+				msg.Venue.Location.Latitude,
 				reset,
 			),
 		)
@@ -445,7 +505,7 @@ func onMessage(msg *telebot.Message) string {
 	}
 
 	// Service messages
-	if msg.UsersJoined != nil {
+	if msg.NewChatMembers != nil {
 		sb.WriteString(
 			fmt.Sprintf(
 				"%sZur Gruppe hinzugefügt:%s ",
@@ -455,36 +515,36 @@ func onMessage(msg *telebot.Message) string {
 		)
 
 		var newUsers []string
-		for _, user := range msg.UsersJoined {
+		for _, user := range msg.NewChatMembers {
 			newUsers = append(newUsers, printUser(&user))
 		}
 
 		sb.WriteString(strings.Join(newUsers, ", "))
 	}
 
-	if msg.UserLeft != nil {
+	if msg.LeftChatMember != nil {
 		sb.WriteString(
 			fmt.Sprintf(
 				"%sAus der Gruppe entfernt:%s %s",
 				yellow,
 				reset,
-				printUser(msg.UserLeft),
+				printUser(msg.LeftChatMember),
 			),
 		)
 	}
 
-	if msg.NewGroupTitle != "" {
+	if msg.NewChatTitle != "" {
 		sb.WriteString(
 			fmt.Sprintf(
 				"%sGruppe umbenannt in '%s'%s",
 				yellow,
-				msg.NewGroupTitle,
+				msg.NewChatTitle,
 				reset,
 			),
 		)
 	}
 
-	if msg.NewGroupPhoto != nil {
+	if msg.NewChatPhoto != nil {
 		sb.WriteString(
 			fmt.Sprintf(
 				"%sGruppenbild geändert%s",
@@ -494,7 +554,7 @@ func onMessage(msg *telebot.Message) string {
 		)
 	}
 
-	if msg.GroupPhotoDeleted {
+	if msg.DeleteChatPhoto {
 		sb.WriteString(
 			fmt.Sprintf(
 				"%sGruppenbild entfernt%s",
@@ -504,10 +564,30 @@ func onMessage(msg *telebot.Message) string {
 		)
 	}
 
-	if msg.GroupCreated {
+	if msg.GroupChatCreated {
 		sb.WriteString(
 			fmt.Sprintf(
 				"%sGruppe erstellt%s",
+				yellow,
+				reset,
+			),
+		)
+	}
+
+	if msg.SupergroupChatCreated {
+		sb.WriteString(
+			fmt.Sprintf(
+				"%sSupergruppe erstellt%s",
+				yellow,
+				reset,
+			),
+		)
+	}
+
+	if msg.ChannelChatCreated {
+		sb.WriteString(
+			fmt.Sprintf(
+				"%sKanal erstellt%s",
 				yellow,
 				reset,
 			),
@@ -527,39 +607,55 @@ func onMessage(msg *telebot.Message) string {
 	return sb.String()
 }
 
-func onCallback(callback *telebot.Callback) string {
+func onCallback(callback *gotgbot.CallbackQuery) string {
 	var sb strings.Builder
 
-	// Time
-	sb.WriteString(
-		fmt.Sprintf(
-			"%s[%v]",
-			cyan,
-			callback.Message.Time().Format("15:04:05"),
-		),
-	)
+	if callback.Message != nil {
+		// Time
+		if callback.Message.GetDate() != 0 {
+			sb.WriteString(
+				fmt.Sprintf(
+					"%s[%v]%s",
+					cyan,
+					utils.TimestampToTime(callback.Message.GetDate()).Format("15:04:05"),
+					reset,
+				),
+			)
+		}
 
-	// Chat Title
-	if callback.Message.Chat.Title != "" {
-		sb.WriteString(
-			fmt.Sprintf(
-				" %s:",
-				callback.Message.Chat.Title,
-			),
-		)
+		// Chat Title
+		if callback.Message.GetChat().Title != "" {
+			if callback.Message.GetDate() != 0 {
+				sb.WriteString(" ")
+			}
+			sb.WriteString(
+				fmt.Sprintf(
+					"%s%s%s",
+					cyan,
+					callback.Message.GetChat().Title,
+					reset,
+				),
+			)
+		}
+
+		if callback.Message.GetChat().Title != "" || callback.Message.GetDate() != 0 {
+			sb.WriteString(
+				fmt.Sprintf(
+					"%s:%s ",
+					cyan,
+					reset,
+				),
+			)
+		}
 	}
-
-	sb.WriteString(reset)
 
 	// Sender
-	if callback.Sender != nil {
-		sb.WriteString(
-			fmt.Sprintf(
-				" %s",
-				printUser(callback.Sender),
-			),
-		)
-	}
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s",
+			printUser(&callback.From),
+		),
+	)
 
 	// Begin message
 	sb.WriteString(
@@ -586,28 +682,51 @@ func onCallback(callback *telebot.Callback) string {
 	return sb.String()
 }
 
-func onInlineQuery(query *telebot.Query) string {
+func onInlineQuery(query *gotgbot.InlineQuery) string {
 	var sb strings.Builder
 
 	// Time
 	sb.WriteString(
 		fmt.Sprintf(
-			"%s[%v]%s",
+			"%s[%v]%s ",
 			cyan,
 			time.Now().Format("15:04:05"),
 			reset,
 		),
 	)
 
-	// Sender
-	if query.Sender != nil {
+	if query.ChatType != "" {
+		chatType := ""
+		switch query.ChatType {
+		case "channel":
+			chatType = "In Kanal"
+		case "group":
+			chatType = "In Gruppe"
+		case "supergroup":
+			chatType = "In Supergruppe"
+		case "private":
+			chatType = "In Privatchat"
+		case "sender":
+			chatType = "In Bot-Chat"
+		}
 		sb.WriteString(
 			fmt.Sprintf(
-				" %s",
-				printUser(query.Sender),
+				"%s%s%s%s: ",
+				italic,
+				cyan,
+				chatType,
+				reset,
 			),
 		)
 	}
+
+	// Sender
+	sb.WriteString(
+		fmt.Sprintf(
+			"%s",
+			printUser(&query.From),
+		),
+	)
 
 	// Begin message
 	sb.WriteString(
@@ -620,12 +739,12 @@ func onInlineQuery(query *telebot.Query) string {
 		),
 	)
 
-	if query.Text != "" {
+	if query.Query != "" {
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s%s%s",
 				purple,
-				query.Text,
+				query.Query,
 				reset,
 			),
 		)
@@ -634,33 +753,22 @@ func onInlineQuery(query *telebot.Query) string {
 	return sb.String()
 }
 
-func PrintMessage(next telebot.HandlerFunc) telebot.HandlerFunc {
-	return func(c telebot.Context) error {
-
-		var text string
-		if c.Message() != nil {
-			text = onMessage(c.Message())
-		}
-		if c.Callback() != nil {
-			text = onCallback(c.Callback())
-		}
-		if c.Query() != nil {
-			text = onInlineQuery(c.Query())
-		}
-
-		println(text)
-		return next(c)
+func PrintMessage(c *ext.Context) {
+	var text string
+	if c.Message != nil {
+		text = onMessage(c.Message)
 	}
+	if c.CallbackQuery != nil {
+		text = onCallback(c.CallbackQuery)
+	}
+	if c.InlineQuery != nil {
+		text = onInlineQuery(c.InlineQuery)
+	}
+
+	println(text)
 }
 
-func OnError(err error, c telebot.Context) {
-	if err != telebot.ErrTrueResult {
-		lg := log.Err(err)
-		if c != nil {
-			lg = lg.
-				Int64("chat_id", c.Sender().ID).
-				Str("text", c.Text())
-		}
-		lg.Send()
-	}
+func OnError(err error) {
+	lg := log.Err(err)
+	lg.Send()
 }

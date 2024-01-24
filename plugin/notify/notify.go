@@ -9,9 +9,10 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 	"golang.org/x/exp/slices"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("notify")
@@ -22,10 +23,10 @@ type (
 	}
 
 	Service interface {
-		Enabled(chat *telebot.Chat, user *telebot.User) (bool, error)
-		Enable(chat *telebot.Chat, user *telebot.User) error
-		GetAllToBeNotifiedUsers(chat *telebot.Chat, mentionedUsernames []string) ([]int64, error)
-		Disable(chat *telebot.Chat, user *telebot.User) error
+		Enabled(chat *gotgbot.Chat, user *gotgbot.User) (bool, error)
+		Enable(chat *gotgbot.Chat, user *gotgbot.User) error
+		GetAllToBeNotifiedUsers(chat *gotgbot.Chat, mentionedUsernames []string) ([]int64, error)
+		Disable(chat *gotgbot.Chat, user *gotgbot.User) error
 	}
 )
 
@@ -39,20 +40,20 @@ func (p *Plugin) Name() string {
 	return "notify"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "notify",
+			Command:     "notify",
 			Description: "Über neue Erwähnungen informiert werden",
 		},
 		{
-			Text:        "notify_disable",
+			Command:     "notify_disable",
 			Description: "Nicht mehr über neue Erwähnungen informiert werden",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/notify(?:@%s)?$`, botInfo.Username)),
@@ -65,21 +66,21 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     telebot.EntityMention,
+			Trigger:     tgUtils.EntityTypeMention,
 			HandlerFunc: p.notify,
 			GroupOnly:   true,
 		},
 	}
 }
 
-func (p *Plugin) notify(c plugin.GobotContext) error {
+func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var mentionedUsernames []string
-	for _, entity := range utils.AnyEntities(c.Message()) {
-		if entity.Type == telebot.EntityMention {
-			username := strings.TrimPrefix(c.Message().EntityText(entity), "@")
+	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage) {
+		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeMention {
+			username := strings.TrimPrefix(c.EffectiveMessage.ParseEntity(entity).Text, "@")
 			username = strings.ToLower(username)
 			if !slices.Contains(mentionedUsernames, username) && username !=
-				strings.ToLower(c.Sender().Username) {
+				strings.ToLower(c.EffectiveUser.Username) {
 				mentionedUsernames = append(mentionedUsernames, username)
 			}
 		}
@@ -89,11 +90,11 @@ func (p *Plugin) notify(c plugin.GobotContext) error {
 		return nil
 	}
 
-	userIDs, err := p.notifyService.GetAllToBeNotifiedUsers(c.Chat(), mentionedUsernames)
+	userIDs, err := p.notifyService.GetAllToBeNotifiedUsers(c.EffectiveChat, mentionedUsernames)
 	if err != nil {
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Msg("error while getting all usernames that should be notified")
 		return nil
 	}
@@ -107,42 +108,46 @@ func (p *Plugin) notify(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"🔔 <b>%s</b> hat dich erwähnt:\n",
-			utils.Escape(utils.FullName(c.Sender().FirstName, c.Sender().LastName)),
+			utils.Escape(utils.FullName(c.EffectiveUser.FirstName, c.EffectiveUser.LastName)),
 		),
 	)
 	sb.WriteString(
 		fmt.Sprintf(
 			"👥 <b>%s</b> | 📅 %s | 🕒 %s Uhr\n",
-			utils.Escape(c.Chat().Title),
-			c.Message().Time().Format("02.01.2006"),
-			c.Message().Time().Format("15:04:05"),
+			utils.Escape(c.EffectiveChat.Title),
+			utils.TimestampToTime(c.EffectiveMessage.Date).Format("02.01.2006"),
+			utils.TimestampToTime(c.EffectiveMessage.Date).Format("15:04:05"),
 		),
 	)
-	sb.WriteString(utils.Escape(c.Message().Text))
-	if c.Message().Text == "" {
-		sb.WriteString(utils.Escape(c.Message().Caption))
+	sb.WriteString(utils.Escape(c.EffectiveMessage.Text))
+	if c.EffectiveMessage.Text == "" {
+		sb.WriteString(utils.Escape(c.EffectiveMessage.Caption))
 	}
 
 	for _, userID := range userIDs {
-		_, err := c.Bot().Send(telebot.ChatID(userID), sb.String(), utils.DefaultSendOptions)
+		_, err := b.SendMessage(userID, sb.String(), utils.DefaultSendOptions())
 
 		if err != nil {
-			if errors.Is(err, telebot.ErrBlockedByUser) {
-				log.Warn().
-					Int64("to_user_id", userID).
-					Msg("User blocked the bot")
-			} else if errors.Is(err, telebot.ErrNotStartedByUser) {
-				log.Warn().
-					Int64("to_user_id", userID).
-					Msg("User didn't start the bot")
-			} else if errors.Is(err, telebot.ErrUserIsDeactivated) {
-				log.Warn().
-					Int64("to_user_id", userID).
-					Msg("User account is deactivated")
-			} else {
-				log.Err(err).
-					Int64("to_user_id", userID).
-					Msg("error while sending notification")
+			var telegramErr *gotgbot.TelegramError
+
+			if errors.As(err, &telegramErr) {
+				if telegramErr.Description == tgUtils.ErrBlockedByUser {
+					log.Warn().
+						Int64("to_user_id", userID).
+						Msg("User blocked the bot")
+				} else if telegramErr.Description == tgUtils.ErrNotStartedByUser {
+					log.Warn().
+						Int64("to_user_id", userID).
+						Msg("User didn't start the bot")
+				} else if telegramErr.Description == tgUtils.ErrUserIsDeactivated {
+					log.Warn().
+						Int64("to_user_id", userID).
+						Msg("User account is deactivated")
+				} else {
+					log.Err(err).
+						Int64("to_user_id", userID).
+						Msg("error while sending notification")
+				}
 			}
 		}
 	}
@@ -150,96 +155,108 @@ func (p *Plugin) notify(c plugin.GobotContext) error {
 	return nil
 }
 
-func (p *Plugin) enableNotify(c plugin.GobotContext) error {
-	if c.Sender().Username == "" {
-		return c.Reply("😕 Du benötigst einen Benutzernamen um dieses Feature zu nutzen.", utils.DefaultSendOptions)
+func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
+	if c.EffectiveUser.Username == "" {
+		_, err := c.EffectiveMessage.Reply(b, "😕 Du benötigst einen Benutzernamen um dieses Feature zu nutzen.", utils.DefaultSendOptions())
+		return err
 	}
 
-	testMsg, err := c.Bot().Send(c.Sender(), "✅", utils.DefaultSendOptions)
+	testMsg, err := b.SendMessage(c.EffectiveUser.Id, "✅", utils.DefaultSendOptions())
 	if err != nil {
-		if errors.Is(err, telebot.ErrBlockedByUser) {
-			return c.Reply("😭 Du hast mich blockiert T__T", utils.DefaultSendOptions)
-		} else if errors.Is(err, telebot.ErrNotStartedByUser) {
-			return c.Reply("ℹ Bitte starte mich vor dem Aktivieren zuerst privat.", utils.DefaultSendOptions)
+		var telegramErr *gotgbot.TelegramError
+
+		if errors.As(err, &telegramErr) {
+			if telegramErr.Description == tgUtils.ErrBlockedByUser {
+				_, err := c.EffectiveMessage.Reply(b, "😭 Du hast mich blockiert T__T", utils.DefaultSendOptions())
+				return err
+			} else if telegramErr.Description == tgUtils.ErrNotStartedByUser {
+				_, err := c.EffectiveMessage.Reply(b, "ℹ Bitte starte mich vor dem Aktivieren zuerst privat.", utils.DefaultSendOptions())
+				return err
+			}
 		}
+
 		guid := xid.New().String()
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error while sending test message")
-		return c.Reply(fmt.Sprintf("❌ Ich wollte dir eine Nachricht senden, aber das hat nicht funktioniert Bitte den Administrator des Bots um Hilfe und sende ihm folgenden Fehler-Code:%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Ich wollte dir eine Nachricht senden, aber das hat nicht funktioniert Bitte den Administrator des Bots um Hilfe und sende ihm folgenden Fehler-Code:%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
 	}
 
-	err = c.Bot().Delete(testMsg)
+	_, err = testMsg.Delete(b, nil)
 	if err != nil {
 		log.Err(err).
 			Msg("error while deleting test message, lmao")
 	}
 
-	enabled, err := p.notifyService.Enabled(c.Chat(), c.Sender())
+	enabled, err := p.notifyService.Enabled(c.EffectiveChat, c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error during enabled check")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
 	}
 
 	if enabled {
-		return c.Reply("💡 Du wirst in dieser Gruppe schon über neue Erwähnungen informiert.")
+		_, err := c.EffectiveMessage.Reply(b, "💡 Du wirst in dieser Gruppe schon über neue Erwähnungen informiert.", utils.DefaultSendOptions())
+		return err
 	}
 
-	err = p.notifyService.Enable(c.Chat(), c.Sender())
+	err = p.notifyService.Enable(c.EffectiveChat, c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error while enabling notifications")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
 	}
 
-	return c.Reply("✅ Du wirst jetzt über neue Erwähnungen in dieser Gruppe informiert!\n"+
-		"Nutze <code>/notify_disable</code> zum Deaktivieren.", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅ Du wirst jetzt über neue Erwähnungen in dieser Gruppe informiert!\n"+
+		"Nutze <code>/notify_disable</code> zum Deaktivieren.", utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) disableNotify(c plugin.GobotContext) error {
-	enabled, err := p.notifyService.Enabled(c.Chat(), c.Sender())
+func (p *Plugin) disableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
+	enabled, err := p.notifyService.Enabled(c.EffectiveChat, c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error during enabled check")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
 	}
 
 	if !enabled {
-		return c.Reply("💡 Du wirst in dieser Gruppe nicht über neue Erwähnungen informiert.",
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "💡 Du wirst in dieser Gruppe nicht über neue Erwähnungen informiert.", utils.DefaultSendOptions())
+		return err
 	}
 
-	err = p.notifyService.Disable(c.Chat(), c.Sender())
+	err = p.notifyService.Disable(c.EffectiveChat, c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error while disabling notifications")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
-	return c.Reply("✅ Du wirst nicht mehr über neue Erwähnungen in dieser Gruppe informiert.",
-		utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅ Du wirst nicht mehr über neue Erwähnungen in dieser Gruppe informiert.",
+		utils.DefaultSendOptions())
+	return err
 }

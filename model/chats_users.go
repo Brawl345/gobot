@@ -1,13 +1,13 @@
 package model
 
 import (
-	"gopkg.in/telebot.v3"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 type ChatsUsersService interface {
-	Create(chat *telebot.Chat, user *telebot.User) error
-	CreateBatch(chat *telebot.Chat, users *[]telebot.User) error
-	GetAllUsersWithMsgCount(chat *telebot.Chat) ([]User, error)
-	IsAllowed(chat *telebot.Chat, user *telebot.User) bool
-	Leave(chat *telebot.Chat, user *telebot.User) error
+	Create(chat *gotgbot.Chat, user *gotgbot.User) error
+	CreateBatch(chat *gotgbot.Chat, users *[]gotgbot.User) error
+	GetAllUsersWithMsgCount(chat *gotgbot.Chat) ([]User, error)
+	IsAllowed(chat *gotgbot.Chat, user *gotgbot.User) bool
+	Leave(chat *gotgbot.Chat, user *gotgbot.User) error
 }

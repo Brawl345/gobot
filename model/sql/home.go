@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/jmoiron/sqlx"
-	"gopkg.in/telebot.v3"
 )
 
 type homeService struct {
@@ -23,7 +23,7 @@ func NewHomeService(db *sqlx.DB) *homeService {
 	}
 }
 
-func (db *homeService) GetHome(user *telebot.User) (telebot.Venue, error) {
+func (db *homeService) GetHome(user *gotgbot.User) (gotgbot.Venue, error) {
 	const query = `SELECT address, latitude, longitude
 	FROM geocoding g
 	RIGHT OUTER JOIN users u ON u.home = g.id
@@ -36,26 +36,26 @@ func (db *homeService) GetHome(user *telebot.User) (telebot.Venue, error) {
 	}
 
 	var geocoding Home
-	err := db.Get(&geocoding, query, user.ID)
+	err := db.Get(&geocoding, query, user.Id)
 	if err != nil {
-		return telebot.Venue{}, nil
+		return gotgbot.Venue{}, nil
 	}
 
 	if !geocoding.Address.Valid {
-		return telebot.Venue{}, model.ErrHomeAddressNotSet
+		return gotgbot.Venue{}, model.ErrHomeAddressNotSet
 	}
 
-	return telebot.Venue{
+	return gotgbot.Venue{
 		Title:   "Festgelegter Wohnort",
 		Address: geocoding.Address.String,
-		Location: telebot.Location{
-			Lat: float32(geocoding.Lat.Float64),
-			Lng: float32(geocoding.Lng.Float64),
+		Location: gotgbot.Location{
+			Latitude:  geocoding.Lat.Float64,
+			Longitude: geocoding.Lng.Float64,
 		},
 	}, nil
 }
 
-func (db *homeService) SetHome(user *telebot.User, venue *telebot.Venue) error {
+func (db *homeService) SetHome(user *gotgbot.User, venue *gotgbot.Venue) error {
 	tx, err := db.BeginTxx(context.Background(), nil)
 	if err != nil {
 		return err
@@ -71,7 +71,7 @@ func (db *homeService) SetHome(user *telebot.User, venue *telebot.Venue) error {
 	const insertAddressQuery = `INSERT INTO geocoding 
     (address, latitude, longitude) 
 	VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`
-	res, err := db.Exec(insertAddressQuery, venue.Address, venue.Location.Lat, venue.Location.Lng)
+	res, err := db.Exec(insertAddressQuery, venue.Address, venue.Location.Latitude, venue.Location.Longitude)
 	if err != nil {
 		return err
 	}
@@ -84,7 +84,7 @@ func (db *homeService) SetHome(user *telebot.User, venue *telebot.Venue) error {
 	const insertHomeQuery = `UPDATE users
 	SET home = ?
 	WHERE id = ?`
-	_, err = tx.Exec(insertHomeQuery, lastInsertId, user.ID)
+	_, err = tx.Exec(insertHomeQuery, lastInsertId, user.Id)
 	if err != nil {
 		return err
 	}
@@ -96,11 +96,11 @@ func (db *homeService) SetHome(user *telebot.User, venue *telebot.Venue) error {
 	return err
 }
 
-func (db *homeService) DeleteHome(user *telebot.User) error {
+func (db *homeService) DeleteHome(user *gotgbot.User) error {
 	const query = `UPDATE users
 	SET HOME = NULL
 	WHERE id = ?`
 
-	_, err := db.Exec(query, user.ID)
+	_, err := db.Exec(query, user.Id)
 	return err
 }

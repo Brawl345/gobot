@@ -2,8 +2,8 @@ package sql
 
 import (
 	"github.com/Brawl345/gobot/logger"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/jmoiron/sqlx"
-	"gopkg.in/telebot.v3"
 )
 
 type userService struct {
@@ -18,20 +18,20 @@ func NewUserService(db *sqlx.DB) *userService {
 	}
 }
 
-func (db *userService) Allow(user *telebot.User) error {
+func (db *userService) Allow(user *gotgbot.User) error {
 	const query = `UPDATE users SET allowed = true WHERE id = ?`
-	_, err := db.Exec(query, user.ID)
+	_, err := db.Exec(query, user.Id)
 	return err
 }
 
-func (db *userService) Create(user *telebot.User) error {
+func (db *userService) Create(user *gotgbot.User) error {
 	const query = `INSERT INTO 
     users (id, first_name, last_name, username)
     VALUES (? ,?, ?, ?)
     ON DUPLICATE KEY UPDATE first_name = ?, last_name = ?, username = ?`
 	_, err := db.Exec(
 		query,
-		user.ID,
+		user.Id,
 		user.FirstName,
 		NewNullString(user.LastName),
 		NewNullString(user.Username),
@@ -42,14 +42,14 @@ func (db *userService) Create(user *telebot.User) error {
 	return err
 }
 
-func (db *userService) CreateTx(tx *sqlx.Tx, user *telebot.User) error {
+func (db *userService) CreateTx(tx *sqlx.Tx, user *gotgbot.User) error {
 	const query = `INSERT INTO 
     users (id, first_name, last_name, username)
     VALUES (? ,?, ?, ?)
     ON DUPLICATE KEY UPDATE first_name = ?, last_name = ?, username = ?`
 	_, err := tx.Exec(
 		query,
-		user.ID,
+		user.Id,
 		user.FirstName,
 		NewNullString(user.LastName),
 		NewNullString(user.Username),
@@ -60,9 +60,9 @@ func (db *userService) CreateTx(tx *sqlx.Tx, user *telebot.User) error {
 	return err
 }
 
-func (db *userService) Deny(user *telebot.User) error {
+func (db *userService) Deny(user *gotgbot.User) error {
 	const query = `UPDATE users SET allowed = false WHERE id = ?`
-	_, err := db.Exec(query, user.ID)
+	_, err := db.Exec(query, user.Id)
 	return err
 }
 

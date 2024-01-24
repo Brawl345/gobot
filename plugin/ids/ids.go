@@ -9,9 +9,10 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 	"golang.org/x/exp/slices"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("ids")
@@ -22,7 +23,7 @@ type (
 	}
 
 	Service interface {
-		GetAllUsersInChat(chat *telebot.Chat) ([]model.User, error)
+		GetAllUsersInChat(chat *gotgbot.Chat) ([]model.User, error)
 	}
 )
 
@@ -36,16 +37,16 @@ func (p *Plugin) Name() string {
 	return "ids"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "ids",
+			Command:     "ids",
 			Description: "Zeigt die IDs der User in diesem Chat an",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/ids(?:@%s)?$`, botInfo.Username)),
@@ -55,44 +56,47 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onIds(c plugin.GobotContext) error {
-	users, err := p.idsService.GetAllUsersInChat(c.Message().Chat)
+func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
+	users, err := p.idsService.GetAllUsersInChat(c.EffectiveChat)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to get all users in chat")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
-	memberCount, err := c.Bot().Len(c.Message().Chat)
+	memberCount, err := c.EffectiveChat.GetMemberCount(b, nil)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to count members in chat")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
-	adminsAndCreators, err := c.Bot().AdminsOf(c.Message().Chat)
+	adminsAndCreators, err := c.EffectiveChat.GetAdministrators(b, nil)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to get admins and creators in chat")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	var admins []int64
 	var creator int64
 	for _, u := range adminsAndCreators {
-		if u.Role == telebot.Creator {
-			creator = u.User.ID
-		} else if u.Role == telebot.Administrator {
-			admins = append(admins, u.User.ID)
+		if u.GetStatus() == tgUtils.ChatMemberStatusCreator {
+			creator = u.GetUser().Id
+		} else if u.GetStatus() == tgUtils.ChatMemberStatusAdministrator {
+			admins = append(admins, u.GetUser().Id)
 		}
 	}
 
@@ -101,8 +105,8 @@ func (p *Plugin) onIds(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"👥 <b>%s</b> <code>%d</code>\n",
-			utils.Escape(c.Chat().Title),
-			c.Chat().ID,
+			utils.Escape(c.EffectiveChat.Title),
+			c.EffectiveChat.Id,
 		),
 	)
 
@@ -140,5 +144,6 @@ func (p *Plugin) onIds(c plugin.GobotContext) error {
 
 	sb.WriteString("<i>(Bots sind nicht gelistet)</i>")
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	return err
 }

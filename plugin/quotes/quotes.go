@@ -10,8 +10,9 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 type (
@@ -20,9 +21,9 @@ type (
 	}
 
 	Service interface {
-		GetQuote(chat *telebot.Chat) (string, error)
-		SaveQuote(chat *telebot.Chat, quote string) error
-		DeleteQuote(chat *telebot.Chat, quote string) error
+		GetQuote(chat *gotgbot.Chat) (string, error)
+		SaveQuote(chat *gotgbot.Chat, quote string) error
+		DeleteQuote(chat *gotgbot.Chat, quote string) error
 	}
 )
 
@@ -38,20 +39,20 @@ func (p *Plugin) Name() string {
 	return "quotes"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "quote",
+			Command:     "quote",
 			Description: "Zitat anzeigen",
 		},
 		{
-			Text:        "addquote",
+			Command:     "addquote",
 			Description: "<Zitat> - Zitat hinzufügen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/quote(?:@%s)?$`, botInfo.Username)),
@@ -87,47 +88,50 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) getQuote(c plugin.GobotContext) error {
-	quote, err := p.quoteService.GetQuote(c.Chat())
+func (p *Plugin) getQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
+	quote, err := p.quoteService.GetQuote(c.EffectiveChat)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
-			return c.Reply("<b>Es wurden noch keine Zitate eingespeichert!</b>\n"+
-				"Füge welche mit <code>/addquote ZITAT</code> hinzu.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "<b>Es wurden noch keine Zitate eingespeichert!</b>\n"+
+				"Füge welche mit <code>/addquote ZITAT</code> hinzu.", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Str("quote", quote).
 			Msg("failed to save quote")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
-	return c.Send(quote, &telebot.SendOptions{
-		DisableWebPagePreview: true,
-		DisableNotification:   true,
-		ReplyMarkup: &telebot.ReplyMarkup{
-			InlineKeyboard: [][]telebot.InlineButton{
+	_, err = c.EffectiveChat.SendMessage(b, quote, &gotgbot.SendMessageOpts{
+		LinkPreviewOptions:  &gotgbot.LinkPreviewOptions{IsDisabled: true},
+		DisableNotification: true,
+		ReplyMarkup: &gotgbot.InlineKeyboardMarkup{
+			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 				{
 					{
-						Text: "Nochmal",
-						Data: "quotes_again",
+						Text:         "Nochmal",
+						CallbackData: "quotes_again",
 					},
 				},
 			},
 		},
 	})
+	return err
 }
 
-func (p *Plugin) addQuote(c plugin.GobotContext) error {
+func (p *Plugin) addQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var quote string
-	if c.Message().IsReply() &&
-		!c.Message().Sender.IsBot {
-		if c.Message().ReplyTo.Text != "" {
-			quote = fmt.Sprintf("\"%s\" —%s", c.Message().ReplyTo.Text, c.Matches[1])
-		} else if c.Message().ReplyTo.Caption != "" {
-			quote = fmt.Sprintf("\"%s\" —%s", c.Message().ReplyTo.Caption, c.Matches[1])
+	if tgUtils.IsReply(c.EffectiveMessage) &&
+		!c.EffectiveSender.IsBot() {
+		if c.EffectiveMessage.ReplyToMessage.Text != "" {
+			quote = fmt.Sprintf("\"%s\" —%s", c.EffectiveMessage.ReplyToMessage.Text, c.Matches[1])
+		} else if c.EffectiveMessage.ReplyToMessage.Caption != "" {
+			quote = fmt.Sprintf("\"%s\" —%s", c.EffectiveMessage.ReplyToMessage.Caption, c.Matches[1])
 		}
 	}
 
@@ -135,54 +139,60 @@ func (p *Plugin) addQuote(c plugin.GobotContext) error {
 		quote = c.Matches[1]
 	}
 
-	err := p.quoteService.SaveQuote(c.Chat(), quote)
+	err := p.quoteService.SaveQuote(c.EffectiveChat, quote)
 
 	if err != nil {
 		if errors.Is(err, model.ErrAlreadyExists) {
-			return c.Reply("<b>💡 Zitat existiert bereits!</b>", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "<b>💡 Zitat existiert bereits!</b>", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Str("quote", quote).
 			Msg("failed to save quote")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
-	return c.Reply("<b>✅ Gespeichert!</b>", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "<b>✅ Gespeichert!</b>", utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) deleteQuote(c plugin.GobotContext) error {
+func (p *Plugin) deleteQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var quote string
 	if len(c.Matches) > 1 {
 		quote = c.Matches[1]
 	} else {
-		if !c.Message().IsReply() || c.Message().ReplyTo.Text == "" {
+		if !tgUtils.IsReply(c.EffectiveMessage) || c.EffectiveMessage.ReplyToMessage.Text == "" {
 			return nil
 		}
-		quoteMatches := regexp.MustCompile(fmt.Sprintf(`(?i)^(?:/addquote(?:@%s)? )?([\s\S]+)$`, c.Bot().Me.Username)).FindStringSubmatch(c.Message().ReplyTo.Text)
+		quoteMatches := regexp.MustCompile(fmt.Sprintf(`(?i)^(?:/addquote(?:@%s)? )?([\s\S]+)$`, b.Username)).FindStringSubmatch(c.EffectiveMessage.ReplyToMessage.Text)
 		if len(quoteMatches) < 2 {
 			return nil
 		}
 		quote = quoteMatches[1]
 	}
 
-	err := p.quoteService.DeleteQuote(c.Chat(), quote)
+	err := p.quoteService.DeleteQuote(c.EffectiveChat, quote)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
-			return c.Reply("<b>❌ Zitat nicht gefunden!</b>", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "<b>❌ Zitat nicht gefunden!</b>", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Str("quote", quote).
 			Msg("failed to delete quote")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
-	return c.Reply("<b>✅ Zitat gelöscht!</b>", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "<b>✅ Zitat gelöscht!</b>", utils.DefaultSendOptions())
+	return err
 }

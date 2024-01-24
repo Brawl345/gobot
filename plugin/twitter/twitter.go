@@ -3,18 +3,20 @@ package twitter
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/plugin"
-	"github.com/Brawl345/gobot/utils"
-	"github.com/Brawl345/gobot/utils/httpUtils"
-	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 	"io"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 	"time"
+
+	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/plugin"
+	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
+	"github.com/rs/xid"
 )
 
 var log = logger.New("twitter")
@@ -35,11 +37,11 @@ func (*Plugin) Name() string {
 	return "twitter"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil
 }
 
-func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(`(?i)(?:x|twitter)\.com/\w+/status(?:es)?/(\d+)`),
@@ -60,8 +62,8 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) OnStatus(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	// Get Guest Token first
 	var tokenResponse TokenResponse
@@ -71,7 +73,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to get guest token")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	req.Header.Set("Authorization", bearerToken)
@@ -87,7 +90,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to get guest token")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	defer func(Body io.ReadCloser) {
@@ -103,7 +107,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to read guest token body")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	if resp.StatusCode != 200 {
@@ -113,7 +118,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 			Int("status", resp.StatusCode).
 			Interface("response", body).
 			Msg("Got Twitter HTTP error")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	if err := json.Unmarshal(body, &tokenResponse); err != nil {
@@ -121,7 +127,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to get guest token")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	log.Debug().
@@ -132,7 +139,7 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	guestToken := tokenResponse.GuestToken
 
 	// Now we get the tweet
-	_ = c.Notify(telebot.Typing)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	tweetID := c.Matches[1]
 	requestUrl := url.URL{
 		Scheme: "https",
@@ -178,35 +185,42 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("tweetID", tweetID).
 			Msg("Failed to get tweet")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	result := tweetResponse.Data.TweetResult.Result
 
 	if result.Typename == "TweetUnavailable" {
 		if result.Reason == "NsfwLoggedOut" {
-			return c.Reply(fmt.Sprintf("https://vxtwitter.com/_/status/%s", tweetID), &telebot.SendOptions{
-				AllowWithoutReply:     true,
-				DisableWebPagePreview: false,
-				DisableNotification:   true,
-				ParseMode:             telebot.ModeHTML,
-			})
+			_, err = c.EffectiveMessage.Reply(b,
+				fmt.Sprintf("https://vxtwitter.com/_/status/%s", tweetID),
+				&gotgbot.SendMessageOpts{
+					ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+					DisableNotification: true,
+					ParseMode:           gotgbot.ParseModeHTML,
+				},
+			)
+			return err
 		} else if result.Reason == "Protected" {
-			return c.Reply("🔓 Der Account-Inhaber hat beschränkt, wer seine Tweets ansehen kann.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "🔓 Der Account-Inhaber hat beschränkt, wer seine Tweets ansehen kann.", utils.DefaultSendOptions())
+			return err
 		} else {
-			return c.Reply(fmt.Sprintf("❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code>", result.Reason), utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code>", result.Reason), utils.DefaultSendOptions())
+			return err
 		}
 	}
 
 	if result.Typename != "Tweet" && result.Typename != "TweetWithVisibilityResults" && result.Typename != "tweetResult" {
-		return c.Reply("❌ Dieser Tweet existiert nicht.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Dieser Tweet existiert nicht.", utils.DefaultSendOptions())
+		return err
 	}
 
-	sendOptions := &telebot.SendOptions{
-		AllowWithoutReply:     true,
-		DisableWebPagePreview: true,
-		DisableNotification:   true,
-		ParseMode:             telebot.ModeHTML,
+	sendOptions := &gotgbot.SendMessageOpts{
+		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+		LinkPreviewOptions:  &gotgbot.LinkPreviewOptions{IsDisabled: true},
+		DisableNotification: true,
+		ParseMode:           gotgbot.ParseModeHTML,
 	}
 	var sb strings.Builder
 	timezone := utils.GermanTimezone()
@@ -256,7 +270,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 				Str("guid", guid).
 				Str("tweetID", tweetID).
 				Msg("Failed to parse poll")
-			return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			return err
 		}
 
 		sb.WriteString(pollText(poll))
@@ -271,7 +286,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 			Str("tweetID", tweetID).
 			Str("createdAt", result.Legacy.CreatedAt).
 			Msg("Failed to parse tweet created at")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 	sb.WriteString(
 		fmt.Sprintf(
@@ -360,7 +376,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 					Str("guid", guid).
 					Str("tweetID", tweetID).
 					Msg("Failed to parse quote poll")
-				return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+				_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+				return err
 			}
 
 			sb.WriteString(pollText(quotePoll))
@@ -375,7 +392,8 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 				Str("tweetID", tweetID).
 				Str("createdAt", quoteResultSub.Legacy.CreatedAt).
 				Msg("Failed to parse quote tweet created at")
-			return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			return err
 		}
 		sb.WriteString(
 			fmt.Sprintf(
@@ -397,14 +415,17 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 	// Media
 	media := result.Legacy.ExtendedEntities.Media
 	if len(media) == 1 && (media[0].IsPhoto() || media[0].IsGIF()) { // One picture or GIF = send as preview
-		sendOptions.DisableWebPagePreview = false
-		return c.Reply(
-			utils.EmbedImage(media[0].Link())+sb.String(),
+		sendOptions.LinkPreviewOptions.IsDisabled = false
+		sendOptions.LinkPreviewOptions.Url = media[0].Link()
+		sendOptions.LinkPreviewOptions.PreferLargeMedia = true
+		_, err := c.EffectiveMessage.Reply(b,
+			sb.String(),
 			sendOptions,
 		)
+		return err
 	}
 
-	err = c.Reply(sb.String(), sendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), sendOptions)
 	if err != nil {
 		return err
 	}
@@ -421,27 +442,32 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 
 	if len(media) > 0 && len(media) != len(gifs) {
 		// Try album (photos + videos, no GIFs) first
-		_ = c.Notify(telebot.UploadingPhoto)
-		album := make([]telebot.Inputtable, 0, len(media))
+		_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadPhoto, nil)
+		album := make([]gotgbot.InputMedia, 0, len(media))
 
 		for _, medium := range media {
 			if medium.IsPhoto() {
-				album = append(album, &telebot.Photo{Caption: medium.Caption(), File: telebot.FromURL(medium.Link())})
+				album = append(album, gotgbot.InputMediaPhoto{Caption: medium.Caption(), Media: medium.Link()})
 			} else if medium.IsVideo() {
-				album = append(album, &telebot.Video{
-					Caption: medium.Caption(),
-					File:    telebot.FromURL(medium.Link()),
-				})
+				album = append(album, gotgbot.InputMediaVideo{Caption: medium.Caption(), Media: medium.Link()})
 			}
 		}
 
-		err := c.SendAlbum(album, telebot.Silent)
+		_, err := b.SendMediaGroup(
+			c.EffectiveChat.Id,
+			album,
+			&gotgbot.SendMediaGroupOpts{DisableNotification: true,
+				ReplyParameters: &gotgbot.ReplyParameters{
+					MessageId: c.EffectiveMessage.MessageId,
+				},
+			},
+		)
 		if err != nil {
 			// Group send failed - sending media manually as seperate messages
 			log.Err(err).Msg("Error while sending album")
-			msg, err := c.Bot().Reply(c.Message(),
+			msg, err := c.EffectiveMessage.Reply(b,
 				"<i>🕒 Medien werden heruntergeladen und gesendet...</i>",
-				utils.DefaultSendOptions,
+				utils.DefaultSendOptions(),
 			)
 			if err != nil {
 				// This would be very awkward
@@ -450,9 +476,9 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 
 			for _, medium := range media {
 				if medium.IsPhoto() {
-					_ = c.Notify(telebot.UploadingPhoto)
+					_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadPhoto, nil)
 				} else {
-					_ = c.Notify(telebot.UploadingVideo)
+					_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadVideo, nil)
 				}
 
 				func() {
@@ -460,7 +486,10 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 					log.Info().Str("url", medium.Link()).Msg("Downloading")
 					if err != nil {
 						log.Err(err).Str("url", medium.Link()).Msg("Error while downloading")
-						err := c.Reply(medium.Caption(), telebot.Silent, telebot.AllowWithoutReply)
+						_, err := c.EffectiveMessage.Reply(b, medium.Caption(), &gotgbot.SendMessageOpts{
+							ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+							DisableNotification: true,
+						})
 						if err != nil {
 							log.Err(err).Str("url", medium.Link()).Msg("Error while replying with link")
 						}
@@ -475,19 +504,27 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 					}(resp.Body)
 
 					if medium.IsPhoto() {
-						err = c.Reply(&telebot.Photo{File: telebot.FromReader(resp.Body)},
-							telebot.Silent, telebot.AllowWithoutReply)
+						_, err = b.SendPhoto(c.EffectiveChat.Id, resp.Body, &gotgbot.SendPhotoOpts{
+							ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true,
+								MessageId: c.EffectiveMessage.MessageId},
+							DisableNotification: true,
+						})
 					} else {
-						err = c.Reply(&telebot.Video{
-							Caption:   medium.Caption(),
-							File:      telebot.FromReader(resp.Body),
-							Streaming: true,
-						}, telebot.Silent, telebot.AllowWithoutReply)
+						_, err = b.SendVideo(c.EffectiveChat.Id, resp.Body, &gotgbot.SendVideoOpts{
+							Caption: medium.Caption(),
+							ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true,
+								MessageId: c.EffectiveMessage.MessageId},
+							DisableNotification: true,
+							SupportsStreaming:   true,
+						})
 					}
 					if err != nil {
 						// Last resort: Send URL as text
 						log.Err(err).Str("url", medium.Link()).Msg("Error while replying with downloaded medium")
-						err := c.Reply(medium.Caption(), telebot.Silent, telebot.AllowWithoutReply)
+						_, err := c.EffectiveMessage.Reply(b, medium.Caption(), &gotgbot.SendMessageOpts{
+							ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+							DisableNotification: true,
+						})
 						if err != nil {
 							log.Err(err).Str("url", medium.Link()).Msg("Error while sending medium link")
 						}
@@ -495,23 +532,28 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 				}()
 			}
 
-			_ = c.Bot().Delete(msg)
+			_, _ = msg.Delete(b, nil)
 		}
 	}
 
 	// Now to GIFs...
 	if len(gifs) > 0 {
-		_ = c.Notify(telebot.UploadingVideo)
+		_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadVideo, nil)
 		for _, gif := range gifs {
 
-			err = c.Reply(&telebot.Animation{
-				Caption: gif.Caption(),
-				File:    telebot.FromURL(gif.Link()),
-			}, telebot.Silent, telebot.AllowWithoutReply)
+			_, err := b.SendAnimation(c.EffectiveChat.Id,
+				gif.Link(),
+				&gotgbot.SendAnimationOpts{
+					Caption: gif.Caption(),
+					ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true,
+						MessageId: c.EffectiveMessage.MessageId},
+					DisableNotification: true,
+				},
+			)
 
 			if err != nil {
 				func() {
-					_ = c.Notify(telebot.UploadingVideo)
+					_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadVideo, nil)
 
 					log.Err(err).Str("url", gif.Link()).Msg("Error while sending gif through Telegram")
 
@@ -519,7 +561,10 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 					log.Info().Str("url", gif.Link()).Msg("Downloading gif")
 					if err != nil {
 						log.Err(err).Str("url", gif.Link()).Msg("Error while downloading gif")
-						err := c.Reply(gif.Caption(), telebot.Silent, telebot.AllowWithoutReply)
+						_, err := c.EffectiveMessage.Reply(b, gif.Caption(), &gotgbot.SendMessageOpts{
+							ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+							DisableNotification: true,
+						})
 						if err != nil {
 							log.Err(err).Str("url", gif.Link()).Msg("Error while replying with link")
 						}
@@ -533,15 +578,20 @@ func (p *Plugin) OnStatus(c plugin.GobotContext) error {
 						}
 					}(resp.Body)
 
-					err = c.Reply(&telebot.Animation{
+					_, err = b.SendAnimation(c.EffectiveChat.Id, resp.Body, &gotgbot.SendAnimationOpts{
 						Caption: gif.Caption(),
-						File:    telebot.FromReader(resp.Body),
-					}, telebot.Silent, telebot.AllowWithoutReply)
+						ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true,
+							MessageId: c.EffectiveMessage.MessageId},
+						DisableNotification: true,
+					})
 
 					if err != nil {
 						// Last resort: Send URL as text
 						log.Err(err).Str("url", gif.Link()).Msg("Error while replying with downloaded gif")
-						err := c.Reply(gif.Caption(), telebot.Silent, telebot.AllowWithoutReply)
+						_, err := c.EffectiveMessage.Reply(b, gif.Caption(), &gotgbot.SendMessageOpts{
+							ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+							DisableNotification: true,
+						})
 						if err != nil {
 							log.Err(err).Str("url", gif.Link()).Msg("Error while sending gif link")
 						}

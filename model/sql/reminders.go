@@ -3,12 +3,12 @@ package sql
 import (
 	"database/sql"
 	"errors"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/jmoiron/sqlx"
-	"gopkg.in/telebot.v3"
 )
 
 type reminderService struct {
@@ -23,15 +23,15 @@ func NewReminderService(db *sqlx.DB) *reminderService {
 	}
 }
 
-func (db *reminderService) DeleteReminder(chat *telebot.Chat, user *telebot.User, id string) error {
+func (db *reminderService) DeleteReminder(chat *gotgbot.Chat, user *gotgbot.User, id string) error {
 	var exists bool
 	var err error
-	if chat.Type == telebot.ChatPrivate {
+	if chat.Type == gotgbot.ChatTypePrivate {
 		const existsQuery = `SELECT 1 FROM reminders WHERE id = ? AND chat_id IS NULL AND user_id = ?`
-		err = db.Get(&exists, existsQuery, id, user.ID)
+		err = db.Get(&exists, existsQuery, id, user.Id)
 	} else {
 		const existsQuery = `SELECT 1 FROM reminders WHERE id = ? AND chat_id = ?`
-		err = db.Get(&exists, existsQuery, id, chat.ID)
+		err = db.Get(&exists, existsQuery, id, chat.Id)
 	}
 
 	if err != nil {
@@ -45,12 +45,12 @@ func (db *reminderService) DeleteReminder(chat *telebot.Chat, user *telebot.User
 		return model.ErrNotFound
 	}
 
-	if chat.Type == telebot.ChatPrivate {
+	if chat.Type == gotgbot.ChatTypePrivate {
 		const query = `DELETE FROM reminders WHERE id = ? AND chat_id IS NULL AND user_id = ?`
-		_, err = db.Exec(query, id, user.ID)
+		_, err = db.Exec(query, id, user.Id)
 	} else {
 		const query = `DELETE FROM reminders WHERE id = ? AND chat_id = ?`
-		_, err = db.Exec(query, id, chat.ID)
+		_, err = db.Exec(query, id, chat.Id)
 	}
 
 	return err
@@ -84,35 +84,35 @@ func (db *reminderService) GetReminderByID(id int64) (model.Reminder, error) {
 	return reminder, err
 }
 
-func (db *reminderService) GetReminders(chat *telebot.Chat, user *telebot.User) ([]model.Reminder, error) {
+func (db *reminderService) GetReminders(chat *gotgbot.Chat, user *gotgbot.User) ([]model.Reminder, error) {
 	var err error
 	var reminders []model.Reminder
 
-	if chat.Type == telebot.ChatPrivate {
+	if chat.Type == gotgbot.ChatTypePrivate {
 		const query = `SELECT id, time, text FROM reminders WHERE chat_id IS NULL AND user_id = ? ORDER BY time`
-		err = db.Select(&reminders, query, user.ID)
+		err = db.Select(&reminders, query, user.Id)
 	} else {
 		const query = `SELECT id, time, text FROM reminders WHERE chat_id = ? ORDER BY time`
-		err = db.Select(&reminders, query, chat.ID)
+		err = db.Select(&reminders, query, chat.Id)
 	}
 
 	return reminders, err
 }
 
 func (db *reminderService) SaveReminder(
-	chat *telebot.Chat,
-	user *telebot.User,
+	chat *gotgbot.Chat,
+	user *gotgbot.User,
 	remindAt time.Time,
 	text string,
 ) (int64, error) {
 	var err error
 	var res sql.Result
-	if chat.Type == telebot.ChatPrivate {
+	if chat.Type == gotgbot.ChatTypePrivate {
 		const query = `INSERT INTO reminders (user_id, time, text) VALUES (?, ?, ?)`
-		res, err = db.Exec(query, user.ID, remindAt, text)
+		res, err = db.Exec(query, user.Id, remindAt, text)
 	} else {
 		const query = `INSERT INTO reminders (chat_id, user_id, time, text) VALUES (?, ?, ?, ?)`
-		res, err = db.Exec(query, chat.ID, user.ID, remindAt, text)
+		res, err = db.Exec(query, chat.Id, user.Id, remindAt, text)
 	}
 	if err != nil {
 		return 0, err

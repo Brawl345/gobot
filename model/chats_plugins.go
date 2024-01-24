@@ -1,11 +1,11 @@
 package model
 
 import (
-	"gopkg.in/telebot.v3"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 type ChatsPluginsService interface {
-	Disable(chat *telebot.Chat, pluginName string) error
-	Enable(chat *telebot.Chat, pluginName string) error
+	Disable(chat *gotgbot.Chat, pluginName string) error
+	Enable(chat *gotgbot.Chat, pluginName string) error
 	GetAllDisabled() (map[int64][]string, error)
 }

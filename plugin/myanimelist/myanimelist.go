@@ -12,8 +12,9 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("myanimelist")
@@ -41,16 +42,16 @@ func (*Plugin) Name() string {
 	return "myanimelist"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "mal",
+			Command:     "mal",
 			Description: "<Suchbegriff> - Anime suchen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/mal(?:@%s)? (.+)$`, botInfo.Username)),
@@ -67,8 +68,8 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onSearch(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func (p *Plugin) onSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	var response AnimeSearch
 
 	requestUrl := url.URL{
@@ -98,12 +99,13 @@ func (p *Plugin) onSearch(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", requestUrl.String()).
 			Msg("error getting myanimelist search results")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	if len(response.Results) == 0 {
-		return c.Reply("❌ Es wurde kein Anime gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Es wurde kein Anime gefunden.", utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
@@ -123,11 +125,12 @@ func (p *Plugin) onSearch(c plugin.GobotContext) error {
 		sb.WriteString("\n")
 	}
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) onAnime(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	var anime Anime
 	var httpError *httpUtils.HttpError
 
@@ -151,7 +154,8 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 	if err != nil {
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == 404 {
-				return c.Reply("❌ Anime nicht gefunden.", utils.DefaultSendOptions)
+				_, err := c.EffectiveMessage.Reply(b, "❌ Anime nicht gefunden.", utils.DefaultSendOptions())
+				return err
 			}
 		}
 
@@ -161,18 +165,11 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", requestUrl.String()).
 			Msg("error getting myanimelist result")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
-	disableWebPagePreview := true
-
-	// Main Picture
-	if anime.GetMainPicture() != "" && !anime.NSFW() {
-		disableWebPagePreview = false
-		sb.WriteString(utils.EmbedImage(anime.GetMainPicture()))
-	}
 
 	// Title
 	sb.WriteString(
@@ -386,11 +383,15 @@ func (p *Plugin) onAnime(c plugin.GobotContext) error {
 		}
 	}
 
-	return c.Reply(sb.String(), &telebot.SendOptions{
-		AllowWithoutReply:     true,
-		DisableWebPagePreview: disableWebPagePreview,
-		DisableNotification:   true,
-		ParseMode:             telebot.ModeHTML,
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+			IsDisabled:       anime.GetMainPicture() == "" || anime.NSFW(),
+			Url:              anime.GetMainPicture(),
+			PreferLargeMedia: true,
+		},
+		ParseMode:           gotgbot.ParseModeHTML,
+		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+		DisableNotification: true,
 	})
-
+	return err
 }

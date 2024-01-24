@@ -2,24 +2,15 @@ package utils
 
 import (
 	"errors"
-	"os"
 	"runtime/debug"
-	"strconv"
 	"time"
 
+	"github.com/PaulSonOfLars/gotgbot/v2"
+
 	"github.com/Brawl345/gobot/logger"
-	"gopkg.in/telebot.v3"
 )
 
-var (
-	DefaultSendOptions = &telebot.SendOptions{
-		AllowWithoutReply:     true,
-		DisableWebPagePreview: true,
-		DisableNotification:   true,
-		ParseMode:             telebot.ModeHTML,
-	}
-	log = logger.New("utils")
-)
+var log = logger.New("utils")
 
 type (
 	VersionInfo struct {
@@ -32,21 +23,17 @@ type (
 	}
 )
 
-func GermanTimezone() *time.Location {
-	timezone, err := time.LoadLocation("Europe/Berlin")
-	if err != nil {
-		log.Err(err).Msg("Failed to load timezone, using UTC")
-		timezone, _ = time.LoadLocation("UTC")
+func DefaultSendOptions() *gotgbot.SendMessageOpts {
+	return &gotgbot.SendMessageOpts{
+		ReplyParameters: &gotgbot.ReplyParameters{
+			AllowSendingWithoutReply: true,
+		},
+		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+			IsDisabled: true,
+		},
+		DisableNotification: true,
+		ParseMode:           gotgbot.ParseModeHTML,
 	}
-	return timezone
-}
-
-func AnyEntities(message *telebot.Message) telebot.Entities {
-	entities := message.Entities
-	if message.Entities == nil {
-		entities = message.CaptionEntities
-	}
-	return entities
 }
 
 func ReadVersionInfo() (VersionInfo, error) {
@@ -78,7 +65,15 @@ func ReadVersionInfo() (VersionInfo, error) {
 	return versionInfo, nil
 }
 
-func IsAdmin(user *telebot.User) bool {
-	adminId, _ := strconv.ParseInt(os.Getenv("ADMIN_ID"), 10, 64)
-	return adminId == user.ID
+func GermanTimezone() *time.Location {
+	timezone, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		log.Err(err).Msg("Failed to load timezone, using UTC")
+		timezone, _ = time.LoadLocation("UTC")
+	}
+	return timezone
+}
+
+func TimestampToTime(timestamp int64) time.Time {
+	return time.Unix(timestamp, 0)
 }

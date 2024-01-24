@@ -12,8 +12,9 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("weather")
@@ -34,24 +35,24 @@ func (p *Plugin) Name() string {
 	return "weather"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "f",
+			Command:     "f",
 			Description: "[Ort] - Wettervorhersage",
 		},
 		{
-			Text:        "fh",
+			Command:     "fh",
 			Description: "[Ort] - 24-Stunden-Wettervorhersage",
 		},
 		{
-			Text:        "w",
+			Command:     "w",
 			Description: "[Ort] - Aktuelles Wetter",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/w(?:@%s)? (.+)$`, botInfo.Username)),
@@ -80,36 +81,39 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onWeather(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.FindingLocation)
+func (p *Plugin) onWeather(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionFindLocation, nil)
 
 	var err error
-	var venue telebot.Venue
+	var venue gotgbot.Venue
 	if len(c.Matches) > 1 {
 		venue, err = p.geocodingService.Geocode(c.Matches[1])
 	} else {
-		venue, err = p.homeService.GetHome(c.Sender())
+		venue, err = p.homeService.GetHome(c.EffectiveUser)
 	}
 
 	if err != nil {
 		if errors.Is(err, model.ErrHomeAddressNotSet) {
-			return c.Reply("🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
-				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
+				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions())
+			return err
 		}
 		if errors.Is(err, model.ErrAddressNotFound) {
-			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
+			return err
 		}
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error getting location")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
-	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_hours&hourly=precipitation&current_weather=true&timezone=Europe/Berlin", venue.Location.Lat, venue.Location.Lng)
+	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_hours&hourly=precipitation&current_weather=true&timezone=Europe/Berlin", venue.Location.Latitude, venue.Location.Longitude)
 
 	var response Response
 	err = httpUtils.GetRequest(requestUrl, &response)
@@ -119,8 +123,9 @@ func (p *Plugin) onWeather(c plugin.GobotContext) error {
 			Err(err).
 			Str("guid", guid).
 			Msg("error getting weather")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
@@ -251,39 +256,43 @@ func (p *Plugin) onWeather(c plugin.GobotContext) error {
 		),
 	)
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) onForecast(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.FindingLocation)
+func (p *Plugin) onForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionFindLocation, nil)
 
 	var err error
-	var venue telebot.Venue
+	var venue gotgbot.Venue
 	if len(c.Matches) > 1 {
 		venue, err = p.geocodingService.Geocode(c.Matches[1])
 	} else {
-		venue, err = p.homeService.GetHome(c.Sender())
+		venue, err = p.homeService.GetHome(c.EffectiveUser)
 	}
 
 	if err != nil {
 		if errors.Is(err, model.ErrHomeAddressNotSet) {
-			return c.Reply("🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
-				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
+				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions())
+			return err
 		}
 		if errors.Is(err, model.ErrAddressNotFound) {
-			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
+			return err
 		}
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error getting location")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
-	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe/Berlin", venue.Location.Lat, venue.Location.Lng)
+	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe/Berlin", venue.Location.Latitude, venue.Location.Longitude)
 
 	var response Response
 	err = httpUtils.GetRequest(requestUrl, &response)
@@ -293,8 +302,9 @@ func (p *Plugin) onForecast(c plugin.GobotContext) error {
 			Err(err).
 			Str("guid", guid).
 			Msg("error getting weather")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
@@ -321,39 +331,43 @@ func (p *Plugin) onForecast(c plugin.GobotContext) error {
 		sb.WriteString("\n")
 	}
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) onHourlyForecast(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.FindingLocation)
+func (p *Plugin) onHourlyForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionFindLocation, nil)
 
 	var err error
-	var venue telebot.Venue
+	var venue gotgbot.Venue
 	if len(c.Matches) > 1 {
 		venue, err = p.geocodingService.Geocode(c.Matches[1])
 	} else {
-		venue, err = p.homeService.GetHome(c.Sender())
+		venue, err = p.homeService.GetHome(c.EffectiveUser)
 	}
 
 	if err != nil {
 		if errors.Is(err, model.ErrHomeAddressNotSet) {
-			return c.Reply("🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
-				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
+				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions())
+			return err
 		}
 		if errors.Is(err, model.ErrAddressNotFound) {
-			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
+			return err
 		}
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error getting location")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
-	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,weathercode&timezone=Europe/Berlin", venue.Location.Lat, venue.Location.Lng)
+	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,weathercode&timezone=Europe/Berlin", venue.Location.Latitude, venue.Location.Longitude)
 
 	var response Response
 	err = httpUtils.GetRequest(requestUrl, &response)
@@ -363,8 +377,9 @@ func (p *Plugin) onHourlyForecast(c plugin.GobotContext) error {
 			Err(err).
 			Str("guid", guid).
 			Msg("error getting weather")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
@@ -397,5 +412,6 @@ func (p *Plugin) onHourlyForecast(c plugin.GobotContext) error {
 		}
 	}
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	return err
 }

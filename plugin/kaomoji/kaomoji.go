@@ -2,11 +2,13 @@ package kaomoji
 
 import (
 	"fmt"
+	"math/rand"
 	"regexp"
+	"strconv"
 
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
-	"gopkg.in/telebot.v3"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 const (
@@ -27,24 +29,24 @@ func (p *Plugin) Name() string {
 	return "kaomoji"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "lf",
+			Command:     "lf",
 			Description: lennyFace,
 		},
 		{
-			Text:        "lod",
+			Command:     "lod",
 			Description: lookOfDisapproval,
 		},
 		{
-			Text:        "shrug",
+			Command:     "shrug",
 			Description: shrug,
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)/(?:shrug|nbc|idc)(?:@%s)?$`, botInfo.Username)),
@@ -76,44 +78,68 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func onShrug(c plugin.GobotContext) error {
-	return c.Send(shrug, utils.DefaultSendOptions)
+func onShrug(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, err := b.SendMessage(c.EffectiveChat.Id, shrug, utils.DefaultSendOptions())
+	return err
 }
 
-func onShrugInline(c plugin.GobotContext) error {
-	return c.Answer(&telebot.QueryResponse{
-		Results: telebot.Results{&telebot.ArticleResult{
-			Title: shrug,
-			Text:  shrug,
-		}},
-		CacheTime: InlineQueryCacheTime,
-	})
+func onShrugInline(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, err := c.InlineQuery.Answer(
+		b,
+		[]gotgbot.InlineQueryResult{
+			gotgbot.InlineQueryResultArticle{
+				Id:    strconv.Itoa(rand.Int()),
+				Title: shrug,
+				InputMessageContent: gotgbot.InputTextMessageContent{
+					MessageText: shrug,
+				},
+			},
+		},
+		&gotgbot.AnswerInlineQueryOpts{CacheTime: InlineQueryCacheTime},
+	)
+	return err
 }
 
-func onLennyFace(c plugin.GobotContext) error {
-	return c.Send(lennyFace, utils.DefaultSendOptions)
+func onLennyFace(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, err := b.SendMessage(c.EffectiveChat.Id, lennyFace, utils.DefaultSendOptions())
+	return err
 }
 
-func onLennyFaceInline(c plugin.GobotContext) error {
-	return c.Answer(&telebot.QueryResponse{
-		Results: telebot.Results{&telebot.ArticleResult{
-			Title: lennyFace,
-			Text:  lennyFace,
-		}},
-		CacheTime: InlineQueryCacheTime,
-	})
+func onLennyFaceInline(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, err := c.InlineQuery.Answer(
+		b,
+		[]gotgbot.InlineQueryResult{
+			gotgbot.InlineQueryResultArticle{
+				Id:    strconv.Itoa(rand.Int()),
+				Title: lennyFace,
+				InputMessageContent: gotgbot.InputTextMessageContent{
+					MessageText: lennyFace,
+				},
+			},
+		},
+		&gotgbot.AnswerInlineQueryOpts{CacheTime: InlineQueryCacheTime},
+	)
+	return err
 }
 
-func onLookOfDisapproval(c plugin.GobotContext) error {
-	return c.Send(lookOfDisapproval, utils.DefaultSendOptions)
+func onLookOfDisapproval(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, err := b.SendMessage(c.EffectiveChat.Id, lookOfDisapproval, utils.DefaultSendOptions())
+	return err
 }
 
-func onLookOfDisapprovalInline(c plugin.GobotContext) error {
-	return c.Answer(&telebot.QueryResponse{
-		Results: telebot.Results{&telebot.ArticleResult{
-			Title: lookOfDisapproval,
-			Text:  lookOfDisapproval,
-		}},
-		CacheTime: InlineQueryCacheTime,
-	})
+func onLookOfDisapprovalInline(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, err := c.InlineQuery.Answer(
+		b,
+		[]gotgbot.InlineQueryResult{
+			gotgbot.InlineQueryResultArticle{
+				Id:    strconv.Itoa(rand.Int()),
+				Title: lookOfDisapproval,
+				InputMessageContent: gotgbot.InputTextMessageContent{
+					MessageText: lookOfDisapproval,
+				},
+			},
+		},
+		&gotgbot.AnswerInlineQueryOpts{CacheTime: InlineQueryCacheTime},
+	)
+	return err
 }

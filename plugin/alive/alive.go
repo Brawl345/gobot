@@ -6,7 +6,7 @@ import (
 
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
-	"gopkg.in/telebot.v3"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 type Plugin struct{}
@@ -19,11 +19,11 @@ func (p *Plugin) Name() string {
 	return "alive"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil
 }
 
-func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(`(?i)^Bot\??$`),
@@ -32,13 +32,18 @@ func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
 	}
 }
 
-func onAliveCheck(c plugin.GobotContext) error {
-	return c.Reply(
-		fmt.Sprintf("<b>Ich bin da, %s!</b>", utils.Escape(c.Sender().FirstName)),
-		&telebot.SendOptions{
-			AllowWithoutReply:     true,
-			DisableWebPagePreview: true,
-			ParseMode:             telebot.ModeHTML,
+func onAliveCheck(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, err := c.EffectiveMessage.Reply(b,
+		fmt.Sprintf("<b>Ich bin da, %s!</b>", utils.Escape(c.EffectiveSender.FirstName())),
+		&gotgbot.SendMessageOpts{
+			ParseMode: gotgbot.ParseModeHTML,
+			ReplyParameters: &gotgbot.ReplyParameters{
+				AllowSendingWithoutReply: true,
+			},
+			LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+				IsDisabled: true,
+			},
 		},
 	)
+	return err
 }

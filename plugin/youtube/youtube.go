@@ -12,8 +12,9 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("youtube")
@@ -37,16 +38,16 @@ func (p *Plugin) Name() string {
 	return "youtube"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "yt",
+			Command:     "yt",
 			Description: "<Suchbegriff> - Auf YouTube suchen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	// For videoId see https://webapps.stackexchange.com/a/101153
 	return []plugin.Handler{
 		&plugin.CommandHandler{
@@ -293,13 +294,14 @@ func constructText(video *Video) string {
 	return sb.String()
 }
 
-func (p *Plugin) OnYouTubeLink(c plugin.GobotContext) error {
+func (p *Plugin) OnYouTubeLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 	videoID := c.Matches[1]
 	video, err := p.getVideoInfo(videoID)
 
 	if err != nil {
 		if errors.Is(err, ErrNoVideoFound) {
-			return c.Reply("❌ Video nicht gefunden")
+			_, err := c.EffectiveMessage.Reply(b, "❌ Video nicht gefunden", nil)
+			return err
 		}
 
 		guid := xid.New().String()
@@ -307,12 +309,13 @@ func (p *Plugin) OnYouTubeLink(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("videoID", videoID).
 			Msg("Error while getting video info")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	text := constructText(&video)
 
-	msg, err := c.Bot().Reply(c.Message(), text, utils.DefaultSendOptions)
+	msg, err := c.EffectiveMessage.Reply(b, text, utils.DefaultSendOptions())
 	if err == nil {
 		modifiedText, err := deArrow(text, &video)
 		if err != nil {
@@ -322,15 +325,17 @@ func (p *Plugin) OnYouTubeLink(c plugin.GobotContext) error {
 			return nil
 		}
 
-		_, err = c.Bot().Edit(msg, modifiedText, utils.DefaultSendOptions)
+		_, _, err = msg.EditText(b, modifiedText, &gotgbot.EditMessageTextOpts{
+			ParseMode: gotgbot.ParseModeHTML,
+		})
 	}
 
 	return err
 }
 
-func (p *Plugin) onYouTubeSearch(c plugin.GobotContext) error {
+func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	query := c.Matches[1]
-	_ = c.Notify(telebot.Typing)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "www.googleapis.com",
@@ -356,11 +361,13 @@ func (p *Plugin) onYouTubeSearch(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("query", query).
 			Msg("error getting youtube search results")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	if len(response.Items) == 0 {
-		return c.Reply("❌ Keine Ergebnisse gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Ergebnisse gefunden.", utils.DefaultSendOptions())
+		return err
 	}
 
 	videoID := response.Items[0].ID.VideoID
@@ -368,7 +375,8 @@ func (p *Plugin) onYouTubeSearch(c plugin.GobotContext) error {
 
 	if err != nil {
 		if errors.Is(err, ErrNoVideoFound) {
-			return c.Reply("❌ Video nicht gefunden")
+			_, err := c.EffectiveMessage.Reply(b, "❌ Video nicht gefunden", nil)
+			return err
 		}
 
 		guid := xid.New().String()
@@ -376,7 +384,8 @@ func (p *Plugin) onYouTubeSearch(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("videoID", videoID).
 			Msg("Error while getting video info")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
@@ -384,10 +393,10 @@ func (p *Plugin) onYouTubeSearch(c plugin.GobotContext) error {
 	sb.WriteString(constructText(&video))
 	text := sb.String()
 
-	msg, err := c.Bot().Reply(c.Message(), text, &telebot.SendOptions{
-		AllowWithoutReply:   true,
+	msg, err := c.EffectiveMessage.Reply(b, text, &gotgbot.SendMessageOpts{
+		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
 		DisableNotification: true,
-		ParseMode:           telebot.ModeHTML,
+		ParseMode:           gotgbot.ParseModeHTML,
 	})
 
 	if err == nil {
@@ -399,10 +408,8 @@ func (p *Plugin) onYouTubeSearch(c plugin.GobotContext) error {
 			return nil
 		}
 
-		_, err = c.Bot().Edit(msg, modifiedText, &telebot.SendOptions{
-			AllowWithoutReply:   true,
-			DisableNotification: true,
-			ParseMode:           telebot.ModeHTML,
+		_, _, err = msg.EditText(b, modifiedText, &gotgbot.EditMessageTextOpts{
+			ParseMode: gotgbot.ParseModeHTML,
 		})
 	}
 

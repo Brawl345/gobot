@@ -12,7 +12,8 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
-	"gopkg.in/telebot.v3"
+	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 var log = logger.New("expand")
@@ -32,16 +33,16 @@ func (p *Plugin) Name() string {
 	return "expand"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "expand",
+			Command:     "expand",
 			Description: "<URL> - Link entkürzen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/expand(?:@%s)? .+$`, botInfo.Username)),
@@ -108,68 +109,20 @@ func loop(sb *strings.Builder, url string, depth int) {
 	}
 }
 
-func onExpand(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func onExpand(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	var shortUrls []string
-	for _, entity := range utils.AnyEntities(c.Message()) {
-		if entity.Type == telebot.EntityURL {
-			shortUrls = append(shortUrls, c.Message().EntityText(entity))
-		} else if entity.Type == telebot.EntityTextLink {
-			shortUrls = append(shortUrls, entity.URL)
+	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage) {
+		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeURL {
+			shortUrls = append(shortUrls, c.EffectiveMessage.ParseEntity(entity).Url)
+		} else if tgUtils.EntityType(entity.Type) == tgUtils.EntityTextLink {
+			shortUrls = append(shortUrls, entity.Url)
 		}
 	}
 
 	if len(shortUrls) == 0 {
-		return c.Reply("Keine Links gefunden", utils.DefaultSendOptions)
-	}
-
-	var limitExceeded bool
-	if len(shortUrls) > MaxLinksPerMessage {
-		shortUrls = shortUrls[:MaxLinksPerMessage]
-		limitExceeded = true
-	}
-
-	var sb strings.Builder
-
-	for _, url := range shortUrls {
-		sb.WriteString(fmt.Sprintf("%s\n", url))
-		loop(&sb, url, 1)
-		sb.WriteString("\n")
-	}
-
-	if limitExceeded {
-		sb.WriteString("💡 <i>...weitere Links ignoriert</i>\n")
-	}
-
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
-}
-
-func onExpandFromReply(c plugin.GobotContext) error {
-	if !c.Message().IsReply() {
-		log.Debug().
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
-			Msg("Message is not a reply")
-		return nil
-	}
-
-	if strings.HasPrefix(c.Message().ReplyTo.Text, "/expand") ||
-		strings.HasPrefix(c.Message().ReplyTo.Caption, "/expand") {
-		return c.Reply("😠", utils.DefaultSendOptions)
-	}
-
-	var shortUrls []string
-	for _, entity := range utils.AnyEntities(c.Message().ReplyTo) {
-		if entity.Type == telebot.EntityURL {
-			shortUrls = append(shortUrls, c.Message().ReplyTo.EntityText(entity))
-		} else if entity.Type == telebot.EntityTextLink {
-			shortUrls = append(shortUrls, entity.URL)
-		}
-	}
-
-	if len(shortUrls) == 0 {
-		_, err := c.Bot().Reply(c.Message().ReplyTo, "Keine Links gefunden", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "Keine Links gefunden", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -179,7 +132,6 @@ func onExpandFromReply(c plugin.GobotContext) error {
 		limitExceeded = true
 	}
 
-	_ = c.Notify(telebot.Typing)
 	var sb strings.Builder
 
 	for _, url := range shortUrls {
@@ -192,6 +144,58 @@ func onExpandFromReply(c plugin.GobotContext) error {
 		sb.WriteString("💡 <i>...weitere Links ignoriert</i>\n")
 	}
 
-	_, err := c.Bot().Reply(c.Message().ReplyTo, sb.String(), utils.DefaultSendOptions)
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	return err
+}
+
+func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
+	if !tgUtils.IsReply(c.EffectiveMessage) {
+		log.Debug().
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
+			Msg("Message is not a reply")
+		return nil
+	}
+
+	if strings.HasPrefix(c.EffectiveMessage.ReplyToMessage.Text, "/expand") ||
+		strings.HasPrefix(c.EffectiveMessage.ReplyToMessage.Caption, "/expand") {
+		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions())
+		return err
+	}
+
+	var shortUrls []string
+	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage.ReplyToMessage) {
+		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeURL {
+			shortUrls = append(shortUrls, c.EffectiveMessage.ReplyToMessage.ParseEntity(entity).Url)
+		} else if tgUtils.EntityType(entity.Type) == tgUtils.EntityTextLink {
+			shortUrls = append(shortUrls, entity.Url)
+		}
+	}
+
+	if len(shortUrls) == 0 {
+		_, err := c.EffectiveMessage.ReplyToMessage.Reply(b, "Keine Links gefunden", utils.DefaultSendOptions())
+		return err
+	}
+
+	var limitExceeded bool
+	if len(shortUrls) > MaxLinksPerMessage {
+		shortUrls = shortUrls[:MaxLinksPerMessage]
+		limitExceeded = true
+	}
+
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+	var sb strings.Builder
+
+	for _, url := range shortUrls {
+		sb.WriteString(fmt.Sprintf("%s\n", url))
+		loop(&sb, url, 1)
+		sb.WriteString("\n")
+	}
+
+	if limitExceeded {
+		sb.WriteString("💡 <i>...weitere Links ignoriert</i>\n")
+	}
+
+	_, err := c.EffectiveMessage.ReplyToMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

@@ -12,8 +12,9 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("gps")
@@ -37,38 +38,39 @@ func (p *Plugin) Name() string {
 	return "gps"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "map",
+			Command:     "map",
 			Description: "<Ort> - Ort auf der Karte anzeigen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/(?:gps|map)(?:@%s)? (.+)$`, botInfo.Username)),
 			HandlerFunc: p.onGPS,
 		},
 		&plugin.CommandHandler{
-			Trigger:     telebot.OnLocation,
+			Trigger:     tgUtils.LocationMsg,
 			HandlerFunc: p.onLocation,
 		},
 		&plugin.CommandHandler{
-			Trigger:     telebot.OnVenue,
+			Trigger:     tgUtils.VenueMsg,
 			HandlerFunc: p.onLocation,
 		},
 	}
 }
 
-func (p *Plugin) onGPS(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.FindingLocation)
+func (p *Plugin) onGPS(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionFindLocation, nil)
 	venue, err := p.geocodingService.Geocode(c.Matches[1])
 	if err != nil {
 		if errors.Is(err, model.ErrAddressNotFound) {
-			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
@@ -76,14 +78,21 @@ func (p *Plugin) onGPS(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("location", c.Matches[1]).
 			Msg("Failed to get coordinates for location")
-		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Koordinaten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Koordinaten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
-	return c.Reply(&venue, utils.DefaultSendOptions)
+	_, err = b.SendVenue(c.EffectiveChat.Id, venue.Location.Latitude, venue.Location.Longitude, venue.Title, venue.Address, &gotgbot.SendVenueOpts{
+		ReplyParameters: &gotgbot.ReplyParameters{
+			AllowSendingWithoutReply: true,
+			MessageId:                c.EffectiveMessage.MessageId,
+		},
+		DisableNotification: true,
+	})
+	return err
 }
 
-func (p *Plugin) onLocation(c plugin.GobotContext) error {
+func (p *Plugin) onLocation(b *gotgbot.Bot, c plugin.GobotContext) error {
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "nominatim.openstreetmap.org",
@@ -99,12 +108,12 @@ func (p *Plugin) onLocation(c plugin.GobotContext) error {
 	var lat string
 	var lon string
 
-	if c.Message().Location != nil {
-		lat = strconv.FormatFloat(float64(c.Message().Location.Lat), 'f', -1, 32)
-		lon = strconv.FormatFloat(float64(c.Message().Location.Lng), 'f', -1, 32)
+	if c.EffectiveMessage.Location != nil {
+		lat = strconv.FormatFloat(c.EffectiveMessage.Location.Latitude, 'f', -1, 32)
+		lon = strconv.FormatFloat(c.EffectiveMessage.Location.Longitude, 'f', -1, 32)
 	} else {
-		lat = strconv.FormatFloat(float64(c.Message().Venue.Location.Lat), 'f', -1, 32)
-		lon = strconv.FormatFloat(float64(c.Message().Venue.Location.Lng), 'f', -1, 32)
+		lat = strconv.FormatFloat(c.EffectiveMessage.Venue.Location.Latitude, 'f', -1, 32)
+		lon = strconv.FormatFloat(c.EffectiveMessage.Venue.Location.Longitude, 'f', -1, 32)
 	}
 
 	q.Set("lat", lat)
@@ -131,10 +140,11 @@ func (p *Plugin) onLocation(c plugin.GobotContext) error {
 	}
 
 	if response.DisplayName != "" {
-		return c.Reply(fmt.Sprintf(
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf(
 			"<a href=\"https://maps.google.com/maps?q=%s,%s&ll=%s,%s&z=16\">%s</a>",
 			lat, lon, lat, lon, utils.Escape(response.DisplayName),
-		), utils.DefaultSendOptions)
+		), utils.DefaultSendOptions())
+		return err
 	}
 	return nil
 }

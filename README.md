@@ -4,7 +4,7 @@
 
 
 
-Multi-purpose bot for the Telegram Messenger based on [Telebot](https://github.com/tucnak/telebot/) and inspired
+Multi-purpose bot for the Telegram Messenger based on [gotgbot](https://github.com/PaulSonOfLars/gotgbot) and inspired
 by [Python-Telegram-Bot](https://github.com/python-telegram-bot/python-telegram-bot).
 
 **The source code is here so YOU can do what you want with it - don't ask questions about it nor ask for help on how to use
@@ -31,9 +31,11 @@ To use a webhook, set the webhook-related variables. If you don't, long-polling 
 Example with [Hookdeck](https://hookdeck.com/):
 
 1. Copy your `https://events.hookdeck.com/e/...` URL to `WEBHOOK_PUBLIC_URL` variable
-2. Choose a webhook port (e.g. `41320`) - be careful, no error will be shown if the port is already in use (limitation
-   of telebot)!
-3. Use the Hookdeck CLI: `hookdeck listen 41320 [SOURCE]`
+2. Set a webhook port (e.g. `41320`) to `PORT`
+3. Set `WEBHOOK_URL_PATH` to a custom path
+   1. This is where the internal webhook server will listen on. Gotgbot does not support an empty path sadly.
+   2. For Hookdeck, set "Destionation Type" to "CLI" and insert your path
+4. Use the Hookdeck CLI: `hookdeck listen 41320 [SOURCE]`
 
 ### More options
 

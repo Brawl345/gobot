@@ -4,11 +4,11 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/jmoiron/sqlx"
-	"gopkg.in/telebot.v3"
 )
 
 type chatsPluginsService struct {
@@ -31,7 +31,7 @@ func NewChatsPluginsService(
 	}
 }
 
-func (db *chatsPluginsService) Disable(chat *telebot.Chat, pluginName string) error {
+func (db *chatsPluginsService) Disable(chat *gotgbot.Chat, pluginName string) error {
 	tx, err := db.BeginTxx(context.Background(), nil)
 	if err != nil {
 		return err
@@ -66,7 +66,7 @@ func (db *chatsPluginsService) Disable(chat *telebot.Chat, pluginName string) er
 	return nil
 }
 
-func (db *chatsPluginsService) Enable(chat *telebot.Chat, pluginName string) error {
+func (db *chatsPluginsService) Enable(chat *gotgbot.Chat, pluginName string) error {
 	tx, err := db.BeginTxx(context.Background(), nil)
 	if err != nil {
 		return err
@@ -101,12 +101,12 @@ func (db *chatsPluginsService) Enable(chat *telebot.Chat, pluginName string) err
 	return nil
 }
 
-func (db *chatsPluginsService) insertRelationship(tx *sqlx.Tx, chat *telebot.Chat, pluginName string, enabled bool) error {
+func (db *chatsPluginsService) insertRelationship(tx *sqlx.Tx, chat *gotgbot.Chat, pluginName string, enabled bool) error {
 	const query = `INSERT INTO 
     chats_plugins (chat_id, plugin_name, enabled) 
     VALUES (?, ?, ?)
     ON DUPLICATE KEY UPDATE enabled = ?`
-	_, err := tx.Exec(query, chat.ID, pluginName, enabled, enabled)
+	_, err := tx.Exec(query, chat.Id, pluginName, enabled, enabled)
 	return err
 }
 

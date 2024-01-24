@@ -12,8 +12,9 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 type Plugin struct {
@@ -39,16 +40,16 @@ func (p *Plugin) Name() string {
 	return "worldclock"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "time",
+			Command:     "time",
 			Description: "[Ort] - Aktuelle Uhrzeit an diesem Ort",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/time?(?:@%s)?$`, botInfo.Username)),
@@ -61,8 +62,8 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onTime(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	var location string
 	if len(c.Matches) > 1 {
@@ -73,7 +74,8 @@ func (p *Plugin) onTime(c plugin.GobotContext) error {
 	venue, err := p.geocodingService.Geocode(location)
 	if err != nil {
 		if errors.Is(err, model.ErrAddressNotFound) {
-			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
@@ -81,14 +83,15 @@ func (p *Plugin) onTime(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("location", c.Matches[1]).
 			Msg("Failed to get coordinates for location")
-		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Koordinaten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Koordinaten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "dev.virtualearth.net",
-		Path:   fmt.Sprintf("/REST/v1/TimeZone/%f,%f", venue.Location.Lat, venue.Location.Lng),
+		Path:   fmt.Sprintf("/REST/v1/TimeZone/%f,%f", venue.Location.Latitude, venue.Location.Longitude),
 	}
 
 	q := requestUrl.Query()
@@ -102,7 +105,8 @@ func (p *Plugin) onTime(c plugin.GobotContext) error {
 	err = httpUtils.GetRequest(requestUrl.String(), &response)
 	if err != nil {
 		if errors.As(err, &httpError) && httpError.StatusCode == 404 {
-			return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
@@ -111,12 +115,15 @@ func (p *Plugin) onTime(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", requestUrl.String()).
 			Msg("error requesting API")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	if len(response.ResourceSets) == 0 || len(response.ResourceSets[0].Resources) == 0 {
-		return c.Reply("❌ Ort nicht gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
@@ -156,5 +163,6 @@ func (p *Plugin) onTime(c plugin.GobotContext) error {
 		),
 	)
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	return err
 }

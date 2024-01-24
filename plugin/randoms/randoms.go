@@ -10,8 +10,8 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("randoms")
@@ -38,16 +38,16 @@ func (p *Plugin) Name() string {
 	return "randoms"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "random",
+			Command:     "random",
 			Description: "<Nutzer> - Schabernack",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/addrandom(?:@%s)? (.+)$`, botInfo.Username)),
@@ -66,19 +66,21 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) addRandom(c plugin.GobotContext) error {
+func (p *Plugin) addRandom(b *gotgbot.Bot, c plugin.GobotContext) error {
 	random := c.Matches[1]
 
 	if !strings.Contains(random, "{user}") ||
 		!strings.Contains(random, "{other_user}") {
-		return c.Reply("❌ Dein Text muss <code>{user}</code> und <code>{other_user}</code> enthalten, welche durch die Usernamen ersetzt werden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Dein Text muss <code>{user}</code> und <code>{other_user}</code> enthalten, welche durch die Usernamen ersetzt werden.", utils.DefaultSendOptions())
+		return err
 	}
 
 	err := p.randomService.SaveRandom(random)
 
 	if err != nil {
 		if errors.Is(err, model.ErrAlreadyExists) {
-			return c.Reply("<b>💡 Text existiert bereits!</b>", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "<b>💡 Text existiert bereits!</b>", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
@@ -86,24 +88,27 @@ func (p *Plugin) addRandom(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("random", random).
 			Msg("failed to save random")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	example := strings.NewReplacer(
-		"{user}", "<b>"+utils.Escape(c.Sender().FirstName)+"</b>",
-		"{other_user}", "<b>"+utils.Escape(c.Bot().Me.FirstName)+"</b>",
-	).Replace(random)
+		"{user}", "<b>"+utils.Escape(c.EffectiveUser.FirstName)+"</b>",
+		"{other_user}", "<b>"+utils.Escape(b.FirstName)+"</b>",
+	).Replace(utils.Escape(random))
 
-	return c.Reply(fmt.Sprintf("<b>✅ Gespeichert!</b> Beispiel:\n%s", utils.Escape(example)),
-		utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("<b>✅ Gespeichert!</b> Beispiel:\n%s", example),
+		utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) delRandom(c plugin.GobotContext) error {
+func (p *Plugin) delRandom(b *gotgbot.Bot, c plugin.GobotContext) error {
 	random := c.Matches[1]
 	err := p.randomService.DeleteRandom(random)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
-			return c.Reply("<b>❌ Nicht gefunden!</b>", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "<b>❌ Nicht gefunden!</b>", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
@@ -111,29 +116,34 @@ func (p *Plugin) delRandom(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("random", random).
 			Msg("failed to delete random")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
-	return c.Reply("<b>✅ Text gelöscht!</b>", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "<b>✅ Text gelöscht!</b>", utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) random(c plugin.GobotContext) error {
+func (p *Plugin) random(b *gotgbot.Bot, c plugin.GobotContext) error {
 	random, err := p.randomService.GetRandom()
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
-			return c.Reply("<b>❌ Keine Texte gefunden!</b> Bitte doch den Bot-Administrator darum, welche einzuspeichern.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "<b>❌ Keine Texte gefunden!</b> Bitte doch den Bot-Administrator darum, welche einzuspeichern.", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
 			Msg("failed to get random")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	random = strings.NewReplacer(
-		"{user}", "<b>"+utils.Escape(c.Sender().FirstName)+"</b>",
+		"{user}", "<b>"+utils.Escape(c.EffectiveUser.FirstName)+"</b>",
 		"{other_user}", "<b>"+utils.Escape(c.Matches[1])+"</b>",
 	).Replace(random)
-	return c.Reply(random, utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, random, utils.DefaultSendOptions())
+	return err
 }

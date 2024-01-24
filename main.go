@@ -5,12 +5,12 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Brawl345/gobot/utils"
 	_ "github.com/joho/godotenv/autoload"
 
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model/sql"
-	"github.com/Brawl345/gobot/utils"
 )
 
 var log = logger.New("main")
@@ -33,7 +33,7 @@ func main() {
 		log.Fatal().Err(err).Send()
 	}
 
-	log.Info().Msgf("Logged in as @%s (%d)", b.Telebot.Me.Username, b.Telebot.Me.ID)
+	log.Info().Msgf("Logged in as @%s (%d)", b.GoTgBot.Username, b.GoTgBot.Id)
 
 	channel := make(chan os.Signal)
 	signal.Notify(channel, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
@@ -43,5 +43,5 @@ func main() {
 		os.Exit(0)
 	}()
 
-	b.Telebot.Start()
+	b.Start()
 }

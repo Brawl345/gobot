@@ -3,18 +3,20 @@ package google_images
 import (
 	"errors"
 	"fmt"
-	"github.com/Brawl345/gobot/logger"
 	"net/url"
 	"regexp"
 	"strconv"
 	"time"
+
+	"github.com/Brawl345/gobot/logger"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("google_images")
@@ -77,16 +79,16 @@ func (p *Plugin) Name() string {
 	return "google_images"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "i",
+			Command:     "i",
 			Description: "<Suchbegriff> - Nach Bildern suchen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/i(?:@%s)? (.+)$`, botInfo.Username)),
@@ -101,12 +103,12 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) doImageSearch(c *plugin.GobotContext) error {
+func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 	query := c.Matches[1]
 
 	var wrapper model.GoogleImages
 	var err error
-	if c.Callback() != nil {
+	if c.CallbackQuery != nil {
 		queryID, err := strconv.ParseInt(query, 10, 64)
 		if err != nil {
 			return err
@@ -127,7 +129,7 @@ func (p *Plugin) doImageSearch(c *plugin.GobotContext) error {
 	}
 
 	if len(wrapper.Images) == 0 {
-		_ = c.Notify(telebot.UploadingPhoto)
+		_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadPhoto, nil)
 		requestUrl := url.URL{
 			Scheme: "https",
 			Host:   "customsearch.googleapis.com",
@@ -173,27 +175,11 @@ func (p *Plugin) doImageSearch(c *plugin.GobotContext) error {
 		wrapper.QueryID = queryID
 	}
 
-	_ = c.Notify(telebot.UploadingPhoto)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadPhoto, nil)
 	index := wrapper.CurrentIndex
 	var success bool
 	var numberOfTries int
 	var maxNumberOfTries = len(wrapper.Images)
-	imageSendOptions := &telebot.SendOptions{
-		AllowWithoutReply:     true,
-		DisableWebPagePreview: true,
-		DisableNotification:   true,
-		ParseMode:             telebot.ModeHTML,
-		ReplyMarkup: &telebot.ReplyMarkup{
-			InlineKeyboard: [][]telebot.InlineButton{
-				{
-					{
-						Text: "Nächstes Bild",
-						Data: fmt.Sprintf("i:%d", wrapper.QueryID),
-					},
-				},
-			},
-		},
-	}
 
 	for !success && numberOfTries < maxNumberOfTries {
 		image := wrapper.Images[index]
@@ -202,17 +188,39 @@ func (p *Plugin) doImageSearch(c *plugin.GobotContext) error {
 			image.ImageLink(),
 			image.ContextLink(),
 		)
+		replyMarkup := &gotgbot.InlineKeyboardMarkup{
+			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
+				{
+					{
+						Text:         "Nächstes Bild",
+						CallbackData: fmt.Sprintf("i:%d", wrapper.QueryID),
+					},
+				},
+			},
+		}
 
 		if image.IsGIF() {
-			err = c.Reply(&telebot.Document{
-				File:    telebot.FromURL(image.ImageLink()),
+			_, err = b.SendDocument(c.EffectiveChat.Id, image.ImageLink(), &gotgbot.SendDocumentOpts{
 				Caption: caption,
-			}, imageSendOptions)
+				ReplyParameters: &gotgbot.ReplyParameters{
+					AllowSendingWithoutReply: true,
+					MessageId:                c.EffectiveMessage.MessageId,
+				},
+				DisableNotification: true,
+				ParseMode:           gotgbot.ParseModeHTML,
+				ReplyMarkup:         replyMarkup,
+			})
 		} else {
-			err = c.Reply(&telebot.Photo{
-				File:    telebot.FromURL(image.ImageLink()),
+			_, err = b.SendPhoto(c.EffectiveChat.Id, image.ImageLink(), &gotgbot.SendPhotoOpts{
 				Caption: caption,
-			}, imageSendOptions)
+				ReplyParameters: &gotgbot.ReplyParameters{
+					AllowSendingWithoutReply: true,
+					MessageId:                c.EffectiveMessage.MessageId,
+				},
+				DisableNotification: true,
+				ParseMode:           gotgbot.ParseModeHTML,
+				ReplyMarkup:         replyMarkup,
+			})
 		}
 
 		index++
@@ -243,41 +251,44 @@ func (p *Plugin) doImageSearch(c *plugin.GobotContext) error {
 	}
 }
 
-func (p *Plugin) onImageSearch(c plugin.GobotContext) error {
-	err := p.doImageSearch(&c)
+func (p *Plugin) onImageSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
+	err := p.doImageSearch(b, &c)
 	var httpError *httpUtils.HttpError
 	if err != nil {
 		if errors.Is(err, ErrNoImagesFound) {
-			return c.Reply("❌ Keine Bilder gefunden.", utils.DefaultSendOptions)
-		} else if err == ErrCouldNotDownloadAnyImage {
-			return c.Reply("❌ Es konnte kein Bild heruntergeladen werden.", utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b, "❌ Keine Bilder gefunden.", utils.DefaultSendOptions())
+		} else if errors.Is(err, ErrCouldNotDownloadAnyImage) {
+			_, err = c.EffectiveMessage.Reply(b, "❌ Es konnte kein Bild heruntergeladen werden.", utils.DefaultSendOptions())
 		} else if errors.As(err, &httpError) && httpError.StatusCode == 429 {
-			return c.Reply("❌ Rate-Limit erreicht. Bitte versuche es morgen erneut.", utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht. Bitte versuche es morgen erneut.", utils.DefaultSendOptions())
 		} else {
 			guid := xid.New().String()
 			log.Err(err).
 				Str("guid", guid).
 				Msg("error doing image search")
-			return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		}
+		return err
 	}
 	return nil
 }
 
-func (p *Plugin) onImageSearchCallback(c plugin.GobotContext) error {
+func (p *Plugin) onImageSearchCallback(b *gotgbot.Bot, c plugin.GobotContext) error {
 	// ignore callback queries older than 7 days
-	if c.Callback().Message.Time().Add(utils.Week).Before(time.Now()) {
-		return c.Respond(&telebot.CallbackResponse{
+	callbackTime := utils.TimestampToTime(c.CallbackQuery.Message.GetDate())
+	if callbackTime.Add(utils.Week).Before(time.Now()) {
+		_, err := c.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
 			Text:      "❌ Bitte sende den Befehl erneut ab.",
 			ShowAlert: true,
 		})
+		return err
 	}
 
-	_ = c.Respond(&telebot.CallbackResponse{
+	_, _ = c.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
 		Text:      "Nächstes Bild wird gesendet...",
 		ShowAlert: false,
 	})
-	err := p.doImageSearch(&c)
+	err := p.doImageSearch(b, &c)
 	if err != nil {
 		log.Err(err).
 			Str("query_id", c.Matches[1]).

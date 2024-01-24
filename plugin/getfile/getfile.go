@@ -10,8 +10,9 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
-	"github.com/Brawl345/gobot/utils"
-	"gopkg.in/telebot.v3"
+	"github.com/Brawl345/gobot/utils/httpUtils"
+	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 var log = logger.New("getfile")
@@ -43,39 +44,70 @@ func (*Plugin) Name() string {
 	return "getfile"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil
 }
 
-func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     telebot.OnMedia,
+			Trigger:     tgUtils.AnyMedia,
 			HandlerFunc: p.OnMedia,
 			HandleEdits: true,
 		},
 	}
 }
 
-func (p *Plugin) OnMedia(c plugin.GobotContext) error {
+func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var fileID string
 	var uniqueID string
 	var subFolder string
 	var fileSize int64
 
-	if c.Message().Media() != nil {
-		fileID = c.Message().Media().MediaFile().FileID
-		fileSize = c.Message().Media().MediaFile().FileSize
-		uniqueID = c.Message().Media().MediaFile().UniqueID
-		subFolder = c.Message().Media().MediaType()
-	} else {
-		fileID = c.Message().Sticker.FileID
-		fileSize = c.Message().Sticker.FileSize
-		uniqueID = c.Message().Sticker.UniqueID
-		subFolder = c.Message().Sticker.MediaType()
+	if c.EffectiveMessage.Animation != nil {
+		fileID = c.EffectiveMessage.Animation.FileId
+		fileSize = c.EffectiveMessage.Animation.FileSize
+		uniqueID = c.EffectiveMessage.Animation.FileUniqueId
+		subFolder = "animation"
+	} else if c.EffectiveMessage.Audio != nil {
+		fileID = c.EffectiveMessage.Audio.FileId
+		fileSize = c.EffectiveMessage.Audio.FileSize
+		uniqueID = c.EffectiveMessage.Audio.FileUniqueId
+		subFolder = "audio"
+	} else if c.EffectiveMessage.Document != nil {
+		fileID = c.EffectiveMessage.Document.FileId
+		fileSize = c.EffectiveMessage.Document.FileSize
+		uniqueID = c.EffectiveMessage.Document.FileUniqueId
+		subFolder = "document"
+	} else if c.EffectiveMessage.Photo != nil {
+		bestResolution := tgUtils.GetBestResolution(c.EffectiveMessage.Photo)
+		fileID = bestResolution.FileId
+		fileSize = bestResolution.FileSize
+		uniqueID = bestResolution.FileUniqueId
+		subFolder = "photo"
+	} else if c.EffectiveMessage.Sticker != nil {
+		fileID = c.EffectiveMessage.Sticker.FileId
+		fileSize = c.EffectiveMessage.Sticker.FileSize
+		uniqueID = c.EffectiveMessage.Sticker.FileUniqueId
+		subFolder = "sticker"
+	} else if c.EffectiveMessage.Video != nil {
+		fileID = c.EffectiveMessage.Video.FileId
+		fileSize = c.EffectiveMessage.Video.FileSize
+		uniqueID = c.EffectiveMessage.Video.FileUniqueId
+		subFolder = "video"
+	} else if c.EffectiveMessage.VideoNote != nil {
+		fileID = c.EffectiveMessage.VideoNote.FileId
+		fileSize = c.EffectiveMessage.VideoNote.FileSize
+		uniqueID = c.EffectiveMessage.VideoNote.FileUniqueId
+		subFolder = "videoNote"
+	} else if c.EffectiveMessage.Voice != nil {
+		fileID = c.EffectiveMessage.Voice.FileId
+		fileSize = c.EffectiveMessage.Voice.FileSize
+		uniqueID = c.EffectiveMessage.Voice.FileUniqueId
+		subFolder = "voice"
 	}
 
-	if fileSize > utils.MaxFilesizeDownload {
+	if fileSize > tgUtils.MaxFilesizeDownload {
 		log.Warn().Msgf("File is too big: %d", fileSize)
 		return nil
 	}
@@ -98,9 +130,23 @@ func (p *Plugin) OnMedia(c plugin.GobotContext) error {
 		return nil
 	}
 
-	file := &telebot.File{FileID: fileID}
-	reader, err := c.Bot().File(file)
+	file, err := b.GetFile(fileID, nil)
 	if err != nil {
+		log.Err(err).
+			Str("fileID", fileID).
+			Str("uniqueID", uniqueID).
+			Str("mediaType", subFolder).
+			Msg("Failed to get file from Telegram")
+		return err
+	}
+
+	reader, err := httpUtils.DownloadFileFromGetFile(b, file)
+	if err != nil {
+		log.Err(err).
+			Str("fileID", fileID).
+			Str("uniqueID", uniqueID).
+			Str("mediaType", subFolder).
+			Msg("Failed to download file")
 		return err
 	}
 	defer func(reader io.ReadCloser) {
@@ -111,30 +157,30 @@ func (p *Plugin) OnMedia(c plugin.GobotContext) error {
 	}(reader)
 
 	var fileName string
-	if c.Message().Animation != nil && c.Message().Animation.FileName != "" {
-		fileName = uniqueID + "_" + c.Message().Animation.FileName
-	} else if c.Message().Audio != nil && c.Message().Audio.FileName != "" {
-		fileName = uniqueID + "_" + c.Message().Audio.FileName
-	} else if c.Message().Document != nil && c.Message().Document.FileName != "" {
-		fileName = uniqueID + "_" + c.Message().Document.FileName
-	} else if c.Message().Video != nil && c.Message().Video.FileName != "" {
-		fileName = uniqueID + "_" + c.Message().Video.FileName
+	if c.EffectiveMessage.Animation != nil && c.EffectiveMessage.Animation.FileName != "" {
+		fileName = uniqueID + "_" + c.EffectiveMessage.Animation.FileName
+	} else if c.EffectiveMessage.Audio != nil && c.EffectiveMessage.Audio.FileName != "" {
+		fileName = uniqueID + "_" + c.EffectiveMessage.Audio.FileName
+	} else if c.EffectiveMessage.Document != nil && c.EffectiveMessage.Document.FileName != "" {
+		fileName = uniqueID + "_" + c.EffectiveMessage.Document.FileName
+	} else if c.EffectiveMessage.Video != nil && c.EffectiveMessage.Video.FileName != "" {
+		fileName = uniqueID + "_" + c.EffectiveMessage.Video.FileName
 	} else {
 		fileName = path.Base(file.FilePath)
 	}
 
 	// Fix file endings
-	if c.Message().Sticker != nil &&
-		!c.Message().Sticker.Animated {
+	if c.EffectiveMessage.Sticker != nil &&
+		!c.EffectiveMessage.Sticker.IsAnimated {
 		if !strings.HasSuffix(fileName, ".webp") && !strings.HasSuffix(fileName, ".webm") {
 			fileName += ".webp"
 		}
 	}
-	if c.Message().Voice != nil &&
+	if c.EffectiveMessage.Voice != nil &&
 		!strings.HasSuffix(fileName, ".oga") {
 		fileName += ".oga"
 	}
-	if c.Message().VideoNote != nil &&
+	if c.EffectiveMessage.VideoNote != nil &&
 		!strings.HasSuffix(fileName, ".mp4") {
 		fileName += ".mp4"
 	}

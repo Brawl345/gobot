@@ -2,17 +2,17 @@ package model
 
 import (
 	"database/sql"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/jmoiron/sqlx"
-	"gopkg.in/telebot.v3"
 )
 
 type (
 	UserService interface {
-		Allow(user *telebot.User) error
-		Create(user *telebot.User) error
-		CreateTx(tx *sqlx.Tx, user *telebot.User) error
-		Deny(user *telebot.User) error
+		Allow(user *gotgbot.User) error
+		Create(user *gotgbot.User) error
+		CreateTx(tx *sqlx.Tx, user *gotgbot.User) error
+		Deny(user *gotgbot.User) error
 		GetAllAllowed() ([]int64, error)
 	}
 

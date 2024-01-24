@@ -13,9 +13,10 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 	"golang.org/x/sync/errgroup"
-	"gopkg.in/telebot.v3"
 )
 
 const (
@@ -36,20 +37,20 @@ func (*Plugin) Name() string {
 	return "covid"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "covid",
+			Command:     "covid",
 			Description: "[Ort] - COVID-19-Statistik",
 		},
 		{
-			Text:        "covid_germany",
+			Command:     "covid_germany",
 			Description: "COVID-19-Statistik für Deutschland",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/covid(?:@%s)?$`, botInfo.Username)),
@@ -65,8 +66,8 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func OnCountry(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func OnCountry(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	var httpError *httpUtils.HttpError
 	var result countryResult
@@ -83,10 +84,13 @@ func OnCountry(c plugin.GobotContext) error {
 		guid := xid.New().String()
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == 404 {
-				return c.Reply("❌ Das gesuchte Land existiert nicht oder hat keine COVID-Fälle gemeldet.\n"+
-					"Bitte darauf achten das Land in <b>Englisch</b> anzugeben!",
-					utils.DefaultSendOptions,
+				_, err := c.EffectiveMessage.Reply(
+					b,
+					fmt.Sprintf("❌ Das gesuchte Land existiert nicht oder hat keine COVID-Fälle gemeldet.\n"+
+						"Bitte darauf achten das Land in <b>Englisch</b> anzugeben!%s", utils.EmbedGUID(guid)),
+					utils.DefaultSendOptions(),
 				)
+				return err
 			} else {
 				log.Error().
 					Str("guid", guid).
@@ -99,19 +103,18 @@ func OnCountry(c plugin.GobotContext) error {
 				Send()
 		}
 
-		return c.Reply(fmt.Sprintf("❌ Bei der Anfrage ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Bei der Anfrage ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	if result.Message != "" {
 		log.Error().Str("message", result.Message).Msg("Error message found in data")
-		return c.Reply(fmt.Sprintf("❌ %s", result.Message), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ %s", result.Message), utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
-	if result.CountryInfo.Flag != "" {
-		sb.WriteString(utils.EmbedImage(result.CountryInfo.Flag))
-	}
 
 	sb.WriteString(
 		fmt.Sprintf(
@@ -160,7 +163,7 @@ func OnCountry(c plugin.GobotContext) error {
 		),
 	)
 
-	_ = c.Notify(telebot.Typing)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	var vaccine vaccineResult
 	err = httpUtils.GetRequest(
 		fmt.Sprintf(
@@ -195,15 +198,21 @@ func OnCountry(c plugin.GobotContext) error {
 		),
 	)
 
-	return c.Reply(sb.String(), &telebot.SendOptions{
-		AllowWithoutReply: true,
-		ParseMode:         telebot.ModeHTML,
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+			IsDisabled:       result.CountryInfo.Flag == "",
+			Url:              result.CountryInfo.Flag,
+			PreferLargeMedia: true,
+		},
+		ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+		ParseMode:       gotgbot.ParseModeHTML,
 	})
+	return err
 
 }
 
-func OnRun(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func OnRun(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
@@ -235,7 +244,8 @@ func OnRun(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("on", "all").
 			Msg("Failed to get 'all' data")
-		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Daten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
@@ -289,10 +299,11 @@ func OnRun(c plugin.GobotContext) error {
 			Msg("Failed to get 'all countries' data")
 		sb.WriteString(fmt.Sprintf("❌ Fehler beim Abrufen aller Länder.%s", utils.EmbedGUID(guid)))
 
-		return c.Reply(sb.String(), &telebot.SendOptions{
-			AllowWithoutReply: true,
-			ParseMode:         telebot.ModeHTML,
+		_, err := c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+			ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+			ParseMode:       gotgbot.ParseModeHTML,
 		})
+		return err
 	}
 
 	myCountryIndex := 0
@@ -330,8 +341,9 @@ func OnRun(c plugin.GobotContext) error {
 		),
 	)
 
-	return c.Reply(sb.String(), &telebot.SendOptions{
-		AllowWithoutReply: true,
-		ParseMode:         telebot.ModeHTML,
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+		ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+		ParseMode:       gotgbot.ParseModeHTML,
 	})
+	return err
 }

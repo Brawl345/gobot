@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"regexp"
 
+	"github.com/PaulSonOfLars/gotgbot/v2"
+
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("manager")
@@ -31,11 +32,11 @@ func (*Plugin) Name() string {
 	return "manager"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil // Because it's a superuser plugin
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/enable(?:@%s)? (.+)$`, botInfo.Username)),
@@ -60,17 +61,19 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) OnEnable(c plugin.GobotContext) error {
+func (p *Plugin) OnEnable(b *gotgbot.Bot, c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
 	if p.managerService.IsPluginEnabled(pluginName) {
-		return c.Reply("💡 Plugin ist bereits aktiv", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "💡 Plugin ist bereits aktiv", utils.DefaultSendOptions())
+		return err
 	}
 
 	err := p.managerService.EnablePlugin(pluginName)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
-			return c.Reply("❌ Plugin existiert nicht", utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b, "❌ Plugin existiert nicht", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
@@ -78,44 +81,52 @@ func (p *Plugin) OnEnable(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("plugin", pluginName).
 			Msg("Failed to enable plugin")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
-	return c.Reply("✅ Plugin wurde aktiviert", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅ Plugin wurde aktiviert", utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) OnEnableInChat(c plugin.GobotContext) error {
+func (p *Plugin) OnEnableInChat(b *gotgbot.Bot, c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
-	if !p.managerService.IsPluginDisabledForChat(c.Chat(), pluginName) {
-		return c.Reply("💡 Plugin ist für diesen Chat schon aktiv", utils.DefaultSendOptions)
+	if !p.managerService.IsPluginDisabledForChat(c.EffectiveChat, pluginName) {
+		_, err := c.EffectiveMessage.Reply(b, "💡 Plugin ist für diesen Chat schon aktiv", utils.DefaultSendOptions())
+		return err
 	}
 
-	err := p.managerService.EnablePluginForChat(c.Chat(), pluginName)
+	err := p.managerService.EnablePluginForChat(c.EffectiveChat, pluginName)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
-			return c.Reply("❌ Plugin existiert nicht", utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b, "❌ Plugin existiert nicht", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
 			Str("plugin", pluginName).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to enable plugin in chat")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
-	return c.Reply("✅ Plugin wurde für diesen Chat wieder aktiviert", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅ Plugin wurde für diesen Chat wieder aktiviert", utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) OnDisable(c plugin.GobotContext) error {
+func (p *Plugin) OnDisable(b *gotgbot.Bot, c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
 	if pluginName == p.Name() {
-		return c.Reply("❌ Manager kann nicht deaktiviert werden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Manager kann nicht deaktiviert werden.", utils.DefaultSendOptions())
+		return err
 	}
 
 	if !p.managerService.IsPluginEnabled(pluginName) {
-		return c.Reply("💡 Plugin ist nicht aktiv", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "💡 Plugin ist nicht aktiv", utils.DefaultSendOptions())
+		return err
 	}
 
 	err := p.managerService.DisablePlugin(pluginName)
@@ -125,35 +136,42 @@ func (p *Plugin) OnDisable(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("plugin", pluginName).
 			Msg("Failed to disable plugin")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
-	return c.Reply("✅ Plugin wurde deaktiviert", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅ Plugin wurde deaktiviert", utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) OnDisableInChat(c plugin.GobotContext) error {
+func (p *Plugin) OnDisableInChat(b *gotgbot.Bot, c plugin.GobotContext) error {
 	pluginName := c.Matches[1]
 
 	if pluginName == p.Name() {
-		return c.Reply("❌ Manager kann nicht deaktiviert werden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Manager kann nicht deaktiviert werden.", utils.DefaultSendOptions())
+		return err
 	}
 
-	if p.managerService.IsPluginDisabledForChat(c.Chat(), pluginName) {
-		return c.Reply("💡 Plugin ist für diesen Chat schon deaktiviert", utils.DefaultSendOptions)
+	if p.managerService.IsPluginDisabledForChat(c.EffectiveChat, pluginName) {
+		_, err := c.EffectiveMessage.Reply(b, "💡 Plugin ist für diesen Chat schon deaktiviert", utils.DefaultSendOptions())
+		return err
 	}
 
-	err := p.managerService.DisablePluginForChat(c.Chat(), pluginName)
+	err := p.managerService.DisablePluginForChat(c.EffectiveChat, pluginName)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
-			return c.Reply("❌ Plugin existiert nicht", utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b, "❌ Plugin existiert nicht", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
 			Str("plugin", pluginName).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to disable plugin in chat")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
-	return c.Reply("✅ Plugin wurde für diesen Chat deaktiviert", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅ Plugin wurde für diesen Chat deaktiviert", utils.DefaultSendOptions())
+	return err
 }

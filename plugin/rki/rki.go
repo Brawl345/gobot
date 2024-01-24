@@ -9,8 +9,9 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("rki")
@@ -23,9 +24,9 @@ type (
 	}
 
 	Service interface {
-		DelAGS(user *telebot.User) error
-		GetAGS(user *telebot.User) (string, error)
-		SetAGS(user *telebot.User, ags string) error
+		DelAGS(user *gotgbot.User) error
+		GetAGS(user *gotgbot.User) (string, error)
+		SetAGS(user *gotgbot.User, ags string) error
 	}
 )
 
@@ -39,20 +40,20 @@ func (p *Plugin) Name() string {
 	return "rki"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "rki",
+			Command:     "rki",
 			Description: "<Stadt> - COVID-19-Fälle in dieser deutschen Stadt",
 		},
 		{
-			Text:        "myrki",
+			Command:     "myrki",
 			Description: "COVID-19-Fälle in deinem Heimatort",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/rki(?:@%s)?$`, botInfo.Username)),
@@ -81,8 +82,8 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func onNational(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func onNational(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	var response Nationwide
 
 	url := fmt.Sprintf("%s/germany", BaseUrl)
@@ -98,8 +99,9 @@ func onNational(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", url).
 			Msg("error getting RKI data")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
@@ -179,11 +181,12 @@ func onNational(c plugin.GobotContext) error {
 		),
 	)
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	return err
 }
 
-func onDistrictSearch(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func onDistrictSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	var response DistrictResponse
 
 	url := fmt.Sprintf("%s/districts", BaseUrl)
@@ -199,8 +202,9 @@ func onDistrictSearch(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", url).
 			Msg("error getting RKI data")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	var foundDistricts []District
@@ -211,7 +215,8 @@ func onDistrictSearch(c plugin.GobotContext) error {
 	}
 
 	if len(foundDistricts) == 0 {
-		return c.Reply("❌ Keine Stadt gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Stadt gefunden.", utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
@@ -230,7 +235,8 @@ func onDistrictSearch(c plugin.GobotContext) error {
 		)
 	}
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	return err
 }
 
 func districtText(ags string) string {
@@ -327,18 +333,20 @@ func districtText(ags string) string {
 	return sb.String()
 }
 
-func onDistrict(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
-	return c.Reply(districtText(c.Matches[1]), utils.DefaultSendOptions)
+func onDistrict(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+	_, err := c.EffectiveMessage.Reply(b, districtText(c.Matches[1]), utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) setRkiAGS(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func (p *Plugin) setRkiAGS(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	ags := c.Matches[1]
 
 	if len(ags) > 8 {
-		return c.Reply("❌ Gemeindeschlüssel muss kleiner als 8 Zeichen lang sein.\nSuche mit <code>/rki STADT</code>.",
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Gemeindeschlüssel muss kleiner als 8 Zeichen lang sein.\nSuche mit <code>/rki STADT</code>.",
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	var response DistrictResponse
@@ -355,65 +363,74 @@ func (p *Plugin) setRkiAGS(c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", url).
 			Msg("error getting RKI data")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	if len(response.Districts) == 0 {
-		return c.Reply("❌ Stadt nicht gefunden.", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Stadt nicht gefunden.", utils.DefaultSendOptions())
+		return err
 	}
 
-	err = p.rkiService.SetAGS(c.Sender(), ags)
+	err = p.rkiService.SetAGS(c.EffectiveUser, ags)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
 			Str("guid", guid).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("ags", ags).
 			Msg("error while saving AGS")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(xid.New().String())),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
-	return c.Reply("✅ Du kannst jetzt /myrki nutzen.", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅ Du kannst jetzt /myrki nutzen.", utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) onMyRKI(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
-	ags, err := p.rkiService.GetAGS(c.Sender())
+func (p *Plugin) onMyRKI(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+	ags, err := p.rkiService.GetAGS(c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
 			Str("guid", guid).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Msg("error while getting AGS")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	if ags == "" {
-		return c.Reply("❌ Du hast keinen Gemeindeschlüssel gespeichert."+
+		_, err := c.EffectiveMessage.Reply(b, "❌ Du hast keinen Gemeindeschlüssel gespeichert."+
 			"\nSuche mit <code>/rki STADT</code> und setze ihn mit <code>/setrki_AGS</code>.",
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
+		return err
 	}
 
-	return c.Reply(districtText(ags), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, districtText(ags), utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) delRKI(c plugin.GobotContext) error {
-	err := p.rkiService.DelAGS(c.Sender())
+func (p *Plugin) delRKI(b *gotgbot.Bot, c plugin.GobotContext) error {
+	err := p.rkiService.DelAGS(c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
 			Str("guid", guid).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Msg("error while deleting AGS")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
-	return c.Reply("✅", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅", utils.DefaultSendOptions())
+	return err
 }

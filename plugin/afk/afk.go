@@ -10,8 +10,9 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("afk")
@@ -22,11 +23,11 @@ type (
 	}
 
 	Service interface {
-		BackAgain(chat *telebot.Chat, user *telebot.User) error
-		IsAFK(chat *telebot.Chat, user *telebot.User) (bool, model.AFKData, error)
-		IsAFKByUsername(chat *telebot.Chat, username string) (bool, model.AFKData, error)
-		SetAFK(chat *telebot.Chat, user *telebot.User, now time.Time) error
-		SetAFKWithReason(chat *telebot.Chat, user *telebot.User, reason string) error
+		BackAgain(chat *gotgbot.Chat, user *gotgbot.Sender) error
+		IsAFK(chat *gotgbot.Chat, user *gotgbot.Sender) (bool, model.AFKData, error)
+		IsAFKByUsername(chat *gotgbot.Chat, username string) (bool, model.AFKData, error)
+		SetAFK(chat *gotgbot.Chat, user *gotgbot.Sender, now time.Time) error
+		SetAFKWithReason(chat *gotgbot.Chat, user *gotgbot.Sender, reason string) error
 	}
 )
 
@@ -40,16 +41,16 @@ func (p *Plugin) Name() string {
 	return "afk"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "afk",
+			Command:     "afk",
 			Description: "[Text] - Auf AFK schalten",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/afk(?:@%s)?$`, botInfo.Username)),
@@ -62,19 +63,19 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     utils.OnMsg,
+			Trigger:     tgUtils.AnyMsg,
 			HandlerFunc: p.checkAFK,
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     telebot.EntityMention,
+			Trigger:     tgUtils.EntityTypeMention,
 			HandlerFunc: p.notifyIfAFK,
 			GroupOnly:   true,
 		},
 	}
 }
 
-func (p *Plugin) goAFK(c plugin.GobotContext) error {
+func (p *Plugin) goAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var reason string
 	if len(c.Matches) > 1 {
 		reason = c.Matches[1]
@@ -82,20 +83,21 @@ func (p *Plugin) goAFK(c plugin.GobotContext) error {
 	var err error
 
 	if reason != "" {
-		err = p.afkService.SetAFKWithReason(c.Chat(), c.Sender(), reason)
+		err = p.afkService.SetAFKWithReason(c.EffectiveChat, c.EffectiveSender, reason)
 	} else {
-		err = p.afkService.SetAFK(c.Chat(), c.Sender(), time.Now())
+		err = p.afkService.SetAFK(c.EffectiveChat, c.EffectiveSender, time.Now())
 	}
 
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveSender.Id()).
 			Str("reason", reason).
 			Msg("Failure to go AFK")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
@@ -103,7 +105,7 @@ func (p *Plugin) goAFK(c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"💤 <b>%s ist jetzt AFK</b>",
-			utils.Escape(c.Sender().FirstName),
+			utils.Escape(c.EffectiveSender.FirstName()),
 		),
 	)
 
@@ -118,19 +120,20 @@ func (p *Plugin) goAFK(c plugin.GobotContext) error {
 
 	sb.WriteString(".")
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) checkAFK(c plugin.GobotContext) error {
-	if strings.HasPrefix(c.Text(), "/afk") {
+func (p *Plugin) checkAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
+	if strings.HasPrefix(tgUtils.AnyText(c.EffectiveMessage), "/afk") {
 		return nil
 	}
 
-	isAFK, data, err := p.afkService.IsAFK(c.Chat(), c.Sender())
+	isAFK, data, err := p.afkService.IsAFK(c.EffectiveChat, c.EffectiveSender)
 	if err != nil {
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveSender.Id()).
 			Msg("Failure to check AFK")
 		return nil
 	}
@@ -139,22 +142,23 @@ func (p *Plugin) checkAFK(c plugin.GobotContext) error {
 		return nil
 	}
 
-	err = p.afkService.BackAgain(c.Chat(), c.Sender())
+	err = p.afkService.BackAgain(c.EffectiveChat, c.EffectiveSender)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveSender.Id()).
 			Msg("Failure to set back again")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
 	sb.WriteString(
 		fmt.Sprintf(
 			"🔔 <b>%s ist wieder da!</b> <i>(🕒 %s",
-			utils.Escape(c.Sender().FirstName),
+			utils.Escape(c.EffectiveSender.FirstName()),
 			data.Duration().Round(time.Second),
 		),
 	)
@@ -169,31 +173,32 @@ func (p *Plugin) checkAFK(c plugin.GobotContext) error {
 	}
 	sb.WriteString(")</i>")
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	return err
 }
 
-func (p *Plugin) notifyIfAFK(c plugin.GobotContext) error {
+func (p *Plugin) notifyIfAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var mentionedUsername string
-	for _, entity := range utils.AnyEntities(c.Message()) {
-		if entity.Type == telebot.EntityMention {
+	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage) {
+		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeMention {
 			if mentionedUsername != "" {
 				return nil // Supports only one username
 			}
-			username := strings.TrimPrefix(c.Message().EntityText(entity), "@")
+			username := strings.TrimPrefix(c.EffectiveMessage.ParseEntity(entity).Text, "@")
 			mentionedUsername = strings.ToLower(username)
 		}
 	}
 
 	if mentionedUsername == "" ||
-		mentionedUsername == strings.ToLower(c.Bot().Me.Username) ||
-		mentionedUsername == strings.ToLower(c.Sender().Username) {
+		mentionedUsername == strings.ToLower(b.Username) ||
+		mentionedUsername == strings.ToLower(c.EffectiveSender.Username()) {
 		return nil
 	}
 
-	isAFK, data, err := p.afkService.IsAFKByUsername(c.Chat(), mentionedUsername)
+	isAFK, data, err := p.afkService.IsAFKByUsername(c.EffectiveChat, mentionedUsername)
 	if err != nil {
 		log.Err(err).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Str("username", mentionedUsername).
 			Msg("Failure to check AFK")
 		return nil
@@ -206,7 +211,7 @@ func (p *Plugin) notifyIfAFK(c plugin.GobotContext) error {
 	var sb strings.Builder
 	sb.WriteString(
 		fmt.Sprintf(
-			"💤 <b>%s ist zurzeit AFK!</b> <i>(🕒 seit %s",
+			"⚠️ <b>%s ist zurzeit AFK!</b> <i>(🕒 seit %s",
 			utils.Escape(data.FirstName),
 			data.Duration().Round(time.Second),
 		),
@@ -223,5 +228,6 @@ func (p *Plugin) notifyIfAFK(c plugin.GobotContext) error {
 
 	sb.WriteString(")</i>")
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	return err
 }

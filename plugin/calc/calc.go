@@ -4,16 +4,19 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 const (
@@ -43,16 +46,16 @@ func (p *Plugin) Name() string {
 	return "calc"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "calc",
+			Command:     "calc",
 			Description: "<Ausdruck> - Taschenrechner",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/calc(?:@%s)? (.+)$`, botInfo.Username)),
@@ -104,32 +107,40 @@ func calculate(expr string) (string, error) {
 	return result, nil
 }
 
-func onCalc(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.Typing)
+func onCalc(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	result, err := calculate(c.Matches[1])
 	if err != nil {
 		var apiError *ApiError
 		if errors.As(err, &apiError) {
-			return c.Reply(fmt.Sprintf("❌ <b>Fehler:</b> <i>%s</i>", utils.Escape(apiError.Error())),
-				utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b,
+				fmt.Sprintf("❌ <b>Fehler:</b> <i>%s</i>", utils.Escape(apiError.Error())),
+				utils.DefaultSendOptions(),
+			)
 		}
 
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
 			Msg("failed to calculate")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
-	return c.Reply(fmt.Sprintf("= %s", result), &telebot.SendOptions{
-		AllowWithoutReply:     true,
-		DisableWebPagePreview: true,
-		DisableNotification:   true,
+	_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("= %s", result), &gotgbot.SendMessageOpts{
+		ReplyParameters: &gotgbot.ReplyParameters{
+			AllowSendingWithoutReply: true,
+		},
+		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+			IsDisabled: true,
+		},
+		DisableNotification: true,
 	})
+	return err
 }
 
-func onCalcInline(c plugin.GobotContext) error {
+func onCalcInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 	result, err := calculate(c.Matches[1])
 
 	if err != nil {
@@ -139,19 +150,30 @@ func onCalcInline(c plugin.GobotContext) error {
 		} else {
 			log.Err(err).Msg("failed to calculate")
 		}
-		return c.Answer(&telebot.QueryResponse{
-			Results:    telebot.Results{},
-			CacheTime:  utils.InlineQueryFailureCacheTime,
-			IsPersonal: true,
-		})
+		_, err := c.InlineQuery.Answer(
+			b,
+			nil,
+			&gotgbot.AnswerInlineQueryOpts{
+				CacheTime:  utils.InlineQueryFailureCacheTime,
+				IsPersonal: true,
+			},
+		)
+		return err
 	}
 
-	return c.Answer(&telebot.QueryResponse{
-		Results: telebot.Results{&telebot.ArticleResult{
-			Title:       c.Matches[1],
-			Description: fmt.Sprintf("= %s", result),
-			Text:        fmt.Sprintf("%s = %s", c.Matches[1], result),
-		}},
-		CacheTime: InlineQueryCacheTime,
-	})
+	_, err = c.InlineQuery.Answer(
+		b,
+		[]gotgbot.InlineQueryResult{
+			gotgbot.InlineQueryResultArticle{
+				Id:          strconv.Itoa(rand.Int()),
+				Title:       c.Matches[1],
+				Description: fmt.Sprintf("= %s", result),
+				InputMessageContent: gotgbot.InputTextMessageContent{
+					MessageText: fmt.Sprintf("%s = %s", c.Matches[1], result),
+				},
+			},
+		},
+		&gotgbot.AnswerInlineQueryOpts{CacheTime: InlineQueryCacheTime},
+	)
+	return err
 }

@@ -1,12 +1,12 @@
 package model
 
-import "gopkg.in/telebot.v3"
+import "github.com/PaulSonOfLars/gotgbot/v2"
 
 type AllowService interface {
-	AllowChat(chat *telebot.Chat) error
-	AllowUser(user *telebot.User) error
-	DenyChat(chat *telebot.Chat) error
-	DenyUser(user *telebot.User) error
-	IsChatAllowed(chat *telebot.Chat) bool
-	IsUserAllowed(user *telebot.User) bool
+	AllowChat(chat *gotgbot.Chat) error
+	AllowUser(user *gotgbot.User) error
+	DenyChat(chat *gotgbot.Chat) error
+	DenyUser(user *gotgbot.User) error
+	IsChatAllowed(chat *gotgbot.Chat) bool
+	IsUserAllowed(user *gotgbot.User) bool
 }

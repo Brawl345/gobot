@@ -9,8 +9,9 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("home")
@@ -29,14 +30,14 @@ func New(geocodingService model.GeocodingService, homeService model.HomeService)
 	}
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "home",
+			Command:     "home",
 			Description: "<Ort> - Heimatort setzen",
 		},
 		{
-			Text:        "home_delete",
+			Command:     "home_delete",
 			Description: "Heimatort löschen",
 		},
 	}
@@ -46,7 +47,7 @@ func (p *Plugin) Name() string {
 	return "home"
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/home(?:@%s)?$`, botInfo.Username)),
@@ -63,72 +64,94 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onGetHome(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.FindingLocation)
-	venue, err := p.homeService.GetHome(c.Sender())
+func (p *Plugin) onGetHome(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionFindLocation, nil)
+	venue, err := p.homeService.GetHome(c.EffectiveUser)
 	if err != nil {
 		if errors.Is(err, model.ErrHomeAddressNotSet) {
-			return c.Reply("🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
-				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b, "🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
+				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error getting home")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
-	return c.Reply(&venue, utils.DefaultSendOptions)
+	_, err = b.SendVenue(c.EffectiveChat.Id, venue.Location.Latitude, venue.Location.Longitude, venue.Title, venue.Address, &gotgbot.SendVenueOpts{
+		ReplyParameters: &gotgbot.ReplyParameters{
+			AllowSendingWithoutReply: true,
+			MessageId:                c.EffectiveMessage.MessageId,
+		},
+		DisableNotification: true,
+	})
+	return err
 }
 
-func (p *Plugin) onHomeSet(c plugin.GobotContext) error {
-	_ = c.Notify(telebot.FindingLocation)
+func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionFindLocation, nil)
 
 	venue, err := p.geocodingService.Geocode(c.Matches[1])
 
 	if err != nil {
 		if errors.Is(err, model.ErrAddressNotFound) {
-			return c.Reply("❌ Es wurde kein Ort gefunden.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "❌ Es wurde kein Ort gefunden.", utils.DefaultSendOptions())
+			return err
 		}
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
 			Str("guid", guid).
 			Msg("error getting location")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
-	err = p.homeService.SetHome(c.Sender(), &venue)
+	err = p.homeService.SetHome(c.EffectiveUser, &venue)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error setting home")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 	venue.Title = "✅ Wohnort festgelegt"
-	return c.Reply(&venue, utils.DefaultSendOptions)
+
+	_, err = b.SendVenue(c.EffectiveChat.Id, venue.Location.Latitude, venue.Location.Longitude, venue.Title, venue.Address, &gotgbot.SendVenueOpts{
+		ReplyParameters: &gotgbot.ReplyParameters{
+			AllowSendingWithoutReply: true,
+			MessageId:                c.EffectiveMessage.MessageId,
+		},
+		DisableNotification: true,
+	})
+	return err
 }
 
-func (p *Plugin) onDeleteHome(c plugin.GobotContext) error {
-	err := p.homeService.DeleteHome(c.Sender())
+func (p *Plugin) onDeleteHome(b *gotgbot.Bot, c plugin.GobotContext) error {
+	err := p.homeService.DeleteHome(c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
-			Int64("user_id", c.Sender().ID).
+			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error deleting home")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
-	return c.Reply("✅ Wohnort gelöscht", utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, "✅ Wohnort gelöscht", utils.DefaultSendOptions())
+	return err
 }

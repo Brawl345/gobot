@@ -3,14 +3,15 @@ package speech_to_text
 import (
 	"encoding/json"
 	"fmt"
+	"io"
+	"strings"
+
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
-	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
-	"gopkg.in/telebot.v3"
-	"io"
-	"strings"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 var log = logger.New("speech_to_text")
@@ -42,45 +43,45 @@ func (p *Plugin) Name() string {
 	return "speech_to_text"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil
 }
 
-func (p *Plugin) Handlers(*telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     telebot.OnVoice,
+			Trigger:     tgUtils.VoiceMsg,
 			HandlerFunc: p.OnVoice,
 		},
 	}
 }
 
-func (p *Plugin) OnVoice(c plugin.GobotContext) error {
-	if c.Message().Voice.FileSize > utils.MaxFilesizeDownload {
+func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
+	if c.EffectiveMessage.Voice.FileSize > tgUtils.MaxFilesizeDownload {
 		log.Warn().
-			Int64("filesize", c.Message().Voice.FileSize).
+			Int64("filesize", c.EffectiveMessage.Voice.FileSize).
 			Msg("Voice file is too big to download")
 		return nil
 	}
 
-	if c.Message().Voice.FileSize > MaxVoiceSize {
+	if c.EffectiveMessage.Voice.FileSize > MaxVoiceSize {
 		log.Warn().
-			Int64("filesize", c.Message().Voice.FileSize).
+			Int64("filesize", c.EffectiveMessage.Voice.FileSize).
 			Msg(fmt.Sprintf("Voice file is bigger than %d bytes", MaxVoiceSize))
 		return nil
 	}
 
-	if c.Message().Voice.Duration > MaxDuration {
+	if c.EffectiveMessage.Voice.Duration > MaxDuration {
 		log.Warn().
-			Int("duration", c.Message().Voice.Duration).
+			Int64("duration", c.EffectiveMessage.Voice.Duration).
 			Msg(fmt.Sprintf("Voice message is longer than %d seconds", MaxDuration))
 		return nil
 	}
 
-	file, err := c.Bot().File(&telebot.File{FileID: c.Message().Voice.FileID})
+	file, err := httpUtils.DownloadFile(b, c.EffectiveMessage.Voice.FileId)
 	if err != nil {
 		log.Err(err).
-			Interface("file", c.Message().Voice).
+			Interface("file", c.EffectiveMessage.Voice).
 			Msg("Failed to download file")
 		return nil
 	}
@@ -163,15 +164,16 @@ func (p *Plugin) OnVoice(c plugin.GobotContext) error {
 	var sb strings.Builder
 
 	sb.WriteString("💬 ")
-	if len(apiResponse.Text) > utils.MaxMessageLength {
-		sb.WriteString(apiResponse.Text[:utils.MaxMessageLength-10])
+	if len(apiResponse.Text) > tgUtils.MaxMessageLength {
+		sb.WriteString(apiResponse.Text[:tgUtils.MaxMessageLength-10])
 	} else {
 		sb.WriteString(apiResponse.Text)
 	}
 
-	return c.Reply(sb.String(), &telebot.SendOptions{
-		AllowWithoutReply:     true,
-		DisableWebPagePreview: true,
-		DisableNotification:   true,
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+		LinkPreviewOptions:  &gotgbot.LinkPreviewOptions{IsDisabled: true},
+		DisableNotification: true,
 	})
+	return err
 }

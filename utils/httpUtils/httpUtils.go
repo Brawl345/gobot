@@ -3,6 +3,7 @@ package httpUtils
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"mime/multipart"
 	"net"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 var (
@@ -257,4 +259,33 @@ func MultiPartFormRequestWithHeaders(url string, headers map[string]string, para
 	}
 
 	return HttpClient.Do(req)
+}
+
+func DownloadFile(b *gotgbot.Bot, fileID string) (io.ReadCloser, error) {
+	file, err := b.GetFile(fileID, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get file from Telegram: %w", err)
+	}
+
+	return DownloadFileFromGetFile(b, file)
+}
+
+func DownloadFileFromGetFile(b *gotgbot.Bot, file *gotgbot.File) (io.ReadCloser, error) {
+	fileUrl := file.URL(b, nil)
+	log.Debug().
+		Str("url", fileUrl).
+		Send()
+	resp, err := HttpClient.Get(fileUrl)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download file: %w", err)
+	}
+
+	if resp.StatusCode != 200 {
+		return nil, &HttpError{
+			StatusCode: resp.StatusCode,
+			Status:     resp.Status,
+		}
+	}
+
+	return resp.Body, nil
 }

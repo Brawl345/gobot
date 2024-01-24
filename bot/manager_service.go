@@ -3,8 +3,8 @@ package bot
 import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"golang.org/x/exp/slices"
-	"gopkg.in/telebot.v3"
 )
 
 type managerService struct {
@@ -64,15 +64,15 @@ func (service *managerService) EnablePlugin(name string) error {
 	return model.ErrNotFound
 }
 
-func (service *managerService) IsPluginDisabledForChat(chat *telebot.Chat, name string) bool {
-	disabledPlugins, exists := service.disabledPluginsForChat[chat.ID]
+func (service *managerService) IsPluginDisabledForChat(chat *gotgbot.Chat, name string) bool {
+	disabledPlugins, exists := service.disabledPluginsForChat[chat.Id]
 	if !exists {
 		return false
 	}
 	return slices.Contains(disabledPlugins, name)
 }
 
-func (service *managerService) EnablePluginForChat(chat *telebot.Chat, name string) error {
+func (service *managerService) EnablePluginForChat(chat *gotgbot.Chat, name string) error {
 	if !service.IsPluginDisabledForChat(chat, name) {
 		return model.ErrAlreadyExists
 	}
@@ -84,8 +84,8 @@ func (service *managerService) EnablePluginForChat(chat *telebot.Chat, name stri
 				return err
 			}
 
-			index := slices.Index(service.disabledPluginsForChat[chat.ID], name)
-			service.disabledPluginsForChat[chat.ID] = slices.Delete(service.disabledPluginsForChat[chat.ID],
+			index := slices.Index(service.disabledPluginsForChat[chat.Id], name)
+			service.disabledPluginsForChat[chat.Id] = slices.Delete(service.disabledPluginsForChat[chat.Id],
 				index, index+1)
 
 			return nil
@@ -108,7 +108,7 @@ func (service *managerService) DisablePlugin(name string) error {
 	return nil
 }
 
-func (service *managerService) DisablePluginForChat(chat *telebot.Chat, name string) error {
+func (service *managerService) DisablePluginForChat(chat *gotgbot.Chat, name string) error {
 	if service.IsPluginDisabledForChat(chat, name) {
 		return model.ErrAlreadyExists
 	}
@@ -120,7 +120,7 @@ func (service *managerService) DisablePluginForChat(chat *telebot.Chat, name str
 				return err
 			}
 
-			service.disabledPluginsForChat[chat.ID] = append(service.disabledPluginsForChat[chat.ID], name)
+			service.disabledPluginsForChat[chat.Id] = append(service.disabledPluginsForChat[chat.Id], name)
 
 			return nil
 		}

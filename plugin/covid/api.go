@@ -72,5 +72,5 @@ func (countryResult *countryResult) GetRankingText(place int) string {
 }
 
 func (result *Result) UpdatedParsed() time.Time {
-	return time.Unix(result.Updated/1000, 0)
+	return utils.TimestampToTime(result.Updated / 1000)
 }

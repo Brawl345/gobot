@@ -3,16 +3,18 @@ package summarize
 import (
 	"errors"
 	"fmt"
+	"regexp"
+	"strings"
+	"time"
+
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
-	"regexp"
-	"strings"
-	"time"
 
 	"github.com/go-shiori/go-readability"
 )
@@ -67,16 +69,16 @@ func (p *Plugin) Name() string {
 	return "summarize"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "su",
+			Command:     "su",
 			Description: "<URL> - Artikel zusammenfassen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/su(?:mmarize)?(?:@%s)? .+$`, botInfo.Username)),
@@ -90,45 +92,47 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) onSummarize(c plugin.GobotContext) error {
-	return p.summarize(c, c.Message())
+func (p *Plugin) onSummarize(b *gotgbot.Bot, c plugin.GobotContext) error {
+	return p.summarize(b, c, c.EffectiveMessage)
 }
 
-func (p *Plugin) onReply(c plugin.GobotContext) error {
-	if !c.Message().IsReply() {
+func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
+	if !tgUtils.IsReply(c.EffectiveMessage) {
 		log.Debug().
-			Int64("chat_id", c.Chat().ID).
-			Int64("user_id", c.Sender().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Int64("user_id", c.EffectiveUser.Id).
 			Msg("Message is not a reply")
 		return nil
 	}
 
-	if strings.HasPrefix(c.Message().ReplyTo.Text, "/su") ||
-		strings.HasPrefix(c.Message().ReplyTo.Caption, "/su") {
-		return c.Reply("😠", utils.DefaultSendOptions)
+	if strings.HasPrefix(c.EffectiveMessage.ReplyToMessage.Text, "/su") ||
+		strings.HasPrefix(c.EffectiveMessage.ReplyToMessage.Caption, "/su") {
+		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions())
+		return err
 	}
 
-	if c.Message().ReplyTo.Sender.IsBot {
-		return c.Reply("😠", utils.DefaultSendOptions)
+	if c.EffectiveMessage.ReplyToMessage.From.IsBot {
+		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions())
+		return err
 	}
 
-	return p.summarize(c, c.Message().ReplyTo)
+	return p.summarize(b, c, c.EffectiveMessage.ReplyToMessage)
 }
 
-func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
-	_ = c.Notify(telebot.Typing)
+func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.Message) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	var urls []string
-	for _, entity := range utils.AnyEntities(msg) {
-		if entity.Type == telebot.EntityURL {
-			urls = append(urls, msg.EntityText(entity))
-		} else if entity.Type == telebot.EntityTextLink {
-			urls = append(urls, entity.URL)
+	for _, entity := range tgUtils.AnyEntities(msg) {
+		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeURL {
+			urls = append(urls, msg.ParseEntity(entity).Url)
+		} else if tgUtils.EntityType(entity.Type) == tgUtils.EntityTextLink {
+			urls = append(urls, entity.Url)
 		}
 	}
 
 	if len(urls) == 0 {
-		_, err := c.Bot().Reply(msg, "❌ Keine Links gefunden", utils.DefaultSendOptions)
+		_, err := msg.Reply(b, "❌ Keine Links gefunden", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -140,23 +144,23 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 			Str("url", url).
 			Msg("Failed to extract text content from URL")
 
-		_, err := c.Bot().Reply(msg,
+		_, err := msg.Reply(b,
 			fmt.Sprintf("❌ Text konnte nicht extrahiert werden: <code>%v</code>", utils.Escape(err.Error())),
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(article.TextContent) < MinArticleLength {
-		_, err := c.Bot().Reply(msg,
+		_, err := msg.Reply(b,
 			"❌ Artikel-Inhalt ist zu kurz.",
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(article.TextContent) > MaxArticleLength {
-		_, err := c.Bot().Reply(msg,
+		_, err := msg.Reply(b,
 			"❌ Artikel-Inhalt ist zu lang.",
-			utils.DefaultSendOptions)
+			utils.DefaultSendOptions())
 		return err
 	}
 
@@ -189,7 +193,8 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == 429 {
-				return c.Reply("❌ Rate-Limit erreicht.", utils.DefaultSendOptions)
+				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())
+				return err
 			}
 		}
 
@@ -198,8 +203,9 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 			Str("guid", guid).
 			Str("url", url).
 			Msg("Failed to send POST request")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	if response.Error.Type != "" {
@@ -210,21 +216,23 @@ func (p *Plugin) summarize(c plugin.GobotContext, msg *telebot.Message) error {
 			Str("message", response.Error.Message).
 			Str("type", response.Error.Type).
 			Msg("Got error from OpenAI API")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	if len(response.Choices) == 0 || (len(response.Choices) > 0 && response.Choices[0].Message.Content == "") {
 		log.Error().
 			Str("url", url).
 			Msg("Got no answer from ChatGPT")
-		return c.Reply("❌ Keine Antwort von ChatGPT erhalten", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von ChatGPT erhalten", utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
 	sb.WriteString("<b>Zusammenfassung:</b>\n")
 	sb.WriteString(utils.Escape(response.Choices[0].Message.Content))
 
-	_, err = c.Bot().Reply(msg, sb.String(), utils.DefaultSendOptions)
+	_, err = msg.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

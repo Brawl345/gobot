@@ -9,8 +9,8 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("stats")
@@ -29,16 +29,16 @@ func (*Plugin) Name() string {
 	return "stats"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
-	return []telebot.Command{
+func (p *Plugin) Commands() []gotgbot.BotCommand {
+	return []gotgbot.BotCommand{
 		{
-			Text:        "stats",
+			Command:     "stats",
 			Description: "Chat-Statistiken anzeigen",
 		},
 	}
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/stats(?:@%s)?$`, botInfo.Username)),
@@ -48,20 +48,22 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) OnStats(c plugin.GobotContext) error {
-	users, err := p.chatsUsersService.GetAllUsersWithMsgCount(c.Chat())
+func (p *Plugin) OnStats(b *gotgbot.Bot, c plugin.GobotContext) error {
+	users, err := p.chatsUsersService.GetAllUsersWithMsgCount(c.EffectiveChat)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Int64("chat_id", c.Chat().ID).
+			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to get statistics")
-		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Statistiken.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Statistiken.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
 	}
 
 	if len(users) == 0 {
-		return c.Reply("<i>Es wurden noch keine Statistiken erstellt.</i>", utils.DefaultSendOptions)
+		_, err := c.EffectiveMessage.Reply(b, "<i>Es wurden noch keine Statistiken erstellt.</i>", utils.DefaultSendOptions())
+		return err
 	}
 
 	var sb strings.Builder
@@ -102,5 +104,6 @@ func (p *Plugin) OnStats(c plugin.GobotContext) error {
 	}
 	sb.WriteString(fmt.Sprintf("<b>GESAMT:</b> %s", utils.FormatThousand(totalCount)))
 
-	return c.Reply(sb.String(), utils.DefaultSendOptions)
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	return err
 }

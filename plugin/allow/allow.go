@@ -8,8 +8,9 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("allow")
@@ -30,11 +31,11 @@ func (*Plugin) Name() string {
 	return "allow"
 }
 
-func (p *Plugin) Commands() []telebot.Command {
+func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return nil // Because it's a superuser command
 }
 
-func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
+func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/allow(?:@%s)?$`, botInfo.Username)),
@@ -51,100 +52,116 @@ func (p *Plugin) Handlers(botInfo *telebot.User) []plugin.Handler {
 	}
 }
 
-func (p *Plugin) OnAllow(c plugin.GobotContext) error {
-	if c.Message().IsReply() { // Allow user
-		if c.Message().ReplyTo.Sender.IsBot {
-			return c.Reply("🤖🤖🤖", utils.DefaultSendOptions)
+func (p *Plugin) OnAllow(b *gotgbot.Bot, c plugin.GobotContext) error {
+	if tgUtils.IsReply(c.EffectiveMessage) { // Allow user
+		if c.EffectiveMessage.ReplyToMessage.From.IsBot {
+			_, err := c.EffectiveMessage.Reply(b, "🤖🤖🤖", utils.DefaultSendOptions())
+			return err
 		}
 
-		isAllowed := p.allowService.IsUserAllowed(c.Message().ReplyTo.Sender)
+		isAllowed := p.allowService.IsUserAllowed(c.EffectiveMessage.ReplyToMessage.From)
 		if isAllowed {
-			return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot bereits überall benutzen.",
-				utils.Escape(c.Message().ReplyTo.Sender.FirstName)),
-				utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b,
+				fmt.Sprintf(
+					"✅ <b>%s</b> darf den Bot bereits überall benutzen.",
+					utils.Escape(c.EffectiveMessage.ReplyToMessage.From.FirstName),
+				),
+				utils.DefaultSendOptions(),
+			)
+			return err
 		}
 
-		err := p.allowService.AllowUser(c.Message().ReplyTo.Sender)
+		err := p.allowService.AllowUser(c.EffectiveMessage.ReplyToMessage.From)
 		if err != nil {
 			guid := xid.New().String()
 			log.Err(err).
 				Str("guid", guid).
-				Int64("chat_id", c.Message().ReplyTo.Sender.ID).
+				Int64("chat_id", c.EffectiveMessage.ReplyToMessage.From.Id).
 				Msg("Failed to allow user")
-			return c.Reply(fmt.Sprintf("❌ Fehler beim Erlauben des Nutzers.%s", utils.EmbedGUID(guid)),
-				utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Erlauben des Nutzers.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			return err
 		}
 
-		return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot jetzt überall benutzen",
-			utils.Escape(c.Message().ReplyTo.Sender.FirstName)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("✅ <b>%s</b> darf den Bot jetzt überall benutzen",
+			utils.Escape(c.EffectiveMessage.ReplyToMessage.From.FirstName)),
+			utils.DefaultSendOptions())
+		return err
 	} else { // Allow group
-		isAllowed := p.allowService.IsChatAllowed(c.Chat())
+		isAllowed := p.allowService.IsChatAllowed(c.EffectiveChat)
 
 		if isAllowed {
-			return c.Reply("✅ Dieser Chat darf den Bot bereits nutzen.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "✅ Dieser Chat darf den Bot bereits nutzen.", utils.DefaultSendOptions())
+			return err
 		}
 
-		err := p.allowService.AllowChat(c.Chat())
+		err := p.allowService.AllowChat(c.EffectiveChat)
 		if err != nil {
 			guid := xid.New().String()
 			log.Err(err).
 				Str("guid", guid).
-				Int64("chat_id", c.Message().ReplyTo.Sender.ID).
+				Int64("chat_id", c.EffectiveMessage.ReplyToMessage.From.Id).
 				Msg("Failed to allow chat")
-			return c.Reply(fmt.Sprintf("❌ Fehler beim Erlauben des Chats.%s", utils.EmbedGUID(guid)),
-				utils.DefaultSendOptions)
+
+			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Erlauben des Chats.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			return err
 		}
 
-		return c.Reply("✅ Dieser Chat darf den Bot jetzt nutzen", utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, "✅ Dieser Chat darf den Bot jetzt nutzen", utils.DefaultSendOptions())
+		return err
 	}
 }
 
-func (p *Plugin) OnDeny(c plugin.GobotContext) error {
-	if c.Message().IsReply() { // Deny user
-		if c.Message().ReplyTo.Sender.IsBot {
-			return c.Reply("🤖🤖🤖", utils.DefaultSendOptions)
+func (p *Plugin) OnDeny(b *gotgbot.Bot, c plugin.GobotContext) error {
+	if tgUtils.IsReply(c.EffectiveMessage) { // Deny user
+		if c.EffectiveMessage.ReplyToMessage.From.IsBot {
+			_, err := c.EffectiveMessage.Reply(b, "🤖🤖🤖", utils.DefaultSendOptions())
+			return err
 		}
 
-		isAllowed := p.allowService.IsUserAllowed(c.Message().ReplyTo.Sender)
+		isAllowed := p.allowService.IsUserAllowed(c.EffectiveMessage.ReplyToMessage.From)
 		if !isAllowed {
-			return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot nicht überall benutzen.",
-				utils.Escape(c.Message().ReplyTo.Sender.FirstName)),
-				utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("✅ <b>%s</b> darf den Bot nicht überall benutzen.",
+				utils.Escape(c.EffectiveMessage.ReplyToMessage.From.FirstName)),
+				utils.DefaultSendOptions())
+			return err
 		}
 
-		err := p.allowService.DenyUser(c.Message().ReplyTo.Sender)
+		err := p.allowService.DenyUser(c.EffectiveMessage.ReplyToMessage.From)
 		if err != nil {
 			guid := xid.New().String()
 			log.Err(err).
 				Str("guid", guid).
-				Int64("chat_id", c.Message().ReplyTo.Sender.ID).
+				Int64("chat_id", c.EffectiveMessage.ReplyToMessage.From.Id).
 				Msg("Failed to deny user")
-			return c.Reply(fmt.Sprintf("❌ Fehler beim Verweigern des Nutzers.%s", utils.EmbedGUID(guid)),
-				utils.DefaultSendOptions)
+
+			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Verweigern des Nutzers.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			return err
 		}
 
-		return c.Reply(fmt.Sprintf("✅ <b>%s</b> darf den Bot jetzt nicht mehr überall benutzen",
-			utils.Escape(c.Message().ReplyTo.Sender.FirstName)),
-			utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("✅ <b>%s</b> darf den Bot jetzt nicht mehr überall benutzen",
+			utils.Escape(c.EffectiveMessage.ReplyToMessage.From.FirstName)),
+			utils.DefaultSendOptions())
+		return err
 	} else { // Deny group
-		isAllowed := p.allowService.IsChatAllowed(c.Chat())
+		isAllowed := p.allowService.IsChatAllowed(c.EffectiveChat)
 
 		if !isAllowed {
-			return c.Reply("✅ Dieser Chat darf den Bot nicht nutzen.", utils.DefaultSendOptions)
+			_, err := c.EffectiveMessage.Reply(b, "✅ Dieser Chat darf den Bot nicht nutzen.", utils.DefaultSendOptions())
+			return err
 		}
 
-		err := p.allowService.DenyChat(c.Chat())
+		err := p.allowService.DenyChat(c.EffectiveChat)
 		if err != nil {
 			guid := xid.New().String()
 			log.Err(err).
 				Str("guid", guid).
-				Int64("chat_id", c.Message().ReplyTo.Sender.ID).
+				Int64("chat_id", c.EffectiveMessage.ReplyToMessage.From.Id).
 				Msg("Failed to deny chat")
-			return c.Reply(fmt.Sprintf("❌ Fehler beim Verweigern des Chats.%s", utils.EmbedGUID(guid)),
-				utils.DefaultSendOptions)
+			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Verweigern des Chats.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			return err
 		}
 
-		return c.Reply("✅ Dieser Chat darf den Bot jetzt nicht mehr nutzen", utils.DefaultSendOptions)
+		_, err = c.EffectiveMessage.Reply(b, "✅ Dieser Chat darf den Bot jetzt nicht mehr nutzen", utils.DefaultSendOptions())
+		return err
 	}
 }
