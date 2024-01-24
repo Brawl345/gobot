@@ -2,10 +2,11 @@ package sql
 
 import (
 	"errors"
+
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/model"
-	"github.com/Brawl345/gobot/utils"
 	"golang.org/x/exp/slices"
 )
 
@@ -36,7 +37,7 @@ func NewAllowService(chatService model.ChatService, userService model.UserServic
 }
 
 func (service *allowService) IsUserAllowed(user *gotgbot.User) bool {
-	if utils.IsAdmin(user) {
+	if tgUtils.IsAdmin(user) {
 		return true
 	}
 
@@ -58,7 +59,7 @@ func (service *allowService) AllowUser(user *gotgbot.User) error {
 }
 
 func (service *allowService) DenyUser(user *gotgbot.User) error {
-	if utils.IsAdmin(user) {
+	if tgUtils.IsAdmin(user) {
 		return errors.New("cannot deny admin")
 	}
 	err := service.userService.Deny(user)

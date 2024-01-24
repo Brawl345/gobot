@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 )
@@ -367,7 +368,7 @@ func onMessage(msg *gotgbot.Message) string {
 			),
 		)
 	} else if msg.Photo != nil && len(msg.Photo) > 0 { // Photo: https://core.telegram.org/bots/api#photosize
-		bestResolutionPhoto := utils.GetBestResolution(msg.Photo)
+		bestResolutionPhoto := tgUtils.GetBestResolution(msg.Photo)
 		sb.WriteString(
 			fmt.Sprintf(
 				"%s[Foto: %dx%d px]%s ",

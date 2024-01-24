@@ -9,6 +9,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -64,7 +65,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) onGetHome(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionFindLocation, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionFindLocation, nil)
 	venue, err := p.homeService.GetHome(c.EffectiveUser)
 	if err != nil {
 		if errors.Is(err, model.ErrHomeAddressNotSet) {
@@ -95,7 +96,7 @@ func (p *Plugin) onGetHome(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionFindLocation, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionFindLocation, nil)
 
 	venue, err := p.geocodingService.Geocode(c.Matches[1])
 

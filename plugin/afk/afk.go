@@ -10,6 +10,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -62,12 +63,12 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     utils.AnyMsg,
+			Trigger:     tgUtils.AnyMsg,
 			HandlerFunc: p.checkAFK,
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     utils.EntityTypeMention,
+			Trigger:     tgUtils.EntityTypeMention,
 			HandlerFunc: p.notifyIfAFK,
 			GroupOnly:   true,
 		},
@@ -124,7 +125,7 @@ func (p *Plugin) goAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) checkAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if strings.HasPrefix(utils.AnyText(c.EffectiveMessage), "/afk") {
+	if strings.HasPrefix(tgUtils.AnyText(c.EffectiveMessage), "/afk") {
 		return nil
 	}
 
@@ -178,8 +179,8 @@ func (p *Plugin) checkAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 func (p *Plugin) notifyIfAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var mentionedUsername string
-	for _, entity := range utils.AnyEntities(c.EffectiveMessage) {
-		if utils.EntityType(entity.Type) == utils.EntityTypeMention {
+	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage) {
+		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeMention {
 			if mentionedUsername != "" {
 				return nil // Supports only one username
 			}

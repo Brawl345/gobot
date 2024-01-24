@@ -14,6 +14,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -62,7 +63,7 @@ func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	// Get Guest Token first
 	var tokenResponse TokenResponse
@@ -138,7 +139,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 	guestToken := tokenResponse.GuestToken
 
 	// Now we get the tweet
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	tweetID := c.Matches[1]
 	requestUrl := url.URL{
 		Scheme: "https",
@@ -439,7 +440,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if len(media) > 0 && len(media) != len(gifs) {
 		// Try album (photos + videos, no GIFs) first
-		_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionUploadPhoto, nil)
+		_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadPhoto, nil)
 		album := make([]gotgbot.InputMedia, 0, len(media))
 
 		for _, medium := range media {
@@ -473,9 +474,9 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 			for _, medium := range media {
 				if medium.IsPhoto() {
-					_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionUploadPhoto, nil)
+					_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadPhoto, nil)
 				} else {
-					_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionUploadVideo, nil)
+					_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadVideo, nil)
 				}
 
 				func() {
@@ -535,7 +536,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	// Now to GIFs...
 	if len(gifs) > 0 {
-		_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionUploadVideo, nil)
+		_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadVideo, nil)
 		for _, gif := range gifs {
 
 			_, err := b.SendAnimation(c.EffectiveChat.Id,
@@ -550,7 +551,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 			if err != nil {
 				func() {
-					_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionUploadVideo, nil)
+					_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadVideo, nil)
 
 					log.Err(err).Str("url", gif.Link()).Msg("Error while sending gif through Telegram")
 

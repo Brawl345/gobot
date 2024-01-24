@@ -9,6 +9,7 @@ import (
 
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
@@ -60,7 +61,7 @@ func onId(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString(fmt.Sprintf(" <b>(@%s)</b>", c.EffectiveUser.Username))
 	}
 
-	if utils.FromGroup(c.EffectiveMessage) {
+	if tgUtils.FromGroup(c.EffectiveMessage) {
 		sb.WriteString(fmt.Sprintf("\nGruppe: <b>%s</b> <code>[%d]</code>",
 			utils.Escape(c.EffectiveChat.Title),
 			c.EffectiveChat.Id,

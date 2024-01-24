@@ -12,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -53,18 +54,18 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 			HandlerFunc: p.onGPS,
 		},
 		&plugin.CommandHandler{
-			Trigger:     utils.LocationMsg,
+			Trigger:     tgUtils.LocationMsg,
 			HandlerFunc: p.onLocation,
 		},
 		&plugin.CommandHandler{
-			Trigger:     utils.VenueMsg,
+			Trigger:     tgUtils.VenueMsg,
 			HandlerFunc: p.onLocation,
 		},
 	}
 }
 
 func (p *Plugin) onGPS(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionFindLocation, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionFindLocation, nil)
 	venue, err := p.geocodingService.Geocode(c.Matches[1])
 	if err != nil {
 		if errors.Is(err, model.ErrAddressNotFound) {

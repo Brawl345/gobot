@@ -12,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -89,7 +90,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	var contents []Content
 	geminiData, err := p.geminiService.GetHistory(c.EffectiveChat)
@@ -244,11 +245,11 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}
 
-	if len(output) > utils.MaxMessageLength {
-		if inputChars > utils.MaxMessageLength {
-			output = output[:utils.MaxMessageLength-70] + "..." // More space for the message below
+	if len(output) > tgUtils.MaxMessageLength {
+		if inputChars > tgUtils.MaxMessageLength {
+			output = output[:tgUtils.MaxMessageLength-70] + "..." // More space for the message below
 		} else {
-			output = output[:utils.MaxMessageLength-9] + "..."
+			output = output[:tgUtils.MaxMessageLength-9] + "..."
 		}
 	}
 

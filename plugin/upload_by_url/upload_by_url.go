@@ -12,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"golang.org/x/exp/slices"
 )
@@ -74,7 +75,7 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Msg("Failed to parse content length")
 		return nil
 	}
-	if fileSize > utils.MaxFilesizeUpload {
+	if fileSize > tgUtils.MaxFilesizeUpload {
 		log.Error().
 			Str("url", url).
 			Int64("fileSize", fileSize).
@@ -89,7 +90,7 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	if slices.Contains(imageExt, ext) && fileSize < utils.MaxPhotosizeThroughTelegram {
+	if slices.Contains(imageExt, ext) && fileSize < tgUtils.MaxPhotosizeThroughTelegram {
 		return nil
 	}
 
@@ -98,14 +99,14 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	// Send file through Telegram first
-	if fileSize < utils.MaxFilesizeDownload {
+	if fileSize < tgUtils.MaxFilesizeDownload {
 		if slices.Contains(audioExt, ext) {
 			_, err = b.SendAudio(c.EffectiveChat.Id, url, &gotgbot.SendAudioOpts{ReplyParameters: replyParams})
 		} else if slices.Contains(videoExt, ext) {
 			_, err = b.SendVideo(c.EffectiveChat.Id, url,
 				&gotgbot.SendVideoOpts{ReplyParameters: replyParams, SupportsStreaming: true},
 			)
-		} else if slices.Contains(imageExt, ext) && fileSize < utils.MaxPhotosizeUpload {
+		} else if slices.Contains(imageExt, ext) && fileSize < tgUtils.MaxPhotosizeUpload {
 			_, err = b.SendPhoto(c.EffectiveChat.Id, url, &gotgbot.SendPhotoOpts{ReplyParameters: replyParams})
 		} else {
 			_, err = b.SendDocument(c.EffectiveChat.Id, url, &gotgbot.SendDocumentOpts{ReplyParameters: replyParams})
@@ -144,7 +145,7 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 			_, err = b.SendVideo(c.EffectiveChat.Id, file,
 				&gotgbot.SendVideoOpts{ReplyParameters: replyParams, SupportsStreaming: true},
 			)
-		} else if slices.Contains(imageExt, ext) && fileSize < utils.MaxPhotosizeUpload {
+		} else if slices.Contains(imageExt, ext) && fileSize < tgUtils.MaxPhotosizeUpload {
 			_, err = b.SendPhoto(c.EffectiveChat.Id, file, &gotgbot.SendPhotoOpts{ReplyParameters: replyParams})
 			if err != nil {
 				_, err = b.SendDocument(c.EffectiveChat.Id, file, &gotgbot.SendDocumentOpts{ReplyParameters: replyParams})

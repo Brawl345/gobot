@@ -9,6 +9,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -82,7 +83,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func onNational(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	var response Nationwide
 
 	url := fmt.Sprintf("%s/germany", BaseUrl)
@@ -185,7 +186,7 @@ func onNational(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func onDistrictSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	var response DistrictResponse
 
 	url := fmt.Sprintf("%s/districts", BaseUrl)
@@ -333,13 +334,13 @@ func districtText(ags string) string {
 }
 
 func onDistrict(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	_, err := c.EffectiveMessage.Reply(b, districtText(c.Matches[1]), utils.DefaultSendOptions())
 	return err
 }
 
 func (p *Plugin) setRkiAGS(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	ags := c.Matches[1]
 
 	if len(ags) > 8 {
@@ -391,7 +392,7 @@ func (p *Plugin) setRkiAGS(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) onMyRKI(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	ags, err := p.rkiService.GetAGS(c.EffectiveUser)
 	if err != nil {
 		guid := xid.New().String()

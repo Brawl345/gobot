@@ -10,8 +10,8 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
-	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
@@ -51,7 +51,7 @@ func (p *Plugin) Commands() []gotgbot.BotCommand {
 func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     utils.AnyMedia,
+			Trigger:     tgUtils.AnyMedia,
 			HandlerFunc: p.OnMedia,
 			HandleEdits: true,
 		},
@@ -80,7 +80,7 @@ func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 		uniqueID = c.EffectiveMessage.Document.FileUniqueId
 		subFolder = "document"
 	} else if c.EffectiveMessage.Photo != nil {
-		bestResolution := utils.GetBestResolution(c.EffectiveMessage.Photo)
+		bestResolution := tgUtils.GetBestResolution(c.EffectiveMessage.Photo)
 		fileID = bestResolution.FileId
 		fileSize = bestResolution.FileSize
 		uniqueID = bestResolution.FileUniqueId
@@ -107,7 +107,7 @@ func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 		subFolder = "voice"
 	}
 
-	if fileSize > utils.MaxFilesizeDownload {
+	if fileSize > tgUtils.MaxFilesizeDownload {
 		log.Warn().Msgf("File is too big: %d", fileSize)
 		return nil
 	}

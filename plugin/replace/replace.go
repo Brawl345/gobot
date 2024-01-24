@@ -7,6 +7,7 @@ import (
 
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
@@ -38,7 +39,7 @@ func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 }
 
 func onReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if !utils.IsReply(c.EffectiveMessage) {
+	if !tgUtils.IsReply(c.EffectiveMessage) {
 		return nil
 	}
 
@@ -76,7 +77,7 @@ func onReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func onRegexReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if !utils.IsReply(c.EffectiveMessage) {
+	if !tgUtils.IsReply(c.EffectiveMessage) {
 		return nil
 	}
 

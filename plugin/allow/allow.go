@@ -8,6 +8,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -52,7 +53,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) OnAllow(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if utils.IsReply(c.EffectiveMessage) { // Allow user
+	if tgUtils.IsReply(c.EffectiveMessage) { // Allow user
 		if c.EffectiveMessage.ReplyToMessage.From.IsBot {
 			_, err := c.EffectiveMessage.Reply(b, "🤖🤖🤖", utils.DefaultSendOptions())
 			return err
@@ -111,7 +112,7 @@ func (p *Plugin) OnAllow(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) OnDeny(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if utils.IsReply(c.EffectiveMessage) { // Deny user
+	if tgUtils.IsReply(c.EffectiveMessage) { // Deny user
 		if c.EffectiveMessage.ReplyToMessage.From.IsBot {
 			_, err := c.EffectiveMessage.Reply(b, "🤖🤖🤖", utils.DefaultSendOptions())
 			return err

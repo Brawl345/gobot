@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -34,7 +35,7 @@ func (p *Plugin) Commands() []gotgbot.BotCommand {
 func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     utils.DocumentMsg,
+			Trigger:     tgUtils.DocumentMsg,
 			HandlerFunc: p.OnFile,
 		},
 	}
@@ -46,9 +47,9 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionUploadDocument, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadDocument, nil)
 
-	if c.EffectiveMessage.Document.FileSize > utils.MaxFilesizeDownload {
+	if c.EffectiveMessage.Document.FileSize > tgUtils.MaxFilesizeDownload {
 		_, err := c.EffectiveMessage.Reply(b, "❌ DLC-Container ist größer als 20 MB.", utils.DefaultSendOptions())
 		return err
 	}

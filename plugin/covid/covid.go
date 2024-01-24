@@ -13,6 +13,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 	"golang.org/x/sync/errgroup"
@@ -66,7 +67,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func OnCountry(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	var httpError *httpUtils.HttpError
 	var result countryResult
@@ -165,7 +166,7 @@ func OnCountry(b *gotgbot.Bot, c plugin.GobotContext) error {
 		),
 	)
 
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	var vaccine vaccineResult
 	err = httpUtils.GetRequest(
 		fmt.Sprintf(
@@ -209,7 +210,7 @@ func OnCountry(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func OnRun(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()

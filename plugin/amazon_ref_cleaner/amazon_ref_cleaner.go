@@ -10,6 +10,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
@@ -40,8 +41,8 @@ func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 
 func onAmazonLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var links []string
-	for _, entity := range utils.AnyEntities(c.EffectiveMessage) {
-		if utils.EntityType(entity.Type) == utils.EntityTypeURL {
+	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage) {
+		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeURL {
 			amazonUrl, err := url.Parse(c.EffectiveMessage.ParseEntity(entity).Url)
 
 			if err != nil {

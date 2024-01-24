@@ -10,6 +10,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -125,7 +126,7 @@ func (p *Plugin) getQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 func (p *Plugin) addQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var quote string
-	if utils.IsReply(c.EffectiveMessage) &&
+	if tgUtils.IsReply(c.EffectiveMessage) &&
 		!c.EffectiveSender.IsBot() {
 		if c.EffectiveMessage.ReplyToMessage.Text != "" {
 			quote = fmt.Sprintf("\"%s\" —%s", c.EffectiveMessage.ReplyToMessage.Text, c.Matches[1])
@@ -165,7 +166,7 @@ func (p *Plugin) deleteQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if len(c.Matches) > 1 {
 		quote = c.Matches[1]
 	} else {
-		if !utils.IsReply(c.EffectiveMessage) || c.EffectiveMessage.ReplyToMessage.Text == "" {
+		if !tgUtils.IsReply(c.EffectiveMessage) || c.EffectiveMessage.ReplyToMessage.Text == "" {
 			return nil
 		}
 		quoteMatches := regexp.MustCompile(fmt.Sprintf(`(?i)^(?:/addquote(?:@%s)? )?([\s\S]+)$`, b.Username)).FindStringSubmatch(c.EffectiveMessage.ReplyToMessage.Text)

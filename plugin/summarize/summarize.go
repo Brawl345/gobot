@@ -12,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 
@@ -96,7 +97,7 @@ func (p *Plugin) onSummarize(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if !utils.IsReply(c.EffectiveMessage) {
+	if !tgUtils.IsReply(c.EffectiveMessage) {
 		log.Debug().
 			Int64("chat_id", c.EffectiveChat.Id).
 			Int64("user_id", c.EffectiveUser.Id).
@@ -119,13 +120,13 @@ func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.Message) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	var urls []string
-	for _, entity := range utils.AnyEntities(msg) {
-		if utils.EntityType(entity.Type) == utils.EntityTypeURL {
+	for _, entity := range tgUtils.AnyEntities(msg) {
+		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeURL {
 			urls = append(urls, msg.ParseEntity(entity).Url)
-		} else if utils.EntityType(entity.Type) == utils.EntityTextLink {
+		} else if tgUtils.EntityType(entity.Type) == tgUtils.EntityTextLink {
 			urls = append(urls, entity.Url)
 		}
 	}

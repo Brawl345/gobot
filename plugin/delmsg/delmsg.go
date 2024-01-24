@@ -6,7 +6,7 @@ import (
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
-	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
@@ -38,7 +38,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func deleteMsg(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if !utils.IsReply(c.EffectiveMessage) {
+	if !tgUtils.IsReply(c.EffectiveMessage) {
 		log.Debug().Msg("Message is not a reply")
 		return nil
 	}

@@ -9,6 +9,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -59,7 +60,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) OnGet(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if utils.FromGroup(c.EffectiveMessage) {
+	if tgUtils.FromGroup(c.EffectiveMessage) {
 		return nil
 	}
 
@@ -105,7 +106,7 @@ func (p *Plugin) OnGet(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) OnAdd(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if utils.FromGroup(c.EffectiveMessage) {
+	if tgUtils.FromGroup(c.EffectiveMessage) {
 		return nil
 	}
 
@@ -127,7 +128,7 @@ func (p *Plugin) OnAdd(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) OnDelete(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if utils.FromGroup(c.EffectiveMessage) {
+	if tgUtils.FromGroup(c.EffectiveMessage) {
 		return nil
 	}
 

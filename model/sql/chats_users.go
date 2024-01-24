@@ -4,11 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
-	"github.com/Brawl345/gobot/utils"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -131,7 +132,7 @@ func (db *chatsUsersService) insertRelationship(tx *sqlx.Tx, chatId int64, userI
 }
 
 func (db *chatsUsersService) IsAllowed(chat *gotgbot.Chat, user *gotgbot.User) bool {
-	if utils.IsAdmin(user) {
+	if tgUtils.IsAdmin(user) {
 		return true
 	}
 

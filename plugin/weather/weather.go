@@ -12,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -81,7 +82,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) onWeather(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionFindLocation, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionFindLocation, nil)
 
 	var err error
 	var venue gotgbot.Venue
@@ -260,7 +261,7 @@ func (p *Plugin) onWeather(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) onForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionFindLocation, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionFindLocation, nil)
 
 	var err error
 	var venue gotgbot.Venue
@@ -335,7 +336,7 @@ func (p *Plugin) onForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) onHourlyForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionFindLocation, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionFindLocation, nil)
 
 	var err error
 	var venue gotgbot.Venue

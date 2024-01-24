@@ -5,12 +5,12 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Brawl345/gobot/utils"
 	_ "github.com/joho/godotenv/autoload"
 
 	"github.com/Brawl345/gobot/bot"
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model/sql"
-	"github.com/Brawl345/gobot/utils"
 )
 
 var log = logger.New("main")

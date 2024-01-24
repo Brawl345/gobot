@@ -9,6 +9,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 	"golang.org/x/exp/slices"
@@ -65,7 +66,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 			GroupOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     utils.EntityTypeMention,
+			Trigger:     tgUtils.EntityTypeMention,
 			HandlerFunc: p.notify,
 			GroupOnly:   true,
 		},
@@ -74,8 +75,8 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 
 func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var mentionedUsernames []string
-	for _, entity := range utils.AnyEntities(c.EffectiveMessage) {
-		if utils.EntityType(entity.Type) == utils.EntityTypeMention {
+	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage) {
+		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeMention {
 			username := strings.TrimPrefix(c.EffectiveMessage.ParseEntity(entity).Text, "@")
 			username = strings.ToLower(username)
 			if !slices.Contains(mentionedUsernames, username) && username !=
@@ -130,15 +131,15 @@ func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			var telegramErr *gotgbot.TelegramError
 
 			if errors.As(err, &telegramErr) {
-				if telegramErr.Description == utils.ErrBlockedByUser {
+				if telegramErr.Description == tgUtils.ErrBlockedByUser {
 					log.Warn().
 						Int64("to_user_id", userID).
 						Msg("User blocked the bot")
-				} else if telegramErr.Description == utils.ErrNotStartedByUser {
+				} else if telegramErr.Description == tgUtils.ErrNotStartedByUser {
 					log.Warn().
 						Int64("to_user_id", userID).
 						Msg("User didn't start the bot")
-				} else if telegramErr.Description == utils.ErrUserIsDeactivated {
+				} else if telegramErr.Description == tgUtils.ErrUserIsDeactivated {
 					log.Warn().
 						Int64("to_user_id", userID).
 						Msg("User account is deactivated")
@@ -165,10 +166,10 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 		var telegramErr *gotgbot.TelegramError
 
 		if errors.As(err, &telegramErr) {
-			if telegramErr.Description == utils.ErrBlockedByUser {
+			if telegramErr.Description == tgUtils.ErrBlockedByUser {
 				_, err := c.EffectiveMessage.Reply(b, "😭 Du hast mich blockiert T__T", utils.DefaultSendOptions())
 				return err
-			} else if telegramErr.Description == utils.ErrNotStartedByUser {
+			} else if telegramErr.Description == tgUtils.ErrNotStartedByUser {
 				_, err := c.EffectiveMessage.Reply(b, "ℹ Bitte starte mich vor dem Aktivieren zuerst privat.", utils.DefaultSendOptions())
 				return err
 			}

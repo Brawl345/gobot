@@ -12,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
@@ -109,13 +110,13 @@ func loop(sb *strings.Builder, url string, depth int) {
 }
 
 func onExpand(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	var shortUrls []string
-	for _, entity := range utils.AnyEntities(c.EffectiveMessage) {
-		if utils.EntityType(entity.Type) == utils.EntityTypeURL {
+	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage) {
+		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeURL {
 			shortUrls = append(shortUrls, c.EffectiveMessage.ParseEntity(entity).Url)
-		} else if utils.EntityType(entity.Type) == utils.EntityTextLink {
+		} else if tgUtils.EntityType(entity.Type) == tgUtils.EntityTextLink {
 			shortUrls = append(shortUrls, entity.Url)
 		}
 	}
@@ -148,7 +149,7 @@ func onExpand(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if !utils.IsReply(c.EffectiveMessage) {
+	if !tgUtils.IsReply(c.EffectiveMessage) {
 		log.Debug().
 			Int64("chat_id", c.EffectiveChat.Id).
 			Int64("user_id", c.EffectiveUser.Id).
@@ -163,10 +164,10 @@ func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	var shortUrls []string
-	for _, entity := range utils.AnyEntities(c.EffectiveMessage.ReplyToMessage) {
-		if utils.EntityType(entity.Type) == utils.EntityTypeURL {
+	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage.ReplyToMessage) {
+		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeURL {
 			shortUrls = append(shortUrls, c.EffectiveMessage.ReplyToMessage.ParseEntity(entity).Url)
-		} else if utils.EntityType(entity.Type) == utils.EntityTextLink {
+		} else if tgUtils.EntityType(entity.Type) == tgUtils.EntityTextLink {
 			shortUrls = append(shortUrls, entity.Url)
 		}
 	}
@@ -182,7 +183,7 @@ func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 		limitExceeded = true
 	}
 
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	var sb strings.Builder
 
 	for _, url := range shortUrls {

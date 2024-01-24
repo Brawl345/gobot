@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -64,7 +65,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 func (p *Plugin) onGoogleSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	query := c.Matches[1]
 
-	_, _ = c.EffectiveChat.SendAction(b, utils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "customsearch.googleapis.com",

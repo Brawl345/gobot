@@ -11,6 +11,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/rs/xid"
@@ -74,7 +75,7 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 	isEdited := msg.EditDate != 0
 
 	isAllowed := p.allowService.IsUserAllowed(ctx.EffectiveUser)
-	if utils.FromGroup(msg) && !isAllowed {
+	if tgUtils.FromGroup(msg) && !isAllowed {
 		isAllowed = p.allowService.IsChatAllowed(ctx.EffectiveChat)
 	}
 
@@ -86,7 +87,7 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 	var err error
 
 	if !isEdited {
-		if utils.IsPrivate(msg) {
+		if tgUtils.IsPrivate(msg) {
 			err = p.userService.Create(ctx.EffectiveUser)
 		} else {
 			err = p.chatsUsersService.Create(ctx.EffectiveChat, ctx.EffectiveUser)
@@ -115,7 +116,7 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 				continue
 			}
 
-			if !utils.FromGroup(msg) && handler.GroupOnly {
+			if !tgUtils.FromGroup(msg) && handler.GroupOnly {
 				continue
 			}
 
@@ -132,36 +133,36 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 						namedMatches[command.SubexpNames()[i]] = name
 					}
 				}
-			case utils.MessageTrigger:
+			case tgUtils.MessageTrigger:
 				switch {
 				// More to be added when needed
 				case msg.Document != nil:
-					matched = command == utils.DocumentMsg
+					matched = command == tgUtils.DocumentMsg
 				case msg.Photo != nil && len(msg.Photo) > 0:
-					matched = command == utils.PhotoMsg
+					matched = command == tgUtils.PhotoMsg
 				case msg.Location != nil:
-					matched = command == utils.LocationMsg
+					matched = command == tgUtils.LocationMsg
 				case msg.Venue != nil:
-					matched = command == utils.VenueMsg
+					matched = command == tgUtils.VenueMsg
 				case msg.Voice != nil:
-					matched = command == utils.VoiceMsg
+					matched = command == tgUtils.VoiceMsg
 				}
 
-				if !matched && utils.ContainsMedia(msg) {
-					matched = command == utils.AnyMedia
+				if !matched && tgUtils.ContainsMedia(msg) {
+					matched = command == tgUtils.AnyMedia
 				}
 
 				if !matched {
-					matched = command == utils.AnyMsg
+					matched = command == tgUtils.AnyMsg
 				}
-			case utils.EntityType:
+			case tgUtils.EntityType:
 				entities := msg.Entities
 				if entities == nil {
 					entities = msg.CaptionEntities
 				}
 
 				for _, entity := range entities {
-					matched = utils.EntityType(entity.Type) == command
+					matched = tgUtils.EntityType(entity.Type) == command
 					if matched {
 						break
 					}
@@ -178,12 +179,12 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 					continue
 				}
 
-				if utils.FromGroup(msg) && p.managerService.IsPluginDisabledForChat(ctx.EffectiveChat, plg.Name()) {
+				if tgUtils.FromGroup(msg) && p.managerService.IsPluginDisabledForChat(ctx.EffectiveChat, plg.Name()) {
 					log.Printf("Plugin %s is disabled for this chat", plg.Name())
 					continue
 				}
 
-				if handler.AdminOnly && !utils.IsAdmin(ctx.EffectiveUser) {
+				if handler.AdminOnly && !tgUtils.IsAdmin(ctx.EffectiveUser) {
 					log.Print("User is not an admin.")
 					continue
 				}
@@ -238,7 +239,7 @@ func (p *Processor) onCallback(b *gotgbot.Bot, ctx *ext.Context) error {
 	}
 
 	isAllowed := p.allowService.IsUserAllowed(&ctx.CallbackQuery.From)
-	if msg != nil && utils.FromGroup(msg) && !isAllowed {
+	if msg != nil && tgUtils.FromGroup(msg) && !isAllowed {
 		isAllowed = p.allowService.IsChatAllowed(ctx.EffectiveChat)
 	}
 
@@ -278,7 +279,7 @@ func (p *Processor) onCallback(b *gotgbot.Bot, ctx *ext.Context) error {
 					return err
 				}
 
-				if utils.FromGroup(msg) && p.managerService.IsPluginDisabledForChat(ctx.EffectiveChat, plg.Name()) {
+				if tgUtils.FromGroup(msg) && p.managerService.IsPluginDisabledForChat(ctx.EffectiveChat, plg.Name()) {
 					log.Printf("Plugin %s is disabled for this chat", plg.Name())
 					_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
 						Text:      "Dieser Befehl ist nicht verfügbar.",
@@ -287,7 +288,7 @@ func (p *Processor) onCallback(b *gotgbot.Bot, ctx *ext.Context) error {
 					return err
 				}
 
-				if handler.AdminOnly && !utils.IsAdmin(ctx.EffectiveUser) {
+				if handler.AdminOnly && !tgUtils.IsAdmin(ctx.EffectiveUser) {
 					log.Print("User is not an admin.")
 					_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
 						Text:      "Du bist kein Bot-Administrator.",
@@ -398,7 +399,7 @@ func (p *Processor) onInlineQuery(b *gotgbot.Bot, ctx *ext.Context) error {
 					return err
 				}
 
-				if handler.AdminOnly && !utils.IsAdmin(ctx.EffectiveUser) {
+				if handler.AdminOnly && !tgUtils.IsAdmin(ctx.EffectiveUser) {
 					log.Print("User is not an admin.")
 					_, err := ctx.InlineQuery.Answer(b, nil, &gotgbot.AnswerInlineQueryOpts{
 						CacheTime:  utils.InlineQueryFailureCacheTime,

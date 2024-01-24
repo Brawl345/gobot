@@ -9,8 +9,8 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
-	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
@@ -50,14 +50,14 @@ func (p *Plugin) Commands() []gotgbot.BotCommand {
 func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     utils.VoiceMsg,
+			Trigger:     tgUtils.VoiceMsg,
 			HandlerFunc: p.OnVoice,
 		},
 	}
 }
 
 func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if c.EffectiveMessage.Voice.FileSize > utils.MaxFilesizeDownload {
+	if c.EffectiveMessage.Voice.FileSize > tgUtils.MaxFilesizeDownload {
 		log.Warn().
 			Int64("filesize", c.EffectiveMessage.Voice.FileSize).
 			Msg("Voice file is too big to download")
@@ -164,8 +164,8 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var sb strings.Builder
 
 	sb.WriteString("💬 ")
-	if len(apiResponse.Text) > utils.MaxMessageLength {
-		sb.WriteString(apiResponse.Text[:utils.MaxMessageLength-10])
+	if len(apiResponse.Text) > tgUtils.MaxMessageLength {
+		sb.WriteString(apiResponse.Text[:tgUtils.MaxMessageLength-10])
 	} else {
 		sb.WriteString(apiResponse.Text)
 	}
