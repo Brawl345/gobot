@@ -87,6 +87,7 @@ func (p *Plugin) onGetHome(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_, err = b.SendVenue(c.EffectiveChat.Id, venue.Location.Latitude, venue.Location.Longitude, venue.Title, venue.Address, &gotgbot.SendVenueOpts{
 		ReplyParameters: &gotgbot.ReplyParameters{
 			AllowSendingWithoutReply: true,
+			MessageId:                c.EffectiveMessage.MessageId,
 		},
 		DisableNotification: true,
 	})
@@ -130,6 +131,7 @@ func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_, err = b.SendVenue(c.EffectiveChat.Id, venue.Location.Latitude, venue.Location.Longitude, venue.Title, venue.Address, &gotgbot.SendVenueOpts{
 		ReplyParameters: &gotgbot.ReplyParameters{
 			AllowSendingWithoutReply: true,
+			MessageId:                c.EffectiveMessage.MessageId,
 		},
 		DisableNotification: true,
 	})

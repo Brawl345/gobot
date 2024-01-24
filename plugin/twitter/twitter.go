@@ -450,8 +450,16 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 			}
 		}
 
-		_, err := b.SendMediaGroup(c.EffectiveChat.Id, album, &gotgbot.SendMediaGroupOpts{DisableNotification: true,
-			RequestOpts: &gotgbot.RequestOpts{Timeout: 30 * time.Second}})
+		_, err := b.SendMediaGroup(
+			c.EffectiveChat.Id,
+			album,
+			&gotgbot.SendMediaGroupOpts{DisableNotification: true,
+				ReplyParameters: &gotgbot.ReplyParameters{
+					MessageId: c.EffectiveMessage.MessageId,
+				},
+				RequestOpts: &gotgbot.RequestOpts{Timeout: 30 * time.Second},
+			},
+		)
 		if err != nil {
 			// Group send failed - sending media manually as seperate messages
 			log.Err(err).Msg("Error while sending album")
