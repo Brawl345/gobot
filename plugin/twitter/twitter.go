@@ -457,7 +457,6 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 				ReplyParameters: &gotgbot.ReplyParameters{
 					MessageId: c.EffectiveMessage.MessageId,
 				},
-				RequestOpts: &gotgbot.RequestOpts{Timeout: 30 * time.Second},
 			},
 		)
 		if err != nil {

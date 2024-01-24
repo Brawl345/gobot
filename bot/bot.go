@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"net/http"
 	"os"
 	"sort"
 	"strings"
@@ -85,7 +86,12 @@ func New(db *sqlx.DB) (*Gobot, error) {
 	}
 
 	// Bot itself
-	bot, err := gotgbot.NewBot(strings.TrimSpace(os.Getenv("BOT_TOKEN")), nil)
+	bot, err := gotgbot.NewBot(strings.TrimSpace(os.Getenv("BOT_TOKEN")), &gotgbot.BotOpts{
+		BotClient: &gotgbot.BaseBotClient{
+			Client:             http.Client{Timeout: time.Second * 30},
+			DefaultRequestOpts: &gotgbot.RequestOpts{Timeout: time.Second * 30},
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
