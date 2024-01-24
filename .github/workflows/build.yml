@@ -4,7 +4,7 @@ on:
   - pull_request
 
 env:
-  GOVER: ^1.18
+  GOVER: ^1.21
   NAME: gobot
 
 jobs:
