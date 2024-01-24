@@ -10,6 +10,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
 
@@ -104,6 +105,6 @@ func onUrbanDictionary(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString(fmt.Sprintf(" - 👎 %s", utils.FormatThousand(term.Downvotes)))
 	}
 
-	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

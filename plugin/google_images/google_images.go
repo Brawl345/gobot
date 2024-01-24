@@ -203,6 +203,7 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 				Caption: caption,
 				ReplyParameters: &gotgbot.ReplyParameters{
 					AllowSendingWithoutReply: true,
+					MessageId:                c.EffectiveMessage.MessageId,
 				},
 				DisableNotification: true,
 				ParseMode:           gotgbot.ParseModeHTML,
@@ -213,6 +214,7 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 				Caption: caption,
 				ReplyParameters: &gotgbot.ReplyParameters{
 					AllowSendingWithoutReply: true,
+					MessageId:                c.EffectiveMessage.MessageId,
 				},
 				DisableNotification: true,
 				ParseMode:           gotgbot.ParseModeHTML,

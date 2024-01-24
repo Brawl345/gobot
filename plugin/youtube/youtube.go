@@ -12,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
 
@@ -298,7 +299,8 @@ func (p *Plugin) OnYouTubeLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if err != nil {
 		if errors.Is(err, ErrNoVideoFound) {
-			return c.Reply("❌ Video nicht gefunden")
+			_, err := c.EffectiveMessage.Reply(b, "❌ Video nicht gefunden", nil)
+			return err
 		}
 
 		guid := xid.New().String()
@@ -312,7 +314,7 @@ func (p *Plugin) OnYouTubeLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	text := constructText(&video)
 
-	msg, err := c.Bot().Reply(c.EffectiveMessage, text, utils.DefaultSendOptions())
+	msg, err := c.EffectiveMessage.Reply(b, text, utils.DefaultSendOptions())
 	if err == nil {
 		modifiedText, err := deArrow(text, &video)
 		if err != nil {
@@ -322,7 +324,9 @@ func (p *Plugin) OnYouTubeLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 			return nil
 		}
 
-		_, err = c.Bot().Edit(msg, modifiedText, utils.DefaultSendOptions())
+		_, _, err = msg.EditText(b, modifiedText, &gotgbot.EditMessageTextOpts{
+			ParseMode: gotgbot.ParseModeHTML,
+		})
 	}
 
 	return err
@@ -370,7 +374,8 @@ func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if err != nil {
 		if errors.Is(err, ErrNoVideoFound) {
-			return c.Reply("❌ Video nicht gefunden")
+			_, err := c.EffectiveMessage.Reply(b, "❌ Video nicht gefunden", nil)
+			return err
 		}
 
 		guid := xid.New().String()
@@ -387,10 +392,10 @@ func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	sb.WriteString(constructText(&video))
 	text := sb.String()
 
-	msg, err := c.Bot().Reply(c.EffectiveMessage, text, &telebot.SendOptions{
-		AllowWithoutReply:   true,
+	msg, err := c.EffectiveMessage.Reply(b, text, &gotgbot.SendMessageOpts{
+		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
 		DisableNotification: true,
-		ParseMode:           telebot.ModeHTML,
+		ParseMode:           gotgbot.ParseModeHTML,
 	})
 
 	if err == nil {
@@ -402,10 +407,8 @@ func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 			return nil
 		}
 
-		_, err = c.Bot().Edit(msg, modifiedText, &telebot.SendOptions{
-			AllowWithoutReply:   true,
-			DisableNotification: true,
-			ParseMode:           telebot.ModeHTML,
+		_, _, err = msg.EditText(b, modifiedText, &gotgbot.EditMessageTextOpts{
+			ParseMode: gotgbot.ParseModeHTML,
 		})
 	}
 

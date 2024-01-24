@@ -79,7 +79,7 @@ func (p *Plugin) onGetHome(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error getting home")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -108,7 +108,7 @@ func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Err(err).
 			Str("guid", guid).
 			Msg("error getting location")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -121,7 +121,7 @@ func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error setting home")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -145,7 +145,7 @@ func (p *Plugin) onDeleteHome(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error deleting home")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}

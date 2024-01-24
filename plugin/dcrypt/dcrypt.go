@@ -181,6 +181,7 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 		Caption: "🔑 Hier sind deine entschlüsselten Links!",
 		ReplyParameters: &gotgbot.ReplyParameters{
 			AllowSendingWithoutReply: true,
+			MessageId:                c.EffectiveMessage.MessageId,
 		},
 		DisableNotification: true,
 		ParseMode:           gotgbot.ParseModeHTML,

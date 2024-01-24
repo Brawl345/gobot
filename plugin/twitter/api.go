@@ -2,10 +2,11 @@ package twitter
 
 import (
 	"fmt"
-	"github.com/Brawl345/gobot/utils"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Brawl345/gobot/utils"
 )
 
 const (

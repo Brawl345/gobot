@@ -12,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"golang.org/x/exp/slices"
 )
 
@@ -92,27 +93,22 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
+	replyParams := &gotgbot.ReplyParameters{
+		MessageId: c.EffectiveMessage.MessageId,
+	}
+
 	// Send file through Telegram first
 	if fileSize < utils.MaxFilesizeDownload {
-		file := telebot.FromURL(url)
-
 		if slices.Contains(audioExt, ext) {
-			err = c.Reply(&telebot.Audio{
-				File: file,
-			})
+			_, err = b.SendAudio(c.EffectiveChat.Id, url, &gotgbot.SendAudioOpts{ReplyParameters: replyParams})
 		} else if slices.Contains(videoExt, ext) {
-			err = c.Reply(&telebot.Video{
-				File:      file,
-				Streaming: true,
-			})
+			_, err = b.SendVideo(c.EffectiveChat.Id, url,
+				&gotgbot.SendVideoOpts{ReplyParameters: replyParams, SupportsStreaming: true},
+			)
 		} else if slices.Contains(imageExt, ext) && fileSize < utils.MaxPhotosizeUpload {
-			err = c.Reply(&telebot.Photo{
-				File: file,
-			})
+			_, err = b.SendPhoto(c.EffectiveChat.Id, url, &gotgbot.SendPhotoOpts{ReplyParameters: replyParams})
 		} else {
-			err = c.Reply(&telebot.Document{
-				File: file,
-			})
+			_, err = b.SendDocument(c.EffectiveChat.Id, url, &gotgbot.SendDocumentOpts{ReplyParameters: replyParams})
 		}
 	}
 
@@ -140,34 +136,21 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 			}
 		}(resp.Body)
 
-		file := telebot.FromReader(resp.Body)
 		fileName := path.Base(url)
+		file := gotgbot.NamedFile{File: resp.Body, FileName: fileName}
 		if slices.Contains(audioExt, ext) {
-			err = c.Reply(&telebot.Audio{
-				File:     file,
-				FileName: fileName,
-			})
+			_, err = b.SendAudio(c.EffectiveChat.Id, file, &gotgbot.SendAudioOpts{ReplyParameters: replyParams})
 		} else if slices.Contains(videoExt, ext) {
-			err = c.Reply(&telebot.Video{
-				File:      file,
-				FileName:  fileName,
-				Streaming: true,
-			})
+			_, err = b.SendVideo(c.EffectiveChat.Id, file,
+				&gotgbot.SendVideoOpts{ReplyParameters: replyParams, SupportsStreaming: true},
+			)
 		} else if slices.Contains(imageExt, ext) && fileSize < utils.MaxPhotosizeUpload {
-			err = c.Reply(&telebot.Photo{
-				File: file,
-			})
+			_, err = b.SendPhoto(c.EffectiveChat.Id, file, &gotgbot.SendPhotoOpts{ReplyParameters: replyParams})
 			if err != nil {
-				err = c.Reply(&telebot.Document{
-					File:     file,
-					FileName: fileName,
-				})
+				_, err = b.SendDocument(c.EffectiveChat.Id, file, &gotgbot.SendDocumentOpts{ReplyParameters: replyParams})
 			}
 		} else {
-			err = c.Reply(&telebot.Document{
-				File:     file,
-				FileName: fileName,
-			})
+			_, err = b.SendDocument(c.EffectiveChat.Id, file, &gotgbot.SendDocumentOpts{ReplyParameters: replyParams})
 		}
 		if err != nil {
 			log.Err(err).

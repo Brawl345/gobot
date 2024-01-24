@@ -30,6 +30,7 @@ const (
 	ChatActionFindLocation   = "find_location"
 	ChatActionUploadDocument = "upload_document"
 	ChatActionUploadPhoto    = "upload_photo"
+	ChatActionUploadVideo    = "upload_video"
 	ChatActionTyping         = "typing"
 
 	ChatMemberStatusCreator       = "creator"

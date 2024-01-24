@@ -45,6 +45,13 @@ import (
 	"github.com/Brawl345/gobot/plugin/speech_to_text"
 	"github.com/Brawl345/gobot/plugin/stats"
 	"github.com/Brawl345/gobot/plugin/summarize"
+	"github.com/Brawl345/gobot/plugin/twitter"
+	"github.com/Brawl345/gobot/plugin/upload_by_url"
+	"github.com/Brawl345/gobot/plugin/urbandictionary"
+	"github.com/Brawl345/gobot/plugin/weather"
+	"github.com/Brawl345/gobot/plugin/wikipedia"
+	"github.com/Brawl345/gobot/plugin/worldclock"
+	"github.com/Brawl345/gobot/plugin/youtube"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/jmoiron/sqlx"
@@ -141,13 +148,13 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		speech_to_text.New(credentialService),
 		stats.New(chatsUsersService),
 		summarize.New(credentialService),
-		//twitter.New(),
-		//upload_by_url.New(),
-		//urbandictionary.New(),
-		//weather.New(geocodingService, homeService),
-		//wikipedia.New(),
-		//worldclock.New(credentialService, geocodingService),
-		//youtube.New(credentialService),
+		twitter.New(),
+		upload_by_url.New(),
+		urbandictionary.New(),
+		weather.New(geocodingService, homeService),
+		wikipedia.New(),
+		worldclock.New(credentialService, geocodingService),
+		youtube.New(credentialService),
 	}
 	managerSrvce.SetPlugins(plugins)
 

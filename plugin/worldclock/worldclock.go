@@ -12,6 +12,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
 
@@ -81,14 +82,15 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("location", c.Matches[1]).
 			Msg("Failed to get coordinates for location")
-		return c.Reply(fmt.Sprintf("❌ Fehler beim Abrufen der Koordinaten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Koordinaten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
+		return err
 	}
 
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "dev.virtualearth.net",
-		Path:   fmt.Sprintf("/REST/v1/TimeZone/%f,%f", venue.Location.Lat, venue.Location.Lng),
+		Path:   fmt.Sprintf("/REST/v1/TimeZone/%f,%f", venue.Location.Latitude, venue.Location.Longitude),
 	}
 
 	q := requestUrl.Query()
@@ -112,8 +114,10 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", requestUrl.String()).
 			Msg("error requesting API")
-		return c.Reply(fmt.Sprintf("❌ Ein Fehler ist aufgetreten.%s", utils.EmbedGUID(guid)),
+
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
+		return err
 	}
 
 	if len(response.ResourceSets) == 0 || len(response.ResourceSets[0].Resources) == 0 {
@@ -158,6 +162,6 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 		),
 	)
 
-	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

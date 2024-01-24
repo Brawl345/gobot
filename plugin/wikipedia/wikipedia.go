@@ -12,8 +12,8 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"gopkg.in/telebot.v3"
 )
 
 var log = logger.New("wikipedia")
@@ -82,8 +82,9 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("query", query).
 			Msg("Failed to unescape query")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
+		return err
 	}
 
 	requestUrl := url.URL{
@@ -113,7 +114,8 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err != nil {
 		var noSuchHostErr *net.DNSError
 		if errors.As(err, &noSuchHostErr) {
-			return c.Reply("❌ Diese Wikipedia-Sprachversion existiert nicht.")
+			_, err := c.EffectiveMessage.Reply(b, "❌ Diese Wikipedia-Sprachversion existiert nicht.", nil)
+			return err
 		}
 
 		guid := xid.New().String()
@@ -121,8 +123,9 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("query", query).
 			Msg("Failed to get Wikipedia response")
-		return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
+		return err
 	}
 
 	if len(response.Query.Pages) == 0 {
@@ -159,7 +162,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 		// Need to parse the disambiguation page manually
 		requestUrl := url.URL{
 			Scheme: "https",
-			Host:   "de.wikipedia.org",
+			Host:   fmt.Sprintf("%s.wikipedia.org", lang),
 			Path:   "/w/api.php",
 		}
 
@@ -183,8 +186,9 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Str("guid", guid).
 				Str("query", query).
 				Msg("Failed to get disambiugation response")
-			return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 				utils.DefaultSendOptions())
+			return err
 		}
 
 		matches := regexDisambiguation.FindAllStringSubmatch(response.Query.Pages[0].Text, -1)
@@ -201,22 +205,23 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 			}
 		}
 
-		return c.Reply(sb.String(), &telebot.SendOptions{
-			AllowWithoutReply:     true,
-			DisableWebPagePreview: true,
-			DisableNotification:   true,
-			ParseMode:             telebot.ModeHTML,
-			ReplyMarkup: &telebot.ReplyMarkup{
-				InlineKeyboard: [][]telebot.InlineButton{
+		_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+			ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+			LinkPreviewOptions:  &gotgbot.LinkPreviewOptions{IsDisabled: true},
+			DisableNotification: true,
+			ParseMode:           gotgbot.ParseModeHTML,
+			ReplyMarkup: &gotgbot.InlineKeyboardMarkup{
+				InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 					{
 						{
 							Text: "...weitere?",
-							URL:  article.URL,
+							Url:  article.URL,
 						},
 					},
 				},
 			},
 		})
+		return err
 	}
 
 	if section != "" {
@@ -228,8 +233,9 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Str("query", query).
 				Str("section", section).
 				Msg("Failed to unescape section")
-			return c.Reply(fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 				utils.DefaultSendOptions())
+			return err
 		}
 		matches := regexSection.FindAllStringSubmatch(article.Text, -1)
 		for _, match := range matches {
@@ -262,6 +268,6 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 		),
 	)
 
-	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }
