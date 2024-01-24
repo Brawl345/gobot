@@ -416,8 +416,10 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 	media := result.Legacy.ExtendedEntities.Media
 	if len(media) == 1 && (media[0].IsPhoto() || media[0].IsGIF()) { // One picture or GIF = send as preview
 		sendOptions.LinkPreviewOptions.IsDisabled = false
+		sendOptions.LinkPreviewOptions.Url = media[0].Link()
+		sendOptions.LinkPreviewOptions.PreferLargeMedia = true
 		_, err := c.EffectiveMessage.Reply(b,
-			utils.EmbedImage(media[0].Link())+sb.String(),
+			sb.String(),
 			sendOptions,
 		)
 		return err

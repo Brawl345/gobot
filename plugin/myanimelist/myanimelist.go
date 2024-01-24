@@ -170,13 +170,6 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	var sb strings.Builder
-	disableWebPagePreview := true
-
-	// Main Picture
-	if anime.GetMainPicture() != "" && !anime.NSFW() {
-		disableWebPagePreview = false
-		sb.WriteString(utils.EmbedImage(anime.GetMainPicture()))
-	}
 
 	// Title
 	sb.WriteString(
@@ -391,7 +384,11 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
-		LinkPreviewOptions:  &gotgbot.LinkPreviewOptions{IsDisabled: disableWebPagePreview},
+		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+			IsDisabled:       anime.GetMainPicture() == "" || anime.NSFW(),
+			Url:              anime.GetMainPicture(),
+			PreferLargeMedia: true,
+		},
 		ParseMode:           gotgbot.ParseModeHTML,
 		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
 		DisableNotification: true,

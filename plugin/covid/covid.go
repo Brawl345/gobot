@@ -115,9 +115,6 @@ func OnCountry(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	var sb strings.Builder
-	if result.CountryInfo.Flag != "" {
-		sb.WriteString(utils.EmbedImage(result.CountryInfo.Flag))
-	}
 
 	sb.WriteString(
 		fmt.Sprintf(
@@ -202,6 +199,11 @@ func OnCountry(b *gotgbot.Bot, c plugin.GobotContext) error {
 	)
 
 	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+			IsDisabled:       result.CountryInfo.Flag == "",
+			Url:              result.CountryInfo.Flag,
+			PreferLargeMedia: true,
+		},
 		ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
 		ParseMode:       gotgbot.ParseModeHTML,
 	})
