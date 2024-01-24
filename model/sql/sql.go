@@ -8,10 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Brawl345/gobot/logger"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	migrate "github.com/rubenv/sql-migrate"
 )
+
+var log = logger.New("db")
 
 //go:embed migrations/*
 var embeddedMigrations embed.FS
@@ -51,9 +54,12 @@ func New() (*sqlx.DB, error) {
 	_, ignoreMigration := os.LookupEnv("IGNORE_SQL_MIGRATION")
 	if !ignoreMigration {
 		migrationSource := &migrate.EmbedFileSystemMigrationSource{FileSystem: embeddedMigrations, Root: "migrations"}
-		_, err = migrate.Exec(db.DB, "mysql", migrationSource, migrate.Up)
+		applied, err := migrate.Exec(db.DB, "mysql", migrationSource, migrate.Up)
 		if err != nil {
 			return nil, err
+		}
+		if applied != 0 {
+			log.Info().Msgf("Applied %d migrations", applied)
 		}
 	}
 
