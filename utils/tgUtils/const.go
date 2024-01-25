@@ -33,6 +33,7 @@ const (
 	EntityTypeURL     EntityType = "url"
 
 	ErrBlockedByUser     = "Forbidden: bot was blocked by the user"
+	ErrReactionInvalid   = "Bad Request: REACTION_INVALID"
 	ErrNotStartedByUser  = "Forbidden: bot can't initiate conversation with a user"
 	ErrUserIsDeactivated = "Forbidden: user is deactivated"
 )

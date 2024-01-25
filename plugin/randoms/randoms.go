@@ -10,6 +10,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -120,8 +121,9 @@ func (p *Plugin) delRandom(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "<b>✅ Text gelöscht!</b>", utils.DefaultSendOptions())
-	return err
+	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+		Fallback: "<b>✅ Text gelöscht!</b>",
+	})
 }
 
 func (p *Plugin) random(b *gotgbot.Bot, c plugin.GobotContext) error {

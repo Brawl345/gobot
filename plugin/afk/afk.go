@@ -120,8 +120,9 @@ func (p *Plugin) goAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	sb.WriteString(".")
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
-	return err
+	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "😴", &tgUtils.ReactionFallbackOpts{
+		Fallback: sb.String(),
+	})
 }
 
 func (p *Plugin) checkAFK(b *gotgbot.Bot, c plugin.GobotContext) error {

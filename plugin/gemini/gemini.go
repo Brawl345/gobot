@@ -290,8 +290,10 @@ func (p *Plugin) onReset(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err != nil {
 		return err
 	}
-	_, err = c.EffectiveMessage.Reply(b, "✅", utils.DefaultSendOptions())
-	return err
+
+	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+		Fallback: "✅",
+	})
 }
 
 func (p *Plugin) onResetAndRun(b *gotgbot.Bot, c plugin.GobotContext) error {

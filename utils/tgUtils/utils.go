@@ -1,9 +1,11 @@
 package tgUtils
 
 import (
+	"errors"
 	"os"
 	"strconv"
 
+	"github.com/Brawl345/gobot/utils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
@@ -78,4 +80,37 @@ func GetBestResolution(photo []gotgbot.PhotoSize) *gotgbot.PhotoSize {
 	}
 
 	return bestResolution
+}
+
+type ReactionFallbackOpts struct {
+	SendMessageOpts *gotgbot.SendMessageOpts
+	Fallback        string
+}
+
+// AddRectionWithFallback adds a reaction to a message. If reactions are disabled, a Fallback message is sent instead
+func AddRectionWithFallback(b *gotgbot.Bot, message *gotgbot.Message, emoji string, opts *ReactionFallbackOpts) error {
+	_, err := message.SetReaction(b, &gotgbot.SetMessageReactionOpts{
+		Reaction: []gotgbot.ReactionType{
+			gotgbot.ReactionTypeEmoji{
+				Emoji: emoji,
+			},
+		},
+	})
+
+	var telegramErr *gotgbot.TelegramError
+	if err != nil && errors.As(err, &telegramErr) && telegramErr.Description == ErrReactionInvalid {
+		fallback := opts.Fallback
+		if fallback == "" {
+			fallback = emoji
+		}
+
+		sendMessageOpts := opts.SendMessageOpts
+		if sendMessageOpts == nil {
+			sendMessageOpts = utils.DefaultSendOptions()
+		}
+
+		_, err = message.Reply(b, fallback, sendMessageOpts)
+	}
+
+	return err
 }

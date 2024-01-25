@@ -157,8 +157,9 @@ func (p *Plugin) addQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "<b>✅ Gespeichert!</b>", utils.DefaultSendOptions())
-	return err
+	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+		Fallback: "<b>✅ Gespeichert!</b>",
+	})
 }
 
 func (p *Plugin) deleteQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
@@ -193,6 +194,7 @@ func (p *Plugin) deleteQuote(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "<b>✅ Zitat gelöscht!</b>", utils.DefaultSendOptions())
-	return err
+	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+		Fallback: "<b>✅ Zitat gelöscht!</b>",
+	})
 }

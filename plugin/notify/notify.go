@@ -220,9 +220,10 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			utils.DefaultSendOptions())
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "✅ Du wirst jetzt über neue Erwähnungen in dieser Gruppe informiert!\n"+
-		"Nutze <code>/notify_disable</code> zum Deaktivieren.", utils.DefaultSendOptions())
-	return err
+	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+		Fallback: "✅ Du wirst jetzt über neue Erwähnungen in dieser Gruppe informiert!\n" +
+			"Nutze <code>/notify_disable</code> zum Deaktivieren.",
+	})
 }
 
 func (p *Plugin) disableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
@@ -256,7 +257,7 @@ func (p *Plugin) disableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "✅ Du wirst nicht mehr über neue Erwähnungen in dieser Gruppe informiert.",
-		utils.DefaultSendOptions())
-	return err
+	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+		Fallback: "✅ Du wirst nicht mehr über neue Erwähnungen in dieser Gruppe informiert.",
+	})
 }

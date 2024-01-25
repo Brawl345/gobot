@@ -61,14 +61,14 @@ func (p *Plugin) OnAllow(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 		isAllowed := p.allowService.IsUserAllowed(c.EffectiveMessage.ReplyToMessage.From)
 		if isAllowed {
-			_, err := c.EffectiveMessage.Reply(b,
-				fmt.Sprintf(
-					"✅ <b>%s</b> darf den Bot bereits überall benutzen.",
-					utils.Escape(c.EffectiveMessage.ReplyToMessage.From.FirstName),
-				),
-				utils.DefaultSendOptions(),
+			return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+				&tgUtils.ReactionFallbackOpts{
+					Fallback: fmt.Sprintf(
+						"✅ <b>%s</b> darf den Bot bereits überall benutzen.",
+						utils.Escape(c.EffectiveMessage.ReplyToMessage.From.FirstName),
+					),
+				},
 			)
-			return err
 		}
 
 		err := p.allowService.AllowUser(c.EffectiveMessage.ReplyToMessage.From)
@@ -82,16 +82,21 @@ func (p *Plugin) OnAllow(b *gotgbot.Bot, c plugin.GobotContext) error {
 			return err
 		}
 
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("✅ <b>%s</b> darf den Bot jetzt überall benutzen",
-			utils.Escape(c.EffectiveMessage.ReplyToMessage.From.FirstName)),
-			utils.DefaultSendOptions())
-		return err
+		return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+			&tgUtils.ReactionFallbackOpts{
+				Fallback: fmt.Sprintf("✅ <b>%s</b> darf den Bot jetzt überall benutzen.",
+					utils.Escape(c.EffectiveMessage.ReplyToMessage.From.FirstName)),
+			},
+		)
 	} else { // Allow group
 		isAllowed := p.allowService.IsChatAllowed(c.EffectiveChat)
 
 		if isAllowed {
-			_, err := c.EffectiveMessage.Reply(b, "✅ Dieser Chat darf den Bot bereits nutzen.", utils.DefaultSendOptions())
-			return err
+			return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+				&tgUtils.ReactionFallbackOpts{
+					Fallback: "✅ Dieser Chat darf den Bot bereits nutzen.",
+				},
+			)
 		}
 
 		err := p.allowService.AllowChat(c.EffectiveChat)
@@ -106,8 +111,11 @@ func (p *Plugin) OnAllow(b *gotgbot.Bot, c plugin.GobotContext) error {
 			return err
 		}
 
-		_, err = c.EffectiveMessage.Reply(b, "✅ Dieser Chat darf den Bot jetzt nutzen", utils.DefaultSendOptions())
-		return err
+		return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+			&tgUtils.ReactionFallbackOpts{
+				Fallback: "✅ Dieser Chat darf den Bot jetzt nutzen.",
+			},
+		)
 	}
 }
 
@@ -120,10 +128,12 @@ func (p *Plugin) OnDeny(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 		isAllowed := p.allowService.IsUserAllowed(c.EffectiveMessage.ReplyToMessage.From)
 		if !isAllowed {
-			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("✅ <b>%s</b> darf den Bot nicht überall benutzen.",
-				utils.Escape(c.EffectiveMessage.ReplyToMessage.From.FirstName)),
-				utils.DefaultSendOptions())
-			return err
+			return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+				&tgUtils.ReactionFallbackOpts{
+					Fallback: fmt.Sprintf("✅ <b>%s</b> darf den Bot nicht überall benutzen.",
+						utils.Escape(c.EffectiveMessage.ReplyToMessage.From.FirstName)),
+				},
+			)
 		}
 
 		err := p.allowService.DenyUser(c.EffectiveMessage.ReplyToMessage.From)
@@ -138,16 +148,21 @@ func (p *Plugin) OnDeny(b *gotgbot.Bot, c plugin.GobotContext) error {
 			return err
 		}
 
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("✅ <b>%s</b> darf den Bot jetzt nicht mehr überall benutzen",
-			utils.Escape(c.EffectiveMessage.ReplyToMessage.From.FirstName)),
-			utils.DefaultSendOptions())
-		return err
+		return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+			&tgUtils.ReactionFallbackOpts{
+				Fallback: fmt.Sprintf("✅ <b>%s</b> darf den Bot jetzt nicht mehr überall benutzen.",
+					utils.Escape(c.EffectiveMessage.ReplyToMessage.From.FirstName)),
+			},
+		)
 	} else { // Deny group
 		isAllowed := p.allowService.IsChatAllowed(c.EffectiveChat)
 
 		if !isAllowed {
-			_, err := c.EffectiveMessage.Reply(b, "✅ Dieser Chat darf den Bot nicht nutzen.", utils.DefaultSendOptions())
-			return err
+			return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+				&tgUtils.ReactionFallbackOpts{
+					Fallback: "✅ Dieser Chat darf den Bot nicht nutzen.",
+				},
+			)
 		}
 
 		err := p.allowService.DenyChat(c.EffectiveChat)
@@ -161,7 +176,10 @@ func (p *Plugin) OnDeny(b *gotgbot.Bot, c plugin.GobotContext) error {
 			return err
 		}
 
-		_, err = c.EffectiveMessage.Reply(b, "✅ Dieser Chat darf den Bot jetzt nicht mehr nutzen", utils.DefaultSendOptions())
-		return err
+		return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+			&tgUtils.ReactionFallbackOpts{
+				Fallback: "✅ Dieser Chat darf den Bot jetzt nicht mehr nutzen..",
+			},
+		)
 	}
 }

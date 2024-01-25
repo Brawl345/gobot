@@ -10,6 +10,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -161,8 +162,11 @@ func (p *Plugin) onSetBirthday(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Msg("Failed to set birthday")
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "✅ <b>Dein Geburtstag wurde gespeichert.</b>", utils.DefaultSendOptions())
-	return err
+	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+		&tgUtils.ReactionFallbackOpts{
+			Fallback: "✅ <b>Dein Geburtstag wurde gespeichert.</b>",
+		},
+	)
 }
 
 func (p *Plugin) onDeleteBirthday(b *gotgbot.Bot, c plugin.GobotContext) error {
@@ -176,8 +180,11 @@ func (p *Plugin) onDeleteBirthday(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "✅ <b>Dein Geburtstag wurde gelöscht.</b>\nTja, ich schätze du alterst nicht mehr.", utils.DefaultSendOptions())
-	return err
+	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+		&tgUtils.ReactionFallbackOpts{
+			Fallback: "✅ <b>Dein Geburtstag wurde gelöscht.</b>\nTja, ich schätze du alterst nicht mehr.",
+		},
+	)
 }
 
 func (p *Plugin) onEnableBirthdayNotifications(b *gotgbot.Bot, c plugin.GobotContext) error {
@@ -208,8 +215,11 @@ func (p *Plugin) onEnableBirthdayNotifications(b *gotgbot.Bot, c plugin.GobotCon
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "✅ Geburtstagsbenachrichtigungen wurden aktiviert.", utils.DefaultSendOptions())
-	return err
+	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+		&tgUtils.ReactionFallbackOpts{
+			Fallback: "✅ Geburtstagsbenachrichtigungen wurden aktiviert.",
+		},
+	)
 }
 
 func (p *Plugin) onDisableBirthdayNotifications(b *gotgbot.Bot, c plugin.GobotContext) error {
@@ -240,8 +250,11 @@ func (p *Plugin) onDisableBirthdayNotifications(b *gotgbot.Bot, c plugin.GobotCo
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "✅ Geburtstagsbenachrichtigungen wurden deaktiviert.", utils.DefaultSendOptions())
-	return err
+	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+		&tgUtils.ReactionFallbackOpts{
+			Fallback: "✅ Geburtstagsbenachrichtigungen wurden deaktiviert.",
+		},
+	)
 }
 
 func (p *Plugin) listBirthdays(b *gotgbot.Bot, c plugin.GobotContext) error {
