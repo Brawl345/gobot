@@ -200,7 +200,6 @@ func onMessage(msg *gotgbot.Message) string {
 	}
 
 	// Reply
-	// TODO: Not working with "reply in other chat"
 	if msg.ReplyToMessage != nil {
 		sb.WriteString(
 			fmt.Sprintf(
@@ -208,6 +207,18 @@ func onMessage(msg *gotgbot.Message) string {
 				green,
 				reset,
 				printUser(msg.ReplyToMessage.From),
+			),
+		)
+	}
+
+	// External Replys
+	if msg.ExternalReply != nil {
+		// TODO
+		sb.WriteString(
+			fmt.Sprintf(
+				"%sExterne Antwort%s: ",
+				green,
+				reset,
 			),
 		)
 	}
@@ -757,12 +768,18 @@ func PrintMessage(c *ext.Context) {
 	var text string
 	if c.Message != nil {
 		text = onMessage(c.Message)
-	}
-	if c.CallbackQuery != nil {
+	} else if c.CallbackQuery != nil {
 		text = onCallback(c.CallbackQuery)
-	}
-	if c.InlineQuery != nil {
+	} else if c.InlineQuery != nil {
 		text = onInlineQuery(c.InlineQuery)
+	} else {
+		text = fmt.Sprintf(
+			"%s>>> %s%sUnbekannter Nachrichtentyp%s",
+			cyan,
+			reset,
+			red,
+			reset,
+		)
 	}
 
 	println(text)
