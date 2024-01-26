@@ -25,7 +25,9 @@ const (
 	MaxTokens        = 1000
 	PresencePenalty  = 1.0
 	Temperature      = 0.3
-	SystemPrompt     = "Summarize the following article in five short bullet points. Always speak in German. If the website needs JavaScript and has a cookie consent banner, reply with a clown emoji."
+	SystemPrompt     = "Fasse den folgenden Artikel in fünf kurzen Stichpunkten zusammen. Antworte IMMER nur Deutsch. Formatiere deine Ausgabe wie folgt:\n" +
+		"Der Artikel handelt von [Zusammenfassung in einem Satz]\n\n" +
+		"- [Stichpunkt 1]..."
 )
 
 var log = logger.New("summarize")
@@ -87,7 +89,6 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 		&plugin.CommandHandler{
 			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/su(?:mmarize)?(?:@%s)?$`, botInfo.Username)),
 			HandlerFunc: p.onReply,
-			GroupOnly:   true,
 		},
 	}
 }
