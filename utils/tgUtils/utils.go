@@ -26,13 +26,14 @@ func AnyText(message *gotgbot.Message) string {
 }
 
 func ParseAnyEntities(message *gotgbot.Message, entity *gotgbot.MessageEntity) gotgbot.ParsedMessageEntity {
-	if message.Text != "" {
+	switch {
+	case message.Text != "":
 		return message.ParseEntity(*entity)
-	}
-	if message.Caption != "" {
+	case message.Caption != "":
 		return message.ParseCaptionEntity(*entity)
+	default:
+		return gotgbot.ParsedMessageEntity{}
 	}
-	return gotgbot.ParsedMessageEntity{}
 }
 
 // ParseAnyEntityTypes is a simplied version of ParseEntityTypes that accepts a slice instead of a map for entites types
@@ -43,13 +44,14 @@ func ParseAnyEntityTypes(message *gotgbot.Message, only []EntityType) []gotgbot.
 		accepted[string(entityType)] = struct{}{}
 	}
 
-	if message.Text != "" {
+	switch {
+	case message.Text != "":
 		return message.ParseEntityTypes(accepted)
-	}
-	if message.Caption != "" {
+	case message.Caption != "":
 		return message.ParseCaptionEntityTypes(accepted)
+	default:
+		return []gotgbot.ParsedMessageEntity{}
 	}
-	return []gotgbot.ParsedMessageEntity{}
 }
 
 func ContainsMedia(m *gotgbot.Message) bool {
