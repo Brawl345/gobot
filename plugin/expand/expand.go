@@ -14,6 +14,7 @@ import (
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
+	"golang.org/x/exp/slices"
 )
 
 var log = logger.New("expand")
@@ -113,10 +114,9 @@ func onExpand(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	var shortUrls []string
-	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage) {
-		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeURL {
-			shortUrls = append(shortUrls, c.EffectiveMessage.ParseEntity(entity).Url)
-		} else if tgUtils.EntityType(entity.Type) == tgUtils.EntityTextLink {
+
+	for _, entity := range tgUtils.ParseAnyEntityTypes(c.EffectiveMessage, []tgUtils.EntityType{tgUtils.EntityTypeURL, tgUtils.EntityTextLink}) {
+		if !slices.Contains(shortUrls, entity.Url) {
 			shortUrls = append(shortUrls, entity.Url)
 		}
 	}
@@ -164,10 +164,9 @@ func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	var shortUrls []string
-	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage.ReplyToMessage) {
-		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeURL {
-			shortUrls = append(shortUrls, c.EffectiveMessage.ReplyToMessage.ParseEntity(entity).Url)
-		} else if tgUtils.EntityType(entity.Type) == tgUtils.EntityTextLink {
+
+	for _, entity := range tgUtils.ParseAnyEntityTypes(c.EffectiveMessage.ReplyToMessage, []tgUtils.EntityType{tgUtils.EntityTypeURL, tgUtils.EntityTextLink}) {
+		if !slices.Contains(shortUrls, entity.Url) {
 			shortUrls = append(shortUrls, entity.Url)
 		}
 	}

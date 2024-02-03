@@ -41,65 +41,64 @@ func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 
 func onAmazonLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var links []string
-	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage) {
-		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeURL {
-			amazonUrl, err := url.Parse(c.EffectiveMessage.ParseEntity(entity).Url)
+
+	for _, entity := range tgUtils.ParseAnyEntityTypes(c.EffectiveMessage, []tgUtils.EntityType{tgUtils.EntityTypeURL}) {
+		amazonUrl, err := url.Parse(entity.Url)
+
+		if err != nil {
+			log.Err(err).
+				Str("url", entity.Url).
+				Msg("Failed to parse amazon url")
+			continue
+		}
+
+		if amazonUrl.Hostname() == "amzn.to" {
+			req, err := http.NewRequest("GET", amazonUrl.String(), nil) // HEAD requests lead to 405 :(
 
 			if err != nil {
 				log.Err(err).
-					Str("url", c.EffectiveMessage.ParseEntity(entity).Url).
-					Msg("Failed to parse amazon url")
+					Str("url", amazonUrl.String()).
+					Msg("Failed to create request")
 				continue
 			}
 
-			if amazonUrl.Hostname() == "amzn.to" {
-				req, err := http.NewRequest("GET", amazonUrl.String(), nil) // HEAD requests lead to 405 :(
+			req.Header.Set("User-Agent", utils.UserAgent) // Amazon blocks unknown user agents
+			client := &http.Client{
+				CheckRedirect: func(req *http.Request, via []*http.Request) error {
+					return http.ErrUseLastResponse
+				},
+				Timeout: 10 * time.Second,
+			}
+			resp, err := client.Do(req)
 
-				if err != nil {
-					log.Err(err).
-						Str("url", amazonUrl.String()).
-						Msg("Failed to create request")
-					continue
-				}
-
-				req.Header.Set("User-Agent", utils.UserAgent) // Amazon blocks unknown user agents
-				client := &http.Client{
-					CheckRedirect: func(req *http.Request, via []*http.Request) error {
-						return http.ErrUseLastResponse
-					},
-					Timeout: 10 * time.Second,
-				}
-				resp, err := client.Do(req)
-
-				if err != nil {
-					log.Err(err).
-						Str("url", amazonUrl.String()).
-						Msg("Failed to send request")
-					continue
-				}
-
-				if resp.StatusCode != 301 {
-					log.Error().
-						Int("status_code", resp.StatusCode).
-						Msg("Got non-301 status code")
-					continue
-				}
-
-				fullLink, err := resp.Location()
-				if err != nil {
-					log.Error().
-						Interface("headers", resp.Header).
-						Str("url", amazonUrl.String()).
-						Msg("Failed to parse location header")
-					continue
-				}
-				amazonUrl = fullLink
+			if err != nil {
+				log.Err(err).
+					Str("url", amazonUrl.String()).
+					Msg("Failed to send request")
+				continue
 			}
 
-			if amazonUrl.Query().Has("tag") || amazonUrl.Query().Has("linkId") {
-				amazonUrl.RawQuery = ""
-				links = append(links, amazonUrl.String())
+			if resp.StatusCode != 301 {
+				log.Error().
+					Int("status_code", resp.StatusCode).
+					Msg("Got non-301 status code")
+				continue
 			}
+
+			fullLink, err := resp.Location()
+			if err != nil {
+				log.Error().
+					Interface("headers", resp.Header).
+					Str("url", amazonUrl.String()).
+					Msg("Failed to parse location header")
+				continue
+			}
+			amazonUrl = fullLink
+		}
+
+		if amazonUrl.Query().Has("tag") || amazonUrl.Query().Has("linkId") {
+			amazonUrl.RawQuery = ""
+			links = append(links, amazonUrl.String())
 		}
 	}
 

@@ -124,12 +124,8 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	var urls []string
-	for _, entity := range tgUtils.AnyEntities(msg) {
-		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeURL {
-			urls = append(urls, msg.ParseEntity(entity).Url)
-		} else if tgUtils.EntityType(entity.Type) == tgUtils.EntityTextLink {
-			urls = append(urls, entity.Url)
-		}
+	for _, entity := range tgUtils.ParseAnyEntityTypes(msg, []tgUtils.EntityType{tgUtils.EntityTypeURL, tgUtils.EntityTextLink}) {
+		urls = append(urls, entity.Url)
 	}
 
 	if len(urls) == 0 {

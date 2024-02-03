@@ -195,9 +195,7 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 							guid := xid.New().String()
 							log.Err(errors.New("panic")).
 								Str("guid", guid).
-								Int64("chat_id", ctx.EffectiveChat.Id).
-								Int64("user_id", ctx.EffectiveUser.Id).
-								Str("text", ctx.EffectiveMessage.Text).
+								Interface("ctx", ctx).
 								Str("component", plg.Name()).
 								Msgf("%s", r)
 							_, _ = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
@@ -212,9 +210,7 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 						guid := xid.New().String()
 						log.Err(err).
 							Str("guid", guid).
-							Int64("chat_id", ctx.EffectiveChat.Id).
-							Int64("user_id", ctx.EffectiveUser.Id).
-							Str("text", ctx.EffectiveMessage.Text).
+							Interface("ctx", ctx).
 							Str("component", plg.Name()).
 							Send()
 						_, _ = ctx.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())

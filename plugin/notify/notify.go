@@ -75,14 +75,13 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 
 func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var mentionedUsernames []string
-	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage) {
-		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeMention {
-			username := strings.TrimPrefix(c.EffectiveMessage.ParseEntity(entity).Text, "@")
-			username = strings.ToLower(username)
-			if !slices.Contains(mentionedUsernames, username) && username !=
-				strings.ToLower(c.EffectiveUser.Username) {
-				mentionedUsernames = append(mentionedUsernames, username)
-			}
+
+	for _, entity := range tgUtils.ParseAnyEntityTypes(c.EffectiveMessage, []tgUtils.EntityType{tgUtils.EntityTypeMention}) {
+		username := strings.TrimPrefix(entity.Text, "@")
+		username = strings.ToLower(username)
+		if !slices.Contains(mentionedUsernames, username) && username !=
+			strings.ToLower(c.EffectiveUser.Username) {
+			mentionedUsernames = append(mentionedUsernames, username)
 		}
 	}
 

@@ -25,6 +25,33 @@ func AnyText(message *gotgbot.Message) string {
 	return text
 }
 
+func ParseAnyEntities(message *gotgbot.Message, entity *gotgbot.MessageEntity) gotgbot.ParsedMessageEntity {
+	if message.Text != "" {
+		return message.ParseEntity(*entity)
+	}
+	if message.Caption != "" {
+		return message.ParseCaptionEntity(*entity)
+	}
+	return gotgbot.ParsedMessageEntity{}
+}
+
+// ParseAnyEntityTypes is a simplied version of ParseEntityTypes that accepts a slice instead of a map for entites types
+// that should be parsed. It also uses caption entites when they exist.
+func ParseAnyEntityTypes(message *gotgbot.Message, only []EntityType) []gotgbot.ParsedMessageEntity {
+	accepted := make(map[string]struct{}, len(only))
+	for _, entityType := range only {
+		accepted[string(entityType)] = struct{}{}
+	}
+
+	if message.Text != "" {
+		return message.ParseEntityTypes(accepted)
+	}
+	if message.Caption != "" {
+		return message.ParseCaptionEntityTypes(accepted)
+	}
+	return []gotgbot.ParsedMessageEntity{}
+}
+
 func ContainsMedia(m *gotgbot.Message) bool {
 	switch {
 	case m.Photo != nil:

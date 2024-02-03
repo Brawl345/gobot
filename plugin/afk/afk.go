@@ -180,14 +180,10 @@ func (p *Plugin) checkAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 func (p *Plugin) notifyIfAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var mentionedUsername string
-	for _, entity := range tgUtils.AnyEntities(c.EffectiveMessage) {
-		if tgUtils.EntityType(entity.Type) == tgUtils.EntityTypeMention {
-			if mentionedUsername != "" {
-				return nil // Supports only one username
-			}
-			username := strings.TrimPrefix(c.EffectiveMessage.ParseEntity(entity).Text, "@")
-			mentionedUsername = strings.ToLower(username)
-		}
+
+	for _, entity := range tgUtils.ParseAnyEntityTypes(c.EffectiveMessage, []tgUtils.EntityType{tgUtils.EntityTypeMention}) {
+		username := strings.TrimPrefix(entity.Text, "@")
+		mentionedUsername = strings.ToLower(username)
 	}
 
 	if mentionedUsername == "" ||
