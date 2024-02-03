@@ -54,23 +54,23 @@ func ParseAnyEntityTypes(message *gotgbot.Message, only []EntityType) []gotgbot.
 	}
 }
 
-func ContainsMedia(m *gotgbot.Message) bool {
+func ContainsMedia(message *gotgbot.Message) bool {
 	switch {
-	case m.Photo != nil:
+	case message.Photo != nil:
 		return true
-	case m.Voice != nil:
+	case message.Voice != nil:
 		return true
-	case m.Audio != nil:
+	case message.Audio != nil:
 		return true
-	case m.Animation != nil:
+	case message.Animation != nil:
 		return true
-	case m.Sticker != nil:
+	case message.Sticker != nil:
 		return true
-	case m.Document != nil:
+	case message.Document != nil:
 		return true
-	case m.Video != nil:
+	case message.Video != nil:
 		return true
-	case m.VideoNote != nil:
+	case message.VideoNote != nil:
 		return true
 	default:
 		return false
