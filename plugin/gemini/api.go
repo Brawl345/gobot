@@ -1,9 +1,10 @@
 package gemini
 
 const (
-	ApiUrl    = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
-	RoleModel = "model"
-	RoleUser  = "user"
+	ApiUrlGemini       = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+	ApiUrlGeminiVision = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent"
+	RoleModel          = "model"
+	RoleUser           = "user"
 )
 
 type (
@@ -12,8 +13,14 @@ type (
 		Parts []Part `json:"parts"`
 	}
 
+	InlineData struct {
+		MimeType string `json:"mimeType,omitempty"`
+		Data     string `json:"data,omitempty"`
+	}
+
 	Part struct {
-		Text string `json:"text"`
+		Text       string      `json:"text,omitempty"`
+		InlineData *InlineData `json:"inlineData,omitempty"`
 	}
 
 	SafetySetting struct {
@@ -28,12 +35,14 @@ type (
 		MaxOutputTokens int     `json:"maxOutputTokens"`
 	}
 
+	// Request - https://ai.google.dev/api/rest/v1beta/models/generateContent#request-body
 	Request struct {
 		Contents         []Content        `json:"contents"`
 		SafetySettings   []SafetySetting  `json:"safetySettings"`
 		GenerationConfig GenerationConfig `json:"generationConfig"`
 	}
 
+	// Response - https://ai.google.dev/api/rest/v1beta/GenerateContentResponse
 	Response struct {
 		Candidates []struct {
 			Content       Content `json:"content"`

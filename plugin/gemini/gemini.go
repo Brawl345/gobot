@@ -1,9 +1,12 @@
 package gemini
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"net/url"
 	"regexp"
 	"time"
 
@@ -29,9 +32,10 @@ var log = logger.New("gemini")
 
 type (
 	Plugin struct {
-		apiUrl            string
-		googleVertexAIKey string
-		geminiService     Service
+		apiUrlGemini       string
+		apiUrlGeminiVision string
+		googleVertexAIKey  string
+		geminiService      Service
 	}
 
 	Service interface {
@@ -47,17 +51,25 @@ func New(credentialService model.CredentialService, geminiService Service) *Plug
 		log.Warn().Msg("google_vertex_ai_key not found")
 	}
 
-	apiUrl := ApiUrl
-	proxyUrl, err := credentialService.GetKey("google_gemini_proxy")
+	apiUrlGeminiPro := ApiUrlGemini
+	proxyUrlGeminiPro, err := credentialService.GetKey("google_gemini_proxy")
 	if err == nil {
-		log.Debug().Msg("Using Gemini API proxy")
-		apiUrl = proxyUrl
+		log.Debug().Msg("Using Gemini API proxy for base model")
+		apiUrlGeminiPro = proxyUrlGeminiPro
+	}
+
+	apiUrlGeminiVision := ApiUrlGeminiVision
+	proxyUrlVision, err := credentialService.GetKey("google_gemini_vision_proxy")
+	if err == nil {
+		log.Debug().Msg("Using Gemini API proxy for Vision")
+		apiUrlGeminiVision = proxyUrlVision
 	}
 
 	return &Plugin{
-		apiUrl:            apiUrl,
-		googleVertexAIKey: googleVertexAIKey,
-		geminiService:     geminiService,
+		apiUrlGemini:       apiUrlGeminiPro,
+		apiUrlGeminiVision: apiUrlGeminiVision,
+		googleVertexAIKey:  googleVertexAIKey,
+		geminiService:      geminiService,
 	}
 }
 
@@ -90,6 +102,18 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
+	if c.EffectiveMessage.Photo != nil {
+		return p.onGeminiVision(b, c)
+	}
+
+	if c.EffectiveMessage.ReplyToMessage != nil && c.EffectiveMessage.ReplyToMessage.Photo != nil {
+		return p.onGeminiVision(b, c)
+	}
+
+	if c.EffectiveMessage.ExternalReply != nil && c.EffectiveMessage.ExternalReply.Photo != nil {
+		return p.onGeminiVision(b, c)
+	}
+
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
 	var contents []Content
@@ -150,8 +174,24 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	var response Response
 	var httpError *httpUtils.HttpError
+
+	apiUrl, err := url.Parse(p.apiUrlGemini)
+	if err != nil {
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Str("api_url", p.apiUrlGemini).
+			Msg("error while parsing api url")
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
+	}
+
+	q := apiUrl.Query()
+	q.Add("key", p.googleVertexAIKey)
+	apiUrl.RawQuery = q.Encode()
+
 	err = httpUtils.PostRequest(
-		p.apiUrl+"?key="+p.googleVertexAIKey,
+		apiUrl.String(),
 		nil,
 		&request,
 		&response,
@@ -163,7 +203,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 				guid := xid.New().String()
 				log.Err(err).
 					Str("guid", guid).
-					Str("url", p.apiUrl).
+					Str("url", p.apiUrlGemini).
 					Msg("Failed to send POST request, got HTTP code 400")
 
 				err := p.geminiService.ResetHistory(c.EffectiveChat)
@@ -187,7 +227,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Str("url", p.apiUrl).
+			Str("url", p.apiUrlGemini).
 			Msg("Failed to send POST request")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
@@ -197,7 +237,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		len(response.Candidates[0].Content.Parts) == 0 ||
 		response.Candidates[0].Content.Parts[0].Text == "" {
 		log.Error().
-			Str("url", p.apiUrl).
+			Str("url", p.apiUrlGemini).
 			Msg("Got no answer from Gemini")
 		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von Gemini erhalten (eventuell gefiltert).", utils.DefaultSendOptions())
 		return err
@@ -255,6 +295,181 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if inputChars > MaxInputCharacters {
 		output += "\n\n(Token-Limit fast erreicht, Konversation wurde zurückgesetzt)"
+	}
+
+	_, err = c.EffectiveMessage.Reply(b, output, &gotgbot.SendMessageOpts{
+		ReplyParameters: &gotgbot.ReplyParameters{
+			AllowSendingWithoutReply: true,
+		},
+		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+			IsDisabled: true,
+		},
+	})
+
+	return err
+}
+
+func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
+	// NOTE: Multiturn chat is not enabled for Gemini Pro Vision
+
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadPhoto, nil)
+
+	var bestResolution *gotgbot.PhotoSize
+
+	if c.EffectiveMessage.Photo != nil {
+		bestResolution = tgUtils.GetBestResolution(c.EffectiveMessage.Photo)
+	} else if c.EffectiveMessage.ReplyToMessage != nil && c.EffectiveMessage.ReplyToMessage.Photo != nil {
+		bestResolution = tgUtils.GetBestResolution(c.EffectiveMessage.ReplyToMessage.Photo)
+	} else if c.EffectiveMessage.ExternalReply != nil && c.EffectiveMessage.ExternalReply.Photo != nil {
+		bestResolution = tgUtils.GetBestResolution(c.EffectiveMessage.ExternalReply.Photo)
+	}
+	fileSize := bestResolution.FileSize
+
+	// This should never happen because the limit for photos sent through Telegram is ~5-10 MB
+	if fileSize > tgUtils.MaxFilesizeDownload {
+		log.Warn().
+			Msgf("File is too big: %d", fileSize)
+		_, err := c.EffectiveMessage.Reply(b, "❌Das Bild ist zu groß.", utils.DefaultSendOptions())
+		return err
+	}
+
+	file, err := httpUtils.DownloadFile(b, bestResolution.FileId)
+	if err != nil {
+		log.Err(err).
+			Interface("photo", bestResolution).
+			Msg("Failed to get photo from Telegram")
+		_, err := c.EffectiveMessage.Reply(b, "❌ Konnte Bild nicht von Telegram herunterladen.", utils.DefaultSendOptions())
+		return err
+	}
+
+	defer func(file io.ReadCloser) {
+		err := file.Close()
+		if err != nil {
+			log.Err(err).Msg("Failed to close file")
+		}
+	}(file)
+
+	fileData, err := io.ReadAll(file)
+	if err != nil {
+		log.Err(err).
+			Msg("Failed to read body")
+		_, err := c.EffectiveMessage.Reply(b, "❌ Konnte Bild nicht lesen.", utils.DefaultSendOptions())
+		return err
+	}
+
+	var contents []Content
+	contents = append(contents, Content{
+		Role: RoleUser,
+		Parts: []Part{
+			{
+				Text: c.Matches[1],
+			},
+			{
+				InlineData: &InlineData{
+					MimeType: "image/jpeg", // Images sent through Telegram are always JPEGs
+					Data:     base64.StdEncoding.EncodeToString(fileData),
+				},
+			},
+		},
+	})
+
+	request := Request{
+		Contents: contents,
+		SafetySettings: []SafetySetting{
+			{
+				Category:  "HARM_CATEGORY_HARASSMENT",
+				Threshold: "BLOCK_NONE",
+			},
+			{
+				Category:  "HARM_CATEGORY_HATE_SPEECH",
+				Threshold: "BLOCK_NONE",
+			},
+			{
+				Category:  "HARM_CATEGORY_SEXUALLY_EXPLICIT",
+				Threshold: "BLOCK_NONE",
+			},
+			{
+				Category:  "HARM_CATEGORY_DANGEROUS_CONTENT",
+				Threshold: "BLOCK_NONE",
+			},
+		},
+		GenerationConfig: GenerationConfig{
+			Temperature:     Temperature,
+			TopK:            TopK,
+			TopP:            TopP,
+			MaxOutputTokens: MaxOutputTokens,
+		},
+	}
+
+	var response Response
+	var httpError *httpUtils.HttpError
+
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadPhoto, nil)
+
+	apiUrl, err := url.Parse(p.apiUrlGeminiVision)
+	if err != nil {
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Str("api_url", p.apiUrlGeminiVision).
+			Msg("error while parsing api url")
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
+	}
+
+	q := apiUrl.Query()
+	q.Add("key", p.googleVertexAIKey)
+	apiUrl.RawQuery = q.Encode()
+
+	err = httpUtils.PostRequest(
+		apiUrl.String(),
+		nil,
+		&request,
+		&response,
+	)
+
+	if err != nil {
+		if errors.As(err, &httpError) {
+			if httpError.StatusCode == 400 {
+				guid := xid.New().String()
+				log.Err(err).
+					Str("guid", guid).
+					Str("url", p.apiUrlGeminiVision).
+					Msg("Failed to send POST request, got HTTP code 400")
+
+				_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+				return err
+			}
+
+			if httpError.StatusCode == 429 {
+				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())
+				return err
+			}
+		}
+
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Str("url", p.apiUrlGemini).
+			Msg("Failed to send POST request")
+		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
+	}
+
+	if len(response.Candidates) == 0 ||
+		len(response.Candidates[0].Content.Parts) == 0 ||
+		response.Candidates[0].Content.Parts[0].Text == "" {
+		log.Error().
+			Str("url", p.apiUrlGemini).
+			Msg("Got no answer from Gemini")
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von Gemini erhalten (eventuell gefiltert).", utils.DefaultSendOptions())
+		return err
+	}
+
+	output := response.Candidates[0].Content.Parts[0].Text
+
+	if len(output) > tgUtils.MaxMessageLength {
+		output = output[:tgUtils.MaxMessageLength-9] + "..."
 	}
 
 	_, err = c.EffectiveMessage.Reply(b, output, &gotgbot.SendMessageOpts{
