@@ -144,6 +144,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if tgUtils.IsReply(c.EffectiveMessage) && tgUtils.AnyText(c.EffectiveMessage.ReplyToMessage) != "" {
 		inputText.WriteString("-- ZUSÄTZLICHER KONTEXT --\n")
+		inputText.WriteString("Dies ist zusätzlicher Kontext. Wiederhole diesen nicht wortwörtlich!")
 		inputText.WriteString(fmt.Sprintf("Nachricht von %s", c.EffectiveMessage.ReplyToMessage.From.FirstName))
 		if c.EffectiveMessage.ReplyToMessage.From.LastName != "" {
 			inputText.WriteString(fmt.Sprintf(" %s", c.EffectiveMessage.ReplyToMessage.From.LastName))
