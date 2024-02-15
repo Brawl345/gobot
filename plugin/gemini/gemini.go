@@ -8,6 +8,7 @@ import (
 	"io"
 	"net/url"
 	"regexp"
+	"strings"
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
@@ -139,9 +140,24 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}
 
+	var inputText strings.Builder
+
+	if tgUtils.IsReply(c.EffectiveMessage) && tgUtils.AnyText(c.EffectiveMessage.ReplyToMessage) != "" {
+		inputText.WriteString("-- ZUSÄTZLICHER KONTEXT --\n")
+		inputText.WriteString(fmt.Sprintf("Nachricht von %s", c.EffectiveMessage.ReplyToMessage.From.FirstName))
+		if c.EffectiveMessage.ReplyToMessage.From.LastName != "" {
+			inputText.WriteString(fmt.Sprintf(" %s", c.EffectiveMessage.ReplyToMessage.From.LastName))
+		}
+		inputText.WriteString(":\n")
+		inputText.WriteString(tgUtils.AnyText(c.EffectiveMessage.ReplyToMessage))
+		inputText.WriteString("-- ZUSÄTZLICHER KONTEXT ENDE --\n")
+	}
+
+	inputText.WriteString(c.Matches[1])
+
 	contents = append(contents, Content{
 		Role:  RoleUser,
-		Parts: []Part{{Text: c.Matches[1]}},
+		Parts: []Part{{Text: inputText.String()}},
 	})
 
 	request := Request{
