@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"net"
 	"net/url"
 	"regexp"
 	"strings"
@@ -196,7 +197,6 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	var response Response
-	var httpError *httpUtils.HttpError
 
 	apiUrl, err := url.Parse(p.apiUrlGemini)
 	if err != nil {
@@ -221,6 +221,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 	)
 
 	if err != nil {
+		var httpError *httpUtils.HttpError
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == 400 {
 				guid := xid.New().String()
@@ -245,6 +246,12 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())
 				return err
 			}
+		}
+
+		var netErr net.Error
+		if errors.As(err, &netErr) && netErr.Timeout() {
+			_, err := c.EffectiveMessage.Reply(b, "❌ Timeout, bitte erneut versuchen.", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
@@ -425,7 +432,6 @@ func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	var response Response
-	var httpError *httpUtils.HttpError
 
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadPhoto, nil)
 
@@ -452,6 +458,7 @@ func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
 	)
 
 	if err != nil {
+		var httpError *httpUtils.HttpError
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == 400 {
 				guid := xid.New().String()
@@ -468,6 +475,12 @@ func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
 				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())
 				return err
 			}
+		}
+
+		var netErr net.Error
+		if errors.As(err, &netErr) && netErr.Timeout() {
+			_, err := c.EffectiveMessage.Reply(b, "❌ Timeout, bitte erneut versuchen.", utils.DefaultSendOptions())
+			return err
 		}
 
 		guid := xid.New().String()
