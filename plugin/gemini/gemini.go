@@ -144,13 +144,19 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if tgUtils.IsReply(c.EffectiveMessage) && tgUtils.AnyText(c.EffectiveMessage.ReplyToMessage) != "" {
 		inputText.WriteString("-- ZUSÄTZLICHER KONTEXT --\n")
-		inputText.WriteString("Dies ist zusätzlicher Kontext. Wiederhole diesen nicht wortwörtlich!")
+		inputText.WriteString("Dies ist zusätzlicher Kontext. Wiederhole diesen nicht wortwörtlich!\n\n")
 		inputText.WriteString(fmt.Sprintf("Nachricht von %s", c.EffectiveMessage.ReplyToMessage.From.FirstName))
 		if c.EffectiveMessage.ReplyToMessage.From.LastName != "" {
 			inputText.WriteString(fmt.Sprintf(" %s", c.EffectiveMessage.ReplyToMessage.From.LastName))
 		}
 		inputText.WriteString(":\n")
 		inputText.WriteString(tgUtils.AnyText(c.EffectiveMessage.ReplyToMessage))
+
+		if c.EffectiveMessage.Quote != nil && c.EffectiveMessage.Quote.Text != "" {
+			inputText.WriteString("\n-- Beziehe dich nur auf folgenden Textteil: --\n")
+			inputText.WriteString(c.EffectiveMessage.Quote.Text)
+		}
+
 		inputText.WriteString("-- ZUSÄTZLICHER KONTEXT ENDE --\n")
 	}
 
