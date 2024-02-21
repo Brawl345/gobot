@@ -766,13 +766,17 @@ func onInlineQuery(query *gotgbot.InlineQuery) string {
 
 func PrintMessage(c *ext.Context) {
 	var text string
-	if c.Message != nil {
+
+	switch c.GetType() {
+	case gotgbot.UpdateTypeMessage:
 		text = onMessage(c.Message)
-	} else if c.CallbackQuery != nil {
+	case gotgbot.UpdateTypeEditedMessage:
+		text = onMessage(c.EditedMessage)
+	case gotgbot.UpdateTypeCallbackQuery:
 		text = onCallback(c.CallbackQuery)
-	} else if c.InlineQuery != nil {
+	case gotgbot.UpdateTypeInlineQuery:
 		text = onInlineQuery(c.InlineQuery)
-	} else {
+	default:
 		text = fmt.Sprintf(
 			"%s>>> %s%sUnbekannter Nachrichtentyp%s",
 			cyan,

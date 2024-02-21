@@ -42,7 +42,7 @@ func (p *Processor) ProcessUpdate(d *ext.Dispatcher, b *gotgbot.Bot, ctx *ext.Co
 		PrintMessage(ctx)
 	}
 
-	if ctx.Message != nil {
+	if ctx.GetType() == gotgbot.UpdateTypeMessage {
 
 		if ctx.Message.LeftChatMember != nil {
 			return p.onUserLeft(ctx)
@@ -55,15 +55,15 @@ func (p *Processor) ProcessUpdate(d *ext.Dispatcher, b *gotgbot.Bot, ctx *ext.Co
 		return p.onMessage(b, ctx)
 	}
 
-	if ctx.EditedMessage != nil {
+	if ctx.GetType() == gotgbot.UpdateTypeEditedMessage {
 		return p.onMessage(b, ctx)
 	}
 
-	if ctx.CallbackQuery != nil {
+	if ctx.GetType() == gotgbot.UpdateTypeCallbackQuery {
 		return p.onCallback(b, ctx)
 	}
 
-	if ctx.InlineQuery != nil {
+	if ctx.GetType() == gotgbot.UpdateTypeInlineQuery {
 		return p.onInlineQuery(b, ctx)
 	}
 
