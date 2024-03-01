@@ -33,9 +33,8 @@ const (
 var log = logger.New("summarize")
 
 type Plugin struct {
-	apiUrl                   string
-	openAIApiKey             string
-	cloudflareApiGatewayPath string
+	apiUrl       string
+	openAIApiKey string
 }
 
 func New(credentialService model.CredentialService) *Plugin {
@@ -61,9 +60,8 @@ func New(credentialService model.CredentialService) *Plugin {
 	}
 
 	return &Plugin{
-		apiUrl:                   apiUrl,
-		openAIApiKey:             openAIApiKey,
-		cloudflareApiGatewayPath: cloudflareApiGatewayPath,
+		apiUrl:       apiUrl,
+		openAIApiKey: openAIApiKey,
 	}
 }
 
