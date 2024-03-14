@@ -21,47 +21,46 @@ import (
 
 const (
 	MinArticleLength = 500
-	MaxArticleLength = 60000 // ~12,000 tokens
-	MaxTokens        = 1000
-	PresencePenalty  = 1.0
+	MaxArticleLength = 650000 // a bit under ~2 mio. tokens
+	MaxTokens        = 700
 	Temperature      = 0.3
 	SystemPrompt     = "Fasse den folgenden Artikel in fünf kurzen Stichpunkten zusammen. Antworte IMMER nur Deutsch. Formatiere deine Ausgabe wie folgt:\n" +
-		"Der Artikel handelt von [Zusammenfassung in einem Satz]\n\n" +
-		"- [Stichpunkt 1]..."
+		"Der Artikel handelt von [Zusammenfassung in einem kurzen Satz]\n\n" +
+		"- [Kurzer Stichpunkt 1, kein ganzer Satz]...\n" +
+		"- [Kurzer Stichpunkt 2, kein ganzer Satz]...\n" +
+		"..."
 )
 
 var log = logger.New("summarize")
 
 type Plugin struct {
-	apiUrl       string
-	openAIApiKey string
+	apiUrl string
+	apiKey string
 }
 
 func New(credentialService model.CredentialService) *Plugin {
-	openAIApiKey, err := credentialService.GetKey("openai_api_key")
+	apiKey, err := credentialService.GetKey("anthropic_api_key")
 	if err != nil {
-		log.Warn().Msg("openai_api_key not found")
+		log.Warn().Msg("anthropic_api_key not found")
 	}
 
-	apiUrl := OpenAIApiUrl
+	apiUrl := AnthropicApiUrl
 
-	// In the format "accountTag/gateway"
-	cloudflareApiGatewayPath, _ := credentialService.GetKey("openai_cloudflare_ai_gateway")
-	if cloudflareApiGatewayPath != "" {
-		if strings.HasPrefix(cloudflareApiGatewayPath, "/") {
-			cloudflareApiGatewayPath = cloudflareApiGatewayPath[1:]
-		}
-		if strings.HasSuffix(cloudflareApiGatewayPath, "/") {
-			cloudflareApiGatewayPath = cloudflareApiGatewayPath[:len(cloudflareApiGatewayPath)-1]
+	// Must be the direct URL to the proxy - nothing will be appended. Slashes at the end will be removed.
+	// E.g. for Cloudflare AI Gateway, use "https://gateway.ai.cloudflare.com/v1/ACCOUNT_TAG/anthropic/messages"
+	proxyUrl, _ := credentialService.GetKey("summarize_ai_proxy")
+	if proxyUrl != "" && strings.HasPrefix(proxyUrl, "https://") {
+		if strings.HasSuffix(proxyUrl, "/") {
+			proxyUrl = proxyUrl[:len(proxyUrl)-1]
 		}
 
-		apiUrl = fmt.Sprintf(CloudflareGatewayUrl, cloudflareApiGatewayPath)
-		log.Debug().Msg("Using Cloudflare AI Gateway")
+		apiUrl = proxyUrl
+		log.Debug().Msg("Using Anthropic AI proxy")
 	}
 
 	return &Plugin{
-		apiUrl:       apiUrl,
-		openAIApiKey: openAIApiKey,
+		apiUrl: apiUrl,
+		apiKey: apiKey,
 	}
 }
 
@@ -160,27 +159,24 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 	}
 
 	request := Request{
-		Model: Model,
+		Model:  Model,
+		System: SystemPrompt,
 		Messages: []ApiMessage{
-			{
-				Role:    System,
-				Content: SystemPrompt,
-			},
 			{
 				Role:    User,
 				Content: article.TextContent,
 			},
 		},
-		PresencePenalty: PresencePenalty,
-		MaxTokens:       MaxTokens,
-		Temperature:     Temperature,
+		MaxTokens:   MaxTokens,
+		Temperature: Temperature,
 	}
 
 	var response Response
 	var httpError *httpUtils.HttpError
 	err = httpUtils.PostRequest(p.apiUrl,
 		map[string]string{
-			"Authorization": fmt.Sprintf("Bearer %s", p.openAIApiKey),
+			"x-api-key":         p.apiKey,
+			"anthropic-version": AnthropicVersion,
 		},
 		&request,
 		&response)
@@ -203,30 +199,30 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		return err
 	}
 
-	if response.Error.Type != "" {
+	if response.Type == "error" {
 		guid := xid.New().String()
 		log.Error().
 			Str("guid", guid).
 			Str("url", url).
 			Str("message", response.Error.Message).
 			Str("type", response.Error.Type).
-			Msg("Got error from OpenAI API")
+			Msg("Got error from Anthropic API")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
 
-	if len(response.Choices) == 0 || (len(response.Choices) > 0 && response.Choices[0].Message.Content == "") {
+	if len(response.Content) == 0 || (len(response.Content) > 0 && response.Content[0].Text == "") {
 		log.Error().
 			Str("url", url).
-			Msg("Got no answer from ChatGPT")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von ChatGPT erhalten", utils.DefaultSendOptions())
+			Msg("Got no answer from Claude")
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von Claude erhalten", utils.DefaultSendOptions())
 		return err
 	}
 
 	var sb strings.Builder
 	sb.WriteString("<b>Zusammenfassung:</b>\n")
-	sb.WriteString(utils.Escape(response.Choices[0].Message.Content))
+	sb.WriteString(utils.Escape(response.Content[0].Text))
 
 	_, err = msg.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
