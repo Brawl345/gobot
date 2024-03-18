@@ -103,17 +103,6 @@ func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	if strings.HasPrefix(c.EffectiveMessage.ReplyToMessage.Text, "/su") ||
-		strings.HasPrefix(c.EffectiveMessage.ReplyToMessage.Caption, "/su") {
-		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions())
-		return err
-	}
-
-	if c.EffectiveMessage.ReplyToMessage.From.IsBot {
-		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions())
-		return err
-	}
-
 	return p.summarize(b, c, c.EffectiveMessage.ReplyToMessage)
 }
 
