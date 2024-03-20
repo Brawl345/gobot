@@ -3,9 +3,9 @@ package sql
 import (
 	"database/sql"
 	"errors"
-	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/logger"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -24,8 +24,8 @@ func NewNotifyService(db *sqlx.DB) *notifyService {
 func (db *notifyService) Enabled(chat *gotgbot.Chat, user *gotgbot.User) (bool, error) {
 	const query = `SELECT notify
 	FROM chats_users
-	WHERE chat_id = ?
-	  AND user_id = ?;`
+	WHERE chat_id = $1
+	  AND user_id = $2;`
 	var enabled bool
 	err := db.Get(&enabled, query, chat.Id, user.Id)
 
@@ -42,8 +42,8 @@ func (db *notifyService) Enabled(chat *gotgbot.Chat, user *gotgbot.User) (bool, 
 func (db *notifyService) Enable(chat *gotgbot.Chat, user *gotgbot.User) error {
 	const query = `UPDATE chats_users
 	SET notify = true
-	WHERE chat_id = ?
-	  AND user_id = ?;`
+	WHERE chat_id = $1
+	  AND user_id = $2;`
 	_, err := db.Exec(query, chat.Id, user.Id)
 	return err
 }
@@ -51,8 +51,8 @@ func (db *notifyService) Enable(chat *gotgbot.Chat, user *gotgbot.User) error {
 func (db *notifyService) Disable(chat *gotgbot.Chat, user *gotgbot.User) error {
 	const query = `UPDATE chats_users
 	SET notify = false
-	WHERE chat_id = ?
-	  AND user_id = ?;`
+	WHERE chat_id = $1
+	  AND user_id = $2;`
 	_, err := db.Exec(query, chat.Id, user.Id)
 	return err
 }
@@ -63,7 +63,7 @@ func (db *notifyService) GetAllToBeNotifiedUsers(chat *gotgbot.Chat, mentionedUs
 	WHERE cu.notify = TRUE
 	  AND cu.chat_id = ?
 	  AND cu.in_group = TRUE
-	  AND u.username IN (?);`
+	  AND LOWER(u.username) IN (?);`
 	query, args, err := sqlx.In(query, chat.Id, mentionedUsernames)
 	if err != nil {
 		return nil, err

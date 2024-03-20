@@ -1,5 +1,6 @@
 -- +migrate Up
 
-ALTER TABLE  `chats_users`
-    ADD `notify` TINYINT(1) DEFAULT 0,
-    ADD INDEX `notify` (`notify`);
+ALTER TABLE chats_users
+    ADD COLUMN notify BOOLEAN DEFAULT FALSE;
+
+CREATE INDEX ON chats_users (notify);

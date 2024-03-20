@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+
 	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/logger"
@@ -27,7 +28,7 @@ func (db *homeService) GetHome(user *gotgbot.User) (gotgbot.Venue, error) {
 	const query = `SELECT address, latitude, longitude
 	FROM geocoding g
 	RIGHT OUTER JOIN users u ON u.home = g.id
-	WHERE u.id = ?`
+	WHERE u.id = $1`
 
 	type Home struct {
 		Address sql.NullString  `db:"address"`
@@ -68,23 +69,22 @@ func (db *homeService) SetHome(user *gotgbot.User, venue *gotgbot.Venue) error {
 		}
 	}(tx)
 
-	const insertAddressQuery = `INSERT INTO geocoding 
-    (address, latitude, longitude) 
-	VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`
-	res, err := db.Exec(insertAddressQuery, venue.Address, venue.Location.Latitude, venue.Location.Longitude)
-	if err != nil {
-		return err
-	}
+	const insertAddressQuery = `INSERT INTO geocoding
+    (address, latitude, longitude)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (latitude, longitude) DO UPDATE SET address = EXCLUDED.address
+    RETURNING id`
 
-	lastInsertId, err := res.LastInsertId()
+	var lastInsertID int64
+	err = tx.QueryRow(insertAddressQuery, venue.Address, venue.Location.Latitude, venue.Location.Longitude).Scan(&lastInsertID)
 	if err != nil {
 		return err
 	}
 
 	const insertHomeQuery = `UPDATE users
-	SET home = ?
-	WHERE id = ?`
-	_, err = tx.Exec(insertHomeQuery, lastInsertId, user.Id)
+	SET home = $1
+	WHERE id = $2`
+	_, err = tx.Exec(insertHomeQuery, lastInsertID, user.Id)
 	if err != nil {
 		return err
 	}
@@ -99,7 +99,7 @@ func (db *homeService) SetHome(user *gotgbot.User, venue *gotgbot.Venue) error {
 func (db *homeService) DeleteHome(user *gotgbot.User) error {
 	const query = `UPDATE users
 	SET HOME = NULL
-	WHERE id = ?`
+	WHERE id = $1`
 
 	_, err := db.Exec(query, user.Id)
 	return err

@@ -46,18 +46,17 @@ func (db *credentialService) GetKey(name string) string {
 }
 
 func (db *credentialService) SetKey(name, value string) error {
-	const query = `INSERT INTO credentials (name, value) VALUES (?, ?) ON DUPLICATE KEY UPDATE value = ?`
-	_, err := db.Exec(query, name, value, value)
+	const query = `INSERT INTO credentials (name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value`
+	_, err := db.Exec(query, name, value)
 
 	if err == nil {
 		db.credentials[name] = value
 	}
-
 	return err
 }
 
 func (db *credentialService) DeleteKey(name string) error {
-	const query = `DELETE FROM credentials WHERE name = ?`
+	const query = `DELETE FROM credentials WHERE name = $1`
 	res, err := db.Exec(query, name)
 	if err != nil {
 		return err

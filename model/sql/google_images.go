@@ -49,7 +49,7 @@ func (db *googleImagesService) GetImages(query string) (model.GoogleImages, erro
 	const selectQuery = `SELECT query_id, image_url, context_url, is_gif, current_index
 		FROM google_images gi
 		RIGHT JOIN google_images_queries giq ON giq.id = gi.query_id
-		WHERE query = ?`
+		WHERE query = $1`
 
 	rows, err := db.Queryx(selectQuery, query)
 	if err != nil {
@@ -86,7 +86,7 @@ func (db *googleImagesService) GetImagesFromQueryID(queryID int64) (model.Google
 	const selectQuery = `SELECT image_url, context_url, is_gif, current_index
 		FROM google_images gi
 		RIGHT JOIN google_images_queries giq ON giq.id = gi.query_id
-		WHERE query_id = ?`
+		WHERE query_id = $1`
 
 	rows, err := db.Queryx(selectQuery, queryID)
 	if err != nil {
@@ -133,18 +133,14 @@ func (db *googleImagesService) SaveImages(query string, wrapper *model.GoogleIma
 		}
 	}(tx)
 
-	const insertSearchQuery = `INSERT INTO google_images_queries (query, current_index) VALUES (?, ?)`
-	res, err := tx.Exec(insertSearchQuery, query, wrapper.CurrentIndex)
+	const insertSearchQuery = `INSERT INTO google_images_queries (query, current_index) VALUES ($1, $2) RETURNING id`
+	var lastInsertID int64
+	err = tx.QueryRow(insertSearchQuery, query, wrapper.CurrentIndex).Scan(&lastInsertID)
 	if err != nil {
 		return 0, err
 	}
 
-	lastInsertID, err := res.LastInsertId()
-	if err != nil {
-		return 0, err
-	}
-
-	const insertImages = `INSERT INTO google_images (query_id, image_url, context_url, is_gif) VALUES (?, ?, ?, ?)`
+	const insertImages = `INSERT INTO google_images (query_id, image_url, context_url, is_gif) VALUES ($1, $2, $3, $4)`
 	// creating a query for every image is inefficient,
 	// but idc
 	for _, image := range wrapper.Images {
@@ -162,7 +158,7 @@ func (db *googleImagesService) SaveImages(query string, wrapper *model.GoogleIma
 }
 
 func (db *googleImagesService) SaveIndex(queryID int64, index int) error {
-	const updateQuery = `UPDATE google_images_queries SET current_index = ? WHERE id = ?`
+	const updateQuery = `UPDATE google_images_queries SET current_index = $1 WHERE id = $2`
 	_, err := db.Exec(updateQuery, index, queryID)
 	return err
 }

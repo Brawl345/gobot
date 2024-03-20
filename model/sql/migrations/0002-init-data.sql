@@ -1,11 +1,11 @@
 -- +migrate Up
 
-INSERT INTO `plugins` (`name`, `enabled`)
-VALUES ('about', 1),
-       ('alive', 1),
-       ('allow', 1),
-       ('creds', 1),
-       ('echo', 1),
-       ('id', 1),
-       ('manager', 1),
-       ('stats', 1);
+INSERT INTO plugins (name, enabled)
+VALUES ('about', TRUE),
+       ('alive', TRUE),
+       ('allow', TRUE),
+       ('creds', TRUE),
+       ('echo', TRUE),
+       ('id', TRUE),
+       ('manager', TRUE),
+       ('stats', TRUE);

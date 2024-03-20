@@ -1,75 +1,87 @@
 -- +migrate Up
 
-CREATE TABLE `chats`
+CREATE TABLE chats
 (
-    `id`         BIGINT(20)   NOT NULL PRIMARY KEY,
-    `created_at` DATETIME     NOT NULL DEFAULT current_timestamp(),
-    `updated_at` DATETIME     NULL     DEFAULT NULL ON UPDATE current_timestamp(),
-    `title`      VARCHAR(255) NOT NULL,
-    `allowed`    TINYINT(1)   NOT NULL DEFAULT 0,
-    INDEX `allowed` (`allowed`)
-) COLLATE = 'utf8mb4_general_ci'
-  ENGINE = InnoDB;
+    id         BIGINT PRIMARY KEY,
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ  NULL     DEFAULT NULL,
+    title      VARCHAR(255) NOT NULL,
+    allowed    BOOLEAN      NOT NULL DEFAULT FALSE
+);
 
-CREATE TABLE `users`
-(
-    `id`         BIGINT(20)   NOT NULL PRIMARY KEY,
-    `created_at` DATETIME     NOT NULL DEFAULT current_timestamp(),
-    `updated_at` DATETIME     NULL     DEFAULT NULL ON UPDATE current_timestamp(),
-    `first_name` VARCHAR(255) NOT NULL,
-    `last_name`  VARCHAR(255) NULL,
-    `username`   VARCHAR(255) NULL,
-    `allowed`    TINYINT(1)   NOT NULL DEFAULT 0,
-    INDEX `allowed` (`allowed`),
-    INDEX `username` (`username`)
-) COLLATE = 'utf8mb4_general_ci'
-  ENGINE = InnoDB;
+CREATE INDEX ON chats (allowed);
 
-CREATE TABLE `chats_users`
+CREATE TABLE users
 (
-    `chat_id`    BIGINT(20) NOT NULL,
-    `user_id`    BIGINT(20) NOT NULL,
-    `created_at` DATETIME   NOT NULL DEFAULT current_timestamp(),
-    `updated_at` DATETIME   NULL     DEFAULT NULL ON UPDATE current_timestamp(),
-    `msg_count`  BIGINT     NOT NULL DEFAULT 1,
-    `in_group`   TINYINT(1) NOT NULL DEFAULT 1,
-    PRIMARY KEY (`chat_id`, `user_id`),
-    INDEX `FK_chats_users_users` (`user_id`),
-    INDEX `in_group` (`in_group`),
-    CONSTRAINT `FK_chats_users_chats` FOREIGN KEY (`chat_id`) REFERENCES `chats` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
-    CONSTRAINT `FK_chats_users_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
-) COLLATE = 'utf8mb4_general_ci'
-  ENGINE = InnoDB;
+    id         BIGINT PRIMARY KEY,
+    created_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ  NULL     DEFAULT NULL,
+    first_name VARCHAR(255) NOT NULL,
+    last_name  VARCHAR(255) NULL,
+    username   VARCHAR(255) NULL,
+    allowed    BOOLEAN      NOT NULL DEFAULT FALSE
+);
 
-CREATE TABLE `plugins`
-(
-    `name`       VARCHAR(25) NOT NULL PRIMARY KEY,
-    `created_at` DATETIME    NOT NULL DEFAULT current_timestamp(),
-    `updated_at` DATETIME    NULL     DEFAULT NULL ON UPDATE current_timestamp(),
-    `enabled`    TINYINT(1)  NOT NULL DEFAULT 1,
-    INDEX `enabled` (`enabled`)
-) COLLATE = 'utf8mb4_general_ci'
-  ENGINE = InnoDB;
+CREATE INDEX ON users (allowed);
+CREATE INDEX ON users (username);
 
-CREATE TABLE `chats_plugins`
+CREATE TABLE chats_users
 (
-    `chat_id`     BIGINT(20)  NOT NULL,
-    `plugin_name` VARCHAR(25) NOT NULL,
-    `created_at`  DATETIME    NOT NULL DEFAULT current_timestamp(),
-    `updated_at`  DATETIME    NULL     DEFAULT NULL ON UPDATE current_timestamp(),
-    `enabled`     TINYINT(4)  NOT NULL DEFAULT 1,
-    PRIMARY KEY (`chat_id`, `plugin_name`),
-    INDEX `FK_chats_plugins_plugins` (`plugin_name`),
-    INDEX `enabled` (`enabled`),
-    CONSTRAINT `FK_chats_plugins_chats` FOREIGN KEY (`chat_id`) REFERENCES `chats` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT `FK_chats_plugins_plugins` FOREIGN KEY (`plugin_name`) REFERENCES `plugins` (`name`) ON UPDATE CASCADE ON DELETE CASCADE
-) COLLATE = 'utf8mb4_general_ci'
-  ENGINE = InnoDB;
+    chat_id    BIGINT,
+    user_id    BIGINT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NULL     DEFAULT NULL,
+    msg_count  BIGINT      NOT NULL DEFAULT 1,
+    in_group   BOOLEAN     NOT NULL DEFAULT TRUE,
+    PRIMARY KEY (chat_id, user_id),
+    CONSTRAINT fk_chats_users_chats FOREIGN KEY (chat_id)
+        REFERENCES chats (id)
+        ON UPDATE CASCADE
+        ON DELETE RESTRICT,
+    CONSTRAINT fk_chats_users_users FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
 
-CREATE TABLE `credentials`
+CREATE INDEX ON chats_users (user_id);
+CREATE INDEX ON chats_users (in_group);
+
+CREATE TABLE plugins
 (
-    `name`       VARCHAR(50) NOT NULL PRIMARY KEY,
-    `created_at` DATETIME    NOT NULL DEFAULT current_timestamp(),
-    `value`      TEXT        NOT NULL
-) COLLATE = 'utf8mb4_general_ci'
-  ENGINE = InnoDB;
+    name       VARCHAR(25) PRIMARY KEY,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NULL     DEFAULT NULL,
+    enabled    BOOLEAN     NOT NULL DEFAULT TRUE
+);
+
+CREATE INDEX ON plugins (enabled);
+
+CREATE TABLE chats_plugins
+(
+    chat_id     BIGINT,
+    plugin_name VARCHAR(25),
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  TIMESTAMPTZ NULL     DEFAULT NULL,
+    enabled     BOOLEAN     NOT NULL DEFAULT TRUE,
+    PRIMARY KEY (chat_id, plugin_name),
+    CONSTRAINT fk_chats_plugins_chats FOREIGN KEY (chat_id)
+        REFERENCES chats (id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_chats_plugins_plugins FOREIGN KEY (plugin_name)
+        REFERENCES plugins (name)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+CREATE INDEX ON chats_plugins (plugin_name);
+CREATE INDEX ON chats_plugins (enabled);
+
+
+CREATE TABLE credentials
+(
+    name       VARCHAR(50) PRIMARY KEY,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    value      TEXT        NOT NULL
+);

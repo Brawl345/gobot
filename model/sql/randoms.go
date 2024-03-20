@@ -22,7 +22,7 @@ func NewRandomService(db *sqlx.DB) *randomService {
 }
 
 func (db *randomService) exists(random string) (bool, error) {
-	const query = `SELECT 1 FROM randoms WHERE text = ?`
+	const query = `SELECT 1 FROM randoms WHERE text = $1`
 	var exists bool
 	err := db.Get(&exists, query, random)
 	if err != nil {
@@ -43,7 +43,7 @@ func (db *randomService) DeleteRandom(random string) error {
 		return model.ErrNotFound
 	}
 
-	const query = `DELETE FROM randoms WHERE text = ?`
+	const query = `DELETE FROM randoms WHERE text = $1`
 
 	_, err = db.Exec(query, random)
 	return err
@@ -51,7 +51,7 @@ func (db *randomService) DeleteRandom(random string) error {
 
 func (db *randomService) GetRandom() (string, error) {
 	var random string
-	err := db.Get(&random, "SELECT text FROM randoms ORDER BY RAND() LIMIT 1")
+	err := db.Get(&random, "SELECT text FROM randoms ORDER BY RANDOM() LIMIT 1")
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", model.ErrNotFound
 	}
@@ -67,7 +67,7 @@ func (db *randomService) SaveRandom(random string) error {
 		return model.ErrAlreadyExists
 	}
 
-	const query = `INSERT INTO randoms (text) VALUES (?)`
+	const query = `INSERT INTO randoms (text) VALUES ($1)`
 	_, err = db.Exec(query, random)
 	return err
 }

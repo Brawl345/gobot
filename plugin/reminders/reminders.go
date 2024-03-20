@@ -362,12 +362,13 @@ func (p *Plugin) onGetReminders(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	var sb strings.Builder
 
+	timezone := utils.GermanTimezone()
 	for _, reminder := range reminders {
 		sb.WriteString(
 			fmt.Sprintf(
 				"<b>%d)</b> %s - <b>%s</b>\n",
 				reminder.ID,
-				reminder.Time.Format("02.01.2006, 15:04:05 Uhr"),
+				reminder.Time.In(timezone).Format("02.01.2006, 15:04:05 Uhr"),
 				utils.Escape(reminder.Text),
 			),
 		)

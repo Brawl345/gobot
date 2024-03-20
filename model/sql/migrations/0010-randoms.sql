@@ -1,10 +1,10 @@
 -- +migrate Up
 
-CREATE TABLE `randoms`
+CREATE TABLE randoms
 (
-    `id`         INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
-    `created_at` DATETIME            NOT NULL DEFAULT current_timestamp(),
-    `text`      LONGTEXT            NOT NULL,
-    INDEX `text` (`text`(768))
-) COLLATE = 'utf8mb4_general_ci'
-  ENGINE = InnoDB;
+    id         SERIAL PRIMARY KEY,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    text       TEXT        NOT NULL
+);
+
+CREATE INDEX ON randoms (text);

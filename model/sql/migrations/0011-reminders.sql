@@ -1,15 +1,21 @@
 -- +migrate Up
 
-CREATE TABLE `reminders`
+CREATE TABLE reminders
 (
-    `id`         INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
-    `created_at` DATETIME            NOT NULL DEFAULT current_timestamp(),
-    `chat_id`    BIGINT(20)          NULL,
-    `user_id`    BIGINT(20)          NOT NULL,
-    `time`       DATETIME            NOT NULL,
-    `text`       LONGTEXT            NOT NULL,
-    CONSTRAINT `FK_randoms_chats` FOREIGN KEY (`chat_id`) REFERENCES `chats` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-    CONSTRAINT `FK_randoms_users` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE ON DELETE CASCADE,
-    INDEX `text` (`text`(768))
-) COLLATE = 'utf8mb4_general_ci'
-  ENGINE = InnoDB;
+    id         SERIAL PRIMARY KEY,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    chat_id    BIGINT      NULL,
+    user_id    BIGINT      NOT NULL,
+    time       TIMESTAMPTZ NOT NULL,
+    text       TEXT        NOT NULL,
+    CONSTRAINT fk_reminders_chats FOREIGN KEY (chat_id)
+        REFERENCES chats (id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE,
+    CONSTRAINT fk_reminders_users FOREIGN KEY (user_id)
+        REFERENCES users (id)
+        ON UPDATE CASCADE
+        ON DELETE CASCADE
+);
+
+CREATE INDEX ON reminders (text);
