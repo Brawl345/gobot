@@ -19,7 +19,7 @@ func NewChatService(db *sqlx.DB) *chatService {
 }
 
 func (db *chatService) Allow(chat *gotgbot.Chat) error {
-	const query = `UPDATE chats SET allowed = true WHERE id = ?`
+	const query = `UPDATE chats SET allowed = true WHERE id = $1`
 	_, err := db.Exec(query, chat.Id)
 	return err
 }
@@ -27,23 +27,23 @@ func (db *chatService) Allow(chat *gotgbot.Chat) error {
 func (db *chatService) Create(chat *gotgbot.Chat) error {
 	const query = `INSERT INTO 
     chats (id, title)
-    VALUES (? ,?)
-    ON DUPLICATE KEY UPDATE title = ?`
-	_, err := db.Exec(query, chat.Id, chat.Title, chat.Title)
+    VALUES ($1, $2)
+    ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title`
+	_, err := db.Exec(query, chat.Id, chat.Title)
 	return err
 }
 
 func (db *chatService) CreateTx(tx *sqlx.Tx, chat *gotgbot.Chat) error {
 	const query = `INSERT INTO 
     chats (id, title)
-    VALUES (? ,?)
-    ON DUPLICATE KEY UPDATE title = ?`
-	_, err := tx.Exec(query, chat.Id, chat.Title, chat.Title)
+    VALUES ($1, $2)
+    ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title`
+	_, err := tx.Exec(query, chat.Id, chat.Title)
 	return err
 }
 
 func (db *chatService) Deny(chat *gotgbot.Chat) error {
-	const query = `UPDATE chats SET allowed = false WHERE id = ?`
+	const query = `UPDATE chats SET allowed = false WHERE id = $1`
 	_, err := db.Exec(query, chat.Id)
 	return err
 }

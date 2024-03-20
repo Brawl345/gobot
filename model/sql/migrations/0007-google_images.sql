@@ -1,23 +1,26 @@
 -- +migrate Up
 
-CREATE TABLE `google_images_queries`
+CREATE TABLE google_images_queries
 (
-    `id`            INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
-    `created_at`    DATETIME            NOT NULL DEFAULT current_timestamp(),
-    `query`         VARCHAR(512)        NOT NULL,
-    `current_index` TINYINT(1)          NOT NULL DEFAULT 1,
-    INDEX `query` (`query`)
-) COLLATE = 'utf8mb4_general_ci'
-  ENGINE = InnoDB;
+    id            SERIAL PRIMARY KEY,
+    created_at    TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    query         VARCHAR(512) NOT NULL,
+    current_index SMALLINT     NOT NULL DEFAULT 1
+);
 
-CREATE TABLE `google_images`
+CREATE INDEX ON google_images_queries (query);
+
+CREATE TABLE google_images
 (
-    `id`          INT(11) PRIMARY KEY NOT NULL AUTO_INCREMENT,
-    `created_at`  DATETIME            NOT NULL DEFAULT current_timestamp(),
-    `query_id`    INT(11)             NOT NULL,
-    `image_url`   VARCHAR(2048)       NOT NULL,
-    `context_url` VARCHAR(2048)       NOT NULL,
-    `is_gif`      TINYINT(1)          NOT NULL DEFAULT 0,
-    FOREIGN KEY (`query_id`) REFERENCES `google_images_queries` (`id`) ON UPDATE CASCADE ON DELETE CASCADE
-) COLLATE = 'utf8mb4_general_ci'
-  ENGINE = InnoDB;
+    id          SERIAL PRIMARY KEY,
+    created_at  TIMESTAMPTZ   NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    query_id    INT           NOT NULL,
+    image_url   VARCHAR(2048) NOT NULL,
+    context_url VARCHAR(2048) NOT NULL,
+    is_gif      BOOLEAN       NOT NULL DEFAULT FALSE,
+    CONSTRAINT fk_google_images_google_images_queries
+        FOREIGN KEY (query_id)
+            REFERENCES google_images_queries (id)
+            ON UPDATE CASCADE
+            ON DELETE CASCADE
+);

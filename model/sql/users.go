@@ -19,7 +19,7 @@ func NewUserService(db *sqlx.DB) *userService {
 }
 
 func (db *userService) Allow(user *gotgbot.User) error {
-	const query = `UPDATE users SET allowed = true WHERE id = ?`
+	const query = `UPDATE users SET allowed = true WHERE id = $1`
 	_, err := db.Exec(query, user.Id)
 	return err
 }
@@ -27,14 +27,13 @@ func (db *userService) Allow(user *gotgbot.User) error {
 func (db *userService) Create(user *gotgbot.User) error {
 	const query = `INSERT INTO 
     users (id, first_name, last_name, username)
-    VALUES (? ,?, ?, ?)
-    ON DUPLICATE KEY UPDATE first_name = ?, last_name = ?, username = ?`
+    VALUES ($1, $2, $3, $4)
+    ON CONFLICT (id) DO UPDATE SET first_name = EXCLUDED.first_name,
+                                   last_name = EXCLUDED.last_name,
+                                   username = EXCLUDED.username`
 	_, err := db.Exec(
 		query,
 		user.Id,
-		user.FirstName,
-		NewNullString(user.LastName),
-		NewNullString(user.Username),
 		user.FirstName,
 		NewNullString(user.LastName),
 		NewNullString(user.Username),
@@ -45,14 +44,13 @@ func (db *userService) Create(user *gotgbot.User) error {
 func (db *userService) CreateTx(tx *sqlx.Tx, user *gotgbot.User) error {
 	const query = `INSERT INTO 
     users (id, first_name, last_name, username)
-    VALUES (? ,?, ?, ?)
-    ON DUPLICATE KEY UPDATE first_name = ?, last_name = ?, username = ?`
+    VALUES ($1, $2, $3, $4)
+    ON CONFLICT (id) DO UPDATE SET first_name = EXCLUDED.first_name,
+                                   last_name = EXCLUDED.last_name,
+                                   username = EXCLUDED.username`
 	_, err := tx.Exec(
 		query,
 		user.Id,
-		user.FirstName,
-		NewNullString(user.LastName),
-		NewNullString(user.Username),
 		user.FirstName,
 		NewNullString(user.LastName),
 		NewNullString(user.Username),
@@ -61,7 +59,7 @@ func (db *userService) CreateTx(tx *sqlx.Tx, user *gotgbot.User) error {
 }
 
 func (db *userService) Deny(user *gotgbot.User) error {
-	const query = `UPDATE users SET allowed = false WHERE id = ?`
+	const query = `UPDATE users SET allowed = false WHERE id = $1`
 	_, err := db.Exec(query, user.Id)
 	return err
 }

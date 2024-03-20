@@ -26,20 +26,20 @@ func NewAfkService(db *sqlx.DB) *afkService {
 
 func (db *afkService) SetAFK(chat *gotgbot.Chat, user *gotgbot.Sender, now time.Time) error {
 	const query = `UPDATE chats_users
-	SET afk_since = ?,
+	SET afk_since = $1,
 	    afk_reason = NULL
-	WHERE chat_id = ?
-	  AND user_id = ?`
+	WHERE chat_id = $2
+	  AND user_id = $3`
 	_, err := db.Exec(query, now, chat.Id, user.Id())
 	return err
 }
 
 func (db *afkService) SetAFKWithReason(chat *gotgbot.Chat, user *gotgbot.Sender, reason string) error {
 	const query = `UPDATE chats_users
-	SET afk_since = CURRENT_TIME(),
-	    afk_reason = ?
-	WHERE chat_id = ?
-	  AND user_id = ?`
+	SET afk_since = CURRENT_TIMESTAMP,
+	    afk_reason = $1
+	WHERE chat_id = $2
+	  AND user_id = $3`
 	_, err := db.Exec(query, reason, chat.Id, user.Id())
 	return err
 }
@@ -47,8 +47,8 @@ func (db *afkService) SetAFKWithReason(chat *gotgbot.Chat, user *gotgbot.Sender,
 func (db *afkService) IsAFK(chat *gotgbot.Chat, user *gotgbot.Sender) (bool, model.AFKData, error) {
 	const query = `SELECT afk_since, afk_reason
 	FROM chats_users
-	WHERE chat_id = ?
-	  AND user_id = ?
+	WHERE chat_id = $1
+	  AND user_id = $2
 	  AND afk_since IS NOT NULL`
 	var afkData model.AFKData
 	err := db.Get(&afkData, query, chat.Id, user.Id())
@@ -65,8 +65,8 @@ func (db *afkService) BackAgain(chat *gotgbot.Chat, user *gotgbot.Sender) error 
 	const updateQuery = `UPDATE chats_users
 	SET afk_since = NULL,
 	    afk_reason = NULL	
-	WHERE chat_id = ?
-	  AND user_id = ?`
+	WHERE chat_id = $1
+	  AND user_id = $2`
 	_, err := db.Exec(updateQuery, chat.Id, user.Id())
 	return err
 }
@@ -75,9 +75,9 @@ func (db *afkService) IsAFKByUsername(chat *gotgbot.Chat, username string) (bool
 	const query = `SELECT afk_since, afk_reason, first_name
 	FROM chats_users
 	LEFT JOIN users ON chats_users.user_id = users.id
-	WHERE chat_id = ?
+	WHERE chat_id = $1
 	  AND in_group = TRUE
-	  AND username = ?
+	  AND username = $2
 	  AND afk_since IS NOT NULL`
 
 	var afkData model.AFKData

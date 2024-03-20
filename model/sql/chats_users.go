@@ -67,8 +67,8 @@ func (db *chatsUsersService) Create(chat *gotgbot.Chat, user *gotgbot.User) erro
 func (db *chatsUsersService) CreateBatch(chat *gotgbot.Chat, users *[]gotgbot.User) error {
 	const insertRelationshipQuery = `INSERT INTO 
     chats_users (chat_id, user_id, msg_count, in_group) 
-    VALUES (?, ?, 0, true)
-    ON DUPLICATE KEY UPDATE chat_id = chat_id, in_group = true`
+    VALUES ($1, $2, 0, true)
+    ON CONFLICT (chat_id, user_id) DO UPDATE SET in_group = true`
 
 	tx, err := db.BeginTxx(context.Background(), nil)
 	if err != nil {
@@ -115,7 +115,7 @@ func (db *chatsUsersService) CreateBatch(chat *gotgbot.Chat, users *[]gotgbot.Us
 func (db *chatsUsersService) GetAllUsersWithMsgCount(chat *gotgbot.Chat) ([]model.User, error) {
 	const query = `SELECT u.first_name, u.last_name, msg_count, in_group FROM chats_users
 JOIN users u on u.id = chats_users.user_id
-WHERE chat_id = ?
+WHERE chat_id = $1
 ORDER BY msg_count DESC`
 	var users []model.User
 	err := db.Select(&users, query, chat.Id)
@@ -125,8 +125,8 @@ ORDER BY msg_count DESC`
 func (db *chatsUsersService) insertRelationship(tx *sqlx.Tx, chatId int64, userId int64) error {
 	const query = `INSERT INTO 
     chats_users (chat_id, user_id, in_group) 
-    VALUES (?, ?, true)
-    ON DUPLICATE KEY UPDATE chat_id = chat_id, msg_count = msg_count + 1, in_group = true`
+    VALUES ($1, $2, true)
+    ON CONFLICT (chat_id, user_id) DO UPDATE SET msg_count = chats_users.msg_count + 1, in_group = true`
 	_, err := tx.Exec(query, chatId, userId)
 	return err
 }
@@ -137,9 +137,9 @@ func (db *chatsUsersService) IsAllowed(chat *gotgbot.Chat, user *gotgbot.User) b
 	}
 
 	const query = `SELECT 1 FROM chats, users 
-	WHERE chats.id = ?
+	WHERE chats.id = $1
 	AND chats.allowed = true
-	OR (users.id = ? AND users.allowed = true);`
+	OR (users.id = $2 AND users.allowed = true);`
 
 	var isAllowed bool
 	err := db.Get(&isAllowed, query, chat.Id, user.Id)
@@ -151,8 +151,8 @@ func (db *chatsUsersService) IsAllowed(chat *gotgbot.Chat, user *gotgbot.User) b
 
 func (db *chatsUsersService) Leave(chat *gotgbot.Chat, user *gotgbot.User) error {
 	const query = `UPDATE chats_users SET in_group = false
-	WHERE chat_id = ?
-	  AND user_id = ?`
+	WHERE chat_id = $1
+	  AND user_id = $2`
 
 	_, err := db.Exec(query, chat.Id, user.Id)
 	return err
@@ -161,7 +161,7 @@ func (db *chatsUsersService) Leave(chat *gotgbot.Chat, user *gotgbot.User) error
 func (db *chatsUsersService) GetAllUsersInChat(chat *gotgbot.Chat) ([]model.User, error) {
 	const query = `SELECT u.id, u.first_name, u.last_name FROM chats_users
 	JOIN users u on u.id = chats_users.user_id
-	WHERE chat_id = ?
+	WHERE chat_id = $1
 	AND in_group = true
 	ORDER BY u.first_name, u.last_name`
 	var users []model.User

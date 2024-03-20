@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+
 	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/logger"
@@ -104,9 +105,9 @@ func (db *chatsPluginsService) Enable(chat *gotgbot.Chat, pluginName string) err
 func (db *chatsPluginsService) insertRelationship(tx *sqlx.Tx, chat *gotgbot.Chat, pluginName string, enabled bool) error {
 	const query = `INSERT INTO 
     chats_plugins (chat_id, plugin_name, enabled) 
-    VALUES (?, ?, ?)
-    ON DUPLICATE KEY UPDATE enabled = ?`
-	_, err := tx.Exec(query, chat.Id, pluginName, enabled, enabled)
+    VALUES ($1, $2, $3)
+    ON CONFLICT (chat_id, plugin_name) DO UPDATE SET enabled = EXCLUDED.enabled`
+	_, err := tx.Exec(query, chat.Id, pluginName, enabled)
 	return err
 }
 

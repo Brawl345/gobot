@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
-	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 	migrate "github.com/rubenv/sql-migrate"
 )
 
@@ -20,33 +20,33 @@ var log = logger.New("db")
 var embeddedMigrations embed.FS
 
 func New() (*sqlx.DB, error) {
-	host := strings.TrimSpace(os.Getenv("MYSQL_HOST"))
+	host := strings.TrimSpace(os.Getenv("POSTGRESQL_HOST"))
 	if host == "" {
-		host = "localhost"
+		host = "127.0.0.1"
 	}
-	port := strings.TrimSpace(os.Getenv("MYSQL_PORT"))
+	port := strings.TrimSpace(os.Getenv("POSTGRESQL_PORT"))
 	if port == "" {
-		port = "3306"
+		port = "5432"
 	}
-	user := strings.TrimSpace(os.Getenv("MYSQL_USER"))
-	password := strings.TrimSpace(os.Getenv("MYSQL_PASSWORD"))
-	dbname := strings.TrimSpace(os.Getenv("MYSQL_DB"))
-	tls := strings.TrimSpace(os.Getenv("MYSQL_TLS"))
-	if tls == "" {
-		tls = "false"
+	user := strings.TrimSpace(os.Getenv("POSTGRESQL_USER"))
+	password := strings.TrimSpace(os.Getenv("POSTGRESQL_PASSWORD"))
+	dbname := strings.TrimSpace(os.Getenv("POSTGRESQL_DB"))
+	sslmode := strings.TrimSpace(os.Getenv("POSTGRESQL_SSLMODE"))
+	if sslmode == "" {
+		sslmode = "disable"
 	}
 
 	connectionString := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&tls=%s",
+		"user=%s password=%s host=%s port=%s dbname=%s sslmode=%s",
 		user,
 		password,
 		host,
 		port,
 		dbname,
-		tls,
+		sslmode,
 	)
 
-	db, err := sqlx.Connect("mysql", connectionString)
+	db, err := sqlx.Connect("postgres", connectionString)
 	if err != nil {
 		return nil, err
 	}
@@ -54,7 +54,7 @@ func New() (*sqlx.DB, error) {
 	_, ignoreMigration := os.LookupEnv("IGNORE_SQL_MIGRATION")
 	if !ignoreMigration {
 		migrationSource := &migrate.EmbedFileSystemMigrationSource{FileSystem: embeddedMigrations, Root: "migrations"}
-		applied, err := migrate.Exec(db.DB, "mysql", migrationSource, migrate.Up)
+		applied, err := migrate.Exec(db.DB, "postgres", migrationSource, migrate.Up)
 		if err != nil {
 			return nil, err
 		}

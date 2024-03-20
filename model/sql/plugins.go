@@ -21,8 +21,8 @@ func NewPluginService(db *sqlx.DB) *pluginService {
 func (db *pluginService) CreateTx(tx *sqlx.Tx, pluginName string) error {
 	const query = `INSERT INTO plugins 
 	(name, enabled) 
-	VALUES (?, false)
-    ON DUPLICATE KEY UPDATE name = name`
+	VALUES ($1, false)
+    ON CONFLICT (name) DO UPDATE SET name = EXCLUDED.name`
 	_, err := tx.Exec(query, pluginName)
 	return err
 }
@@ -30,20 +30,20 @@ func (db *pluginService) CreateTx(tx *sqlx.Tx, pluginName string) error {
 func (db *pluginService) Disable(pluginName string) error {
 	const query = `INSERT INTO plugins 
 	(name, enabled) 
-	VALUES (?, false)
-	ON DUPLICATE KEY UPDATE enabled = false`
+	VALUES ($1, false)
+	ON CONFLICT (name) DO UPDATE SET enabled = false`
 	_, err := db.Exec(query, pluginName)
 	return err
 }
 
 func (db *pluginService) Enable(pluginName string) error {
-	const query = `INSERT INTO plugins (name) VALUES (?) ON DUPLICATE KEY UPDATE enabled = true`
+	const query = `INSERT INTO plugins (name) VALUES ($1) ON CONFLICT (name) DO UPDATE SET enabled = true`
 	_, err := db.Exec(query, pluginName)
 	return err
 }
 
 func (db *pluginService) GetAllEnabled() ([]string, error) {
-	const query = `SELECT name, enabled FROM plugins WHERE enabled = 1`
+	const query = `SELECT name, enabled FROM plugins WHERE enabled = true`
 
 	var enabledPlugins []string
 	var plugins []model.Plugin

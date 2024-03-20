@@ -18,9 +18,10 @@ func NewGoogleImagesCleanupService(db *sqlx.DB) *googleImagesCleanupService {
 }
 
 func (db *googleImagesCleanupService) Cleanup() error {
-	const query = `DELETE giq, g FROM google_images_queries giq
-   RIGHT JOIN google_images g ON giq.id = g.query_id
-   WHERE giq.created_at < NOW() - INTERVAL 7 DAY`
+	const query = `DELETE FROM google_images_queries giq
+   USING google_images g
+       WHERE giq.id = g.query_id
+       AND giq.created_at < NOW() - INTERVAL '7 DAY'`
 	_, err := db.Exec(query)
 	return err
 }

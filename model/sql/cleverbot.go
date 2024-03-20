@@ -22,19 +22,19 @@ func NewCleverbotService(db *sqlx.DB) *cleverbotService {
 }
 
 func (db *cleverbotService) SetState(chat *gotgbot.Chat, state string) error {
-	const query = `UPDATE chats SET cleverbot_state = ? WHERE id = ?`
+	const query = `UPDATE chats SET cleverbot_state = $1 WHERE id = $2`
 	_, err := db.Exec(query, state, chat.Id)
 	return err
 }
 
 func (db *cleverbotService) ResetState(chat *gotgbot.Chat) error {
-	const query = `UPDATE chats SET cleverbot_state = NULL WHERE id = ?`
+	const query = `UPDATE chats SET cleverbot_state = NULL WHERE id = $1`
 	_, err := db.Exec(query, chat.Id)
 	return err
 }
 
 func (db *cleverbotService) GetState(chat *gotgbot.Chat) (string, error) {
-	const query = `SELECT cleverbot_state FROM chats WHERE id = ?`
+	const query = `SELECT cleverbot_state FROM chats WHERE id = $1`
 	var state sql.NullString
 	err := db.Get(&state, query, chat.Id)
 	return state.String, err
