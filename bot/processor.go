@@ -52,6 +52,10 @@ func (p *Processor) ProcessUpdate(d *ext.Dispatcher, b *gotgbot.Bot, ctx *ext.Co
 			return p.onUserJoined(ctx)
 		}
 
+		if ctx.Message.NewChatTitle != "" || ctx.Message.NewChatPhoto != nil {
+			return nil
+		}
+
 		return p.onMessage(b, ctx)
 	}
 
