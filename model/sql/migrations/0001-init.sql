@@ -1,5 +1,18 @@
 -- +migrate Up
 
+-- +migrate StatementBegin
+CREATE FUNCTION trigger_set_updated_at()
+    RETURNS TRIGGER AS
+$$
+BEGIN
+    IF NEW IS DISTINCT FROM OLD THEN
+        NEW.updated_at = CLOCK_TIMESTAMP();
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+-- +migrate StatementEnd
+
 CREATE TABLE chats
 (
     id                             BIGINT PRIMARY KEY,
@@ -16,6 +29,12 @@ CREATE TABLE chats
 CREATE INDEX ON chats (allowed);
 CREATE INDEX ON chats (birthday_notifications_enabled);
 
+CREATE TRIGGER set_timestamp
+    BEFORE UPDATE
+    ON chats
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_updated_at();
+
 CREATE TABLE users
 (
     id         BIGINT PRIMARY KEY,
@@ -30,6 +49,12 @@ CREATE TABLE users
 
 CREATE INDEX ON users (allowed);
 CREATE INDEX ON users (username);
+
+CREATE TRIGGER set_timestamp
+    BEFORE UPDATE
+    ON users
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_updated_at();
 
 CREATE TABLE chats_users
 (
@@ -58,6 +83,12 @@ CREATE INDEX ON chats_users (in_group);
 CREATE INDEX ON chats_users (notify);
 CREATE INDEX ON chats_users (afk_since);
 
+CREATE TRIGGER set_timestamp
+    BEFORE UPDATE
+    ON chats_users
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_updated_at();
+
 CREATE TABLE plugins
 (
     name       TEXT PRIMARY KEY,
@@ -67,6 +98,12 @@ CREATE TABLE plugins
 );
 
 CREATE INDEX ON plugins (enabled);
+
+CREATE TRIGGER set_timestamp
+    BEFORE UPDATE
+    ON plugins
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_updated_at();
 
 CREATE TABLE chats_plugins
 (
@@ -89,10 +126,22 @@ CREATE TABLE chats_plugins
 CREATE INDEX ON chats_plugins (plugin_name);
 CREATE INDEX ON chats_plugins (enabled);
 
+CREATE TRIGGER set_timestamp
+    BEFORE UPDATE
+    ON chats_plugins
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_updated_at();
 
 CREATE TABLE credentials
 (
     name       TEXT PRIMARY KEY,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NULL     DEFAULT NULL,
     value      TEXT        NOT NULL
 );
+
+CREATE TRIGGER set_timestamp
+    BEFORE UPDATE
+    ON credentials
+    FOR EACH ROW
+EXECUTE PROCEDURE trigger_set_updated_at();
