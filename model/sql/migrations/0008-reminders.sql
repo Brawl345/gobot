@@ -2,7 +2,7 @@
 
 CREATE TABLE reminders
 (
-    id         SERIAL PRIMARY KEY,
+    id         INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     chat_id    BIGINT      NULL,
     user_id    BIGINT      NOT NULL,
