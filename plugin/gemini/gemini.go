@@ -43,7 +43,7 @@ type (
 	Service interface {
 		GetHistory(chat *gotgbot.Chat) (model.GeminiData, error)
 		ResetHistory(chat *gotgbot.Chat) error
-		SetHistory(chat *gotgbot.Chat, history string) error
+		AddToHistory(chat *gotgbot.Chat, userContent *model.GeminiContent, modelContent *model.GeminiContent) error
 	}
 )
 
@@ -118,7 +118,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
-	var contents []Content
+	var contents []model.GeminiContent
 	geminiData, err := p.geminiService.GetHistory(c.EffectiveChat)
 	if err != nil {
 		log.Error().
@@ -129,7 +129,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if geminiData.History.Valid && geminiData.ExpiresOn.Valid {
 		if time.Now().Before(geminiData.ExpiresOn.Time) {
-			var history []Content
+			var history []model.GeminiContent
 			err = json.Unmarshal([]byte(geminiData.History.String), &history)
 			if err != nil {
 				log.Error().
@@ -163,10 +163,11 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	inputText.WriteString(c.Matches[1])
 
-	contents = append(contents, Content{
+	userContent := model.GeminiContent{
 		Role:  RoleUser,
-		Parts: []Part{{Text: inputText.String()}},
-	})
+		Parts: []model.GeminiPart{{Text: inputText.String()}},
+	}
+	contents = append(contents, userContent)
 
 	request := Request{
 		Contents: contents,
@@ -275,9 +276,9 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	output := response.Candidates[0].Content.Parts[0].Text
 
-	contents = append(contents, Content{
+	contents = append(contents, model.GeminiContent{
 		Role: RoleModel,
-		Parts: []Part{{
+		Parts: []model.GeminiPart{{
 			Text: output,
 		}},
 	})
@@ -298,20 +299,12 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Msg("error resetting Gemini data")
 		}
 	} else {
-		jsonData, err := json.Marshal(&contents)
+		err = p.geminiService.AddToHistory(c.EffectiveChat, &userContent, &contents[len(contents)-1])
 		if err != nil {
 			log.Error().
 				Err(err).
 				Int64("chat_id", c.EffectiveChat.Id).
-				Msg("error marshalling Gemini data")
-		} else {
-			err = p.geminiService.SetHistory(c.EffectiveChat, string(jsonData))
-			if err != nil {
-				log.Error().
-					Err(err).
-					Int64("chat_id", c.EffectiveChat.Id).
-					Msg("error saving Gemini data")
-			}
+				Msg("error saving Gemini data")
 		}
 	}
 
@@ -387,15 +380,15 @@ func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	var contents []Content
-	contents = append(contents, Content{
+	var contents []model.GeminiContent
+	contents = append(contents, model.GeminiContent{
 		Role: RoleUser,
-		Parts: []Part{
+		Parts: []model.GeminiPart{
 			{
 				Text: c.Matches[1],
 			},
 			{
-				InlineData: &InlineData{
+				InlineData: &model.GeminiInlineData{
 					MimeType: "image/jpeg", // Images sent through Telegram are always JPEGs
 					Data:     base64.StdEncoding.EncodeToString(fileData),
 				},
