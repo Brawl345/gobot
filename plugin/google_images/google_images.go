@@ -114,6 +114,11 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 
 	query := c.Matches[1]
 
+	if len(query) > 100 {
+		_, err := c.EffectiveMessage.Reply(b, "❌ Suchbegriff zu lang.", utils.DefaultSendOptions())
+		return err
+	}
+
 	var wrapper model.GoogleImages
 	var err error
 	if c.CallbackQuery != nil {
