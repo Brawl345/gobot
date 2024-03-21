@@ -158,7 +158,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 			inputText.WriteString(c.EffectiveMessage.Quote.Text)
 		}
 
-		inputText.WriteString("-- ZUSÄTZLICHER KONTEXT ENDE --\n")
+		inputText.WriteString("\n-- ZUSÄTZLICHER KONTEXT ENDE --\n")
 	}
 
 	inputText.WriteString(c.Matches[1])
@@ -346,14 +346,35 @@ func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	var bestResolution *gotgbot.PhotoSize
 
+	var inputText strings.Builder
+
 	if c.EffectiveMessage.Photo != nil {
 		bestResolution = tgUtils.GetBestResolution(c.EffectiveMessage.Photo)
 	} else if c.EffectiveMessage.ReplyToMessage != nil && c.EffectiveMessage.ReplyToMessage.Photo != nil {
 		bestResolution = tgUtils.GetBestResolution(c.EffectiveMessage.ReplyToMessage.Photo)
+		if c.EffectiveMessage.ReplyToMessage.Caption != "" {
+			inputText.WriteString("-- ZUSÄTZLICHER KONTEXT --\n")
+			inputText.WriteString("Dies ist zusätzlicher Kontext. Wiederhole diesen nicht wortwörtlich!\n\n")
+			inputText.WriteString(fmt.Sprintf("Nachricht von %s", c.EffectiveMessage.ReplyToMessage.From.FirstName))
+			if c.EffectiveMessage.ReplyToMessage.From.LastName != "" {
+				inputText.WriteString(fmt.Sprintf(" %s", c.EffectiveMessage.ReplyToMessage.From.LastName))
+			}
+			inputText.WriteString(":\n")
+			inputText.WriteString(tgUtils.AnyText(c.EffectiveMessage.ReplyToMessage))
+
+			if c.EffectiveMessage.Quote != nil && c.EffectiveMessage.Quote.Text != "" {
+				inputText.WriteString("\n-- Beziehe dich nur auf folgenden Textteil: --\n")
+				inputText.WriteString(c.EffectiveMessage.Quote.Text)
+			}
+
+			inputText.WriteString("\n-- ZUSÄTZLICHER KONTEXT ENDE --\n")
+		}
+
 	} else if c.EffectiveMessage.ExternalReply != nil && c.EffectiveMessage.ExternalReply.Photo != nil {
 		bestResolution = tgUtils.GetBestResolution(c.EffectiveMessage.ExternalReply.Photo)
 	}
 	fileSize := bestResolution.FileSize
+	inputText.WriteString(c.Matches[1])
 
 	// This should never happen because the limit for photos sent through Telegram is ~5-10 MB
 	if fileSize > tgUtils.MaxFilesizeDownload {
@@ -392,7 +413,7 @@ func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
 		Role: RoleUser,
 		Parts: []Part{
 			{
-				Text: c.Matches[1],
+				Text: inputText.String(),
 			},
 			{
 				InlineData: &InlineData{
