@@ -2,24 +2,30 @@
 
 CREATE TABLE chats
 (
-    id         BIGINT PRIMARY KEY,
-    created_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ  NULL     DEFAULT NULL,
-    title      VARCHAR(255) NOT NULL,
-    allowed    BOOLEAN      NOT NULL DEFAULT FALSE
+    id                             BIGINT PRIMARY KEY,
+    created_at                     TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at                     TIMESTAMPTZ NULL     DEFAULT NULL,
+    title                          TEXT        NOT NULL,
+    allowed                        BOOLEAN     NOT NULL DEFAULT FALSE,
+    cleverbot_state                TEXT        NULL,
+    birthday_notifications_enabled BOOLEAN     NOT NULL DEFAULT FALSE,
+    gemini_history                 JSONB       NULL,
+    gemini_history_expires_on      TIMESTAMPTZ NULL
 );
 
 CREATE INDEX ON chats (allowed);
+CREATE INDEX ON chats (birthday_notifications_enabled);
 
 CREATE TABLE users
 (
     id         BIGINT PRIMARY KEY,
-    created_at TIMESTAMPTZ  NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMPTZ  NULL     DEFAULT NULL,
-    first_name VARCHAR(255) NOT NULL,
-    last_name  VARCHAR(255) NULL,
-    username   VARCHAR(255) NULL,
-    allowed    BOOLEAN      NOT NULL DEFAULT FALSE
+    created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMPTZ NULL     DEFAULT NULL,
+    first_name TEXT        NOT NULL,
+    last_name  TEXT        NULL,
+    username   TEXT        NULL,
+    allowed    BOOLEAN     NOT NULL DEFAULT FALSE,
+    birthday   DATE        NULL
 );
 
 CREATE INDEX ON users (allowed);
@@ -33,6 +39,9 @@ CREATE TABLE chats_users
     updated_at TIMESTAMPTZ NULL     DEFAULT NULL,
     msg_count  BIGINT      NOT NULL DEFAULT 1,
     in_group   BOOLEAN     NOT NULL DEFAULT TRUE,
+    notify     BOOLEAN              DEFAULT FALSE,
+    afk_since  TIMESTAMPTZ NULL,
+    afk_reason TEXT        NULL,
     PRIMARY KEY (chat_id, user_id),
     CONSTRAINT fk_chats_users_chats FOREIGN KEY (chat_id)
         REFERENCES chats (id)
@@ -46,10 +55,12 @@ CREATE TABLE chats_users
 
 CREATE INDEX ON chats_users (user_id);
 CREATE INDEX ON chats_users (in_group);
+CREATE INDEX ON chats_users (notify);
+CREATE INDEX ON chats_users (afk_since);
 
 CREATE TABLE plugins
 (
-    name       VARCHAR(25) PRIMARY KEY,
+    name       TEXT PRIMARY KEY,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMPTZ NULL     DEFAULT NULL,
     enabled    BOOLEAN     NOT NULL DEFAULT TRUE
@@ -60,7 +71,7 @@ CREATE INDEX ON plugins (enabled);
 CREATE TABLE chats_plugins
 (
     chat_id     BIGINT,
-    plugin_name VARCHAR(25),
+    plugin_name TEXT,
     created_at  TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at  TIMESTAMPTZ NULL     DEFAULT NULL,
     enabled     BOOLEAN     NOT NULL DEFAULT TRUE,
@@ -81,7 +92,7 @@ CREATE INDEX ON chats_plugins (enabled);
 
 CREATE TABLE credentials
 (
-    name       VARCHAR(50) PRIMARY KEY,
+    name       TEXT PRIMARY KEY,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     value      TEXT        NOT NULL
 );

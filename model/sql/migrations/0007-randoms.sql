@@ -2,7 +2,7 @@
 
 CREATE TABLE randoms
 (
-    id         SERIAL PRIMARY KEY,
+    id         INTEGER PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     text       TEXT        NOT NULL
 );

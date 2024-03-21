@@ -2,8 +2,8 @@
 
 CREATE TABLE geocoding
 (
-    id         SERIAL PRIMARY KEY,
-    address    VARCHAR(512)   NOT NULL,
+    id         INTEGER PRIMARY KEY,
+    address    TEXT           NOT NULL,
     latitude   DECIMAL(10, 7) NOT NULL,
     longitude  DECIMAL(10, 7) NOT NULL,
     created_at TIMESTAMPTZ    NOT NULL DEFAULT CURRENT_TIMESTAMP,
