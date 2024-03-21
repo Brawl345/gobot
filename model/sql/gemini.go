@@ -2,6 +2,7 @@ package sql
 
 import (
 	"database/sql"
+	"encoding/json"
 	"errors"
 
 	"github.com/Brawl345/gobot/logger"
@@ -42,11 +43,19 @@ func (db *geminiService) ResetHistory(chat *gotgbot.Chat) error {
 	return err
 }
 
-func (db *geminiService) SetHistory(chat *gotgbot.Chat, history string) error {
+func (db *geminiService) AddToHistory(chat *gotgbot.Chat, userContent *model.GeminiContent, modelContent *model.GeminiContent) error {
 	const query = `UPDATE chats
-	SET gemini_history = $1,
+	SET gemini_history = COALESCE(gemini_history, '[]'::JSONB) || $1 || $2,
 	    gemini_history_expires_on = NOW() + INTERVAL '10 MINUTE' 
-	WHERE id = $2`
-	_, err := db.Exec(query, history, chat.Id)
+	WHERE id = $3`
+	marshelledUserContent, err := json.Marshal(userContent)
+	if err != nil {
+		return err
+	}
+	marshelledModelContent, err := json.Marshal(modelContent)
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(query, marshelledUserContent, marshelledModelContent, chat.Id)
 	return err
 }
