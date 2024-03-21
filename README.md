@@ -13,7 +13,7 @@ it!**
 ## Features
 
 * Written in Go
-* Uses MySQL database
+* Uses PostgreSQL database
 * Supports plugins
 * Whitelist included
 * Supports webhooks and long-polling
@@ -44,5 +44,4 @@ Set the following variables to any value (like "`1`") to enable them:
 * `PRINT_MSGS`: Print all messages the bot receives to the terminal
 * `PRETTY_PRINT_LOG`: Pretty print log
 * `DEBUG`: Enable debug logs (verbose, contains secrets!)
-* `IGNORE_SQL_MIGRATION`: Ignore the SQL migration feature when you want to migrate yourself (for example with
-  PlanetScale since it doesn't support foreign key references).
+* `IGNORE_SQL_MIGRATION`: Ignore SQL migrations
