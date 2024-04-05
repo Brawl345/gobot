@@ -1,7 +1,7 @@
 # Chat prompt
 # NOTE: Set "google_gemini_proxy" either to a proxy that routes requests from a supported country to the API
 # or use "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent" directly
-POST {{google_gemini_proxy}}?key={{google_vertex_ai_key}}
+POST {{google_gemini_proxy}}?key={{google_generative_language_api_key}}
 Content-Type: application/json
 
 {
@@ -46,7 +46,7 @@ Content-Type: application/json
 # Vision prompt
 # NOTE: Set "google_gemini_vision_proxy" either to a proxy that routes requests from a supported country to the API
 # or use "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent" directly
-POST {{google_gemini_vision_proxy}}?key={{google_vertex_ai_key}}
+POST {{google_gemini_vision_proxy}}?key={{google_generative_language_api_key}}
 Content-Type: application/json
 
 {

@@ -34,10 +34,10 @@ var log = logger.New("gemini")
 
 type (
 	Plugin struct {
-		apiUrlGemini       string
-		apiUrlGeminiVision string
-		googleVertexAIKey  string
-		geminiService      Service
+		apiUrlGemini                   string
+		apiUrlGeminiVision             string
+		googleGenerativeLanguageApiKey string
+		geminiService                  Service
 	}
 
 	Service interface {
@@ -48,9 +48,10 @@ type (
 )
 
 func New(credentialService model.CredentialService, geminiService Service) *Plugin {
-	googleVertexAIKey, err := credentialService.GetKey("google_vertex_ai_key")
+	// Get the key from https://aistudio.google.com/
+	googleGenerativeLanguageApiKey, err := credentialService.GetKey("google_generative_language_api_key")
 	if err != nil {
-		log.Warn().Msg("google_vertex_ai_key not found")
+		log.Warn().Msg("google_generative_language_api_key not found")
 	}
 
 	apiUrlGeminiPro := ApiUrlGemini
@@ -68,10 +69,10 @@ func New(credentialService model.CredentialService, geminiService Service) *Plug
 	}
 
 	return &Plugin{
-		apiUrlGemini:       apiUrlGeminiPro,
-		apiUrlGeminiVision: apiUrlGeminiVision,
-		googleVertexAIKey:  googleVertexAIKey,
-		geminiService:      geminiService,
+		apiUrlGemini:                   apiUrlGeminiPro,
+		apiUrlGeminiVision:             apiUrlGeminiVision,
+		googleGenerativeLanguageApiKey: googleGenerativeLanguageApiKey,
+		geminiService:                  geminiService,
 	}
 }
 
@@ -210,7 +211,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	q := apiUrl.Query()
-	q.Add("key", p.googleVertexAIKey)
+	q.Add("key", p.googleGenerativeLanguageApiKey)
 	apiUrl.RawQuery = q.Encode()
 
 	err = httpUtils.PostRequest(
@@ -468,7 +469,7 @@ func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	q := apiUrl.Query()
-	q.Add("key", p.googleVertexAIKey)
+	q.Add("key", p.googleGenerativeLanguageApiKey)
 	apiUrl.RawQuery = q.Encode()
 
 	err = httpUtils.PostRequest(
