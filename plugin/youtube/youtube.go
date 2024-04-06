@@ -20,17 +20,12 @@ import (
 var log = logger.New("youtube")
 
 type Plugin struct {
-	apiKey string
+	credentialService model.CredentialService
 }
 
 func New(credentialService model.CredentialService) *Plugin {
-	apiKey, err := credentialService.GetKey("google_api_key")
-	if err != nil {
-		log.Warn().Msg("google_api_key not found")
-	}
-
 	return &Plugin{
-		apiKey: apiKey,
+		credentialService: credentialService,
 	}
 }
 
@@ -70,6 +65,12 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) getVideoInfo(videoID string) (Video, error) {
+	apiKey := p.credentialService.GetKey("google_api_key")
+	if apiKey == "" {
+		log.Warn().Msg("google_api_key not found")
+		return Video{}, errors.New("google_api_key not found")
+	}
+
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "www.googleapis.com",
@@ -77,7 +78,7 @@ func (p *Plugin) getVideoInfo(videoID string) (Video, error) {
 	}
 
 	q := requestUrl.Query()
-	q.Set("key", p.apiKey)
+	q.Set("key", apiKey)
 	q.Set("id", videoID)
 	q.Set("part", "snippet,statistics,contentDetails,liveStreamingDetails")
 	q.Set(
@@ -334,8 +335,19 @@ func (p *Plugin) OnYouTubeLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
-	query := c.Matches[1]
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+
+	apiKey := p.credentialService.GetKey("google_api_key")
+	if apiKey == "" {
+		log.Warn().Msg("google_api_key not found")
+		_, err := c.EffectiveMessage.Reply(b,
+			"❌ <code>google_api_key</code> fehlt.",
+			utils.DefaultSendOptions(),
+		)
+		return err
+	}
+
+	query := c.Matches[1]
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "www.googleapis.com",
@@ -343,7 +355,7 @@ func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	q := requestUrl.Query()
-	q.Set("key", p.apiKey)
+	q.Set("key", apiKey)
 	q.Set("q", query)
 	q.Set("part", "snippet")
 	q.Set("maxResults", "1")

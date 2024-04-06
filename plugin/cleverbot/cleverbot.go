@@ -21,8 +21,8 @@ var log = logger.New("cleverbot")
 
 type (
 	Plugin struct {
-		apiKey           string
-		cleverbotService Service
+		credentialService model.CredentialService
+		cleverbotService  Service
 	}
 
 	Service interface {
@@ -33,13 +33,9 @@ type (
 )
 
 func New(credentialService model.CredentialService, cleverbotService Service) *Plugin {
-	apiKey, err := credentialService.GetKey("cleverbot_api_key")
-	if err != nil {
-		log.Warn().Msg("cleverbot_api_key not found")
-	}
 	return &Plugin{
-		apiKey:           apiKey,
-		cleverbotService: cleverbotService,
+		credentialService: credentialService,
+		cleverbotService:  cleverbotService,
 	}
 }
 
@@ -75,6 +71,16 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 func (p *Plugin) onCleverbot(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
+	apiKey := p.credentialService.GetKey("cleverbot_api_key")
+	if apiKey == "" {
+		log.Warn().Msg("cleverbot_api_key not found")
+		_, err := c.EffectiveMessage.Reply(b,
+			"❌ <code>cleverbot_api_key</code> fehlt.",
+			utils.DefaultSendOptions(),
+		)
+		return err
+	}
+
 	state, err := p.cleverbotService.GetState(c.EffectiveChat)
 	if err != nil {
 		log.Error().
@@ -86,7 +92,7 @@ func (p *Plugin) onCleverbot(b *gotgbot.Bot, c plugin.GobotContext) error {
 	requestUrl := fmt.Sprintf(
 		"%s?key=%s&input=%s&cs=%s",
 		BaseUrl,
-		p.apiKey,
+		apiKey,
 		url.QueryEscape(c.Matches[1]),
 		url.QueryEscape(state),
 	)

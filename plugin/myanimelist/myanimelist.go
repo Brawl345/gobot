@@ -24,17 +24,12 @@ const (
 )
 
 type Plugin struct {
-	clientID string
+	credentialService model.CredentialService
 }
 
 func New(credentialService model.CredentialService) *Plugin {
-	clientID, err := credentialService.GetKey("mal_client_id")
-	if err != nil {
-		log.Warn().Msg("mal_client_id not found")
-	}
-
 	return &Plugin{
-		clientID: clientID,
+		credentialService: credentialService,
 	}
 }
 
@@ -70,6 +65,17 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 
 func (p *Plugin) onSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+
+	clientID := p.credentialService.GetKey("mal_client_id")
+	if clientID == "" {
+		log.Warn().Msg("mal_client_id not found")
+		_, err := c.EffectiveMessage.Reply(b,
+			"❌ <code>mal_client_id</code> fehlt.",
+			utils.DefaultSendOptions(),
+		)
+		return err
+	}
+
 	var response AnimeSearch
 
 	requestUrl := url.URL{
@@ -87,7 +93,7 @@ func (p *Plugin) onSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err := httpUtils.GetRequestWithHeader(
 		requestUrl.String(),
 		map[string]string{
-			"X-MAL-CLIENT-ID": p.clientID,
+			"X-MAL-CLIENT-ID": clientID,
 		},
 		&response,
 	)
@@ -131,6 +137,17 @@ func (p *Plugin) onSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+
+	clientID := p.credentialService.GetKey("mal_client_id")
+	if clientID == "" {
+		log.Warn().Msg("mal_client_id not found")
+		_, err := c.EffectiveMessage.Reply(b,
+			"❌ <code>mal_client_id</code> fehlt.",
+			utils.DefaultSendOptions(),
+		)
+		return err
+	}
+
 	var anime Anime
 	var httpError *httpUtils.HttpError
 
@@ -146,7 +163,7 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err := httpUtils.GetRequestWithHeader(
 		requestUrl.String(),
 		map[string]string{
-			"X-MAL-CLIENT-ID": p.clientID,
+			"X-MAL-CLIENT-ID": clientID,
 		},
 		&anime,
 	)

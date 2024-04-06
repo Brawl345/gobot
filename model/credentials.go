@@ -2,8 +2,8 @@ package model
 
 type (
 	CredentialService interface {
-		GetAllCredentials() ([]Credential, error)
-		GetKey(name string) (string, error)
+		GetAllCredentials() map[string]string
+		GetKey(name string) string
 		SetKey(name, value string) error
 		DeleteKey(name string) error
 	}

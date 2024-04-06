@@ -34,10 +34,9 @@ var log = logger.New("gemini")
 
 type (
 	Plugin struct {
-		apiUrlGemini                   string
-		apiUrlGeminiVision             string
-		googleGenerativeLanguageApiKey string
-		geminiService                  Service
+		// Get the key from https://aistudio.google.com/
+		credentialService model.CredentialService
+		geminiService     Service
 	}
 
 	Service interface {
@@ -48,31 +47,9 @@ type (
 )
 
 func New(credentialService model.CredentialService, geminiService Service) *Plugin {
-	// Get the key from https://aistudio.google.com/
-	googleGenerativeLanguageApiKey, err := credentialService.GetKey("google_generative_language_api_key")
-	if err != nil {
-		log.Warn().Msg("google_generative_language_api_key not found")
-	}
-
-	apiUrlGeminiPro := ApiUrlGemini
-	proxyUrlGeminiPro, err := credentialService.GetKey("google_gemini_proxy")
-	if err == nil {
-		log.Debug().Msg("Using Gemini API proxy for base model")
-		apiUrlGeminiPro = proxyUrlGeminiPro
-	}
-
-	apiUrlGeminiVision := ApiUrlGeminiVision
-	proxyUrlVision, err := credentialService.GetKey("google_gemini_vision_proxy")
-	if err == nil {
-		log.Debug().Msg("Using Gemini API proxy for Vision")
-		apiUrlGeminiVision = proxyUrlVision
-	}
-
 	return &Plugin{
-		apiUrlGemini:                   apiUrlGeminiPro,
-		apiUrlGeminiVision:             apiUrlGeminiVision,
-		googleGenerativeLanguageApiKey: googleGenerativeLanguageApiKey,
-		geminiService:                  geminiService,
+		credentialService: credentialService,
+		geminiService:     geminiService,
 	}
 }
 
@@ -118,6 +95,23 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+
+	apiKey := p.credentialService.GetKey("google_generative_language_api_key")
+	if apiKey == "" {
+		log.Warn().Msg("google_generative_language_api_key not found")
+		_, err := c.EffectiveMessage.Reply(b,
+			"❌ <code>google_generative_language_api_key</code> fehlt.",
+			utils.DefaultSendOptions(),
+		)
+		return err
+	}
+
+	apiUrlGeminiPro := ApiUrlGemini
+	proxyUrlGeminiPro := p.credentialService.GetKey("google_gemini_proxy")
+	if proxyUrlGeminiPro != "" {
+		log.Debug().Msg("Using Gemini API proxy for base model")
+		apiUrlGeminiPro = proxyUrlGeminiPro
+	}
 
 	var contents []Content
 	geminiData, err := p.geminiService.GetHistory(c.EffectiveChat)
@@ -199,19 +193,19 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	var response Response
 
-	apiUrl, err := url.Parse(p.apiUrlGemini)
+	apiUrl, err := url.Parse(apiUrlGeminiPro)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Str("api_url", p.apiUrlGemini).
+			Str("api_url", apiUrlGeminiPro).
 			Msg("error while parsing api url")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
 	q := apiUrl.Query()
-	q.Add("key", p.googleGenerativeLanguageApiKey)
+	q.Add("key", apiKey)
 	apiUrl.RawQuery = q.Encode()
 
 	err = httpUtils.PostRequest(
@@ -228,7 +222,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 				guid := xid.New().String()
 				log.Err(err).
 					Str("guid", guid).
-					Str("url", p.apiUrlGemini).
+					Str("url", apiUrlGeminiPro).
 					Msg("Failed to send POST request, got HTTP code 400")
 
 				err := p.geminiService.ResetHistory(c.EffectiveChat)
@@ -258,7 +252,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Str("url", p.apiUrlGemini).
+			Str("url", apiUrlGeminiPro).
 			Msg("Failed to send POST request")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
@@ -268,7 +262,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		len(response.Candidates[0].Content.Parts) == 0 ||
 		response.Candidates[0].Content.Parts[0].Text == "" {
 		log.Error().
-			Str("url", p.apiUrlGemini).
+			Str("url", apiUrlGeminiPro).
 			Msg("Got no answer from Gemini")
 		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von Gemini erhalten (eventuell gefiltert).", utils.DefaultSendOptions())
 		return err
@@ -344,6 +338,23 @@ func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
 	// NOTE: Multiturn chat is not enabled for Gemini Pro Vision
 
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadPhoto, nil)
+
+	apiKey := p.credentialService.GetKey("google_generative_language_api_key")
+	if apiKey == "" {
+		log.Warn().Msg("google_generative_language_api_key not found")
+		_, err := c.EffectiveMessage.Reply(b,
+			"❌ <code>google_generative_language_api_key</code> fehlt.",
+			utils.DefaultSendOptions(),
+		)
+		return err
+	}
+
+	apiUrlGeminiVision := ApiUrlGeminiVision
+	proxyUrlVision := p.credentialService.GetKey("google_gemini_vision_proxy")
+	if proxyUrlVision != "" {
+		log.Debug().Msg("Using Gemini API proxy for Vision")
+		apiUrlGeminiVision = proxyUrlVision
+	}
 
 	var bestResolution *gotgbot.PhotoSize
 
@@ -457,19 +468,19 @@ func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadPhoto, nil)
 
-	apiUrl, err := url.Parse(p.apiUrlGeminiVision)
+	apiUrl, err := url.Parse(apiUrlGeminiVision)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Str("api_url", p.apiUrlGeminiVision).
+			Str("api_url", apiUrlGeminiVision).
 			Msg("error while parsing api url")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
 	q := apiUrl.Query()
-	q.Add("key", p.googleGenerativeLanguageApiKey)
+	q.Add("key", apiKey)
 	apiUrl.RawQuery = q.Encode()
 
 	err = httpUtils.PostRequest(
@@ -486,7 +497,7 @@ func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
 				guid := xid.New().String()
 				log.Err(err).
 					Str("guid", guid).
-					Str("url", p.apiUrlGeminiVision).
+					Str("url", apiUrlGeminiVision).
 					Msg("Failed to send POST request, got HTTP code 400")
 
 				_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
@@ -508,7 +519,7 @@ func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Str("url", p.apiUrlGemini).
+			Str("url", apiUrlGeminiVision).
 			Msg("Failed to send POST request")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
@@ -518,7 +529,7 @@ func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
 		len(response.Candidates[0].Content.Parts) == 0 ||
 		response.Candidates[0].Content.Parts[0].Text == "" {
 		log.Error().
-			Str("url", p.apiUrlGemini).
+			Str("url", apiUrlGeminiVision).
 			Msg("Got no answer from Gemini")
 		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von Gemini erhalten (eventuell gefiltert).", utils.DefaultSendOptions())
 		return err

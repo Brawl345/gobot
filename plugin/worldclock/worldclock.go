@@ -18,21 +18,16 @@ import (
 )
 
 type Plugin struct {
-	apiKey           string // https://www.bingmapsportal.com/
-	geocodingService model.GeocodingService
+	credentialService model.CredentialService // https://www.bingmapsportal.com/
+	geocodingService  model.GeocodingService
 }
 
 var log = logger.New("worldclock")
 
 func New(credentialService model.CredentialService, geocodingService model.GeocodingService) *Plugin {
-	apiKey, err := credentialService.GetKey("bing_maps_api_key")
-	if err != nil {
-		log.Warn().Msg("bing_maps_api_key not found")
-	}
-
 	return &Plugin{
-		apiKey:           apiKey,
-		geocodingService: geocodingService,
+		credentialService: credentialService,
+		geocodingService:  geocodingService,
 	}
 }
 
@@ -65,6 +60,16 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
+	apiKey := p.credentialService.GetKey("bing_maps_api_key")
+	if apiKey == "" {
+		log.Warn().Msg("bing_maps_api_key not found")
+		_, err := c.EffectiveMessage.Reply(b,
+			"❌ <code>bing_maps_api_key</code> fehlt.",
+			utils.DefaultSendOptions(),
+		)
+		return err
+	}
+
 	var location string
 	if len(c.Matches) > 1 {
 		location = c.Matches[1]
@@ -95,7 +100,7 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	q := requestUrl.Query()
-	q.Set("key", p.apiKey)
+	q.Set("key", apiKey)
 	q.Set("culture", "de-de")
 
 	requestUrl.RawQuery = q.Encode()

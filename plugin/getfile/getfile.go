@@ -19,8 +19,8 @@ var log = logger.New("getfile")
 
 type (
 	Plugin struct {
-		fileService Service
-		dir         string
+		credentialService model.CredentialService
+		fileService       Service
 	}
 
 	Service interface {
@@ -30,13 +30,9 @@ type (
 )
 
 func New(credentialService model.CredentialService, fileService Service) *Plugin {
-	dir, err := credentialService.GetKey("getfile_dir")
-	if err != nil {
-		dir = "files"
-	}
 	return &Plugin{
-		fileService: fileService,
-		dir:         dir,
+		fileService:       fileService,
+		credentialService: credentialService,
 	}
 }
 
@@ -123,7 +119,12 @@ func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	savePath := filepath.Join(p.dir, subFolder)
+	dir := p.credentialService.GetKey("getfile_dir")
+	if dir == "" {
+		dir = "Files"
+	}
+
+	savePath := filepath.Join(dir, subFolder)
 	err = os.MkdirAll(savePath, 0770)
 	if err != nil {
 		log.Err(err).Msgf("Could not create directory: %s", savePath)

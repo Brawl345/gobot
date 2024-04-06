@@ -24,18 +24,13 @@ const (
 
 type (
 	Plugin struct {
-		apiKey string
+		credentialService model.CredentialService
 	}
 )
 
 func New(credentialService model.CredentialService) *Plugin {
-	apiKey, err := credentialService.GetKey("openai_api_key")
-	if err != nil {
-		log.Warn().Msg("openai_api_key not found")
-	}
-
 	return &Plugin{
-		apiKey: apiKey,
+		credentialService: credentialService,
 	}
 }
 
@@ -57,6 +52,12 @@ func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
+	apiKey := p.credentialService.GetKey("openai_api_key")
+	if apiKey == "" {
+		log.Warn().Msg("openai_api_key not found")
+		return nil
+	}
+
 	if c.EffectiveMessage.Voice.FileSize > tgUtils.MaxFilesizeDownload {
 		log.Warn().
 			Int64("filesize", c.EffectiveMessage.Voice.FileSize).
@@ -96,7 +97,7 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 	resp, err := httpUtils.MultiPartFormRequestWithHeaders(
 		ApiUrl,
 		map[string]string{
-			"Authorization": fmt.Sprintf("Bearer %s", p.apiKey),
+			"Authorization": fmt.Sprintf("Bearer %s", apiKey),
 		},
 		[]httpUtils.MultiPartParam{
 			{

@@ -19,24 +19,12 @@ import (
 var log = logger.New("google_search")
 
 type Plugin struct {
-	apiKey         string
-	searchEngineID string
+	credentialService model.CredentialService
 }
 
 func New(credentialService model.CredentialService) *Plugin {
-	apiKey, err := credentialService.GetKey("google_api_key")
-	if err != nil {
-		log.Warn().Msg("google_api_key not found")
-	}
-
-	searchEngineID, err := credentialService.GetKey("google_search_engine_id")
-	if err != nil {
-		log.Warn().Msg("google_search_engine_id not found")
-	}
-
 	return &Plugin{
-		apiKey:         apiKey,
-		searchEngineID: searchEngineID,
+		credentialService: credentialService,
 	}
 }
 
@@ -63,9 +51,30 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) onGoogleSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+
+	apiKey := p.credentialService.GetKey("google_api_key")
+	if apiKey == "" {
+		log.Warn().Msg("google_api_key not found")
+		_, err := c.EffectiveMessage.Reply(b,
+			"❌ <code>google_api_key</code> fehlt.",
+			utils.DefaultSendOptions(),
+		)
+		return err
+	}
+
+	searchEngineID := p.credentialService.GetKey("google_search_engine_id")
+	if searchEngineID == "" {
+		log.Warn().Msg("google_search_engine_id not found")
+		_, err := c.EffectiveMessage.Reply(b,
+			"❌ <code>google_search_engine_id</code> fehlt.",
+			utils.DefaultSendOptions(),
+		)
+		return err
+	}
+
 	query := c.Matches[1]
 
-	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "customsearch.googleapis.com",
@@ -73,8 +82,8 @@ func (p *Plugin) onGoogleSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	q := requestUrl.Query()
-	q.Set("key", p.apiKey)
-	q.Set("cx", p.searchEngineID)
+	q.Set("key", apiKey)
+	q.Set("cx", searchEngineID)
 	q.Set("q", query)
 	q.Set("hl", "de")
 	q.Set("gl", "de")

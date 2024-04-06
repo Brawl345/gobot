@@ -3,6 +3,7 @@ package creds
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
@@ -64,32 +65,27 @@ func (p *Plugin) OnGet(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	creds, err := p.credentialService.GetAllCredentials()
-
-	if err != nil {
-		guid := xid.New().String()
-		log.Err(err).
-			Str("guid", guid).
-			Send()
-		_, err := c.EffectiveMessage.Reply(b,
-			fmt.Sprintf("❌ Fehler beim Abrufen der Schlüssel.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions(),
-		)
-		return err
-	}
+	creds := p.credentialService.GetAllCredentials()
 
 	if len(creds) == 0 {
 		_, err := c.EffectiveMessage.Reply(b, "<i>Noch keine Schlüssel eingetragen</i>", utils.DefaultSendOptions())
 		return err
 	}
 
+	// Sort creds alphabetically
+	keys := make([]string, 0, len(creds))
+	for k := range creds {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
 	var sb strings.Builder
 
-	for _, cred := range creds {
-		sb.WriteString(fmt.Sprintf("<b>%s</b>:\n<code>%s</code>\n", cred.Name, cred.Value))
+	for _, key := range keys {
+		sb.WriteString(fmt.Sprintf("<b>%s</b>:\n<code>%s</code>\n", key, creds[key]))
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+	_, err := c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
 		ParseMode: gotgbot.ParseModeHTML,
 		ReplyMarkup: &gotgbot.InlineKeyboardMarkup{
 			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
@@ -123,7 +119,7 @@ func (p *Plugin) OnAdd(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "✅ Schlüssel gespeichert. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.Reply(b, "✅ Schlüssel gespeichert.", utils.DefaultSendOptions())
 	return err
 }
 
@@ -149,7 +145,7 @@ func (p *Plugin) OnDelete(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "✅ Schlüssel gelöscht. Der Bot muss neu gestartet werden.", utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.Reply(b, "✅ Schlüssel gelöscht.", utils.DefaultSendOptions())
 	return err
 }
 

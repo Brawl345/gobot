@@ -23,8 +23,7 @@ var log = logger.New("google_images")
 
 type (
 	Plugin struct {
-		apiKey              string
-		searchEngineID      string
+		credentialService   model.CredentialService
 		googleImagesService Service
 	}
 
@@ -41,23 +40,12 @@ type (
 )
 
 func New(credentialService model.CredentialService, googleImagesService Service, cleanupService CleanupService) *Plugin {
-	apiKey, err := credentialService.GetKey("google_api_key")
-	if err != nil {
-		log.Warn().Msg("google_api_key not found")
-	}
-
-	searchEngineID, err := credentialService.GetKey("google_search_engine_id")
-	if err != nil {
-		log.Warn().Msg("google_search_engine_id not found")
-	}
-
 	time.AfterFunc(24*time.Hour, func() {
 		cleanup(cleanupService)
 	})
 
 	return &Plugin{
-		apiKey:              apiKey,
-		searchEngineID:      searchEngineID,
+		credentialService:   credentialService,
 		googleImagesService: googleImagesService,
 	}
 }
@@ -104,6 +92,26 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
+	apiKey := p.credentialService.GetKey("google_api_key")
+	if apiKey == "" {
+		log.Warn().Msg("google_api_key not found")
+		_, err := c.EffectiveMessage.Reply(b,
+			"❌ <code>google_api_key</code> fehlt.",
+			utils.DefaultSendOptions(),
+		)
+		return err
+	}
+
+	searchEngineID := p.credentialService.GetKey("google_search_engine_id")
+	if searchEngineID == "" {
+		log.Warn().Msg("google_search_engine_id not found")
+		_, err := c.EffectiveMessage.Reply(b,
+			"❌ <code>google_search_engine_id</code> fehlt.",
+			utils.DefaultSendOptions(),
+		)
+		return err
+	}
+
 	query := c.Matches[1]
 
 	var wrapper model.GoogleImages
@@ -137,8 +145,8 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 		}
 
 		q := requestUrl.Query()
-		q.Set("key", p.apiKey)
-		q.Set("cx", p.searchEngineID)
+		q.Set("key", apiKey)
+		q.Set("cx", searchEngineID)
 		q.Set("q", query)
 		q.Set("hl", "de")
 		q.Set("gl", "de")

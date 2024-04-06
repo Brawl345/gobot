@@ -34,33 +34,12 @@ const (
 var log = logger.New("summarize")
 
 type Plugin struct {
-	apiUrl string
-	apiKey string
+	credentialService model.CredentialService
 }
 
 func New(credentialService model.CredentialService) *Plugin {
-	apiKey, err := credentialService.GetKey("anthropic_api_key")
-	if err != nil {
-		log.Warn().Msg("anthropic_api_key not found")
-	}
-
-	apiUrl := AnthropicApiUrl
-
-	// Must be the direct URL to the proxy - nothing will be appended. Slashes at the end will be removed.
-	// E.g. for Cloudflare AI Gateway, use "https://gateway.ai.cloudflare.com/v1/ACCOUNT_TAG/anthropic/messages"
-	proxyUrl, _ := credentialService.GetKey("summarize_ai_proxy")
-	if proxyUrl != "" && strings.HasPrefix(proxyUrl, "https://") {
-		if strings.HasSuffix(proxyUrl, "/") {
-			proxyUrl = proxyUrl[:len(proxyUrl)-1]
-		}
-
-		apiUrl = proxyUrl
-		log.Debug().Msg("Using Anthropic AI proxy")
-	}
-
 	return &Plugin{
-		apiUrl: apiUrl,
-		apiKey: apiKey,
+		credentialService: credentialService,
 	}
 }
 
@@ -108,6 +87,30 @@ func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.Message) error {
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+
+	apiKey := p.credentialService.GetKey("anthropic_api_key")
+	if apiKey == "" {
+		log.Warn().Msg("anthropic_api_key not found")
+		_, err := c.EffectiveMessage.Reply(b,
+			"❌ <code>anthropic_api_key</code> fehlt.",
+			utils.DefaultSendOptions(),
+		)
+		return err
+	}
+
+	apiUrl := AnthropicApiUrl
+
+	// Must be the direct URL to the proxy - nothing will be appended. Slashes at the end will be removed.
+	// E.g. for Cloudflare AI Gateway, use "https://gateway.ai.cloudflare.com/v1/ACCOUNT_TAG/anthropic/messages"
+	proxyUrl := p.credentialService.GetKey("summarize_ai_proxy")
+	if proxyUrl != "" && strings.HasPrefix(proxyUrl, "https://") {
+		if strings.HasSuffix(proxyUrl, "/") {
+			proxyUrl = proxyUrl[:len(proxyUrl)-1]
+		}
+
+		apiUrl = proxyUrl
+		log.Debug().Msg("Using Anthropic AI proxy")
+	}
 
 	var urls []string
 	for _, entity := range tgUtils.ParseAnyEntityTypes(msg, []tgUtils.EntityType{tgUtils.EntityTypeURL, tgUtils.EntityTextLink}) {
@@ -162,9 +165,9 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 
 	var response Response
 	var httpError *httpUtils.HttpError
-	err = httpUtils.PostRequest(p.apiUrl,
+	err = httpUtils.PostRequest(apiUrl,
 		map[string]string{
-			"x-api-key":         p.apiKey,
+			"x-api-key":         apiKey,
 			"anthropic-version": AnthropicVersion,
 		},
 		&request,
