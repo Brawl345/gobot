@@ -21,14 +21,13 @@ import (
 
 const (
 	MinArticleLength = 500
-	MaxArticleLength = 650000 // a bit under ~2 mio. tokens
-	MaxTokens        = 700
+	MaxArticleLength = 60000 // ~12,000 tokens
+	MaxTokens        = 1000
+	PresencePenalty  = 1.0
 	Temperature      = 0.3
 	SystemPrompt     = "Fasse den folgenden Artikel in fünf kurzen Stichpunkten zusammen. Antworte IMMER nur Deutsch. Formatiere deine Ausgabe wie folgt:\n" +
-		"Der Artikel handelt von [Zusammenfassung in einem kurzen Satz]\n\n" +
-		"- [Kurzer Stichpunkt 1, kein ganzer Satz]...\n" +
-		"- [Kurzer Stichpunkt 2, kein ganzer Satz]...\n" +
-		"..."
+		"Der Artikel handelt von [Zusammenfassung in einem Satz]\n\n" +
+		"- [Stichpunkt 1]..."
 )
 
 var log = logger.New("summarize")
@@ -88,20 +87,20 @@ func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.Message) error {
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 
-	apiKey := p.credentialService.GetKey("anthropic_api_key")
+	apiKey := p.credentialService.GetKey("openai_api_key")
 	if apiKey == "" {
-		log.Warn().Msg("anthropic_api_key not found")
+		log.Warn().Msg("openai_api_key not found")
 		_, err := c.EffectiveMessage.Reply(b,
-			"❌ <code>anthropic_api_key</code> fehlt.",
+			"❌ <code>openai_api_key</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
 		return err
 	}
 
-	apiUrl := AnthropicApiUrl
+	apiUrl := OpenAIApiUrl
 
 	// Must be the direct URL to the proxy - nothing will be appended. Slashes at the end will be removed.
-	// E.g. for Cloudflare AI Gateway, use "https://gateway.ai.cloudflare.com/v1/ACCOUNT_TAG/anthropic/messages"
+	// E.g. for Cloudflare AI Gateway, use "https://gateway.ai.cloudflare.com/v1/ACCOUNT_TAG/openai/chat/completions"
 	proxyUrl := p.credentialService.GetKey("summarize_ai_proxy")
 	if proxyUrl != "" && strings.HasPrefix(proxyUrl, "https://") {
 		if strings.HasSuffix(proxyUrl, "/") {
@@ -109,7 +108,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		}
 
 		apiUrl = proxyUrl
-		log.Debug().Msg("Using Anthropic AI proxy")
+		log.Debug().Msg("Using OpenAI AI proxy")
 	}
 
 	var urls []string
@@ -151,24 +150,27 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 	}
 
 	request := Request{
-		Model:  Model,
-		System: SystemPrompt,
+		Model: Model,
 		Messages: []ApiMessage{
+			{
+				Role:    System,
+				Content: SystemPrompt,
+			},
 			{
 				Role:    User,
 				Content: article.TextContent,
 			},
 		},
-		MaxTokens:   MaxTokens,
-		Temperature: Temperature,
+		PresencePenalty: PresencePenalty,
+		MaxTokens:       MaxTokens,
+		Temperature:     Temperature,
 	}
 
 	var response Response
 	var httpError *httpUtils.HttpError
 	err = httpUtils.PostRequest(apiUrl,
 		map[string]string{
-			"x-api-key":         apiKey,
-			"anthropic-version": AnthropicVersion,
+			"Authorization": fmt.Sprintf("Bearer %s", apiKey),
 		},
 		&request,
 		&response)
@@ -191,30 +193,30 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		return err
 	}
 
-	if response.Type == "error" {
+	if response.Error.Type != "" {
 		guid := xid.New().String()
 		log.Error().
 			Str("guid", guid).
 			Str("url", url).
 			Str("message", response.Error.Message).
 			Str("type", response.Error.Type).
-			Msg("Got error from Anthropic API")
+			Msg("Got error from OpenAI API")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
 
-	if len(response.Content) == 0 || (len(response.Content) > 0 && response.Content[0].Text == "") {
+	if len(response.Choices) == 0 || (len(response.Choices) > 0 && response.Choices[0].Message.Content == "") {
 		log.Error().
 			Str("url", url).
-			Msg("Got no answer from Claude")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von Claude erhalten", utils.DefaultSendOptions())
+			Msg("Got no answer from ChatGPT")
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von ChatGPT erhalten", utils.DefaultSendOptions())
 		return err
 	}
 
 	var sb strings.Builder
 	sb.WriteString("<b>Zusammenfassung:</b>\n")
-	sb.WriteString(utils.Escape(response.Content[0].Text))
+	sb.WriteString(utils.Escape(response.Choices[0].Message.Content))
 
 	_, err = msg.Reply(b, sb.String(), utils.DefaultSendOptions())
 	return err
