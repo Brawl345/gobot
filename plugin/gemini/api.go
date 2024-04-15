@@ -1,7 +1,9 @@
 package gemini
 
+// Models: https://ai.google.dev/models/gemini
+
 const (
-	ApiUrlGemini       = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+	ApiUrlGemini       = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent"
 	ApiUrlGeminiVision = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent"
 	RoleModel          = "model"
 	RoleUser           = "user"
