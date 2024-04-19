@@ -14,6 +14,7 @@ const (
 	VenueMsg    MessageTrigger = "\agobot_venue"
 	VoiceMsg    MessageTrigger = "\agobot_voice"
 
+	MaxCaptionLength            = 1024
 	MaxMessageLength            = 4096
 	MaxFilesizeDownload         = 20000000 // Max filesize that can be downloaded from Telegram = 20MB
 	MaxFilesizeUpload           = 50000000 // Max filesize that can be uploaded to Telegram = 50MB
