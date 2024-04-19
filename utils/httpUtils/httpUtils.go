@@ -15,12 +15,12 @@ import (
 )
 
 var (
-	log        = logger.New("httpUtils")
-	HttpClient *http.Client
+	log               = logger.New("httpUtils")
+	DefaultHttpClient *http.Client
 )
 
 func init() {
-	HttpClient = createHTTPClient()
+	DefaultHttpClient = createHTTPClient()
 }
 
 func createHTTPClient() *http.Client {
@@ -57,7 +57,7 @@ func GetRequest(url string, result any) error {
 		Str("url", url).
 		Send()
 
-	resp, err := HttpClient.Get(url)
+	resp, err := DefaultHttpClient.Get(url)
 
 	if err != nil {
 		return err
@@ -93,7 +93,11 @@ func GetRequest(url string, result any) error {
 	return nil
 }
 
-func PostRequest(url string, headers map[string]string, input any, result any) error {
+type HttpOptions struct {
+	Client *http.Client
+}
+
+func PostRequest(url string, headers map[string]string, input any, result any, options *HttpOptions) error {
 	log.Debug().
 		Str("url", url).
 		Interface("input", input).
@@ -115,7 +119,15 @@ func PostRequest(url string, headers map[string]string, input any, result any) e
 		req.Header.Set(key, value)
 	}
 
-	resp, err := HttpClient.Do(req)
+	httpClient := DefaultHttpClient
+
+	if options != nil {
+		if options.Client != nil {
+			httpClient = options.Client
+		}
+	}
+
+	resp, err := httpClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -166,7 +178,7 @@ func GetRequestWithHeader(url string, headers map[string]string, result any) err
 		req.Header.Set(key, value)
 	}
 
-	resp, err := HttpClient.Do(req)
+	resp, err := DefaultHttpClient.Do(req)
 
 	if err != nil {
 		return err
@@ -258,7 +270,7 @@ func MultiPartFormRequestWithHeaders(url string, headers map[string]string, para
 		}
 	}
 
-	return HttpClient.Do(req)
+	return DefaultHttpClient.Do(req)
 }
 
 func DownloadFile(b *gotgbot.Bot, fileID string) (io.ReadCloser, error) {
@@ -275,7 +287,7 @@ func DownloadFileFromGetFile(b *gotgbot.Bot, file *gotgbot.File) (io.ReadCloser,
 	log.Debug().
 		Str("url", fileUrl).
 		Send()
-	resp, err := HttpClient.Get(fileUrl)
+	resp, err := DefaultHttpClient.Get(fileUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to download file: %w", err)
 	}

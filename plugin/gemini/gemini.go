@@ -213,6 +213,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		nil,
 		&request,
 		&response,
+		nil,
 	)
 
 	if err != nil {
@@ -488,6 +489,7 @@ func (p *Plugin) onGeminiVision(b *gotgbot.Bot, c plugin.GobotContext) error {
 		nil,
 		&request,
 		&response,
+		nil,
 	)
 
 	if err != nil {

@@ -73,7 +73,7 @@ func calculate(expr string) (string, error) {
 
 	var err error
 
-	resp, err := httpUtils.HttpClient.Get(fmt.Sprintf(ApiUrl, url.QueryEscape(expr)))
+	resp, err := httpUtils.DefaultHttpClient.Get(fmt.Sprintf(ApiUrl, url.QueryEscape(expr)))
 	if err != nil {
 		return "", err
 	}

@@ -173,9 +173,10 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 			"Authorization": fmt.Sprintf("Bearer %s", apiKey),
 		},
 		&request,
-		&response)
+		&response,
+		nil,
+	)
 	if err != nil {
-
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == 429 {
 				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())

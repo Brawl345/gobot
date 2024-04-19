@@ -120,7 +120,7 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("url", url).
 			Msg("Failed to send file through Telegram")
 
-		resp, err := httpUtils.HttpClient.Get(url)
+		resp, err := httpUtils.DefaultHttpClient.Get(url)
 		if err != nil {
 			log.Err(err).
 				Str("url", url).

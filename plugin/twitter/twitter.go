@@ -84,7 +84,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		Interface("headers", req.Header).
 		Send()
 
-	resp, err := httpUtils.HttpClient.Do(req)
+	resp, err := httpUtils.DefaultHttpClient.Do(req)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
@@ -482,7 +482,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 				}
 
 				func() {
-					resp, err := httpUtils.HttpClient.Get(medium.Link())
+					resp, err := httpUtils.DefaultHttpClient.Get(medium.Link())
 					log.Info().Str("url", medium.Link()).Msg("Downloading")
 					if err != nil {
 						log.Err(err).Str("url", medium.Link()).Msg("Error while downloading")
@@ -557,7 +557,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 					log.Err(err).Str("url", gif.Link()).Msg("Error while sending gif through Telegram")
 
-					resp, err := httpUtils.HttpClient.Get(gif.Link())
+					resp, err := httpUtils.DefaultHttpClient.Get(gif.Link())
 					log.Info().Str("url", gif.Link()).Msg("Downloading gif")
 					if err != nil {
 						log.Err(err).Str("url", gif.Link()).Msg("Error while downloading gif")
