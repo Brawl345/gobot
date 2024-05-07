@@ -343,7 +343,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 			}
 
 			if len(tweet) > MaxNoteLength {
-				tweet = fmt.Sprintf("%s...\n<a href=\"https://twitter.com/%s/status/%s\">Zitat Weiterlesen...</a>",
+				tweet = fmt.Sprintf("%s...\n<a href=\"https://twitter.com/%s/status/%s\">Zitat weiterlesen...</a>",
 					utils.Escape(tweet[:MaxNoteLength]),
 					quoteResultSub.Core.UserResults.Result.Legacy.ScreenName,
 					quoteResultSub.RestId,
