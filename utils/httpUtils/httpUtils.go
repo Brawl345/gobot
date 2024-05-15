@@ -104,17 +104,35 @@ func PostRequest(url string, headers map[string]string, input any, result any, o
 		Interface("headers", headers).
 		Send()
 
-	jsonData, err := json.Marshal(input)
+	var reqBody io.Reader
+	isJson := true
+	switch v := input.(type) {
+	case io.ReadCloser:
+		isJson = false
+		reqBody = v
+		defer func(v io.ReadCloser) {
+			err := v.Close()
+			if err != nil {
+				log.Err(err).Msg("Failed to close response body")
+			}
+		}(v)
+	default:
+		jsonData, err := json.Marshal(v)
+		if err != nil {
+			return err
+		}
+		reqBody = bytes.NewBuffer(jsonData)
+	}
+
+	req, err := http.NewRequest("POST", url, reqBody)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
-	if err != nil {
-		return err
+	if isJson {
+		req.Header.Set("Content-Type", "application/json")
 	}
 
-	req.Header.Set("Content-Type", "application/json")
 	for key, value := range headers {
 		req.Header.Set(key, value)
 	}

@@ -1,12 +1,12 @@
 package gemini
 
-// Models: https://ai.google.dev/models/gemini
+// Models: https://ai.google.dev/gemini-api/docs/models/gemini
 
 const (
-	ApiUrlGemini       = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.0-pro:generateContent"
-	ApiUrlGeminiVision = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro-vision:generateContent"
-	RoleModel          = "model"
-	RoleUser           = "user"
+	ApiUrlGemini     = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
+	ApiUrlFileUpload = "https://generativelanguage.googleapis.com/upload/v1beta/files?key=%s"
+	RoleModel        = "model"
+	RoleUser         = "user"
 )
 
 type (
@@ -15,14 +15,14 @@ type (
 		Parts []Part `json:"parts"`
 	}
 
-	InlineData struct {
+	FileData struct {
 		MimeType string `json:"mimeType,omitempty"`
-		Data     string `json:"data,omitempty"`
+		FileUri  string `json:"fileUri,omitempty"`
 	}
 
 	Part struct {
-		Text       string      `json:"text,omitempty"`
-		InlineData *InlineData `json:"inlineData,omitempty"`
+		Text     string    `json:"text,omitempty"`
+		FileData *FileData `json:"fileData,omitempty"`
 	}
 
 	SafetySetting struct {
@@ -37,15 +37,20 @@ type (
 		MaxOutputTokens int     `json:"maxOutputTokens"`
 	}
 
-	// Request - https://ai.google.dev/api/rest/v1beta/models/generateContent#request-body
-	Request struct {
-		Contents         []Content        `json:"contents"`
-		SafetySettings   []SafetySetting  `json:"safetySettings"`
-		GenerationConfig GenerationConfig `json:"generationConfig"`
+	SystemInstruction struct {
+		Parts []Part `json:"parts"`
 	}
 
-	// Response - https://ai.google.dev/api/rest/v1beta/GenerateContentResponse
-	Response struct {
+	// GenerateContentRequest - https://ai.google.dev/api/rest/v1beta/models/generateContent#request-body
+	GenerateContentRequest struct {
+		Contents          []Content         `json:"contents"`
+		SafetySettings    []SafetySetting   `json:"safetySettings"`
+		GenerationConfig  GenerationConfig  `json:"generationConfig"`
+		SystemInstruction SystemInstruction `json:"system_instruction"`
+	}
+
+	// GenerateContentResponse - https://ai.google.dev/api/rest/v1beta/GenerateContentResponse
+	GenerateContentResponse struct {
 		Candidates []struct {
 			Content       Content `json:"content"`
 			FinishReason  string  `json:"finishReason"`
@@ -54,6 +59,14 @@ type (
 				Probability string `json:"probability"`
 			} `json:"safetyRatings"`
 		} `json:"candidates"`
+	}
+
+	// FileUploadResponse - https://ai.google.dev/api/rest/v1beta/media/upload#response-body
+	FileUploadResponse struct {
+		File struct {
+			MimeType string `json:"mimeType"`
+			Uri      string `json:"uri"`
+		} `json:"file"`
 	}
 )
 
