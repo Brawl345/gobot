@@ -28,7 +28,7 @@ const (
 	MaxOutputTokens          = 700
 	MaxInputCharacters       = 250000 // Should be roughly 1 mio tokens, max input tokens are 1048576
 	TokensPerImage           = 258    // https://ai.google.dev/gemini-api/docs/prompting_with_media?lang=python#video_formats
-	DefaultSystemInstruction = "Antworte nur auf Deutsch. Verende kein Markdown, außer für Stichpunkte, da es für den Nutzer nicht formatiert wird. Bilder-Analyse ist eingeschaltet."
+	DefaultSystemInstruction = "Antworte nur auf Deutsch. Nutze nur Standard-Text, da Markdown für den Nutzer nicht angezeigt wird. Verwende keine Emoji. Bilder-Analyse ist eingeschaltet."
 )
 
 var log = logger.New("gemini")
