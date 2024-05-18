@@ -118,6 +118,7 @@ func onCalc(b *gotgbot.Bot, c plugin.GobotContext) error {
 				fmt.Sprintf("❌ <b>Fehler:</b> <i>%s</i>", utils.Escape(apiError.Error())),
 				utils.DefaultSendOptions(),
 			)
+			return err
 		}
 
 		guid := xid.New().String()
