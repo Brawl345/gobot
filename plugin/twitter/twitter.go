@@ -143,7 +143,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 	tweetID := c.Matches[1]
 	requestUrl := url.URL{
 		Scheme: "https",
-		Host:   "twitter.com",
+		Host:   "x.com",
 		Path:   tweetDetailsPath,
 	}
 
@@ -237,7 +237,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 
 		if len(tweet) > MaxNoteLength {
-			tweet = fmt.Sprintf("%s...\n<a href=\"https://twitter.com/%s/status/%s\">Weiterlesen...</a>",
+			tweet = fmt.Sprintf("%s...\n<a href=\"https://x.com/%s/status/%s\">Weiterlesen...</a>",
 				utils.Escape(tweet[:MaxNoteLength]),
 				result.Core.UserResults.Result.Legacy.ScreenName,
 				result.RestId,
@@ -343,7 +343,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 			}
 
 			if len(tweet) > MaxNoteLength {
-				tweet = fmt.Sprintf("%s...\n<a href=\"https://twitter.com/%s/status/%s\">Zitat weiterlesen...</a>",
+				tweet = fmt.Sprintf("%s...\n<a href=\"https://x.com/%s/status/%s\">Zitat weiterlesen...</a>",
 					utils.Escape(tweet[:MaxNoteLength]),
 					quoteResultSub.Core.UserResults.Result.Legacy.ScreenName,
 					quoteResultSub.RestId,

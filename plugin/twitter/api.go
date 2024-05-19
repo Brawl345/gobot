@@ -12,7 +12,7 @@ import (
 const (
 	bearerToken = "Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA"
 
-	apiBase          = "https://api.twitter.com"
+	apiBase          = "https://api.x.com"
 	activateUrl      = apiBase + "/1.1/guest/activate.json"
 	tweetDetailsPath = "/i/api/graphql/DJS3BdhUhcaEpZ7B7irJDg/TweetResultByRestId"
 
@@ -351,7 +351,7 @@ func (u *UserResult) Author() string {
 
 	sb.WriteString(
 		fmt.Sprintf(
-			"<b>%s</b> (<a href=\"https://twitter.com/%s\">@%s</a>",
+			"<b>%s</b> (<a href=\"https://x.com/%s\">@%s</a>",
 			utils.Escape(u.Result.Legacy.Name),
 			u.Result.Legacy.ScreenName,
 			u.Result.Legacy.ScreenName,
