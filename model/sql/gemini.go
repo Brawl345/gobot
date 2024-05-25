@@ -3,6 +3,7 @@ package sql
 import (
 	"database/sql"
 	"errors"
+
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -44,7 +45,7 @@ func (db *geminiService) ResetHistory(chat *gotgbot.Chat) error {
 func (db *geminiService) SetHistory(chat *gotgbot.Chat, history string) error {
 	const query = `UPDATE chats
 	SET gemini_history = ?,
-	    gemini_history_expires_on = NOW() + INTERVAL 10 MINUTE 
+	    gemini_history_expires_on = NOW() + INTERVAL 30 MINUTE 
 	WHERE id = ?`
 	_, err := db.Exec(query, history, chat.Id)
 	return err
