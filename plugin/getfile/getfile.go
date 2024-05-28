@@ -1,6 +1,7 @@
 package getfile
 
 import (
+	"cmp"
 	"io"
 	"os"
 	"path"
@@ -119,10 +120,7 @@ func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	dir := p.credentialService.GetKey("getfile_dir")
-	if dir == "" {
-		dir = "Files"
-	}
+	dir := cmp.Or(p.credentialService.GetKey("getfile_dir"), "Files")
 
 	savePath := filepath.Join(dir, subFolder)
 	err = os.MkdirAll(savePath, 0770)

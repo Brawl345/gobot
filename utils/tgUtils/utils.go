@@ -1,6 +1,7 @@
 package tgUtils
 
 import (
+	"cmp"
 	"errors"
 	"os"
 	"strconv"
@@ -101,15 +102,8 @@ func AddRectionWithFallback(b *gotgbot.Bot, message *gotgbot.Message, emoji stri
 
 	var telegramErr *gotgbot.TelegramError
 	if err != nil && errors.As(err, &telegramErr) && telegramErr.Description == ErrReactionInvalid {
-		fallback := opts.Fallback
-		if fallback == "" {
-			fallback = emoji
-		}
-
-		sendMessageOpts := opts.SendMessageOpts
-		if sendMessageOpts == nil {
-			sendMessageOpts = utils.DefaultSendOptions()
-		}
+		fallback := cmp.Or(opts.Fallback, emoji)
+		sendMessageOpts := cmp.Or(opts.SendMessageOpts, utils.DefaultSendOptions())
 
 		_, err = message.Reply(b, fallback, sendMessageOpts)
 	}

@@ -1,8 +1,6 @@
 module github.com/Brawl345/gobot
 
-go 1.21
-
-toolchain go1.21.5
+go 1.22
 
 require (
 	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.27

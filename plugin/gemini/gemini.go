@@ -1,6 +1,7 @@
 package gemini
 
 import (
+	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -101,10 +102,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		apiUrlGemini = proxyUrlGemini
 	}
 
-	systemInstruction := p.credentialService.GetKey("google_gemini_system_instruction")
-	if systemInstruction == "" {
-		systemInstruction = DefaultSystemInstruction
-	}
+	systemInstruction := cmp.Or(p.credentialService.GetKey("google_gemini_system_instruction"), DefaultSystemInstruction)
 
 	var contents []Content
 	geminiData, err := p.geminiService.GetHistory(c.EffectiveChat)

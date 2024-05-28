@@ -1,6 +1,7 @@
 package sql
 
 import (
+	"cmp"
 	"database/sql"
 	"embed"
 	"fmt"
@@ -20,21 +21,12 @@ var log = logger.New("db")
 var embeddedMigrations embed.FS
 
 func New() (*sqlx.DB, error) {
-	host := strings.TrimSpace(os.Getenv("MYSQL_HOST"))
-	if host == "" {
-		host = "localhost"
-	}
-	port := strings.TrimSpace(os.Getenv("MYSQL_PORT"))
-	if port == "" {
-		port = "3306"
-	}
+	host := cmp.Or(strings.TrimSpace(os.Getenv("MYSQL_HOST")), "localhost")
+	port := cmp.Or(strings.TrimSpace(os.Getenv("MYSQL_PORT")), "3306")
 	user := strings.TrimSpace(os.Getenv("MYSQL_USER"))
 	password := strings.TrimSpace(os.Getenv("MYSQL_PASSWORD"))
 	dbname := strings.TrimSpace(os.Getenv("MYSQL_DB"))
-	tls := strings.TrimSpace(os.Getenv("MYSQL_TLS"))
-	if tls == "" {
-		tls = "false"
-	}
+	tls := cmp.Or(strings.TrimSpace(os.Getenv("MYSQL_TLS")), "false")
 
 	connectionString := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&tls=%s",
