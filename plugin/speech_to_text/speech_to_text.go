@@ -18,7 +18,7 @@ var log = logger.New("speech_to_text")
 
 const (
 	ApiUrl       = "https://api.openai.com/v1/audio/transcriptions"
-	MaxVoiceSize = 25000000 // "File uploads are currently limited to 25 MB"
+	MaxVoiceSize = 25000000 // File uploads to Whisper are limited to 25 MB
 	MaxDuration  = 180      // 3 minutes
 )
 
@@ -94,6 +94,13 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}(file)
 
+	fileEnding := ".ogg"
+	if c.EffectiveMessage.Voice.MimeType == "audio/mpeg" {
+		fileEnding = ".mp3"
+	} else if c.EffectiveMessage.Voice.MimeType == "audio/mp4" {
+		fileEnding = ".m4a"
+	}
+
 	resp, err := httpUtils.MultiPartFormRequestWithHeaders(
 		ApiUrl,
 		map[string]string{
@@ -108,7 +115,7 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 		[]httpUtils.MultiPartFile{
 			{
 				FieldName: "file",
-				FileName:  "voice.ogg",
+				FileName:  fmt.Sprintf("voice%s", fileEnding),
 				Content:   file,
 			},
 		},
