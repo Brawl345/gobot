@@ -126,7 +126,7 @@ func (p *Plugin) goAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) checkAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
-	if strings.HasPrefix(tgUtils.AnyText(c.EffectiveMessage), "/afk") {
+	if strings.HasPrefix(c.EffectiveMessage.GetText(), "/afk") {
 		return nil
 	}
 

@@ -5,7 +5,7 @@ go 1.21
 toolchain go1.21.5
 
 require (
-	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.25
+	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.27
 	github.com/go-shiori/go-readability v0.0.0-20240204090920-819593fddc6b
 	github.com/go-sql-driver/mysql v1.7.1
 	github.com/jmoiron/sqlx v1.3.5

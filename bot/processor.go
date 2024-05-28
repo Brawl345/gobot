@@ -101,10 +101,7 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 		}
 	}
 
-	text := msg.Caption
-	if text == "" {
-		text = msg.Text
-	}
+	text := msg.GetText()
 
 	for _, plg := range p.managerService.Plugins() {
 		plg := plg

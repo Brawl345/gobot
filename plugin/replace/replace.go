@@ -43,10 +43,7 @@ func onReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	text := c.EffectiveMessage.ReplyToMessage.Text
-	if text == "" {
-		text = c.EffectiveMessage.ReplyToMessage.Caption
-	}
+	text := c.EffectiveMessage.ReplyToMessage.GetText()
 
 	if text == "" {
 		return nil
@@ -81,10 +78,7 @@ func onRegexReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	text := c.EffectiveMessage.ReplyToMessage.Text
-	if text == "" {
-		text = c.EffectiveMessage.ReplyToMessage.Caption
-	}
+	text := c.EffectiveMessage.ReplyToMessage.GetText()
 
 	if text == "" {
 		return nil

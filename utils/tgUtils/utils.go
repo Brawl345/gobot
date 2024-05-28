@@ -9,33 +9,6 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
-func AnyEntities(message *gotgbot.Message) []gotgbot.MessageEntity {
-	entities := message.Entities
-	if message.Entities == nil {
-		entities = message.CaptionEntities
-	}
-	return entities
-}
-
-func AnyText(message *gotgbot.Message) string {
-	text := message.Text
-	if message.Text == "" {
-		text = message.Caption
-	}
-	return text
-}
-
-func ParseAnyEntities(message *gotgbot.Message, entity *gotgbot.MessageEntity) gotgbot.ParsedMessageEntity {
-	switch {
-	case message.Text != "":
-		return message.ParseEntity(*entity)
-	case message.Caption != "":
-		return message.ParseCaptionEntity(*entity)
-	default:
-		return gotgbot.ParsedMessageEntity{}
-	}
-}
-
 // ParseAnyEntityTypes is a simplied version of ParseEntityTypes that accepts a slice instead of a map for entites types
 // that should be parsed. It also uses caption entites when they exist.
 func ParseAnyEntityTypes(message *gotgbot.Message, only []EntityType) []gotgbot.ParsedMessageEntity {
