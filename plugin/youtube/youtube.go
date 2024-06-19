@@ -328,6 +328,9 @@ func (p *Plugin) OnYouTubeLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 		_, _, err = msg.EditText(b, modifiedText, &gotgbot.EditMessageTextOpts{
 			ParseMode: gotgbot.ParseModeHTML,
+			LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+				IsDisabled: true,
+			},
 		})
 	}
 
