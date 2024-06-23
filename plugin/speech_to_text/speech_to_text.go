@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
@@ -140,7 +141,7 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		var errorResponse ApiErrorResponse
 		if err := json.Unmarshal(body, &errorResponse); err != nil {
 			log.Error().

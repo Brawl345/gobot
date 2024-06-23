@@ -78,7 +78,7 @@ func onAmazonLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 				continue
 			}
 
-			if resp.StatusCode != 301 {
+			if resp.StatusCode != http.StatusMovedPermanently {
 				log.Error().
 					Int("status_code", resp.StatusCode).
 					Msg("Got non-301 status code")

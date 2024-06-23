@@ -3,6 +3,7 @@ package summarize
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -181,7 +182,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 
 	if err != nil {
 		if errors.As(err, &httpError) {
-			if httpError.StatusCode == 429 {
+			if httpError.StatusCode == http.StatusTooManyRequests {
 				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())
 				return err
 			}

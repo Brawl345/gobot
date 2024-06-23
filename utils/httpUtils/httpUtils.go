@@ -233,7 +233,7 @@ func DownloadFileFromGetFile(b *gotgbot.Bot, file *gotgbot.File) (io.ReadCloser,
 		return nil, fmt.Errorf("failed to download file: %w", err)
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return nil, &HttpError{
 			StatusCode: resp.StatusCode,
 			Status:     resp.Status,

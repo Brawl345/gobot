@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -78,7 +79,7 @@ func calculate(expr string) (string, error) {
 		return "", err
 	}
 
-	if resp.StatusCode != 200 && resp.StatusCode != 400 {
+	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusBadRequest {
 		return "", &httpUtils.HttpError{
 			StatusCode: resp.StatusCode,
 			Status:     resp.Status,
@@ -99,7 +100,7 @@ func calculate(expr string) (string, error) {
 
 	result := string(body)
 
-	if resp.StatusCode == 400 {
+	if resp.StatusCode == http.StatusBadRequest {
 		return "", &ApiError{Message: result}
 	}
 

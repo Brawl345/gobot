@@ -3,6 +3,7 @@ package myanimelist
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -168,7 +169,7 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if err != nil {
 		if errors.As(err, &httpError) {
-			if httpError.StatusCode == 404 {
+			if httpError.StatusCode == http.StatusNotFound {
 				_, err := c.EffectiveMessage.Reply(b, "❌ Anime nicht gefunden.", utils.DefaultSendOptions())
 				return err
 			}

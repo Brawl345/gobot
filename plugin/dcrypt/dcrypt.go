@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"net/http"
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
@@ -93,13 +94,13 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	if resp.StatusCode == 413 {
+	if resp.StatusCode == http.StatusRequestEntityTooLarge {
 		log.Error().Msg("File is too big")
 		_, err := c.EffectiveMessage.Reply(b, "❌ Container ist zum Entschlüsseln zu groß.", utils.DefaultSendOptions())
 		return err
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		log.Error().Int("status_code", resp.StatusCode).Msg("Failed to upload file")
 		_, err := c.EffectiveMessage.Reply(b,
 			fmt.Sprintf(

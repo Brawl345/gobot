@@ -3,6 +3,7 @@ package worldclock
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -113,7 +114,7 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 		Response: &response,
 	})
 	if err != nil {
-		if errors.As(err, &httpError) && httpError.StatusCode == 404 {
+		if errors.As(err, &httpError) && httpError.StatusCode == http.StatusNotFound {
 			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
 			return err
 		}

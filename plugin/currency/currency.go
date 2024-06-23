@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -85,7 +86,7 @@ func convertCurrency(amount, from, to string) (string, error) {
 		Response: &response,
 	})
 	if err != nil {
-		if errors.As(err, &httpError) && httpError.StatusCode == 404 {
+		if errors.As(err, &httpError) && httpError.StatusCode == http.StatusNotFound {
 			return "", ErrBadCurrency
 		}
 		return "", err

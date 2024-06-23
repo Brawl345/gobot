@@ -3,6 +3,7 @@ package google_images
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strconv"
@@ -271,7 +272,7 @@ func (p *Plugin) onImageSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 			_, err = c.EffectiveMessage.Reply(b, "❌ Keine Bilder gefunden.", utils.DefaultSendOptions())
 		} else if errors.Is(err, ErrCouldNotDownloadAnyImage) {
 			_, err = c.EffectiveMessage.Reply(b, "❌ Es konnte kein Bild heruntergeladen werden.", utils.DefaultSendOptions())
-		} else if errors.As(err, &httpError) && httpError.StatusCode == 429 {
+		} else if errors.As(err, &httpError) && httpError.StatusCode == http.StatusTooManyRequests {
 			_, err = c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht. Bitte versuche es morgen erneut.", utils.DefaultSendOptions())
 		} else {
 			guid := xid.New().String()

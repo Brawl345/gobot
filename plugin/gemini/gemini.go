@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -294,7 +295,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err != nil {
 		var httpError *httpUtils.HttpError
 		if errors.As(err, &httpError) {
-			if httpError.StatusCode == 400 {
+			if httpError.StatusCode == http.StatusBadRequest {
 				guid := xid.New().String()
 				log.Err(err).
 					Str("guid", guid).
@@ -313,7 +314,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 				return err
 			}
 
-			if httpError.StatusCode == 429 {
+			if httpError.StatusCode == http.StatusTooManyRequests {
 				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())
 				return err
 			}

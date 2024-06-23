@@ -3,6 +3,7 @@ package youtube
 import (
 	"errors"
 	"fmt"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -122,7 +123,8 @@ func deArrow(originalText string, video *Video) (string, error) {
 
 	if err != nil {
 		if errors.As(err, &httpError) {
-			if httpError.StatusCode == 500 || httpError.StatusCode == 404 { // API seems to throw 500 for some empty responses
+			if httpError.StatusCode == http.StatusInternalServerError ||
+				httpError.StatusCode == http.StatusNotFound { // API seems to throw 500 for some empty responses
 				return "", nil
 			}
 		}
