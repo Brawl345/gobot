@@ -1,8 +1,10 @@
 package twitter
 
 import (
+	"errors"
 	"fmt"
 	"io"
+	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -24,7 +26,9 @@ const (
 )
 
 type (
-	Plugin struct{}
+	Plugin struct {
+		guestToken string
+	}
 )
 
 func New() *Plugin {
@@ -53,17 +57,10 @@ func (p *Plugin) Handlers(*gotgbot.User) []plugin.Handler {
 			Trigger:     regexp.MustCompile(`(?i)(?:x|twitter)\.com/status(?:es)?/(\d+)`),
 			HandlerFunc: p.OnStatus,
 		},
-		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(`(?i)nitter\.net/\w+/status(?:es)?/(\d+)`),
-			HandlerFunc: p.OnStatus,
-		},
 	}
 }
 
-func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
-
-	// Get Guest Token first
+func (p *Plugin) renewToken() error {
 	var tokenResponse TokenResponse
 	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
 		Method:   httpUtils.MethodPost,
@@ -71,18 +68,35 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		Headers:  map[string]string{"Authorization": bearerToken},
 		Response: &tokenResponse,
 	})
+
 	if err != nil {
-		guid := xid.New().String()
-		log.Err(err).
-			Str("guid", guid).
-			Msg("Failed to get guest token")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
-	guestToken := tokenResponse.GuestToken
+	if tokenResponse.GuestToken == "" {
+		return errors.New("guest token is empty")
+	}
 
-	// Now we get the tweet
+	p.guestToken = tokenResponse.GuestToken
+	return nil
+}
+
+func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
+	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+
+	if p.guestToken == "" {
+		err := p.renewToken()
+
+		if err != nil {
+			guid := xid.New().String()
+			log.Err(err).
+				Str("guid", guid).
+				Msg("Failed to get guest token")
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			return err
+		}
+	}
+
 	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
 	tweetID := c.Matches[1]
 	requestUrl := url.URL{
@@ -111,14 +125,14 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 	requestUrl.RawQuery = q.Encode()
 
 	var tweetResponse TweetResponse
-
-	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
+	var httpError *httpUtils.HttpError
+	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
 		Method: httpUtils.MethodGet,
 		URL:    requestUrl.String(),
 		Headers: map[string]string{
 			"Authorization":             bearerToken,
 			"User-Agent":                "Googlebot",
-			"X-Guest-Token":             guestToken,
+			"X-Guest-Token":             p.guestToken,
 			"X-Twitter-Active-User":     "yes",
 			"X-Twitter-Client-Language": "de",
 		},
@@ -126,13 +140,45 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 	})
 
 	if err != nil {
-		guid := xid.New().String()
-		log.Err(err).
-			Str("guid", guid).
-			Str("tweetID", tweetID).
-			Msg("Failed to get tweet")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-		return err
+		if errors.As(err, &httpError) {
+			if httpError.StatusCode == http.StatusForbidden {
+				log.Debug().Msg("Renewing guest token")
+				err = p.renewToken()
+
+				if err != nil {
+					guid := xid.New().String()
+					log.Err(err).
+						Str("guid", guid).
+						Msg("Failed to get guest token")
+					_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+					return err
+				}
+
+				// Try request the tweet again
+				err = httpUtils.MakeRequest(httpUtils.RequestOptions{
+					Method: httpUtils.MethodGet,
+					URL:    requestUrl.String(),
+					Headers: map[string]string{
+						"Authorization":             bearerToken,
+						"User-Agent":                "Googlebot",
+						"X-Guest-Token":             p.guestToken,
+						"X-Twitter-Active-User":     "yes",
+						"X-Twitter-Client-Language": "de",
+					},
+					Response: &tweetResponse,
+				})
+			}
+		}
+
+		if err != nil {
+			guid := xid.New().String()
+			log.Err(err).
+				Str("guid", guid).
+				Str("tweetID", tweetID).
+				Msg("Failed to get tweet")
+			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			return err
+		}
 	}
 
 	result := tweetResponse.Data.TweetResult.Result
