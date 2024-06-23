@@ -107,7 +107,11 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	var response Response
 	var httpError *httpUtils.HttpError
-	err = httpUtils.GetRequest(requestUrl.String(), &response)
+	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      requestUrl.String(),
+		Response: &response,
+	})
 	if err != nil {
 		if errors.As(err, &httpError) && httpError.StatusCode == 404 {
 			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())

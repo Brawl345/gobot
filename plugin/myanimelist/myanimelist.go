@@ -90,13 +90,12 @@ func (p *Plugin) onSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	q.Set("nsfw", "true")
 	requestUrl.RawQuery = q.Encode()
 
-	err := httpUtils.GetRequestWithHeader(
-		requestUrl.String(),
-		map[string]string{
-			"X-MAL-CLIENT-ID": clientID,
-		},
-		&response,
-	)
+	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      requestUrl.String(),
+		Headers:  map[string]string{"X-MAL-CLIENT-ID": clientID},
+		Response: &response,
+	})
 
 	if err != nil {
 		guid := xid.New().String()
@@ -160,13 +159,12 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	q.Set("fields", "id,title,main_picture,alternative_titles,start_date,end_date,synopsis,mean,rank,popularity,nsfw,media_type,status,genres,num_episodes,start_season,average_episode_duration,rating,studios")
 	requestUrl.RawQuery = q.Encode()
 
-	err := httpUtils.GetRequestWithHeader(
-		requestUrl.String(),
-		map[string]string{
-			"X-MAL-CLIENT-ID": clientID,
-		},
-		&anime,
-	)
+	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      requestUrl.String(),
+		Headers:  map[string]string{"X-MAL-CLIENT-ID": clientID},
+		Response: &anime,
+	})
 
 	if err != nil {
 		if errors.As(err, &httpError) {

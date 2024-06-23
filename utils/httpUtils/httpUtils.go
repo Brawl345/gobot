@@ -19,6 +19,35 @@ var (
 	DefaultHttpClient *http.Client
 )
 
+type (
+	HTTPMethod string
+
+	RequestOptions struct {
+		Method   HTTPMethod
+		URL      string
+		Headers  map[string]string
+		Body     any
+		Response any
+		Client   *http.Client
+	}
+
+	MultiPartParam struct {
+		Name  string
+		Value string
+	}
+
+	MultiPartFile struct {
+		FieldName string
+		FileName  string
+		Content   io.Reader
+	}
+)
+
+const (
+	MethodGet  HTTPMethod = http.MethodGet
+	MethodPost HTTPMethod = http.MethodPost
+)
+
 func init() {
 	DefaultHttpClient = createHTTPClient()
 }
@@ -41,193 +70,87 @@ func createHTTPClient() *http.Client {
 	return client
 }
 
-type MultiPartParam struct {
-	Name  string
-	Value string
-}
-
-type MultiPartFile struct {
-	FieldName string
-	FileName  string
-	Content   io.Reader
-}
-
-func GetRequest(url string, result any) error {
+func MakeRequest(opts RequestOptions) error {
 	log.Debug().
-		Str("url", url).
-		Send()
-
-	resp, err := DefaultHttpClient.Get(url)
-
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != 200 {
-		return &HttpError{
-			StatusCode: resp.StatusCode,
-			Status:     resp.Status,
-		}
-	}
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Err(err).Msg("Failed to close response body")
-		}
-	}(resp.Body)
-	body, err := io.ReadAll(resp.Body)
-
-	if err != nil {
-		return err
-	}
-
-	if err := json.Unmarshal(body, result); err != nil {
-		return err
-	}
-
-	log.Debug().
-		Str("url", url).
-		Interface("result", result).
-		Send()
-	return nil
-}
-
-type HttpOptions struct {
-	Client *http.Client
-}
-
-func PostRequest(url string, headers map[string]string, input any, result any, options *HttpOptions) error {
-	log.Debug().
-		Str("url", url).
-		Interface("input", input).
-		Interface("headers", headers).
+		Str("method", string(opts.Method)).
+		Str("url", opts.URL).
+		Interface("body", opts.Body).
+		Interface("headers", opts.Headers).
 		Send()
 
 	var reqBody io.Reader
-	isJson := true
-	switch v := input.(type) {
-	case io.ReadCloser:
-		isJson = false
-		reqBody = v
-		defer func(v io.ReadCloser) {
-			err := v.Close()
+	isJsonBody := true
+	if opts.Body != nil {
+		switch v := opts.Body.(type) {
+		case io.ReadCloser:
+			isJsonBody = false
+			reqBody = v
+			defer func(v io.ReadCloser) {
+				err := v.Close()
+				if err != nil {
+					log.Err(err).Msg("Failed to close response body")
+				}
+			}(v)
+		default:
+			jsonData, err := json.Marshal(v)
 			if err != nil {
-				log.Err(err).Msg("Failed to close response body")
+				return err
 			}
-		}(v)
-	default:
-		jsonData, err := json.Marshal(v)
-		if err != nil {
-			return err
+			reqBody = bytes.NewBuffer(jsonData)
 		}
-		reqBody = bytes.NewBuffer(jsonData)
 	}
 
-	req, err := http.NewRequest("POST", url, reqBody)
+	req, err := http.NewRequest(string(opts.Method), opts.URL, reqBody)
 	if err != nil {
 		return err
 	}
 
-	if isJson {
+	if opts.Body != nil && isJsonBody {
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	for key, value := range headers {
+	for key, value := range opts.Headers {
 		req.Header.Set(key, value)
 	}
 
-	httpClient := DefaultHttpClient
-
-	if options != nil {
-		if options.Client != nil {
-			httpClient = options.Client
-		}
+	client := opts.Client
+	if client == nil {
+		client = DefaultHttpClient
 	}
 
-	resp, err := httpClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
 
-	if resp.StatusCode != 200 {
+	if resp.StatusCode != http.StatusOK {
 		return &HttpError{
 			StatusCode: resp.StatusCode,
 			Status:     resp.Status,
 		}
 	}
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
+	if opts.Response != nil {
+		defer func(Body io.ReadCloser) {
+			err := Body.Close()
+			if err != nil {
+				log.Err(err).Msg("Failed to close response body")
+			}
+		}(resp.Body)
+
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
-			log.Err(err).Msg("Failed to close response body")
+			return err
 		}
-	}(resp.Body)
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	if err := json.Unmarshal(body, result); err != nil {
-		return err
-	}
-
-	log.Debug().
-		Str("url", url).
-		Interface("result", result).
-		Send()
-	return nil
-}
-
-func GetRequestWithHeader(url string, headers map[string]string, result any) error {
-	log.Debug().
-		Str("url", url).
-		Interface("headers", headers).
-		Send()
-
-	req, err := http.NewRequest("GET", url, nil)
-
-	if err != nil {
-		return err
-	}
-
-	for key, value := range headers {
-		req.Header.Set(key, value)
-	}
-
-	resp, err := DefaultHttpClient.Do(req)
-
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != 200 {
-		return &HttpError{
-			StatusCode: resp.StatusCode,
-			Status:     resp.Status,
+		if err := json.Unmarshal(body, opts.Response); err != nil {
+			return err
 		}
 	}
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Err(err).Msg("Failed to close response body")
-		}
-	}(resp.Body)
-	body, err := io.ReadAll(resp.Body)
-
-	if err != nil {
-		return err
-	}
-
-	if err := json.Unmarshal(body, result); err != nil {
-		return err
-	}
-
 	log.Debug().
-		Str("url", url).
-		Interface("result", result).
+		Str("url", opts.URL).
+		Interface("result", opts.Response).
 		Send()
 
 	return nil

@@ -116,7 +116,11 @@ func (p *Plugin) onWeather(b *gotgbot.Bot, c plugin.GobotContext) error {
 	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_hours&hourly=precipitation&current_weather=true&timezone=Europe/Berlin", venue.Location.Latitude, venue.Location.Longitude)
 
 	var response Response
-	err = httpUtils.GetRequest(requestUrl, &response)
+	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      requestUrl,
+		Response: &response,
+	})
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
@@ -295,7 +299,11 @@ func (p *Plugin) onForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe/Berlin", venue.Location.Latitude, venue.Location.Longitude)
 
 	var response Response
-	err = httpUtils.GetRequest(requestUrl, &response)
+	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      requestUrl,
+		Response: &response,
+	})
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().
@@ -370,7 +378,11 @@ func (p *Plugin) onHourlyForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,weathercode&timezone=Europe/Berlin", venue.Location.Latitude, venue.Location.Longitude)
 
 	var response Response
-	err = httpUtils.GetRequest(requestUrl, &response)
+	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      requestUrl,
+		Response: &response,
+	})
 	if err != nil {
 		guid := xid.New().String()
 		log.Error().

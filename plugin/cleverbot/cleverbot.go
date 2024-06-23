@@ -98,10 +98,11 @@ func (p *Plugin) onCleverbot(b *gotgbot.Bot, c plugin.GobotContext) error {
 	)
 
 	var response Response
-	err = httpUtils.GetRequest(
-		requestUrl,
-		&response,
-	)
+	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      requestUrl,
+		Response: &response,
+	})
 
 	if err != nil {
 		guid := xid.New().String()

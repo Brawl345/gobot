@@ -94,7 +94,11 @@ func (p *Plugin) onGoogleSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	requestUrl.RawQuery = q.Encode()
 
 	var response Response
-	err := httpUtils.GetRequest(requestUrl.String(), &response)
+	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      requestUrl.String(),
+		Response: &response,
+	})
 
 	if err != nil {
 		guid := xid.New().String()

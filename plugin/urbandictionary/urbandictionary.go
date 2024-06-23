@@ -50,7 +50,11 @@ func onUrbanDictionary(b *gotgbot.Bot, c plugin.GobotContext) error {
 	query := c.Matches[1]
 
 	var response Response
-	err := httpUtils.GetRequest(fmt.Sprintf(Url, url.QueryEscape(query)), &response)
+	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      fmt.Sprintf(Url, url.QueryEscape(query)),
+		Response: &response,
+	})
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).

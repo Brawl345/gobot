@@ -2,8 +2,9 @@ package sql
 
 import (
 	"fmt"
-	"github.com/PaulSonOfLars/gotgbot/v2"
 	"net/url"
+
+	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/utils/httpUtils"
@@ -44,13 +45,12 @@ func (db *geocodingService) Geocode(address string) (gotgbot.Venue, error) {
 	requestUrl.RawQuery = q.Encode()
 
 	var response []Location
-	err := httpUtils.GetRequestWithHeader(
-		requestUrl.String(),
-		map[string]string{
-			"User-Agent": "Gobot for Telegram",
-		},
-		&response,
-	)
+	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      requestUrl.String(),
+		Headers:  map[string]string{"User-Agent": "Gobot for Telegram"},
+		Response: &response,
+	})
 
 	if err != nil {
 		return gotgbot.Venue{}, fmt.Errorf("error while geocoding: %w, url: %s", err, requestUrl.String())

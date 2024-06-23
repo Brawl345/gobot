@@ -167,17 +167,19 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 	requestUrl.RawQuery = q.Encode()
 
 	var tweetResponse TweetResponse
-	err = httpUtils.GetRequestWithHeader(
-		requestUrl.String(),
-		map[string]string{
+
+	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method: httpUtils.MethodGet,
+		URL:    requestUrl.String(),
+		Headers: map[string]string{
 			"Authorization":             bearerToken,
 			"User-Agent":                "Googlebot",
 			"X-Guest-Token":             guestToken,
 			"X-Twitter-Active-User":     "yes",
 			"X-Twitter-Client-Language": "de",
 		},
-		&tweetResponse,
-	)
+		Response: &tweetResponse,
+	})
 
 	if err != nil {
 		guid := xid.New().String()

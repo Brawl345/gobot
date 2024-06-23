@@ -92,7 +92,11 @@ func (p *Plugin) getVideoInfo(videoID string) (Video, error) {
 	requestUrl.RawQuery = q.Encode()
 
 	var response Response
-	err := httpUtils.GetRequest(requestUrl.String(), &response)
+	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      requestUrl.String(),
+		Response: &response,
+	})
 
 	if err != nil {
 		return Video{}, err
@@ -110,10 +114,11 @@ func deArrow(originalText string, video *Video) (string, error) {
 	deArrowUrl := fmt.Sprintf("https://sponsor.ajay.app/api/branding/?videoID=%s", video.ID)
 	var deArrowResponse DeArrowResponse
 	var httpError *httpUtils.HttpError
-	err := httpUtils.GetRequest(
-		deArrowUrl,
-		&deArrowResponse,
-	)
+	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      deArrowUrl,
+		Response: &deArrowResponse,
+	})
 
 	if err != nil {
 		if errors.As(err, &httpError) {
@@ -368,7 +373,11 @@ func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	requestUrl.RawQuery = q.Encode()
 
 	var response SearchResponse
-	err := httpUtils.GetRequest(requestUrl.String(), &response)
+	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      requestUrl.String(),
+		Response: &response,
+	})
 
 	if err != nil {
 		guid := xid.New().String()

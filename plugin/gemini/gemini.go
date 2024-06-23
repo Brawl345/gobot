@@ -196,15 +196,13 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 		var fileUploadResponse FileUploadResponse
 
-		err = httpUtils.PostRequest(
-			fmt.Sprintf(ApiUrlFileUpload, apiKey),
-			map[string]string{
-				"Content-Type": "image/jpeg", // Images sent through Telegram are always JPEGs
-			},
-			file,
-			&fileUploadResponse,
-			nil,
-		)
+		err = httpUtils.MakeRequest(httpUtils.RequestOptions{
+			Method:   httpUtils.MethodPost,
+			URL:      fmt.Sprintf(ApiUrlFileUpload, apiKey),
+			Headers:  map[string]string{"Content-Type": "image/jpeg"},
+			Body:     file,
+			Response: &fileUploadResponse,
+		})
 
 		if err != nil {
 			guid := xid.New().String()
@@ -286,13 +284,12 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 	q.Add("key", apiKey)
 	apiUrl.RawQuery = q.Encode()
 
-	err = httpUtils.PostRequest(
-		apiUrl.String(),
-		nil,
-		&request,
-		&response,
-		nil,
-	)
+	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodPost,
+		URL:      apiUrl.String(),
+		Body:     &request,
+		Response: &response,
+	})
 
 	if err != nil {
 		var httpError *httpUtils.HttpError

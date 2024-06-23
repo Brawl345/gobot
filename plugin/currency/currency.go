@@ -79,7 +79,11 @@ func convertCurrency(amount, from, to string) (string, error) {
 
 	var response Response
 	var httpError *httpUtils.HttpError
-	err = httpUtils.GetRequest(fmt.Sprintf(ApiUrl, amount, from, to), &response)
+	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      fmt.Sprintf(ApiUrl, amount, from, to),
+		Response: &response,
+	})
 	if err != nil {
 		if errors.As(err, &httpError) && httpError.StatusCode == 404 {
 			return "", ErrBadCurrency

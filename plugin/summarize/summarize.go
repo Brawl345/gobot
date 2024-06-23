@@ -168,14 +168,17 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 
 	var response Response
 	var httpError *httpUtils.HttpError
-	err = httpUtils.PostRequest(apiUrl,
-		map[string]string{
+
+	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method: httpUtils.MethodPost,
+		URL:    apiUrl,
+		Headers: map[string]string{
 			"Authorization": fmt.Sprintf("Bearer %s", apiKey),
 		},
-		&request,
-		&response,
-		nil,
-	)
+		Body:     &request,
+		Response: &response,
+	})
+
 	if err != nil {
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == 429 {

@@ -122,13 +122,12 @@ func (p *Plugin) onLocation(b *gotgbot.Bot, c plugin.GobotContext) error {
 	requestUrl.RawQuery = q.Encode()
 
 	var response Response
-	err := httpUtils.GetRequestWithHeader(
-		requestUrl.String(),
-		map[string]string{
-			"User-Agent": "Gobot for Telegram",
-		},
-		&response,
-	)
+	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      requestUrl.String(),
+		Headers:  map[string]string{"User-Agent": "Gobot for Telegram"},
+		Response: &response,
+	})
 
 	if err != nil {
 		guid := xid.New().String()
