@@ -1,10 +1,8 @@
 package twitter
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -67,7 +65,12 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	// Get Guest Token first
 	var tokenResponse TokenResponse
-	req, err := http.NewRequest("POST", activateUrl, nil)
+	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodPost,
+		URL:      activateUrl,
+		Headers:  map[string]string{"Authorization": bearerToken},
+		Response: &tokenResponse,
+	})
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
@@ -76,65 +79,6 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
-
-	req.Header.Set("Authorization", bearerToken)
-
-	log.Debug().
-		Str("url", activateUrl).
-		Interface("headers", req.Header).
-		Send()
-
-	resp, err := httpUtils.DefaultHttpClient.Do(req)
-	if err != nil {
-		guid := xid.New().String()
-		log.Err(err).
-			Str("guid", guid).
-			Msg("Failed to get guest token")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-		return err
-	}
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Err(err).Msg("error closing body")
-		}
-	}(resp.Body)
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		guid := xid.New().String()
-		log.Err(err).
-			Str("guid", guid).
-			Msg("Failed to read guest token body")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-		return err
-	}
-
-	if resp.StatusCode != 200 {
-		guid := xid.New().String()
-		log.Error().
-			Str("url", activateUrl).
-			Int("status", resp.StatusCode).
-			Interface("response", body).
-			Msg("Got Twitter HTTP error")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-		return err
-	}
-
-	if err := json.Unmarshal(body, &tokenResponse); err != nil {
-		guid := xid.New().String()
-		log.Err(err).
-			Str("guid", guid).
-			Msg("Failed to get guest token")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-		return err
-	}
-
-	log.Debug().
-		Str("url", activateUrl).
-		Interface("response", tokenResponse).
-		Send()
 
 	guestToken := tokenResponse.GuestToken
 
