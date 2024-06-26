@@ -1,12 +1,18 @@
 package httpUtils
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 type HttpError struct {
 	StatusCode int
-	Status     string
 }
 
 func (e *HttpError) Error() string {
-	return fmt.Sprintf("unexpected HTTP status: %s", e.Status)
+	return fmt.Sprintf("unexpected HTTP status: %d %s", e.StatusCode, http.StatusText(e.StatusCode))
+}
+
+func (e *HttpError) StatusText() string {
+	return http.StatusText(e.StatusCode)
 }

@@ -82,7 +82,6 @@ func calculate(expr string) (string, error) {
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusBadRequest {
 		return "", &httpUtils.HttpError{
 			StatusCode: resp.StatusCode,
-			Status:     resp.Status,
 		}
 	}
 

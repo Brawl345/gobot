@@ -126,7 +126,6 @@ func MakeRequest(opts RequestOptions) error {
 	if resp.StatusCode != http.StatusOK {
 		return &HttpError{
 			StatusCode: resp.StatusCode,
-			Status:     resp.Status,
 		}
 	}
 
@@ -232,7 +231,6 @@ func DownloadFileFromGetFile(b *gotgbot.Bot, file *gotgbot.File) (io.ReadCloser,
 	if resp.StatusCode != http.StatusOK {
 		return nil, &HttpError{
 			StatusCode: resp.StatusCode,
-			Status:     resp.Status,
 		}
 	}
 
