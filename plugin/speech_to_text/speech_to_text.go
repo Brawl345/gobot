@@ -134,8 +134,6 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}(resp.Body)
 
-	body, err := io.ReadAll(resp.Body)
-
 	if err != nil {
 		log.Err(err).Msg("Failed to read body")
 		return nil
@@ -143,7 +141,8 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if resp.StatusCode != http.StatusOK {
 		var errorResponse ApiErrorResponse
-		if err := json.Unmarshal(body, &errorResponse); err != nil {
+		err = json.NewDecoder(resp.Body).Decode(&errorResponse)
+		if err != nil {
 			log.Error().
 				Int("status_code", resp.StatusCode).
 				Msg("Failed to upload file")
@@ -160,7 +159,8 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	var apiResponse ApiResponse
 
-	if err := json.Unmarshal(body, &apiResponse); err != nil {
+	err = json.NewDecoder(resp.Body).Decode(&apiResponse)
+	if err != nil {
 		log.Err(err).Msg("Failed to parse body")
 		return nil
 	}

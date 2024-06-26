@@ -138,12 +138,8 @@ func MakeRequest(opts RequestOptions) error {
 			}
 		}(resp.Body)
 
-		body, err := io.ReadAll(resp.Body)
+		err = json.NewDecoder(resp.Body).Decode(opts.Response)
 		if err != nil {
-			return err
-		}
-
-		if err := json.Unmarshal(body, opts.Response); err != nil {
 			return err
 		}
 	}
