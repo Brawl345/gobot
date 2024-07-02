@@ -3,7 +3,6 @@ package calc
 import (
 	"errors"
 	"fmt"
-	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -72,38 +71,26 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 func calculate(expr string) (string, error) {
 	expr = strings.ReplaceAll(expr, ",", ".")
 
-	var err error
+	var resp string
+	var errorResp string
+	var httpError *httpUtils.HttpError
 
-	resp, err := httpUtils.DefaultHttpClient.Get(fmt.Sprintf(ApiUrl, url.QueryEscape(expr)))
+	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:        httpUtils.MethodGet,
+		URL:           fmt.Sprintf(ApiUrl, url.QueryEscape(expr)),
+		Response:      &resp,
+		ErrorResponse: &errorResp,
+	})
+
 	if err != nil {
+		if errors.As(err, &httpError) && httpError.StatusCode == http.StatusBadRequest {
+			return "", &ApiError{Message: errorResp}
+		}
+
 		return "", err
 	}
 
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusBadRequest {
-		return "", &httpUtils.HttpError{
-			StatusCode: resp.StatusCode,
-		}
-	}
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Err(err).Msg("failed to close response body")
-		}
-	}(resp.Body)
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return "", err
-	}
-
-	result := string(body)
-
-	if resp.StatusCode == http.StatusBadRequest {
-		return "", &ApiError{Message: result}
-	}
-
-	result = strings.ReplaceAll(string(body), ".", ",")
+	result := strings.ReplaceAll(resp, ".", ",")
 	return result, nil
 }
 

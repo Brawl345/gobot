@@ -30,6 +30,9 @@ type (
 
 		// Response can either be a pointer to a JSON struct or a pointer to a string
 		Response any
+		// ErrorResponse can either be a pointer to a JSON struct or a pointer to a string.
+		// NOTE: An error will still be returned!
+		ErrorResponse any
 
 		Client *http.Client
 	}
@@ -126,20 +129,46 @@ func MakeRequest(opts RequestOptions) error {
 		return err
 	}
 
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Err(err).Msg("Failed to close response body")
+		}
+	}(resp.Body)
+
 	if resp.StatusCode != http.StatusOK {
+		if opts.ErrorResponse != nil {
+			bodyBytes, err := io.ReadAll(resp.Body)
+			if err != nil {
+				return &HttpError{
+					StatusCode: resp.StatusCode,
+				}
+			}
+
+			switch v := opts.ErrorResponse.(type) {
+			case *string:
+				*v = string(bodyBytes)
+			default:
+				err = json.Unmarshal(bodyBytes, opts.ErrorResponse)
+				if err != nil {
+					return &HttpError{
+						StatusCode: resp.StatusCode,
+					}
+				}
+			}
+
+			log.Debug().
+				Str("url", opts.URL).
+				Interface("result", opts.ErrorResponse).
+				Send()
+		}
+
 		return &HttpError{
 			StatusCode: resp.StatusCode,
 		}
 	}
 
 	if opts.Response != nil {
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-				log.Err(err).Msg("Failed to close response body")
-			}
-		}(resp.Body)
-
 		bodyBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return err
