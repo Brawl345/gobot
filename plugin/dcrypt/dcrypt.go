@@ -1,11 +1,7 @@
 package dcrypt
 
 import (
-	"bytes"
-	"encoding/json"
-	"fmt"
 	"io"
-	"net/http"
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
@@ -14,7 +10,6 @@ import (
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
-	"github.com/rs/xid"
 )
 
 var log = logger.New("dcrypt")
@@ -71,91 +66,27 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}(file)
 
-	resp, err := httpUtils.MultiPartFormRequest(
-		"https://dcrypt.it/decrypt/upload",
-		[]httpUtils.MultiPartParam{},
-		[]httpUtils.MultiPartFile{
-			{
-				FieldName: "dlcfile",
-				FileName:  "dlc.dlc",
-				Content:   file,
-			},
-		},
-	)
+	fileData, err := io.ReadAll(file)
 	if err != nil {
-		guid := xid.New().String()
 		log.Err(err).
-			Str("guid", guid).
-			Msg("Failed to upload file")
-		_, err := c.EffectiveMessage.Reply(b,
-			fmt.Sprintf("❌ Konnte Datei nicht zu dcrypt.it hochladen.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions(),
-		)
+			Interface("file", c.EffectiveMessage.Document).
+			Msg("Failed to read file")
+		_, err := c.EffectiveMessage.Reply(b, "❌ Konnte Datei nicht lesen.", utils.DefaultSendOptions())
 		return err
 	}
 
-	if resp.StatusCode == http.StatusRequestEntityTooLarge {
-		log.Error().Msg("File is too big")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Container ist zum Entschlüsseln zu groß.", utils.DefaultSendOptions())
-		return err
-	}
+	dlc, err := DecryptDLC(fileData)
 
-	if resp.StatusCode != http.StatusOK {
-		log.Error().Int("status_code", resp.StatusCode).Msg("Failed to upload file")
-		_, err := c.EffectiveMessage.Reply(b,
-			fmt.Sprintf(
-				"❌ dcrypt.it konnte nicht erreicht werden: HTTP-Fehler %d",
-				resp.StatusCode,
-			),
-			utils.DefaultSendOptions(),
-		)
-		return err
-	}
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Err(err).Msg("Failed to close response body")
-		}
-	}(resp.Body)
-
-	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		guid := xid.New().String()
 		log.Err(err).
-			Str("guid", guid).
-			Msg("Failed to read response body")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Konnte Antwort von dcrypt.it nicht lesen.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions())
+			Interface("file", c.EffectiveMessage.Document).
+			Msg("Failed to decrypt file")
+		_, err := c.EffectiveMessage.Reply(b, "❌ Konnte DLC-Container nicht entschlüsseln.", utils.DefaultSendOptions())
 		return err
 	}
 
-	matches := textRegex.FindStringSubmatch(string(body))
-	if matches == nil {
-		_, err := c.EffectiveMessage.Reply(b, "❌ dcrypt.it hat keine Links gefunden.", utils.DefaultSendOptions())
-		return err
-	}
-
-	var data Response
-	if err := json.Unmarshal([]byte(matches[1]), &data); err != nil {
-		guid := xid.New().String()
-		log.Err(err).
-			Str("guid", guid).
-			Msg("Failed to unmarshal response body")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Konnte Antwort von dcrypt.it nicht lesen.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions())
-		return err
-	}
-
-	if data.Success.Message == "" {
-		guid := xid.New().String()
-		log.
-			Error().
-			Str("guid", guid).
-			Strs("form_errors", data.FormErrors.Dlcfile).
-			Msg("Failed to decrypt DLC")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ DLC-Container konnte nicht gelesen werden.%s", utils.EmbedGUID(guid)),
-			utils.DefaultSendOptions())
+	if !dlc.HasLinks() {
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Links gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -168,16 +99,40 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	var sb strings.Builder
-	for _, link := range data.Success.Links {
-		sb.WriteString(link)
-		sb.WriteString("\n")
+
+	for _, pkg := range dlc.Content.Package {
+		for _, file := range pkg.File {
+			sb.WriteString(string(file.URL))
+			sb.WriteString("\n")
+		}
 	}
 
-	buf := bytes.NewBufferString(sb.String())
-	document := gotgbot.InputFileByReader(filename, buf)
+	document := gotgbot.InputFileByReader(filename, strings.NewReader(sb.String()))
+
+	var sbCaption strings.Builder
+	sbCaption.WriteString("🔑 Links entschlüsselt")
+
+	size := dlc.TotalSize()
+	if size != "" {
+		sbCaption.WriteString("!\n")
+		sbCaption.WriteString(size)
+	}
+
+	generatedBy := dlc.GeneratedBy()
+	if generatedBy != "" {
+		if size == "" {
+			sbCaption.WriteString("!")
+		}
+		sbCaption.WriteString("\n")
+		sbCaption.WriteString(generatedBy)
+	}
+
+	if generatedBy == "" && size == "" {
+		sbCaption.WriteString(".")
+	}
 
 	_, err = b.SendDocument(c.EffectiveChat.Id, document, &gotgbot.SendDocumentOpts{
-		Caption: "🔑 Hier sind deine entschlüsselten Links!",
+		Caption: sbCaption.String(),
 		ReplyParameters: &gotgbot.ReplyParameters{
 			AllowSendingWithoutReply: true,
 			MessageId:                c.EffectiveMessage.MessageId,

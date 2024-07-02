@@ -23,12 +23,15 @@ type (
 	HTTPMethod string
 
 	RequestOptions struct {
-		Method   HTTPMethod
-		URL      string
-		Headers  map[string]string
-		Body     any
+		Method  HTTPMethod
+		URL     string
+		Headers map[string]string
+		Body    any
+
+		// Response can either be a pointer to a JSON struct or a pointer to a string
 		Response any
-		Client   *http.Client
+
+		Client *http.Client
 	}
 
 	MultiPartParam struct {
@@ -137,9 +140,19 @@ func MakeRequest(opts RequestOptions) error {
 			}
 		}(resp.Body)
 
-		err = json.NewDecoder(resp.Body).Decode(opts.Response)
+		bodyBytes, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return err
+		}
+
+		switch v := opts.Response.(type) {
+		case *string:
+			*v = string(bodyBytes)
+		default:
+			err = json.Unmarshal(bodyBytes, opts.Response)
+			if err != nil {
+				return err
+			}
 		}
 	}
 

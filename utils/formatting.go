@@ -128,6 +128,19 @@ func HumanizeDuration(d *duration.Duration) string {
 	return sb.String()
 }
 
+func HumanizeSize(size int64) string {
+	if size < 1024 {
+		return strings.Replace(fmt.Sprintf("%d B", size), ".", ",", 1)
+	}
+	if size < 1024*1024 {
+		return strings.Replace(fmt.Sprintf("%.2f KB", float64(size)/1024), ".", ",", 1)
+	}
+	if size < 1024*1024*1024 {
+		return strings.Replace(fmt.Sprintf("%.2f MB", float64(size)/1024/1024), ".", ",", 1)
+	}
+	return strings.Replace(fmt.Sprintf("%.2f GB", float64(size)/1024/1024/1024), ".", ",", 1)
+}
+
 func LocalizeDatestring(date string) string {
 	return strings.NewReplacer(
 		"January", "Januar",
