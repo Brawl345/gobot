@@ -439,9 +439,9 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 		for _, medium := range media {
 			if medium.IsPhoto() {
-				album = append(album, gotgbot.InputMediaPhoto{Caption: medium.Caption(), Media: medium.Link()})
+				album = append(album, gotgbot.InputMediaPhoto{Caption: medium.Caption(), Media: medium.InputFile()})
 			} else if medium.IsVideo() {
-				album = append(album, gotgbot.InputMediaVideo{Caption: medium.Caption(), Media: medium.Link()})
+				album = append(album, gotgbot.InputMediaVideo{Caption: medium.Caption(), Media: medium.InputFile()})
 			}
 		}
 
@@ -496,19 +496,23 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 					}(resp.Body)
 
 					if medium.IsPhoto() {
-						_, err = b.SendPhoto(c.EffectiveChat.Id, resp.Body, &gotgbot.SendPhotoOpts{
-							ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true,
-								MessageId: c.EffectiveMessage.MessageId},
-							DisableNotification: true,
-						})
+						_, err = b.SendPhoto(c.EffectiveChat.Id, gotgbot.InputFileByReader(medium.IdStr, resp.Body),
+							&gotgbot.SendPhotoOpts{
+								ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true,
+									MessageId: c.EffectiveMessage.MessageId},
+								DisableNotification: true,
+							},
+						)
 					} else {
-						_, err = b.SendVideo(c.EffectiveChat.Id, resp.Body, &gotgbot.SendVideoOpts{
-							Caption: medium.Caption(),
-							ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true,
-								MessageId: c.EffectiveMessage.MessageId},
-							DisableNotification: true,
-							SupportsStreaming:   true,
-						})
+						_, err = b.SendVideo(c.EffectiveChat.Id, gotgbot.InputFileByReader(medium.IdStr, resp.Body),
+							&gotgbot.SendVideoOpts{
+								Caption: medium.Caption(),
+								ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true,
+									MessageId: c.EffectiveMessage.MessageId},
+								DisableNotification: true,
+								SupportsStreaming:   true,
+							},
+						)
 					}
 					if err != nil {
 						// Last resort: Send URL as text
@@ -534,7 +538,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		for _, gif := range gifs {
 
 			_, err := b.SendAnimation(c.EffectiveChat.Id,
-				gif.Link(),
+				gif.InputFile(),
 				&gotgbot.SendAnimationOpts{
 					Caption: gif.Caption(),
 					ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true,
@@ -570,12 +574,14 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 						}
 					}(resp.Body)
 
-					_, err = b.SendAnimation(c.EffectiveChat.Id, resp.Body, &gotgbot.SendAnimationOpts{
-						Caption: gif.Caption(),
-						ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true,
-							MessageId: c.EffectiveMessage.MessageId},
-						DisableNotification: true,
-					})
+					_, err = b.SendAnimation(c.EffectiveChat.Id, gotgbot.InputFileByReader(gif.IdStr, resp.Body),
+						&gotgbot.SendAnimationOpts{
+							Caption: gif.Caption(),
+							ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true,
+								MessageId: c.EffectiveMessage.MessageId},
+							DisableNotification: true,
+						},
+					)
 
 					if err != nil {
 						// Last resort: Send URL as text

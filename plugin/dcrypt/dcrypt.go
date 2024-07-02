@@ -174,10 +174,7 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	buf := bytes.NewBufferString(sb.String())
-	document := &gotgbot.NamedFile{
-		File:     buf,
-		FileName: filename,
-	}
+	document := gotgbot.InputFileByReader(filename, buf)
 
 	_, err = b.SendDocument(c.EffectiveChat.Id, document, &gotgbot.SendDocumentOpts{
 		Caption: "🔑 Hier sind deine entschlüsselten Links!",

@@ -213,7 +213,7 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 		}
 
 		if image.IsGIF() {
-			_, err = b.SendDocument(c.EffectiveChat.Id, image.ImageLink(), &gotgbot.SendDocumentOpts{
+			_, err = b.SendDocument(c.EffectiveChat.Id, gotgbot.InputFileByURL(image.ImageLink()), &gotgbot.SendDocumentOpts{
 				Caption: caption,
 				ReplyParameters: &gotgbot.ReplyParameters{
 					AllowSendingWithoutReply: true,
@@ -224,7 +224,7 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 				ReplyMarkup:         replyMarkup,
 			})
 		} else {
-			_, err = b.SendPhoto(c.EffectiveChat.Id, image.ImageLink(), &gotgbot.SendPhotoOpts{
+			_, err = b.SendPhoto(c.EffectiveChat.Id, gotgbot.InputFileByURL(image.ImageLink()), &gotgbot.SendPhotoOpts{
 				Caption: caption,
 				ReplyParameters: &gotgbot.ReplyParameters{
 					AllowSendingWithoutReply: true,

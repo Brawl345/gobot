@@ -101,15 +101,15 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 	// Send file through Telegram first
 	if fileSize < tgUtils.MaxFilesizeDownload {
 		if slices.Contains(audioExt, ext) {
-			_, err = b.SendAudio(c.EffectiveChat.Id, url, &gotgbot.SendAudioOpts{ReplyParameters: replyParams})
+			_, err = b.SendAudio(c.EffectiveChat.Id, gotgbot.InputFileByURL(url), &gotgbot.SendAudioOpts{ReplyParameters: replyParams})
 		} else if slices.Contains(videoExt, ext) {
-			_, err = b.SendVideo(c.EffectiveChat.Id, url,
+			_, err = b.SendVideo(c.EffectiveChat.Id, gotgbot.InputFileByURL(url),
 				&gotgbot.SendVideoOpts{ReplyParameters: replyParams, SupportsStreaming: true},
 			)
 		} else if slices.Contains(imageExt, ext) && fileSize < tgUtils.MaxPhotosizeUpload {
-			_, err = b.SendPhoto(c.EffectiveChat.Id, url, &gotgbot.SendPhotoOpts{ReplyParameters: replyParams})
+			_, err = b.SendPhoto(c.EffectiveChat.Id, gotgbot.InputFileByURL(url), &gotgbot.SendPhotoOpts{ReplyParameters: replyParams})
 		} else {
-			_, err = b.SendDocument(c.EffectiveChat.Id, url, &gotgbot.SendDocumentOpts{ReplyParameters: replyParams})
+			_, err = b.SendDocument(c.EffectiveChat.Id, gotgbot.InputFileByURL(url), &gotgbot.SendDocumentOpts{ReplyParameters: replyParams})
 		}
 	}
 
@@ -138,7 +138,8 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}(resp.Body)
 
 		fileName := path.Base(url)
-		file := gotgbot.NamedFile{File: resp.Body, FileName: fileName}
+
+		file := gotgbot.InputFileByReader(fileName, resp.Body)
 		if slices.Contains(audioExt, ext) {
 			_, err = b.SendAudio(c.EffectiveChat.Id, file, &gotgbot.SendAudioOpts{ReplyParameters: replyParams})
 		} else if slices.Contains(videoExt, ext) {

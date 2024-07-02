@@ -3,7 +3,7 @@ module github.com/Brawl345/gobot
 go 1.22
 
 require (
-	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.27
+	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.28
 	github.com/go-shiori/go-readability v0.0.0-20240518065624-0b7c0223026a
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/jmoiron/sqlx v1.4.0

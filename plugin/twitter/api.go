@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/utils"
+	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 const (
@@ -403,6 +404,10 @@ func (m *Medium) Link() string {
 	}
 
 	return highestResURL
+}
+
+func (m *Medium) InputFile() gotgbot.InputFileOrString {
+	return gotgbot.InputFileByURL(m.Link())
 }
 
 func (m *Medium) Caption() string {
