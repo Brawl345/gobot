@@ -22,8 +22,8 @@ import (
 
 const (
 	MinArticleLength = 500
-	MaxArticleLength = 60000 // ~12,000 tokens
-	MaxTokens        = 1000
+	MaxArticleLength = 600000 // ~120.000 tokens
+	MaxOutputTokens  = 1000
 	PresencePenalty  = 1.0
 	Temperature      = 0.3
 	SystemPrompt     = "Fasse den folgenden Artikel in fünf kurzen Stichpunkten zusammen. Antworte IMMER nur Deutsch. Formatiere deine Ausgabe wie folgt:\n" +
@@ -163,7 +163,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 			},
 		},
 		PresencePenalty: PresencePenalty,
-		MaxTokens:       MaxTokens,
+		MaxTokens:       MaxOutputTokens,
 		Temperature:     Temperature,
 	}
 
