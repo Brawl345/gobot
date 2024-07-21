@@ -51,7 +51,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 			HandlerFunc: p.OnYouTubeLink,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(`(?i)youtube\.com/(?:embed|shorts)/([\dA-Za-z_-]{10}[048AEIMQUYcgkosw])`),
+			Trigger:     regexp.MustCompile(`(?i)youtube\.com/(?:embed|shorts|live)/([\dA-Za-z_-]{10}[048AEIMQUYcgkosw])`),
 			HandlerFunc: p.OnYouTubeLink,
 		},
 		&plugin.CommandHandler{
