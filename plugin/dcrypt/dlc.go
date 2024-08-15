@@ -8,7 +8,6 @@ import (
 	"encoding/xml"
 	"errors"
 	"fmt"
-	"html"
 	"regexp"
 	"strconv"
 	"strings"
@@ -101,9 +100,9 @@ func (d *DLC) GeneratedBy() string {
 		sb.WriteString(fmt.Sprintf("<a href=\"%s\">", generator.URL))
 	}
 
-	sb.WriteString(html.EscapeString(string(generator.App)))
+	sb.WriteString(utils.Escape(string(generator.App)))
 	if generator.Version != "" && generator.App != generator.Version {
-		sb.WriteString(fmt.Sprintf(" %s", html.EscapeString(string(generator.Version))))
+		sb.WriteString(fmt.Sprintf(" %s", utils.Escape(string(generator.Version))))
 	}
 
 	if generator.URL != "" {
