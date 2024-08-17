@@ -134,6 +134,10 @@ func onExpand(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var sb strings.Builder
 
 	for _, url := range shortUrls {
+		url := url
+		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+			url = fmt.Sprintf("http://%s", url)
+		}
 		sb.WriteString(fmt.Sprintf("%s\n", url))
 		loop(&sb, url, 1)
 		sb.WriteString("\n")
