@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/model"
@@ -138,7 +137,7 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 	}
 
 	if len(wrapper.Images) == 0 {
-		_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadPhoto, nil)
+		_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadPhoto, nil)
 		requestUrl := url.URL{
 			Scheme: "https",
 			Host:   "customsearch.googleapis.com",
@@ -188,7 +187,7 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 		wrapper.QueryID = queryID
 	}
 
-	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadPhoto, nil)
+	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadPhoto, nil)
 	index := wrapper.CurrentIndex
 	var success bool
 	var numberOfTries int

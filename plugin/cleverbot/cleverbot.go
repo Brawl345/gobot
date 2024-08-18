@@ -69,7 +69,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) onCleverbot(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 
 	apiKey := p.credentialService.GetKey("cleverbot_api_key")
 	if apiKey == "" {

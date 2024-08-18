@@ -43,7 +43,7 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionUploadDocument, nil)
+	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadDocument, nil)
 
 	if c.EffectiveMessage.Document.FileSize > tgUtils.MaxFilesizeDownload {
 		_, err := c.EffectiveMessage.Reply(b, "❌ DLC-Container ist größer als 20 MB.", utils.DefaultSendOptions())

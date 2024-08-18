@@ -3,16 +3,16 @@ module github.com/Brawl345/gobot
 go 1.22
 
 require (
-	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.28
+	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.29
 	github.com/go-shiori/go-readability v0.0.0-20240701094332-1070de7e32ef
 	github.com/go-sql-driver/mysql v1.8.1
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
 	github.com/rs/xid v1.5.0
 	github.com/rs/zerolog v1.33.0
-	github.com/rubenv/sql-migrate v1.6.1
+	github.com/rubenv/sql-migrate v1.7.0
 	github.com/sosodev/duration v1.3.1
-	golang.org/x/exp v0.0.0-20240613232115-7f521ea00fb8
+	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
 )
 
 require (
@@ -24,7 +24,7 @@ require (
 	github.com/gogs/chardet v0.0.0-20211120154057-b7413eaefb8f // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
-	golang.org/x/net v0.26.0 // indirect
-	golang.org/x/sys v0.21.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	golang.org/x/net v0.28.0 // indirect
+	golang.org/x/sys v0.24.0 // indirect
+	golang.org/x/text v0.17.0 // indirect
 )

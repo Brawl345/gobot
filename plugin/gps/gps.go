@@ -65,7 +65,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) onGPS(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionFindLocation, nil)
+	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionFindLocation, nil)
 	venue, err := p.geocodingService.Geocode(c.Matches[1])
 	if err != nil {
 		if errors.Is(err, model.ErrAddressNotFound) {

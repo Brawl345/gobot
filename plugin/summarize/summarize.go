@@ -86,7 +86,7 @@ func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.Message) error {
-	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 
 	apiKey := p.credentialService.GetKey("openai_api_key")
 	if apiKey == "" {

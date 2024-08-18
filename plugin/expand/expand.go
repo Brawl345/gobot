@@ -110,7 +110,7 @@ func loop(sb *strings.Builder, url string, depth int) {
 }
 
 func onExpand(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 
 	var shortUrls []string
 
@@ -185,7 +185,7 @@ func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 		limitExceeded = true
 	}
 
-	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 	var sb strings.Builder
 
 	for _, url := range shortUrls {

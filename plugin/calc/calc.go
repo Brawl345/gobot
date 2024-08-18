@@ -14,7 +14,6 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
-	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -95,7 +94,7 @@ func calculate(expr string) (string, error) {
 }
 
 func onCalc(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 
 	result, err := calculate(c.Matches[1])
 	if err != nil {

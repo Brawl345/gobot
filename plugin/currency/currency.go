@@ -13,7 +13,6 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
-	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -101,7 +100,7 @@ func convertCurrency(amount, from, to string) (string, error) {
 }
 
 func onConvertFromTo(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 
 	text, err := convertCurrency(c.Matches[1], c.Matches[2], c.Matches[3])
 	if err != nil {
@@ -130,7 +129,7 @@ func onConvertFromTo(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func onConvertToEUR(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, _ = c.EffectiveChat.SendAction(b, tgUtils.ChatActionTyping, nil)
+	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 	text, err := convertCurrency(c.Matches[1], c.Matches[2], "EUR")
 	if err != nil {
 		switch {
