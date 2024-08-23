@@ -1,8 +1,5 @@
-# NOTE: Set "google_gemini_proxy" either to a proxy that routes requests from a supported country to the API
-# or use "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent" directly
-
 # Chat prompt
-POST {{google_gemini_proxy}}?key={{google_generative_language_api_key}}
+POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={{google_generative_language_api_key}}
 Content-Type: application/json
 
 {
@@ -59,8 +56,8 @@ Content-Type: image/jpeg
 
 ###
 
-# Vision prompt
-POST {{google_gemini_proxy}}?key={{google_generative_language_api_key}}
+# Vision prompt (edit fileUri below)
+POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={{google_generative_language_api_key}}
 Content-Type: application/json
 
 {

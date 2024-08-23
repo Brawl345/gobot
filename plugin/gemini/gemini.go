@@ -38,7 +38,6 @@ var log = logger.New("gemini")
 type (
 	Plugin struct {
 		// Get the key from https://aistudio.google.com/app/apikey
-		// NOTE: In Europe you have to set up billing for your project (or route requests through a proxy in the US)
 		credentialService model.CredentialService
 		geminiService     Service
 	}
@@ -94,13 +93,6 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 			utils.DefaultSendOptions(),
 		)
 		return err
-	}
-
-	apiUrlGemini := ApiUrlGemini
-	proxyUrlGemini := p.credentialService.GetKey("google_gemini_proxy")
-	if proxyUrlGemini != "" {
-		log.Debug().Msg("Using Gemini API proxy for base model")
-		apiUrlGemini = proxyUrlGemini
 	}
 
 	systemInstruction := cmp.Or(p.credentialService.GetKey("google_gemini_system_instruction"), DefaultSystemInstruction)
@@ -270,12 +262,12 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	var response GenerateContentResponse
 
-	apiUrl, err := url.Parse(apiUrlGemini)
+	apiUrl, err := url.Parse(ApiUrlGemini)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Str("api_url", apiUrlGemini).
+			Str("api_url", ApiUrlGemini).
 			Msg("error while parsing api url")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
@@ -299,7 +291,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 				guid := xid.New().String()
 				log.Err(err).
 					Str("guid", guid).
-					Str("url", apiUrlGemini).
+					Str("url", ApiUrlGemini).
 					Msg("Failed to send POST request, got HTTP code 400")
 
 				err := p.geminiService.ResetHistory(c.EffectiveChat)
@@ -329,7 +321,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Str("url", apiUrlGemini).
+			Str("url", ApiUrlGemini).
 			Msg("Failed to send POST request")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
@@ -339,7 +331,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		len(response.Candidates[0].Content.Parts) == 0 ||
 		response.Candidates[0].Content.Parts[0].Text == "" {
 		log.Error().
-			Str("url", apiUrlGemini).
+			Str("url", ApiUrlGemini).
 			Msg("Got no answer from Gemini")
 		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von Gemini erhalten (eventuell gefiltert).", utils.DefaultSendOptions())
 		return err
