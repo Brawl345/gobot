@@ -120,7 +120,7 @@ func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	dir := cmp.Or(p.credentialService.GetKey("getfile_dir"), "Files")
+	dir := cmp.Or(p.credentialService.GetKey("getfile_dir"), "files")
 
 	savePath := filepath.Join(dir, subFolder)
 	err = os.MkdirAll(savePath, 0770)
