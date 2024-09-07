@@ -2,7 +2,7 @@
   description = "Multi-purpose Telegram bot";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs?ref=nixpkgs-unstable";
   };
 
   outputs = { self, nixpkgs, ... }:
@@ -24,6 +24,14 @@
     in
     {
 
+      nixosModules = {
+        default = ./module.nix;
+      };
+
+      overlays.default = final: prev: {
+        gobot = self.packages.${prev.system}.default;
+      };
+
       devShells = forAllSystems
         (pkgs: {
           default = pkgs.mkShell {
@@ -42,7 +50,7 @@
 
       packages = forAllSystems
         (pkgs: {
-          default =
+          gobot =
             pkgs.buildGoModule
               {
                 pname = "gobot";
@@ -62,6 +70,8 @@
                   platforms = pkgs.lib.platforms.darwin ++ pkgs.lib.platforms.linux;
                 };
               };
+
+          default = self.packages.${pkgs.system}.gobot;
         });
     };
 }
