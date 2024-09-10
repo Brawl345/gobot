@@ -33,7 +33,7 @@ Example with [Hookdeck](https://hookdeck.com/):
 1. Copy your `https://events.hookdeck.com/e/...` URL to `WEBHOOK_PUBLIC_URL` variable
 2. Set a webhook port (e.g. `41320`) to `PORT`
 3. Set `WEBHOOK_URL_PATH` to a custom path
-   1. This is where the internal webhook server will listen on. Gotgbot does not support an empty path sadly.
+   1. This is where the internal webhook server will listen on. Gotgbot **does not support an empty path** sadly.
    2. For Hookdeck, set "Destionation Type" to "CLI" and insert your path
 4. Use the Hookdeck CLI: `hookdeck listen 41320 [SOURCE]`
 

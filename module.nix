@@ -1,9 +1,24 @@
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   cfg = config.services.gobot;
   defaultUser = "gobot";
-  inherit (lib) mkEnableOption mkMerge mkPackageOption mkOption mkIf types optionalAttrs optional optionalString;
+  inherit (lib)
+    mkEnableOption
+    mkMerge
+    mkPackageOption
+    mkOption
+    mkIf
+    types
+    optionalAttrs
+    optional
+    optionalString
+    ;
 in
 {
   options.services.gobot = {
@@ -53,8 +68,22 @@ in
       };
 
       passwordFile = lib.mkOption {
-        type = types.path;
+        type = types.nullOr types.path;
+        default = null;
         description = "Database user password file.";
+      };
+
+      socket = mkOption {
+        type = types.nullOr types.path;
+        default = "/run/mysqld/mysqld.sock";
+        example = "/run/mysqld/mysqld.sock";
+        description = "Path to the unix socket file to use for authentication.";
+      };
+
+      createLocally = mkOption {
+        type = types.bool;
+        default = true;
+        description = "Create the database locally";
       };
     };
 
@@ -95,7 +124,7 @@ in
     };
 
     webhookUrlPath = mkOption {
-      type = types.str;
+      type = types.strMatching "\/.+";
       default = "/webhook";
       description = "Custom path for the webhook";
     };
@@ -120,21 +149,29 @@ in
         assertion = !(cfg.webhookSecret != null && cfg.webhookSecretFile != null);
         message = "Only one of webhookSecret or webhookSecretFile can be set.";
       }
+      {
+        assertion = !(cfg.database.socket != null && cfg.database.passwordFile != null);
+        message = "Only one of services.gobot.database.socket or services.gobot.database.passwordFile can be set.";
+      }
+      {
+        assertion = cfg.database.socket == null && cfg.database.passwordFile == null;
+        message = "Either services.gobot.database.socket or services.gobot.database.passwordFile must be set.";
+      }
     ];
 
-    # TODO: gobot currently must use a db password
-    # TODO: copy implementation from e.g. https://github.com/NixOS/nixpkgs/blob/458c073712070ab3287fe2aa3fdee0aed93d0847/nixos/modules/services/web-apps/anuko-time-tracker.nix#L339
-    # services.mysql = lib.mkIf cfg.database.createLocally {
-    #   enable = lib.mkDefault true;
-    #   package = lib.mkDefault pkgs.mariadb;
-    #   ensureDatabases = [ cfg.database.name ];
-    #   ensureUsers = [{
-    #     name = cfg.database.user;
-    #     ensurePermissions = {
-    #       "${cfg.database.name}.*" = "ALL PRIVILEGES";
-    #     };
-    #   }];
-    # };
+    services.mysql = lib.mkIf cfg.database.createLocally {
+      enable = lib.mkDefault true;
+      package = lib.mkDefault pkgs.mariadb;
+      ensureDatabases = [ cfg.database.name ];
+      ensureUsers = [
+        {
+          name = cfg.database.user;
+          ensurePermissions = {
+            "${cfg.database.name}.*" = "ALL PRIVILEGES";
+          };
+        }
+      ];
+    };
 
     systemd.services.gobot = {
       description = "Gobot Telegram Bot";
@@ -143,19 +180,25 @@ in
 
       script = ''
         export BOT_TOKEN="$(< $CREDENTIALS_DIRECTORY/BOT_TOKEN )"
-        export MYSQL_PASSWORD="$(< $CREDENTIALS_DIRECTORY/MYSQL_PASSWORD )"
+        ${optionalString (cfg.database.passwordFile != null) ''
+          export MYSQL_PASSWORD="$(< $CREDENTIALS_DIRECTORY/MYSQL_PASSWORD )"
+        ''}
         ${optionalString (cfg.useWebhook && cfg.webhookSecretFile != null) ''
-        export WEBHOOK_SECRET="$(< $CREDENTIALS_DIRECTORY/WEBHOOK_SECRET )"
+          export WEBHOOK_SECRET="$(< $CREDENTIALS_DIRECTORY/WEBHOOK_SECRET )"
         ''}
 
         exec ${cfg.package}/bin/gobot
       '';
 
       serviceConfig = {
-        LoadCredential = [
-          "BOT_TOKEN:${cfg.botTokenFile}"
-          "MYSQL_PASSWORD:${cfg.database.passwordFile}"
-        ] ++ optional (cfg.useWebhook && cfg.webhookSecretFile != null) "WEBHOOK_SECRET:${cfg.webhookSecretFile}";
+        LoadCredential =
+          [
+            "BOT_TOKEN:${cfg.botTokenFile}"
+          ]
+          ++ optional (
+            cfg.useWebhook && cfg.webhookSecretFile != null
+          ) "WEBHOOK_SECRET:${cfg.webhookSecretFile}"
+          ++ optional (cfg.database.passwordFile != null) "MYSQL_PASSWORD:${cfg.database.passwordFile}";
 
         Restart = "always";
         User = cfg.user;
@@ -169,6 +212,7 @@ in
           MYSQL_PORT = toString cfg.database.port;
           MYSQL_USER = cfg.database.user;
           MYSQL_DB = cfg.database.name;
+          MYSQL_SOCKET = cfg.database.socket;
         }
         (mkIf cfg.useWebhook {
           PORT = toString cfg.port;
