@@ -156,7 +156,7 @@ in
         message = "Only one of services.gobot.database.socket or services.gobot.database.passwordFile can be set.";
       }
       {
-        assertion = cfg.database.socket == null && cfg.database.passwordFile == null;
+        assertion = cfg.database.socket != null || cfg.database.passwordFile != null;
         message = "Either services.gobot.database.socket or services.gobot.database.passwordFile must be set.";
       }
     ];
