@@ -162,7 +162,7 @@ in
     ];
 
     warnings =
-      optional (cfg.webhook.secret != "")
+      optional (cfg.webhook.secret != null && cfg.webhook.secret != "")
         "config.services.gobot.webhook.secret will be stored as plaintext in the Nix store. Use webhook.secretFile instead.";
 
     services.mysql = lib.mkIf cfg.database.createLocally {
