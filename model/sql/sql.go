@@ -27,16 +27,27 @@ func New() (*sqlx.DB, error) {
 	password := strings.TrimSpace(os.Getenv("MYSQL_PASSWORD"))
 	dbname := strings.TrimSpace(os.Getenv("MYSQL_DB"))
 	tls := cmp.Or(strings.TrimSpace(os.Getenv("MYSQL_TLS")), "false")
+	socket := strings.TrimSpace(os.Getenv("MYSQL_SOCKET"))
 
-	connectionString := fmt.Sprintf(
-		"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&tls=%s",
-		user,
-		password,
-		host,
-		port,
-		dbname,
-		tls,
-	)
+	var connectionString string
+	if socket != "" {
+		connectionString = fmt.Sprintf(
+			"%s@unix(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+			user,
+			socket,
+			dbname,
+		)
+	} else {
+		connectionString = fmt.Sprintf(
+			"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&tls=%s",
+			user,
+			password,
+			host,
+			port,
+			dbname,
+			tls,
+		)
+	}
 
 	db, err := sqlx.Connect("mysql", connectionString)
 	if err != nil {
@@ -59,6 +70,8 @@ func New() (*sqlx.DB, error) {
 	db.SetMaxIdleConns(100)
 	db.SetMaxOpenConns(100)
 	db.SetConnMaxIdleTime(10 * time.Minute)
+
+	log.Debug().Msgf("Connected to database")
 
 	return db, nil
 }
