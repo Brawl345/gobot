@@ -105,40 +105,42 @@ in
       description = "Enable debug mode";
     };
 
-    useWebhook = mkOption {
-      type = types.bool;
-      default = false;
-      description = "Use webhook instead of long polling";
-    };
+    webhook = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = "Use webhook instead of long polling";
+      };
 
-    port = mkOption {
-      type = types.port;
-      default = 8080;
-      description = "Port for the webhook server";
-    };
+      port = mkOption {
+        type = types.port;
+        default = 8080;
+        description = "Port for the webhook server";
+      };
 
-    webhookPublicUrl = mkOption {
-      type = types.str;
-      default = "";
-      description = "Public URL for webhook";
-    };
+      publicUrl = mkOption {
+        type = types.str;
+        default = "";
+        description = "Public URL for webhook";
+      };
 
-    webhookUrlPath = mkOption {
-      type = types.strMatching "\/.+";
-      default = "/webhook";
-      description = "Custom path for the webhook";
-    };
+      urlPath = mkOption {
+        type = types.strMatching "\/.+";
+        default = "/webhook";
+        description = "Custom path for the webhook";
+      };
 
-    webhookSecret = mkOption {
-      type = types.nullOr types.str;
-      default = null;
-      description = "Secret for the webhook";
-    };
+      secret = mkOption {
+        type = types.nullOr types.str;
+        default = null;
+        description = "Secret for the webhook. Note that this will be saved in plaintext in the Nix store";
+      };
 
-    webhookSecretFile = mkOption {
-      type = types.nullOr types.path;
-      default = null;
-      description = "Path to a file containing the secret for the webhook";
+      secretFile = mkOption {
+        type = types.nullOr types.path;
+        default = null;
+        description = "Path to a file containing the secret for the webhook";
+      };
     };
   };
 
@@ -146,8 +148,8 @@ in
 
     assertions = [
       {
-        assertion = !(cfg.webhookSecret != null && cfg.webhookSecretFile != null);
-        message = "Only one of webhookSecret or webhookSecretFile can be set.";
+        assertion = !(cfg.webhook.secret != null && cfg.webhook.secretFile != null);
+        message = "Only one of webhook.secret or webhook.secretFile can be set.";
       }
       {
         assertion = !(cfg.database.socket != null && cfg.database.passwordFile != null);
@@ -158,6 +160,10 @@ in
         message = "Either services.gobot.database.socket or services.gobot.database.passwordFile must be set.";
       }
     ];
+
+    warnings =
+      optional (cfg.webhook.secret != "")
+        "config.services.gobot.webhook.secret will be stored as plaintext in the Nix store. Use webhook.secretFile instead.";
 
     services.mysql = lib.mkIf cfg.database.createLocally {
       enable = lib.mkDefault true;
@@ -183,7 +189,7 @@ in
         ${optionalString (cfg.database.passwordFile != null) ''
           export MYSQL_PASSWORD="$(< $CREDENTIALS_DIRECTORY/MYSQL_PASSWORD )"
         ''}
-        ${optionalString (cfg.useWebhook && cfg.webhookSecretFile != null) ''
+        ${optionalString (cfg.webhook.enable && cfg.webhook.secretFile != null) ''
           export WEBHOOK_SECRET="$(< $CREDENTIALS_DIRECTORY/WEBHOOK_SECRET )"
         ''}
 
@@ -196,8 +202,8 @@ in
             "BOT_TOKEN:${cfg.botTokenFile}"
           ]
           ++ optional (
-            cfg.useWebhook && cfg.webhookSecretFile != null
-          ) "WEBHOOK_SECRET:${cfg.webhookSecretFile}"
+            cfg.webhook.enable && cfg.webhook.secretFile != null
+          ) "WEBHOOK_SECRET:${cfg.webhook.secretFile}"
           ++ optional (cfg.database.passwordFile != null) "MYSQL_PASSWORD:${cfg.database.passwordFile}";
 
         Restart = "always";
@@ -214,11 +220,11 @@ in
           MYSQL_DB = cfg.database.name;
           MYSQL_SOCKET = cfg.database.socket;
         }
-        (mkIf cfg.useWebhook {
-          PORT = toString cfg.port;
-          WEBHOOK_PUBLIC_URL = cfg.webhookPublicUrl;
-          WEBHOOK_URL_PATH = cfg.webhookUrlPath;
-          WEBHOOK_SECRET = optionalString (cfg.webhookSecret != null) cfg.webhookSecret;
+        (mkIf cfg.webhook.enable {
+          PORT = toString cfg.webhook.port;
+          WEBHOOK_PUBLIC_URL = cfg.webhook.publicUrl;
+          WEBHOOK_URL_PATH = cfg.webhook.urlPath;
+          WEBHOOK_SECRET = optionalString (cfg.webhook.secret != null) cfg.webhook.secret;
         })
         (mkIf cfg.printMsgs {
           PRINT_MSGS = "true";
