@@ -75,7 +75,7 @@ in
 
       socket = mkOption {
         type = types.nullOr types.path;
-        default = "/run/mysqld/mysqld.sock";
+        default = if config.services.gobot.database.passwordFile == null then "/run/mysqld/mysqld.sock" else null;
         example = "/run/mysqld/mysqld.sock";
         description = "Path to the unix socket file to use for authentication.";
       };
@@ -149,7 +149,7 @@ in
     assertions = [
       {
         assertion = !(cfg.webhook.secret != null && cfg.webhook.secretFile != null);
-        message = "Only one of webhook.secret or webhook.secretFile can be set.";
+        message = "Only one of services.gobot.webhook.secret or services.gobot.webhook.secretFile can be set.";
       }
       {
         assertion = !(cfg.database.socket != null && cfg.database.passwordFile != null);
