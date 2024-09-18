@@ -181,7 +181,8 @@ in
 
     systemd.services.gobot = {
       description = "Gobot Telegram Bot";
-      after = [ "network.target" ];
+      after = [ "network-online.target" ];
+      wants = [ "network-online.target" ];
       wantedBy = [ "multi-user.target" ];
 
       script = ''
