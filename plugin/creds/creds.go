@@ -43,7 +43,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 			AdminOnly:   true,
 		},
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/creds_add(?:@%s)? ([^\s]+) (.+)$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/creds_add(?:@%s)? ([^\s]+) ([\s\S]+)$`, botInfo.Username)),
 			HandlerFunc: p.OnAdd,
 			AdminOnly:   true,
 		},
@@ -82,7 +82,11 @@ func (p *Plugin) OnGet(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var sb strings.Builder
 
 	for _, key := range keys {
-		sb.WriteString(fmt.Sprintf("<b>%s</b>:\n<code>%s</code>\n", key, creds[key]))
+		if len(creds[key]) > 300 {
+			sb.WriteString(fmt.Sprintf("<b>%s</b>:\n<code>%s...</code>\n", key, creds[key][:297]))
+		} else {
+			sb.WriteString(fmt.Sprintf("<b>%s</b>:\n<code>%s</code>\n", key, creds[key]))
+		}
 	}
 
 	_, err := c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
