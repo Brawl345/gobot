@@ -52,7 +52,7 @@
 
           # Update the hash if go dependencies change!
           # vendorHash = pkgs.lib.fakeHash;
-          vendorHash = "sha256-ApqiGO6P2LkvkzxFxIw3Li5vh/qi0TOfNEhSc1uDhEg=";
+          vendorHash = "sha256-w3CbKW7vzhCA9ACK3GEBnlw+inThgFNqxFcxvykKkFs=";
 
           ldflags = [
             "-s"
