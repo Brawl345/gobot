@@ -68,10 +68,19 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 
-	fileSize, err := strconv.ParseInt(resp.Header.Get("Content-Length"), 10, 64)
+	contentLength := resp.Header.Get("Content-Length")
+	if contentLength == "" {
+		log.Debug().
+			Str("url", url).
+			Msg("Content-Length header is empty")
+		return nil
+	}
+
+	fileSize, err := strconv.ParseInt(contentLength, 10, 64)
 	if err != nil {
 		log.Err(err).
 			Str("url", url).
+			Str("contentLength", contentLength).
 			Msg("Failed to parse content length")
 		return nil
 	}
