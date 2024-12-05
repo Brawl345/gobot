@@ -14,9 +14,9 @@ type Response struct {
 }
 
 func (r *Response) GmtOffsetFormatted() string {
-	sign := "+"
-	if r.GmtOffset < 0 {
-		sign = "-"
+	var sign string
+	if r.GmtOffset > 0 {
+		sign = "+"
 	}
 	hours := r.GmtOffset / 3600
 	minutes := (r.GmtOffset % 3600) / 60
