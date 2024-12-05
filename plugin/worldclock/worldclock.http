@@ -1,4 +1,7 @@
 ### Current time in another country by coordinates
-GET https://dev.virtualearth.net/REST/v1/TimeZone/35.021042,135.755600
-    ?culture=de-de
-    &key={{bing_maps_api_key}}
+GET https://api.timezonedb.com/v2.1/get-time-zone
+    ?key={{timezonedb_api_key}}
+    &format=json
+    &by=position
+    &lat=35.021042
+    &lng=135.755600

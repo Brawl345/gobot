@@ -1,41 +1,25 @@
 package worldclock
 
 import (
-	"strings"
-	"time"
+	"fmt"
 )
 
-type (
-	Response struct {
-		ResourceSets []struct {
-			EstimatedTotal int `json:"estimatedTotal"`
-			Resources      []struct {
-				TimeZone struct {
-					Abbreviation   string        `json:"abbreviation"`
-					IanaTimeZoneId string        `json:"ianaTimeZoneId"`
-					ConvertedTime  ConvertedTime `json:"convertedTime"`
-				} `json:"timeZone"`
-			} `json:"resources"`
-		} `json:"resourceSets"`
-		StatusCode        int    `json:"statusCode"`
-		StatusDescription string `json:"statusDescription"`
-	}
-
-	ConvertedTime struct {
-		LocalTime           string `json:"localTime"`
-		UtcOffsetWithDst    string `json:"utcOffsetWithDst"`
-		TimeZoneDisplayName string `json:"timeZoneDisplayName"`
-		TimeZoneDisplayAbbr string `json:"timeZoneDisplayAbbr"`
-	}
-)
-
-func (c *ConvertedTime) ParsedTime() (time.Time, error) {
-	return time.Parse("2006-01-02T15:04:05", c.LocalTime)
+type Response struct {
+	Status       string `json:"status"`
+	Message      string `json:"message"`
+	ZoneName     string `json:"zoneName"`
+	Abbreviation string `json:"abbreviation"`
+	GmtOffset    int    `json:"gmtOffset"`
+	Timestamp    int64  `json:"timestamp"`
 }
 
-func (c *ConvertedTime) UtcOffsetWithDstFormatted() string {
-	if !strings.HasPrefix(c.UtcOffsetWithDst, "-") {
-		return "+" + c.UtcOffsetWithDst
+func (r *Response) GmtOffsetFormatted() string {
+	sign := "+"
+	if r.GmtOffset < 0 {
+		sign = "-"
 	}
-	return c.UtcOffsetWithDst
+	hours := r.GmtOffset / 3600
+	minutes := (r.GmtOffset % 3600) / 60
+	formattedStr := fmt.Sprintf("%s%02d:%02d", sign, hours, minutes)
+	return formattedStr
 }

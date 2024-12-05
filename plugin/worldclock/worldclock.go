@@ -3,7 +3,6 @@ package worldclock
 import (
 	"errors"
 	"fmt"
-	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
@@ -18,7 +17,7 @@ import (
 )
 
 type Plugin struct {
-	credentialService model.CredentialService // https://www.bingmapsportal.com/
+	credentialService model.CredentialService
 	geocodingService  model.GeocodingService
 }
 
@@ -60,11 +59,11 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 
-	apiKey := p.credentialService.GetKey("bing_maps_api_key")
+	apiKey := p.credentialService.GetKey("timezonedb_api_key")
 	if apiKey == "" {
-		log.Warn().Msg("bing_maps_api_key not found")
+		log.Warn().Msg("timezonedb_api_key not found")
 		_, err := c.EffectiveMessage.Reply(b,
-			"❌ <code>bing_maps_api_key</code> fehlt.",
+			"❌ <code>timezonedb_api_key</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
 		return err
@@ -95,29 +94,27 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	requestUrl := url.URL{
 		Scheme: "https",
-		Host:   "dev.virtualearth.net",
-		Path:   fmt.Sprintf("/REST/v1/TimeZone/%f,%f", venue.Location.Latitude, venue.Location.Longitude),
+		Host:   "api.timezonedb.com",
+		Path:   "/v2.1/get-time-zone",
 	}
 
 	q := requestUrl.Query()
 	q.Set("key", apiKey)
-	q.Set("culture", "de-de")
+	q.Set("format", "json")
+	q.Set("by", "position")
+	q.Set("fields", "zoneName,abbreviation,gmtOffset,timestamp")
+	q.Set("lat", fmt.Sprintf("%f", venue.Location.Latitude))
+	q.Set("lng", fmt.Sprintf("%f", venue.Location.Longitude))
 
 	requestUrl.RawQuery = q.Encode()
 
 	var response Response
-	var httpError *httpUtils.HttpError
 	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
 		Method:   httpUtils.MethodGet,
 		URL:      requestUrl.String(),
 		Response: &response,
 	})
 	if err != nil {
-		if errors.As(err, &httpError) && httpError.StatusCode == http.StatusNotFound {
-			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
-			return err
-		}
-
 		guid := xid.New().String()
 		log.Error().
 			Err(err).
@@ -130,45 +127,30 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	if len(response.ResourceSets) == 0 || len(response.ResourceSets[0].Resources) == 0 {
+	if response.Status != "OK" {
+		log.Error().
+			Str("status", response.Status).
+			Str("message", response.Message).
+			Msg("got unexpected response from API")
 		_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
 	var sb strings.Builder
-	timezone := response.ResourceSets[0].Resources[0].TimeZone
-
 	sb.WriteString(
 		fmt.Sprintf(
-			"<b>%s</b>\n",
-			utils.Escape(timezone.IanaTimeZoneId),
+			"<b>%s</b> <i>(%s, UTC%s)</i>\n",
+			utils.Escape(response.ZoneName),
+			utils.Escape(response.Abbreviation),
+			utils.Escape(response.GmtOffsetFormatted()),
 		),
 	)
 
-	parsedTime, err := timezone.ConvertedTime.ParsedTime()
-	if err != nil {
-		guid := xid.New().String()
-		log.Error().
-			Err(err).
-			Str("guid", guid).
-			Str("localTime", timezone.ConvertedTime.LocalTime).
-			Msg("error converting local time from API")
-		sb.WriteString(fmt.Sprintf("❌ Fehler bei der Konvertierung.%s\n", utils.EmbedGUID(guid)))
-	} else {
-		sb.WriteString(
-			fmt.Sprintf(
-				"🕒 %s\n",
-				utils.LocalizeDatestring(parsedTime.Format("Monday, 02. January 2006, 15:04:05 Uhr")),
-			),
-		)
-	}
-
+	parsedTime := utils.TimestampToTime(response.Timestamp).UTC()
 	sb.WriteString(
 		fmt.Sprintf(
-			"<i>%s (%s, UTC%s)</i>",
-			utils.Escape(timezone.ConvertedTime.TimeZoneDisplayName),
-			utils.Escape(timezone.ConvertedTime.TimeZoneDisplayAbbr),
-			utils.Escape(timezone.ConvertedTime.UtcOffsetWithDstFormatted()),
+			"🕒 %s",
+			utils.LocalizeDatestring(parsedTime.Format("Monday, 02. January 2006, 15:04:05 Uhr")),
 		),
 	)
 
