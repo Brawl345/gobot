@@ -1,5 +1,5 @@
 # Chat prompt
-POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={{google_generative_language_api_key}}
+POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={{google_generative_language_api_key}}
 Content-Type: application/json
 
 {
@@ -57,7 +57,7 @@ Content-Type: image/jpeg
 ###
 
 # Vision prompt (edit fileUri below)
-POST https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={{google_generative_language_api_key}}
+POST https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={{google_generative_language_api_key}}
 Content-Type: application/json
 
 {
@@ -71,7 +71,7 @@ Content-Type: application/json
         {
           "fileData": {
             "mimeType": "image/jpeg",
-            "fileUri": "https://generativelanguage.googleapis.com/v1beta/files/ihbunuo8sc77"
+            "fileUri": "https://generativelanguage.googleapis.com/v1beta/files/sdkqtahx67k4"
           }
         }
       ]

@@ -3,7 +3,7 @@ package gemini
 // Models: https://ai.google.dev/gemini-api/docs/models/gemini
 
 const (
-	ApiUrlGemini     = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent"
+	ApiUrlGemini     = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent"
 	ApiUrlFileUpload = "https://generativelanguage.googleapis.com/upload/v1beta/files?key=%s"
 	RoleModel        = "model"
 	RoleUser         = "user"
@@ -41,7 +41,7 @@ type (
 		Parts []Part `json:"parts"`
 	}
 
-	// GenerateContentRequest - https://ai.google.dev/api/rest/v1beta/models/generateContent#request-body
+	// GenerateContentRequest - https://ai.google.dev/api/generate-content#request-body
 	GenerateContentRequest struct {
 		Contents          []Content         `json:"contents"`
 		SafetySettings    []SafetySetting   `json:"safetySettings"`
@@ -49,7 +49,7 @@ type (
 		SystemInstruction SystemInstruction `json:"system_instruction"`
 	}
 
-	// GenerateContentResponse - https://ai.google.dev/api/rest/v1beta/GenerateContentResponse
+	// GenerateContentResponse - https://ai.google.dev/api/generate-content#generatecontentresponse
 	GenerateContentResponse struct {
 		Candidates []struct {
 			Content       Content `json:"content"`
@@ -61,7 +61,7 @@ type (
 		} `json:"candidates"`
 	}
 
-	// FileUploadResponse - https://ai.google.dev/api/rest/v1beta/media/upload#response-body
+	// FileUploadResponse - https://ai.google.dev/api/files#response-body
 	FileUploadResponse struct {
 		File struct {
 			MimeType string `json:"mimeType"`
