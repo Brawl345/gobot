@@ -64,6 +64,12 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) onSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
+	query := c.Matches[1]
+	if len(query) < 3 {
+		_, err := c.EffectiveMessage.Reply(b, "❌ Suchbegriff muss mindestens 3 Zeichen lang sein.", utils.DefaultSendOptions())
+		return err
+	}
+
 	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 
 	clientID := p.credentialService.GetKey("mal_client_id")
@@ -84,7 +90,7 @@ func (p *Plugin) onSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 		Path:   "/v2/anime",
 	}
 	q := requestUrl.Query()
-	q.Set("q", c.Matches[1])
+	q.Set("q", query)
 	q.Set("fields", "id,title,nsfw,rating")
 	q.Set("limit", "5")
 	q.Set("nsfw", "true")
