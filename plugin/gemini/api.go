@@ -26,8 +26,8 @@ type (
 	}
 
 	SafetySetting struct {
-		Category  string `json:"category"`
-		Threshold string `json:"threshold"`
+		Category  string `json:"category"`  // https://ai.google.dev/api/generate-content#v1beta.HarmCategory
+		Threshold string `json:"threshold"` // https://ai.google.dev/api/generate-content#HarmBlockThreshold
 	}
 
 	GenerationConfig struct {
