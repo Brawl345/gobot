@@ -1,10 +1,8 @@
 package summarize
 
 const (
-	OpenAIApiUrl = "https://api.openai.com/v1/chat/completions"
-	Model        = "gpt-4o-mini"
-	User         = "user"
-	System       = "system"
+	User   = "user"
+	System = "system"
 )
 
 type (

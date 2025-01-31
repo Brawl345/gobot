@@ -3,8 +3,10 @@ package summarize
 import (
 	"errors"
 	"fmt"
+	"math"
 	"net/http"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,7 +15,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
-	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 
@@ -21,12 +23,14 @@ import (
 )
 
 const (
-	MinArticleLength = 500
-	MaxArticleLength = 600000 // ~120.000 tokens
-	MaxOutputTokens  = 1000
-	PresencePenalty  = 1.0
-	Temperature      = 0.3
-	SystemPrompt     = "Fasse den folgenden Artikel in fünf kurzen Stichpunkten zusammen. Antworte IMMER nur Deutsch. Formatiere deine Ausgabe wie folgt:\n" +
+	MinArticleLength        = 500
+	DefaultApiUrl           = "https://api.openai.com/v1/chat/completions"
+	DefaultApiModel         = "gpt-4o-mini"
+	DefaultMaxArticleLength = 128000 * 4.8
+	MaxOutputTokens         = 1000
+	PresencePenalty         = 1.0
+	Temperature             = 0.3
+	SystemPrompt            = "Fasse den folgenden Artikel in fünf kurzen Stichpunkten zusammen. Antworte IMMER nur Deutsch. Formatiere deine Ausgabe wie folgt:\n" +
 		"Der Artikel handelt von [Zusammenfassung in einem Satz]\n\n" +
 		"- [Stichpunkt 1]..."
 )
@@ -88,28 +92,68 @@ func (p *Plugin) onReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.Message) error {
 	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 
-	apiKey := p.credentialService.GetKey("openai_api_key")
+	apiKey := p.credentialService.GetKey("summarize_api_key")
 	if apiKey == "" {
-		log.Warn().Msg("openai_api_key not found")
+		log.Warn().Msg("summarize_api_key not found")
 		_, err := c.EffectiveMessage.Reply(b,
-			"❌ <code>openai_api_key</code> fehlt.",
+			"❌ <code>summarize_api_key</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
 		return err
 	}
 
-	apiUrl := OpenAIApiUrl
+	chatModel := p.credentialService.GetKey("summarize_model")
+	if chatModel == "" {
+		chatModel = DefaultApiModel
+	}
 
-	// Must be the direct URL to the proxy - nothing will be appended. Slashes at the end will be removed.
-	// E.g. for Cloudflare AI Gateway, use "https://gateway.ai.cloudflare.com/v1/ACCOUNT_TAG/openai/chat/completions"
-	proxyUrl := p.credentialService.GetKey("summarize_ai_proxy")
-	if proxyUrl != "" && strings.HasPrefix(proxyUrl, "https://") {
-		if strings.HasSuffix(proxyUrl, "/") {
-			proxyUrl = proxyUrl[:len(proxyUrl)-1]
+	// Must be the direct URL to an OpenAI-compatible API - nothing will be appended. Slashes at the end will be removed.
+	// Examples:
+	// 	OpenAI (default): https://api.openai.com/v1/chat/completions
+	// 	Gemini: https://generativelanguage.googleapis.com/v1beta/openai/chat/completions
+	// 	Mistral: https://api.mistral.ai/v1/chat/completions
+	// 	Groq: https://api.groq.com/openai/v1/chat/completions
+	// 	Cloudflare AI Gateway: https://gateway.ai.cloudflare.com/v1/ACCOUNT_TAG/openai/chat/completions
+	apiUrl := p.credentialService.GetKey("summarize_api_url")
+	if apiUrl == "" {
+		apiUrl = DefaultApiUrl
+	}
+
+	if !strings.HasPrefix(apiUrl, "http://") && !strings.HasPrefix(apiUrl, "https://") {
+		log.Warn().Msg("summarize_api_url is invalid")
+		_, err := c.EffectiveMessage.Reply(b,
+			"❌ <code>summarize_api_url</code> ist ungültig.",
+			utils.DefaultSendOptions(),
+		)
+		return err
+	}
+
+	if strings.HasSuffix(apiUrl, "/") {
+		apiUrl = apiUrl[:len(apiUrl)-1]
+	}
+
+	var ctxWindow float64
+	ctxWindowStr := p.credentialService.GetKey("summarize_ctx_window")
+	if ctxWindowStr != "" {
+		var err error
+		ctxWindow, err = strconv.ParseFloat(ctxWindowStr, 64)
+		if err != nil {
+			log.Err(err).Msg("Failed to parse summarize_ctx_window")
+			_, err := c.EffectiveMessage.Reply(b,
+				"❌ <code>summarize_ctx_window</code> ist ungültig.",
+				utils.DefaultSendOptions(),
+			)
+			return err
 		}
+	}
 
-		apiUrl = proxyUrl
-		log.Debug().Msg("Using OpenAI AI proxy")
+	maxArticleLength := ctxWindow * 4.8 // Roughly with overhead
+	if maxArticleLength == 0 {
+		maxArticleLength = DefaultMaxArticleLength
+	}
+
+	if maxArticleLength < MinArticleLength {
+		maxArticleLength = MinArticleLength
 	}
 
 	var urls []string
@@ -143,7 +187,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		return err
 	}
 
-	if len(article.TextContent) > MaxArticleLength {
+	if len(article.TextContent) > int(math.Ceil(maxArticleLength)) {
 		_, err := msg.Reply(b,
 			"❌ Artikel-Inhalt ist zu lang.",
 			utils.DefaultSendOptions())
@@ -151,7 +195,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 	}
 
 	request := Request{
-		Model: Model,
+		Model: chatModel,
 		Messages: []ApiMessage{
 			{
 				Role:    System,
@@ -205,7 +249,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 			Str("url", url).
 			Str("message", response.Error.Message).
 			Str("type", response.Error.Type).
-			Msg("Got error from OpenAI API")
+			Msg("Got error from model API")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
@@ -215,7 +259,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		log.Error().
 			Str("url", url).
 			Msg("Got no answer from ChatGPT")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von ChatGPT erhalten", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort vom KI-Modell erhalten", utils.DefaultSendOptions())
 		return err
 	}
 

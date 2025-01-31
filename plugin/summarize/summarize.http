@@ -1,13 +1,52 @@
+# OpenAI
 POST https://api.openai.com/v1/chat/completions
 Content-Type: application/json
 Authorization: Bearer {{openai_api_key}}
 
 {
-  "model": "gpt-3.5-turbo",
+  "model": "gpt-4o-mini",
   "messages": [
     {
       "role": "system",
-      "content": "Summarize the following article in five short bullet points. Always speak in German. If the website needs JavaScript and has a cookie consent banner, reply with a clown emoji."
+      "content": "Fasse den folgenden Artikel in fünf kurzen Stichpunkten zusammen. Antworte IMMER nur Deutsch. Formatiere deine Ausgabe wie folgt:\nDer Artikel handelt von [Zusammenfassung in einem Satz]\n\n- [Stichpunkt 1]..."
+    },
+    {
+      "role": "user",
+      "content": "Dies ist ein Test-Artikel, der nur die Funktionalität des Plugins testen soll. 3+3 = 6 und 2+2 = 4."
+    }
+  ]
+}
+
+### Mistral
+POST https://api.mistral.ai/v1/chat/completions
+Content-Type: application/json
+Authorization: Bearer {{mistral_api_key}}
+
+{
+  "model": "mistral-large-latest",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Fasse den folgenden Artikel in fünf kurzen Stichpunkten zusammen. Antworte IMMER nur Deutsch. Formatiere deine Ausgabe wie folgt:\nDer Artikel handelt von [Zusammenfassung in einem Satz]\n\n- [Stichpunkt 1]..."
+    },
+    {
+      "role": "user",
+      "content": "Dies ist ein Test-Artikel, der nur die Funktionalität des Plugins testen soll. 3+3 = 6 und 2+2 = 4."
+    }
+  ]
+}
+
+### Groq
+POST https://api.groq.com/openai/v1/chat/completions
+Content-Type: application/json
+Authorization: Bearer {{groq_api_key}}
+
+{
+  "model": "llama-3.3-70b-versatile",
+  "messages": [
+    {
+      "role": "system",
+      "content": "Fasse den folgenden Artikel in fünf kurzen Stichpunkten zusammen. Antworte IMMER nur Deutsch. Formatiere deine Ausgabe wie folgt:\nDer Artikel handelt von [Zusammenfassung in einem Satz]\n\n- [Stichpunkt 1]..."
     },
     {
       "role": "user",
