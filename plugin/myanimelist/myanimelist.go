@@ -219,7 +219,7 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	// Not safe for work
 	if anime.NSFW() {
-		sb.WriteString("\n😱 <strong>NSFW</strong>")
+		sb.WriteString("\n🔞 <strong>NSFW</strong>")
 	}
 
 	sb.WriteString("\n")
