@@ -130,7 +130,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		URL:    requestUrl.String(),
 		Headers: map[string]string{
 			"Authorization":             bearerToken,
-			"User-Agent":                "Googlebot",
+			"User-Agent":                utils.UserAgent,
 			"X-Guest-Token":             p.guestToken,
 			"X-Twitter-Active-User":     "yes",
 			"X-Twitter-Client-Language": "de",
@@ -159,7 +159,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 					URL:    requestUrl.String(),
 					Headers: map[string]string{
 						"Authorization":             bearerToken,
-						"User-Agent":                "Googlebot",
+						"User-Agent":                utils.UserAgent,
 						"X-Guest-Token":             p.guestToken,
 						"X-Twitter-Active-User":     "yes",
 						"X-Twitter-Client-Language": "de",
