@@ -81,6 +81,11 @@ func (p *Plugin) renewToken() error {
 }
 
 func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
+	isNsfw := strings.Contains(strings.ToLower(c.EffectiveMessage.GetText()), "nsfw")
+	if isNsfw {
+		return nil
+	}
+
 	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 
 	if p.guestToken == "" {
