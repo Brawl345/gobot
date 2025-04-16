@@ -334,7 +334,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if len(response.Candidates) == 0 ||
 		len(response.Candidates[0].Content.Parts) == 0 ||
-		response.Candidates[0].Content.Parts[0].Text == "" {
+		response.Candidates[0].Content.Text() == "" {
 		log.Error().
 			Str("url", ApiUrlGemini).
 			Msg("Got no answer from Gemini")
@@ -342,7 +342,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	output := response.Candidates[0].Content.Parts[0].Text
+	output := response.Candidates[0].Content.Text()
 	groundingMetadata := response.Candidates[0].GroundingMetadata
 	groundingUsed := len(groundingMetadata.GroundingChunks) > 0
 

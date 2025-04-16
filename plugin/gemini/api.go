@@ -129,3 +129,11 @@ func (g *GroundingMetadata) Links() string {
 
 	return sb.String()
 }
+
+func (c *Content) Text() string {
+	var sb strings.Builder
+	for _, part := range c.Parts {
+		sb.WriteString(part.Text)
+	}
+	return sb.String()
+}
