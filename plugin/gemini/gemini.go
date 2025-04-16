@@ -30,7 +30,7 @@ const (
 	MaxOutputTokens          = 700
 	MaxInputCharacters       = 250000 // Should be roughly 1 mio tokens, max input tokens are 1048576
 	TokensPerImage           = 258    // https://ai.google.dev/gemini-api/docs/tokens?lang=go#multimodal-tokens
-	DefaultSystemInstruction = "Antworte nur auf Deutsch. Nutze nur Standard-Text, da Markdown für den Nutzer nicht angezeigt wird. Verwende keine Emoji. Bilder-Analyse ist eingeschaltet."
+	DefaultSystemInstruction = "Antworte nur auf Deutsch. Markdown ist DEAKTIVIERT. HTML ist DEAKTIVIERT. Bilder-Analyse ist AKTIVIERT."
 )
 
 var log = logger.New("gemini")
@@ -262,6 +262,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 			TopP:            TopP,
 			MaxOutputTokens: MaxOutputTokens,
 		},
+		Tools: []Tool{{GoogleSearch: struct{}{}}},
 	}
 
 	var response GenerateContentResponse
@@ -342,6 +343,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	output := response.Candidates[0].Content.Parts[0].Text
+	groundingChunks := response.Candidates[0].GroundingMetadata.GroundingChunks
 
 	contents = append(contents, Content{
 		Role: RoleModel,
@@ -384,6 +386,10 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 					Msg("error saving Gemini data")
 			}
 		}
+	}
+
+	if len(groundingChunks) > 0 {
+		output = "🔎🌐 " + output
 	}
 
 	if len(output) > tgUtils.MaxMessageLength {

@@ -41,12 +41,33 @@ type (
 		Parts []Part `json:"parts"`
 	}
 
+	// Tool - https://ai.google.dev/api/caching#Tool
+	Tool struct {
+		// GoogleSearch - https://ai.google.dev/api/caching#GoogleSearch (has no fields)
+		GoogleSearch struct {
+		} `json:"google_search"`
+	}
+
 	// GenerateContentRequest - https://ai.google.dev/api/generate-content#request-body
 	GenerateContentRequest struct {
 		Contents          []Content         `json:"contents"`
 		SafetySettings    []SafetySetting   `json:"safetySettings"`
 		GenerationConfig  GenerationConfig  `json:"generationConfig"`
 		SystemInstruction SystemInstruction `json:"system_instruction"`
+		Tools             []Tool            `json:"tools"`
+	}
+
+	// GroundingMetadata - https://ai.google.dev/api/generate-content#GroundingMetadata
+	GroundingMetadata struct {
+		// https://ai.google.dev/api/generate-content#GroundingChunk
+		GroundingChunks []struct {
+			// https://ai.google.dev/api/generate-content#Web
+			Web struct {
+				Uri   string `json:"uri"`
+				Title string `json:"title"`
+			} `json:"web"`
+		} `json:"groundingChunks"`
+		WebSearchQueries []string `json:"webSearchQueries"`
 	}
 
 	// GenerateContentResponse - https://ai.google.dev/api/generate-content#generatecontentresponse
@@ -58,6 +79,7 @@ type (
 				Category    string `json:"category"`
 				Probability string `json:"probability"`
 			} `json:"safetyRatings"`
+			GroundingMetadata GroundingMetadata `json:"groundingMetadata"`
 		} `json:"candidates"`
 	}
 
