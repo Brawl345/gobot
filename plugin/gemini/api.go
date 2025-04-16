@@ -1,5 +1,10 @@
 package gemini
 
+import (
+	"fmt"
+	"strings"
+)
+
 // Models: https://ai.google.dev/gemini-api/docs/models/gemini
 
 const (
@@ -98,4 +103,29 @@ func (c *Content) Chars() int {
 		chars += len(part.Text)
 	}
 	return chars
+}
+
+func (g *GroundingMetadata) Links() string {
+	if len(g.GroundingChunks) == 0 {
+		return ""
+	}
+
+	var sb strings.Builder
+
+	sb.WriteString("(")
+	for i, chunk := range g.GroundingChunks {
+		sb.WriteString(
+			fmt.Sprintf(
+				"<a href=\"%s\">%s</a>",
+				chunk.Web.Uri,
+				chunk.Web.Title,
+			),
+		)
+		if i < len(g.GroundingChunks)-1 {
+			sb.WriteString(", ")
+		}
+	}
+	sb.WriteString(")")
+
+	return sb.String()
 }

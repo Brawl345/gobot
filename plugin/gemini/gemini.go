@@ -343,7 +343,8 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	output := response.Candidates[0].Content.Parts[0].Text
-	groundingChunks := response.Candidates[0].GroundingMetadata.GroundingChunks
+	groundingMetadata := response.Candidates[0].GroundingMetadata
+	groundingUsed := len(groundingMetadata.GroundingChunks) > 0
 
 	contents = append(contents, Content{
 		Role: RoleModel,
@@ -388,20 +389,29 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}
 
-	if len(groundingChunks) > 0 {
-		output = "🔎🌐 " + output
+	if groundingUsed {
+		output = fmt.Sprintf("🔎🌐 %s", output)
 	}
 
 	if len(output) > tgUtils.MaxMessageLength {
 		if inputChars > tgUtils.MaxMessageLength {
-			output = output[:tgUtils.MaxMessageLength-70] + "..." // More space for the message below
+			output = output[:tgUtils.MaxMessageLength-75] + "..." // More space for the message below
 		} else {
-			output = output[:tgUtils.MaxMessageLength-9] + "..."
+			output = output[:tgUtils.MaxMessageLength-12] + "..."
+		}
+	} else {
+		if groundingUsed {
+			output = fmt.Sprintf("%s\n%s", utils.Escape(output), groundingMetadata.Links())
 		}
 	}
 
 	if inputChars > MaxInputCharacters {
 		output += "\n\n(Token-Limit fast erreicht, Konversation wurde zurückgesetzt)"
+	}
+
+	parseMode := ""
+	if groundingUsed {
+		parseMode = gotgbot.ParseModeHTML
 	}
 
 	_, err = c.EffectiveMessage.Reply(b, output, &gotgbot.SendMessageOpts{
@@ -411,6 +421,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
 			IsDisabled: true,
 		},
+		ParseMode: parseMode,
 	})
 
 	return err
