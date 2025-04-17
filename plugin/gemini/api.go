@@ -12,7 +12,7 @@ const (
 	ApiUrlFileUpload = "https://generativelanguage.googleapis.com/upload/v1beta/files?key=%s"
 	RoleModel        = "model"
 	RoleUser         = "user"
-	MaxSourceLinks   = 5
+	MaxSourceLinks   = 10
 )
 
 type (
