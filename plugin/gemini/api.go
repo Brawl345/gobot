@@ -12,6 +12,7 @@ const (
 	ApiUrlFileUpload = "https://generativelanguage.googleapis.com/upload/v1beta/files?key=%s"
 	RoleModel        = "model"
 	RoleUser         = "user"
+	MaxSourceLinks   = 5
 )
 
 type (
@@ -36,10 +37,17 @@ type (
 	}
 
 	GenerationConfig struct {
-		Temperature     float64 `json:"temperature"`
-		TopK            int     `json:"topK"`
-		TopP            int     `json:"topP"`
-		MaxOutputTokens int     `json:"maxOutputTokens"`
+		Temperature     float64         `json:"temperature"`
+		TopK            int             `json:"topK"`
+		TopP            int             `json:"topP"`
+		MaxOutputTokens int             `json:"maxOutputTokens"`
+		ThinkingConfig  *ThinkingConfig `json:"thinkingConfig,omitempty"`
+	}
+
+	// ThinkingConfig - https://ai.google.dev/api/generate-content#ThinkingConfig
+	ThinkingConfig struct {
+		IncludeThoughts bool `json:"includeThoughts,omitempty"`
+		ThinkingBudget  int  `json:"thinkingBudget,omitempty"`
 	}
 
 	SystemInstruction struct {
@@ -123,6 +131,10 @@ func (g *GroundingMetadata) Links() string {
 		)
 		if i < len(g.GroundingChunks)-1 {
 			sb.WriteString(", ")
+		}
+		if i == MaxSourceLinks-1 && len(g.GroundingChunks) > MaxSourceLinks {
+			sb.WriteString("...")
+			break
 		}
 	}
 	sb.WriteString(")")
