@@ -8,7 +8,7 @@ import (
 // Models: https://ai.google.dev/gemini-api/docs/models/gemini
 
 const (
-	ApiUrlGemini     = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent"
+	ApiUrlGemini     = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-04-17:generateContent"
 	ApiUrlFileUpload = "https://generativelanguage.googleapis.com/upload/v1beta/files?key=%s"
 	RoleModel        = "model"
 	RoleUser         = "user"
@@ -37,17 +37,17 @@ type (
 	}
 
 	GenerationConfig struct {
-		Temperature     float64         `json:"temperature"`
-		TopK            int             `json:"topK"`
-		TopP            int             `json:"topP"`
-		MaxOutputTokens int             `json:"maxOutputTokens"`
-		ThinkingConfig  *ThinkingConfig `json:"thinkingConfig,omitempty"`
+		Temperature     float64        `json:"temperature"`
+		TopK            int            `json:"topK"`
+		TopP            int            `json:"topP"`
+		MaxOutputTokens int            `json:"maxOutputTokens"`
+		ThinkingConfig  ThinkingConfig `json:"thinkingConfig"`
 	}
 
 	// ThinkingConfig - https://ai.google.dev/api/generate-content#ThinkingConfig
 	ThinkingConfig struct {
-		IncludeThoughts bool `json:"includeThoughts,omitempty"`
-		ThinkingBudget  int  `json:"thinkingBudget,omitempty"`
+		IncludeThoughts bool `json:"includeThoughts"`
+		ThinkingBudget  int  `json:"thinkingBudget"`
 	}
 
 	SystemInstruction struct {

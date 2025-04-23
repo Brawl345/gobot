@@ -27,10 +27,10 @@ const (
 	Temperature              = 0.8
 	TopK                     = 1
 	TopP                     = 1
-	MaxOutputTokens          = 700
+	MaxOutputTokens          = 900
 	MaxInputCharacters       = 250000 // Should be roughly 1 mio tokens, max input tokens are 1048576
 	TokensPerImage           = 258    // https://ai.google.dev/gemini-api/docs/tokens?lang=go#multimodal-tokens
-	DefaultSystemInstruction = "Antworte nur auf Deutsch. Markdown ist DEAKTIVIERT. HTML ist DEAKTIVIERT. Bilder-Analyse ist AKTIVIERT."
+	DefaultSystemInstruction = "Antworte nur auf Deutsch. Markdown ist DEAKTIVIERT. HTML ist DEAKTIVIERT. Bilder-Analyse ist AKTIVIERT. Zitierungen sind DEAKTIVIERT."
 )
 
 var log = logger.New("gemini")
@@ -261,6 +261,10 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 			TopK:            TopK,
 			TopP:            TopP,
 			MaxOutputTokens: MaxOutputTokens,
+			ThinkingConfig: ThinkingConfig{
+				IncludeThoughts: false,
+				ThinkingBudget:  0,
+			},
 		},
 		Tools: []Tool{{GoogleSearch: struct{}{}}},
 	}
