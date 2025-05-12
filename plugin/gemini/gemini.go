@@ -24,6 +24,7 @@ import (
 )
 
 const (
+	MaxRetries               = 3
 	Temperature              = 0.8
 	TopK                     = 1
 	TopP                     = 1
@@ -293,9 +294,24 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		Response: &response,
 	})
 
-	if err != nil {
+	var retryCount int
+	for retryCount = 0; retryCount < MaxRetries; retryCount++ {
+		if err == nil {
+			break
+		}
+
 		var httpError *httpUtils.HttpError
 		if errors.As(err, &httpError) {
+			if httpError.StatusCode == http.StatusInternalServerError {
+				log.Warn().
+					Err(err).
+					Str("url", ApiUrlGemini).
+					Int("retry_count", retryCount).
+					Msg("Received HTTP 500, retrying")
+				// On retry
+				continue
+			}
+
 			if httpError.StatusCode == http.StatusBadRequest {
 				guid := xid.New().String()
 				log.Err(err).
