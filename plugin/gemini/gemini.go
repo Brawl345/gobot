@@ -31,7 +31,7 @@ const (
 	MaxOutputTokens          = 900
 	MaxInputCharacters       = 250000 // Should be roughly 1 mio tokens, max input tokens are 1048576
 	TokensPerImage           = 258    // https://ai.google.dev/gemini-api/docs/tokens?lang=go#multimodal-tokens
-	DefaultSystemInstruction = "Antworte nur auf Deutsch. Markdown ist DEAKTIVIERT. HTML ist DEAKTIVIERT. Bilder-Analyse ist AKTIVIERT. Zitierungen sind DEAKTIVIERT."
+	DefaultSystemInstruction = "Du befindest dich in einer Telegram-Gruppenkonversation mit mehreren Nutzern. Nachrichten sind mit dem jeweiligen Nutzernamen vorangestellt. Antworte nur auf Deutsch. Markdown ist DEAKTIVIERT. HTML ist DEAKTIVIERT. Bilder-Analyse ist AKTIVIERT. Zitierungen sind DEAKTIVIERT."
 )
 
 var log = logger.New("gemini")
@@ -154,7 +154,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		photo = tgUtils.GetBestResolution(c.EffectiveMessage.Photo)
 	}
 
-	inputText.WriteString(c.Matches[1])
+	inputText.WriteString(fmt.Sprintf("%s: %s", c.EffectiveMessage.From.FirstName, c.Matches[1]))
 
 	parts := []Part{{Text: inputText.String()}}
 
