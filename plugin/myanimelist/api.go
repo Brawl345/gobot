@@ -66,10 +66,17 @@ func (a *AnimeResult) NSFW() bool {
 }
 
 func (a *Anime) GetMainPicture() string {
+	pictureURL := ""
 	if a.MainPicture.Large != "" {
-		return a.MainPicture.Large
+		pictureURL = a.MainPicture.Large
+	} else {
+		pictureURL = a.MainPicture.Medium
 	}
-	return a.MainPicture.Medium
+
+	if strings.HasSuffix(pictureURL, ".webp") {
+		pictureURL = strings.Replace(pictureURL, ".webp", ".jpg", 1)
+	}
+	return pictureURL
 }
 
 func (a *Anime) NSFW() bool {
