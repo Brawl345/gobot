@@ -8,7 +8,7 @@ import (
 // Models: https://ai.google.dev/gemini-api/docs/models/gemini
 
 const (
-	ApiUrlGemini     = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent"
+	ApiUrlGemini     = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
 	ApiUrlFileUpload = "https://generativelanguage.googleapis.com/upload/v1beta/files?key=%s"
 	RoleModel        = "model"
 	RoleUser         = "user"
