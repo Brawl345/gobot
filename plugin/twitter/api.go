@@ -390,7 +390,7 @@ func (m *Medium) IsGIF() bool {
 
 func (m *Medium) Link() string {
 	if m.IsPhoto() {
-		return m.MediaUrlHttps
+		return m.MediaUrlHttps + ":orig"
 	}
 
 	var highestRes int
