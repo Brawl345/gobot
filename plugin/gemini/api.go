@@ -9,8 +9,8 @@ import (
 
 const (
 	ApiBase         = "https://generativelanguage.googleapis.com"
-	ApiPathGenerate = "/v1beta/models/gemini-2.5-flash:generateContent?key=%s"
-	ApiPathUpload   = "/upload/v1beta/files?key=%s"
+	ApiPathGenerate = "/v1beta/models/gemini-2.5-flash:generateContent"
+	ApiPathUpload   = "/upload/v1beta/files"
 	RoleModel       = "model"
 	RoleUser        = "user"
 	MaxSourceLinks  = 10

@@ -114,8 +114,8 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 			apiBase = apiBase[:len(apiBase)-1]
 		}
 	}
-	apiUrlGenerate := fmt.Sprintf("%s%s", apiBase, fmt.Sprintf(ApiPathGenerate, apiKey))
-	apiUrlUpload := fmt.Sprintf("%s%s", apiBase, fmt.Sprintf(ApiPathUpload, apiKey))
+	apiUrlGenerate := fmt.Sprintf("%s%s", apiBase, ApiPathGenerate)
+	apiUrlUpload := fmt.Sprintf("%s%s", apiBase, ApiPathUpload)
 
 	systemInstruction := cmp.Or(p.credentialService.GetKey("google_gemini_system_instruction"), DefaultSystemInstruction)
 
@@ -214,7 +214,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		err = httpUtils.MakeRequest(httpUtils.RequestOptions{
 			Method:   httpUtils.MethodPost,
 			URL:      apiUrlUpload,
-			Headers:  map[string]string{"Content-Type": "image/jpeg"},
+			Headers:  map[string]string{"x-goog-api-key": apiKey, "Content-Type": "image/jpeg"},
 			Body:     file,
 			Response: &fileUploadResponse,
 		})
@@ -296,6 +296,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
 		Method:   httpUtils.MethodPost,
 		URL:      apiUrlGenerate,
+		Headers:  map[string]string{"x-goog-api-key": apiKey},
 		Body:     &request,
 		Response: &response,
 	})
