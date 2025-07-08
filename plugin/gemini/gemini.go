@@ -8,7 +8,6 @@ import (
 	"io"
 	"net"
 	"net/http"
-	"net/url"
 	"regexp"
 	"strings"
 	"time"
@@ -95,6 +94,28 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		)
 		return err
 	}
+
+	apiBase := ApiBase
+	proxyUrlGemini := p.credentialService.GetKey("google_gemini_proxy")
+	if proxyUrlGemini != "" {
+		log.Debug().Msg("Using Gemini API proxy")
+		apiBase = proxyUrlGemini
+
+		if !strings.HasPrefix(apiBase, "http://") && !strings.HasPrefix(apiBase, "https://") {
+			log.Warn().Msg("google_gemini_proxy is invalid")
+			_, err := c.EffectiveMessage.Reply(b,
+				"❌ <code>google_gemini_proxy</code> ist ungültig.",
+				utils.DefaultSendOptions(),
+			)
+			return err
+		}
+
+		if strings.HasSuffix(apiBase, "/") {
+			apiBase = apiBase[:len(apiBase)-1]
+		}
+	}
+	apiUrlGenerate := fmt.Sprintf("%s%s", apiBase, fmt.Sprintf(ApiPathGenerate, apiKey))
+	apiUrlUpload := fmt.Sprintf("%s%s", apiBase, fmt.Sprintf(ApiPathUpload, apiKey))
 
 	systemInstruction := cmp.Or(p.credentialService.GetKey("google_gemini_system_instruction"), DefaultSystemInstruction)
 
@@ -192,7 +213,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 		err = httpUtils.MakeRequest(httpUtils.RequestOptions{
 			Method:   httpUtils.MethodPost,
-			URL:      fmt.Sprintf(ApiUrlFileUpload, apiKey),
+			URL:      apiUrlUpload,
 			Headers:  map[string]string{"Content-Type": "image/jpeg"},
 			Body:     file,
 			Response: &fileUploadResponse,
@@ -202,7 +223,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 			guid := xid.New().String()
 			log.Err(err).
 				Str("guid", guid).
-				Str("api_url", ApiUrlFileUpload).
+				Str("api_url", apiUrlUpload).
 				Msg("error while uploading file")
 			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 			return err
@@ -272,24 +293,9 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	var response GenerateContentResponse
 
-	apiUrl, err := url.Parse(ApiUrlGemini)
-	if err != nil {
-		guid := xid.New().String()
-		log.Err(err).
-			Str("guid", guid).
-			Str("api_url", ApiUrlGemini).
-			Msg("error while parsing api url")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-		return err
-	}
-
-	q := apiUrl.Query()
-	q.Add("key", apiKey)
-	apiUrl.RawQuery = q.Encode()
-
 	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
 		Method:   httpUtils.MethodPost,
-		URL:      apiUrl.String(),
+		URL:      apiUrlGenerate,
 		Body:     &request,
 		Response: &response,
 	})
@@ -305,7 +311,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 			if httpError.StatusCode == http.StatusInternalServerError {
 				log.Warn().
 					Err(err).
-					Str("url", ApiUrlGemini).
+					Str("url", apiUrlGenerate).
 					Int("retry_count", retryCount).
 					Msg("Received HTTP 500, retrying")
 				// On retry
@@ -316,7 +322,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 				guid := xid.New().String()
 				log.Err(err).
 					Str("guid", guid).
-					Str("url", ApiUrlGemini).
+					Str("url", apiUrlGenerate).
 					Msg("Failed to send POST request, got HTTP code 400")
 
 				err := p.geminiService.ResetHistory(c.EffectiveChat)
@@ -346,7 +352,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Str("url", ApiUrlGemini).
+			Str("url", apiUrlGenerate).
 			Msg("Failed to send POST request")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
@@ -356,7 +362,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		len(response.Candidates[0].Content.Parts) == 0 ||
 		response.Candidates[0].Content.Text() == "" {
 		log.Error().
-			Str("url", ApiUrlGemini).
+			Str("url", apiUrlGenerate).
 			Msg("Got no answer from Gemini")
 		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von Gemini erhalten (eventuell gefiltert).", utils.DefaultSendOptions())
 		return err

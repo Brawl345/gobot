@@ -8,11 +8,12 @@ import (
 // Models: https://ai.google.dev/gemini-api/docs/models/gemini
 
 const (
-	ApiUrlGemini     = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent"
-	ApiUrlFileUpload = "https://generativelanguage.googleapis.com/upload/v1beta/files?key=%s"
-	RoleModel        = "model"
-	RoleUser         = "user"
-	MaxSourceLinks   = 10
+	ApiBase         = "https://generativelanguage.googleapis.com"
+	ApiPathGenerate = "/v1beta/models/gemini-2.5-flash:generateContent?key=%s"
+	ApiPathUpload   = "/upload/v1beta/files?key=%s"
+	RoleModel       = "model"
+	RoleUser        = "user"
+	MaxSourceLinks  = 10
 )
 
 type (
