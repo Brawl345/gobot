@@ -301,11 +301,17 @@ func (p *Plugin) listBirthdays(b *gotgbot.Bot, c plugin.GobotContext) error {
 	)
 
 	for _, user := range users {
+		now := time.Now()
+		age := now.Year() - user.Birthday.Time.Year()
+		if now.YearDay() < user.Birthday.Time.YearDay() {
+			age--
+		}
 		sb.WriteString(
 			fmt.Sprintf(
-				"<b>%s:</b> %s\n",
+				"<b>%s:</b> %s (%d)\n",
 				utils.Escape(user.GetFullName()),
 				user.Birthday.Time.Format("02.01.2006"),
+				age,
 			),
 		)
 	}
