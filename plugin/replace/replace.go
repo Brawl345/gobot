@@ -59,6 +59,7 @@ func onReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	text = strings.ReplaceAll(text, c.Matches[1], replacement)
+	text = utils.Escape(text)
 
 	_, err := c.EffectiveMessage.ReplyToMessage.Reply(b, "<b>Du meintest wohl:</b>\n"+text, &gotgbot.SendMessageOpts{
 		ReplyParameters: &gotgbot.ReplyParameters{
@@ -98,6 +99,8 @@ func onRegexReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	text = re.ReplaceAllString(text, c.Matches[2])
+	text = utils.Escape(text)
+
 	_, err = c.EffectiveMessage.ReplyToMessage.Reply(b, "<b>Du meintest wohl:</b>\n"+text, utils.DefaultSendOptions())
 	return err
 }
