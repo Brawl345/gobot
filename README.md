@@ -33,9 +33,10 @@ Example with [Hookdeck](https://hookdeck.com/):
 1. Copy your `https://events.hookdeck.com/e/...` URL to `WEBHOOK_PUBLIC_URL` variable
 2. Set a webhook port (e.g. `41320`) to `PORT`
 3. Set `WEBHOOK_URL_PATH` to a custom path
-   1. This is where the internal webhook server will listen on. Gotgbot **does not support an empty path** sadly.
-   2. For Hookdeck, set "Destionation Type" to "CLI" and insert your path
-4. Use the Hookdeck CLI: `hookdeck listen 41320 [SOURCE]`
+   - This is where the internal webhook server will listen on. Gotgbot **does not support an empty path**.
+   - Remember to set the `WEBHOOK_PUBLIC_URL` to `https://.../WEBHOOK_URL_PATH`. This variable is the URL that is sent to Telegram to notify them to which URL to send their data. `WEBHOOK_URL_PATH` is not sent to Telegram, nor appended to the `WEBHOOK_PUBLIC_URL` internally! It's just used for the internal http server.
+   - For Hookdeck, set "Destionation Type" to "CLI" and insert your path
+4. Use the Hookdeck CLI: `hookdeck listen 41320 [SOURCE]`. You can also use `cloudflared`, etc. It MUST be HTTPS!
 
 ### More options
 
