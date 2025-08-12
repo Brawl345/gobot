@@ -188,7 +188,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 	result := tweetResponse.Data.TweetResult.Result
 
 	if result.Typename == "TweetUnavailable" {
-		if result.Reason == "NsfwLoggedOut" {
+		if result.Reason == "NsfwLoggedOut" || result.Reason == "NsfwViewerHasNoStatedAge" {
 			_, err = c.EffectiveMessage.Reply(b,
 				fmt.Sprintf("https://vxtwitter.com/_/status/%s", tweetID),
 				&gotgbot.SendMessageOpts{
