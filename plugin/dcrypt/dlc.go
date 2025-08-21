@@ -177,7 +177,11 @@ func DecryptDLC(data []byte) (DLC, error) {
 		return DLC{}, err
 	}
 
-	decoded, err := base64.StdEncoding.DecodeString(strings.TrimSpace(string(bytes.TrimRight(xmlData, "\x00"))))
+	trimmed := bytes.TrimSpace(xmlData)
+	trimmed = bytes.TrimRight(trimmed, "\x00\u0010")
+	trimmed = bytes.TrimRight(trimmed, "\x00")
+	trimmed = bytes.TrimRight(trimmed, "\u0010")
+	decoded, err := base64.StdEncoding.DecodeString(strings.TrimSpace(string(trimmed)))
 	if err != nil {
 		return DLC{}, err
 	}
