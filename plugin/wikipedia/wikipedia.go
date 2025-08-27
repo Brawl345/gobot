@@ -113,6 +113,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
 		Method:   httpUtils.MethodGet,
 		URL:      requestUrl.String(),
+		Headers:  map[string]string{"User-Agent": "Gobot/1.0 (Telegram Bot; +https://github.com/Brawl345/gobot)"},
 		Response: &response,
 	})
 	if err != nil {
