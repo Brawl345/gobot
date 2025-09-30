@@ -6,11 +6,13 @@ Accept-Language: en-US,en;q=0.5
 Connection: keep-alive
 Authorization: Bearer AAAAAAAAAAAAAAAAAAAAANRILgAAAAAAnNwIzUejRCOuH5E6I8xnZz4puTs%3D1Zv7ttfk8LF81IUq16cHjhLTvJu4FA33AGWWjCpTnA
 
+> {%
+    client.global.set("guestToken", response.body.guest_token);
+%}
 
 #### Get Tweet
 < {%
     request.variables.set("tweetId", "1701716779515441267")
-    request.variables.set("guestToken", "TOKEN_FROM_ABOVE_REQUEST")
 %}
 GET https://api.x.com/graphql/URPP6YZ5eDCjdVMSREn4gg/TweetResultByRestId?
     variables=%7B%22tweetId%22%3A%22{{tweetId}}%22%2C%22withCommunity%22%3Afalse%2C%22includePromotedContent%22%3Afalse%2C%22withVoice%22%3Afalse%7D&
