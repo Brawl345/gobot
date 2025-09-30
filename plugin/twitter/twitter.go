@@ -187,8 +187,8 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	result := tweetResponse.Data.TweetResult.Result
 
-	if result.Typename == "TweetUnavailable" {
-		if result.Reason == "NsfwLoggedOut" || result.Reason == "NsfwViewerHasNoStatedAge" {
+	if result.Typename == "TweetUnavailable" || result.Typename == "TweetTombstone" {
+		if result.Reason == "NsfwLoggedOut" || result.Reason == "NsfwViewerHasNoStatedAge" || result.Tombstone.Typename == "BlurredMediaTombstone" {
 			_, err = c.EffectiveMessage.Reply(b,
 				fmt.Sprintf("https://vxtwitter.com/_/status/%s", tweetID),
 				&gotgbot.SendMessageOpts{
@@ -202,7 +202,13 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 			_, err := c.EffectiveMessage.Reply(b, "🔓 Der Account-Inhaber hat beschränkt, wer seine Tweets ansehen kann.", utils.DefaultSendOptions())
 			return err
 		} else {
-			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code>", result.Reason), utils.DefaultSendOptions())
+			if result.Tombstone.Text.Text != "" {
+				tombstoneText := result.Tombstone.Text.Text
+				tombstoneText = strings.ReplaceAll(tombstoneText, "Mehr efahren", "")
+				_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ %s", tombstoneText), utils.DefaultSendOptions())
+			} else {
+				_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code>", result.Reason), utils.DefaultSendOptions())
+			}
 			return err
 		}
 	}
