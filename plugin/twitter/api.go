@@ -165,9 +165,17 @@ type (
 			RestId                     string `json:"rest_id"`
 			AffiliatesHighlightedLabel struct {
 			} `json:"affiliates_highlighted_label"`
-			HasNftAvatar bool `json:"has_nft_avatar"`
-			Legacy       struct {
-				CreatedAt           string `json:"created_at"`
+			Avatar struct {
+				ImageUrl string `json:"image_url"`
+			} `json:"avatar"`
+			Core struct {
+				CreatedAt  string `json:"created_at"`
+				Name       string `json:"name"`
+				ScreenName string `json:"screen_name"`
+			} `json:"core"`
+			HasNftAvatar   bool `json:"has_nft_avatar"`
+			IsBlueVerified bool `json:"is_blue_verified"`
+			Legacy         struct {
 				DefaultProfile      bool   `json:"default_profile"`
 				DefaultProfileImage bool   `json:"default_profile_image"`
 				Description         string `json:"description"`
@@ -196,24 +204,25 @@ type (
 				HasCustomTimelines      bool          `json:"has_custom_timelines"`
 				IsTranslator            bool          `json:"is_translator"`
 				ListedCount             int           `json:"listed_count"`
-				Location                string        `json:"location"`
 				MediaCount              int           `json:"media_count"`
-				Name                    string        `json:"name"`
 				NormalFollowersCount    int           `json:"normal_followers_count"`
 				PinnedTweetIdsStr       []string      `json:"pinned_tweet_ids_str"`
 				PossiblySensitive       bool          `json:"possibly_sensitive"`
 				ProfileBannerUrl        string        `json:"profile_banner_url"`
-				ProfileImageUrlHttps    string        `json:"profile_image_url_https"`
 				ProfileInterstitialType string        `json:"profile_interstitial_type"`
 				Protected               bool          `json:"protected"`
-				ScreenName              string        `json:"screen_name"`
 				StatusesCount           int           `json:"statuses_count"`
 				TranslatorType          string        `json:"translator_type"`
 				Url                     string        `json:"url"`
-				Verified                bool          `json:"verified"`
 				VerifiedType            string        `json:"verified_type"`
 				WithheldInCountries     []interface{} `json:"withheld_in_countries"`
 			} `json:"legacy"`
+			Location struct {
+				Location string `json:"location"`
+			} `json:"location"`
+			Verification struct {
+				Verified bool `json:"verified"`
+			} `json:"verification"`
 		} `json:"result"`
 	}
 
@@ -345,9 +354,9 @@ func (u *UserResult) Author() string {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b>%s</b> (<a href=\"https://x.com/%s\">@%s</a>",
-			utils.Escape(u.Result.Legacy.Name),
-			u.Result.Legacy.ScreenName,
-			u.Result.Legacy.ScreenName,
+			utils.Escape(u.Result.Core.Name),
+			u.Result.Core.ScreenName,
+			u.Result.Core.ScreenName,
 		),
 	)
 
