@@ -3,12 +3,13 @@ package summarize
 import (
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"net/http"
+	"net/url"
 	"regexp"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
@@ -156,22 +157,85 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		maxArticleLength = MinArticleLength
 	}
 
-	var urls []string
+	var pageUrls []string
 	for _, entity := range tgUtils.ParseAnyEntityTypes(msg, []tgUtils.EntityType{tgUtils.EntityTypeURL, tgUtils.EntityTextLink}) {
-		urls = append(urls, entity.Url)
+		pageUrls = append(pageUrls, entity.Url)
 	}
 
-	if len(urls) == 0 {
+	if len(pageUrls) == 0 {
 		_, err := msg.Reply(b, "❌ Keine Links gefunden", utils.DefaultSendOptions())
 		return err
 	}
 
-	url := urls[0] // only summarize the first URL for now
+	pageUrl := pageUrls[0] // only summarize the first URL for now
 
-	article, err := readability.FromURL(url, 10*time.Second)
+	parsedURL, err := url.Parse(pageUrl)
 	if err != nil {
 		log.Err(err).
-			Str("url", url).
+			Str("pageUrl", pageUrl).
+			Msg("Failed to parse URL")
+
+		_, err := msg.Reply(b, "❌ Die URL konnte nicht geparst werden.", utils.DefaultSendOptions())
+		return err
+	}
+
+	req, err := http.NewRequest(http.MethodGet, pageUrl, nil)
+	if err != nil {
+		log.Err(err).
+			Str("pageUrl", pageUrl).
+			Msg("Failed to create request")
+
+		_, err := msg.Reply(b,
+			fmt.Sprintf("❌ Text konnte nicht extrahiert werden: <code>%v</code>", utils.Escape(err.Error())),
+			utils.DefaultSendOptions())
+		return err
+	}
+
+	req.Header.Set("User-Agent", utils.UserAgent)
+
+	resp, err := httpUtils.DefaultHttpClient.Do(req)
+	if err != nil {
+		log.Err(err).
+			Str("pageUrl", pageUrl).
+			Msg("Failed to fetch URL")
+
+		_, err := msg.Reply(b,
+			fmt.Sprintf("❌ Text konnte nicht extrahiert werden: <code>%v</code>", utils.Escape(err.Error())),
+			utils.DefaultSendOptions())
+		return err
+	}
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Err(err).Msg("Failed to close response body")
+		}
+	}(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		log.Error().
+			Str("pageUrl", pageUrl).
+			Int("status_code", resp.StatusCode).
+			Msg("Got non-200 status code")
+
+		_, err := msg.Reply(b, fmt.Sprintf("❌ Die Seite konnte nicht geladen werden (HTTP %d).", resp.StatusCode), utils.DefaultSendOptions())
+		return err
+	}
+
+	contentType := resp.Header.Get("Content-Type")
+	if !strings.Contains(strings.ToLower(contentType), "text/html") {
+		log.Warn().
+			Str("pageUrl", pageUrl).
+			Str("content_type", contentType).
+			Msg("Content-Type is not text/html")
+
+		_, err := msg.Reply(b, "❌ Die URL verweist nicht auf eine HTML-Seite.", utils.DefaultSendOptions())
+		return err
+	}
+
+	article, err := readability.FromReader(resp.Body, parsedURL)
+	if err != nil {
+		log.Err(err).
+			Str("pageUrl", pageUrl).
 			Msg("Failed to extract text content from URL")
 
 		_, err := msg.Reply(b,
@@ -235,7 +299,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Str("url", url).
+			Str("pageUrl", pageUrl).
 			Msg("Failed to send POST request")
 		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
@@ -246,7 +310,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		guid := xid.New().String()
 		log.Error().
 			Str("guid", guid).
-			Str("url", url).
+			Str("pageUrl", pageUrl).
 			Str("message", response.Error.Message).
 			Str("type", response.Error.Type).
 			Msg("Got error from model API")
@@ -257,7 +321,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 
 	if len(response.Choices) == 0 || (len(response.Choices) > 0 && response.Choices[0].Message.Content == "") {
 		log.Error().
-			Str("url", url).
+			Str("pageUrl", pageUrl).
 			Msg("Got no answer from ChatGPT")
 		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort vom KI-Modell erhalten", utils.DefaultSendOptions())
 		return err
