@@ -33,7 +33,7 @@ func (db *geocodingService) Geocode(address string) (gotgbot.Venue, error) {
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "nominatim.openstreetmap.org",
-		Path:   "/search.php",
+		Path:   "/search",
 	}
 
 	q := requestUrl.Query()
