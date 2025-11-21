@@ -3,6 +3,7 @@ package sql
 import (
 	"database/sql"
 	"errors"
+	"math/rand"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
@@ -50,8 +51,18 @@ func (db *randomService) DeleteRandom(random string) error {
 }
 
 func (db *randomService) GetRandom() (string, error) {
+	var count int
+	err := db.Get(&count, "SELECT COUNT(*) FROM randoms")
+	if err != nil {
+		return "", err
+	}
+	if count == 0 {
+		return "", model.ErrNotFound
+	}
+
+	offset := rand.Intn(count)
 	var random string
-	err := db.Get(&random, "SELECT text FROM randoms ORDER BY RAND() LIMIT 1")
+	err = db.Get(&random, "SELECT text FROM randoms LIMIT 1 OFFSET ?", offset)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", model.ErrNotFound
 	}
