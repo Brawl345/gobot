@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
@@ -144,11 +145,16 @@ func (db *googleImagesService) SaveImages(query string, wrapper *model.GoogleIma
 		return 0, err
 	}
 
-	const insertImages = `INSERT INTO google_images (query_id, image_url, context_url, is_gif) VALUES (?, ?, ?, ?)`
-	// creating a query for every image is inefficient,
-	// but idc
-	for _, image := range wrapper.Images {
-		_, err := tx.Exec(insertImages, lastInsertID, image.ImageLink(), image.ContextLink(), image.IsGIF())
+	if len(wrapper.Images) > 0 {
+		valueStrings := make([]string, 0, len(wrapper.Images))
+		valueArgs := make([]interface{}, 0, len(wrapper.Images)*4)
+		for _, image := range wrapper.Images {
+			valueStrings = append(valueStrings, "(?, ?, ?, ?)")
+			valueArgs = append(valueArgs, lastInsertID, image.ImageLink(), image.ContextLink(), image.IsGIF())
+		}
+		insertImages := fmt.Sprintf("INSERT INTO google_images (query_id, image_url, context_url, is_gif) VALUES %s",
+			strings.Join(valueStrings, ","))
+		_, err = tx.Exec(insertImages, valueArgs...)
 		if err != nil {
 			return 0, err
 		}

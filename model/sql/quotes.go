@@ -3,6 +3,8 @@ package sql
 import (
 	"database/sql"
 	"errors"
+	"math/rand"
+
 	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/logger"
@@ -23,8 +25,18 @@ func NewQuoteService(db *sqlx.DB) *quoteService {
 }
 
 func (db *quoteService) GetQuote(chat *gotgbot.Chat) (string, error) {
+	var count int
+	err := db.Get(&count, "SELECT COUNT(*) FROM quotes WHERE chat_id = ?", chat.Id)
+	if err != nil {
+		return "", err
+	}
+	if count == 0 {
+		return "", model.ErrNotFound
+	}
+
+	offset := rand.Intn(count)
 	var quote string
-	err := db.Get(&quote, "SELECT quote FROM quotes WHERE chat_id = ? ORDER BY RAND() LIMIT 1", chat.Id)
+	err = db.Get(&quote, "SELECT quote FROM quotes WHERE chat_id = ? LIMIT 1 OFFSET ?", chat.Id, offset)
 	if errors.Is(err, sql.ErrNoRows) {
 		return "", model.ErrNotFound
 	}

@@ -136,10 +136,9 @@ func (db *chatsUsersService) IsAllowed(chat *gotgbot.Chat, user *gotgbot.User) b
 		return true
 	}
 
-	const query = `SELECT 1 FROM chats, users 
-	WHERE chats.id = ?
-	AND chats.allowed = true
-	OR (users.id = ? AND users.allowed = true);`
+	const query = `SELECT 1 FROM chats, users
+	WHERE (chats.id = ? AND chats.allowed = true)
+	OR (users.id = ? AND users.allowed = true)`
 
 	var isAllowed bool
 	err := db.Get(&isAllowed, query, chat.Id, user.Id)

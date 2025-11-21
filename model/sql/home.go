@@ -98,7 +98,7 @@ func (db *homeService) SetHome(user *gotgbot.User, venue *gotgbot.Venue) error {
 
 func (db *homeService) DeleteHome(user *gotgbot.User) error {
 	const query = `UPDATE users
-	SET HOME = NULL
+	SET home = NULL
 	WHERE id = ?`
 
 	_, err := db.Exec(query, user.Id)
