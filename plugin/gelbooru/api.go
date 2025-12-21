@@ -2,6 +2,7 @@ package gelbooru
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 )
 
@@ -78,8 +79,8 @@ func (p *Post) Caption() string {
 
 	sb.WriteString(fmt.Sprintf("🔗 <a href=\"%s\">Post #%d</a> - ", p.PostURL(), p.Id))
 	sb.WriteString(fmt.Sprintf("🖼️ <a href=\"%s\">Direktlink</a>", p.DirectURL()))
-	if p.Source != "" {
-		sb.WriteString(fmt.Sprintf(" - 🌐 <a href=\"%s\">Quelle</a>\n", p.Source))
+	if validSource := p.ValidSource(); validSource != "" {
+		sb.WriteString(fmt.Sprintf(" - 🌐 <a href=\"%s\">Quelle</a>\n", validSource))
 	}
 
 	return sb.String()
@@ -94,8 +95,8 @@ func (p *Post) AltCaption() string {
 		sb.WriteString("️🔞 <b>NSFW</b> - ")
 	}
 	sb.WriteString(fmt.Sprintf("🔗 <a href=\"%s\">Post #%d</a>", p.PostURL(), p.Id))
-	if p.Source != "" {
-		sb.WriteString(fmt.Sprintf(" - 🌐 <a href=\"%s\">Quelle</a>\n", p.Source))
+	if validSource := p.ValidSource(); validSource != "" {
+		sb.WriteString(fmt.Sprintf(" - 🌐 <a href=\"%s\">Quelle</a>\n", validSource))
 	}
 
 	return sb.String()
@@ -103,6 +104,37 @@ func (p *Post) AltCaption() string {
 
 func (p *Post) PostURL() string {
 	return fmt.Sprintf(PostURL, p.Id)
+}
+
+func (p *Post) ValidSource() string {
+	if p.Source == "" {
+		return ""
+	}
+
+	sources := strings.Split(p.Source, "|")
+	for _, src := range sources {
+		src = strings.TrimSpace(src)
+		if src == "" {
+			continue
+		}
+
+		parsedURL, err := url.Parse(src)
+		if err != nil {
+			continue
+		}
+
+		if parsedURL.Scheme != "http" && parsedURL.Scheme != "https" {
+			continue
+		}
+
+		if parsedURL.Host == "" {
+			continue
+		}
+
+		return src
+	}
+
+	return ""
 }
 
 func (p *Post) IsImage() bool {
