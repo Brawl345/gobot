@@ -25,6 +25,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/delmsg"
 	"github.com/Brawl345/gobot/plugin/echo"
 	"github.com/Brawl345/gobot/plugin/expand"
+	"github.com/Brawl345/gobot/plugin/gelbooru"
 	"github.com/Brawl345/gobot/plugin/gemini"
 	"github.com/Brawl345/gobot/plugin/getfile"
 	"github.com/Brawl345/gobot/plugin/google_images"
@@ -109,6 +110,8 @@ func New(db *sqlx.DB) (*Gobot, error) {
 	geminiService := sql.NewGeminiService(db)
 	googleImagesService := sql.NewGoogleImagesService(db)
 	googleImagesCleanupService := sql.NewGoogleImagesCleanupService(db)
+	gelbooruService := sql.NewGelbooruService(db)
+	gelbooruCleanupService := sql.NewGelbooruCleanupService(db)
 	homeService := sql.NewHomeService(db)
 	notifyService := sql.NewNotifyService(db)
 	quoteService := sql.NewQuoteService(db)
@@ -130,6 +133,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		delmsg.New(),
 		echo.New(),
 		expand.New(),
+		gelbooru.New(credentialService, gelbooruService, gelbooruCleanupService),
 		gemini.New(credentialService, geminiService),
 		getfile.New(credentialService, fileService),
 		google_images.New(credentialService, googleImagesService, googleImagesCleanupService),

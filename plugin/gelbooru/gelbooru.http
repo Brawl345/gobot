@@ -1,0 +1,21 @@
+### Search by tags
+# @no-auto-encoding
+GET https://gelbooru.com/index.php
+    ?page=dapi
+    &q=index
+    &s=post
+    &json=1
+    &limit=1
+    &api_key={{gelbooru_api_key}}
+    &user_id={{gelbooru_user_id}}
+    &tags=la%2b_darknesss+swimsuit+-rating:explicit+sort:random
+
+### Get post by ID
+GET https://gelbooru.com/index.php
+    ?page=dapi
+    &q=index
+    &s=post
+    &json=1
+    &api_key={{gelbooru_api_key}}
+    &user_id={{gelbooru_user_id}}
+    &id=6942888

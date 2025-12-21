@@ -6,3 +6,4 @@ result
 .direnv/
 http-client.private.env.json
 files/
+gobot
