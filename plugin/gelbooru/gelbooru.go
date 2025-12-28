@@ -226,9 +226,9 @@ func (p *Plugin) doGelbooruSearch(b *gotgbot.Bot, c *plugin.GobotContext, query 
 
 	post := response.Post[0]
 
-	var replyMarkup *gotgbot.InlineKeyboardMarkup
+	var replyMarkup gotgbot.InlineKeyboardMarkup
 	if response.Attributes.Count > 1 && queryID > 0 {
-		replyMarkup = &gotgbot.InlineKeyboardMarkup{
+		replyMarkup = gotgbot.InlineKeyboardMarkup{
 			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 				{
 					{
