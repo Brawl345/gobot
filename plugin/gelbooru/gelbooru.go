@@ -3,7 +3,10 @@ package gelbooru
 import (
 	"errors"
 	"fmt"
+	"io"
+	"net/http"
 	"net/url"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -295,10 +298,33 @@ func (p *Plugin) fetchPost(b *gotgbot.Bot, c *plugin.GobotContext, requestUrl ur
 	return response, nil
 }
 
-func (p *Plugin) sendPost(b *gotgbot.Bot, c *plugin.GobotContext, post *Post, replyMarkup gotgbot.ReplyMarkup) error {
-	var err error
+func (p *Plugin) downloadAndSend(b *gotgbot.Bot, c *plugin.GobotContext, post *Post, replyMarkup gotgbot.ReplyMarkup) error {
+	fileURL := post.FileURL()
+	req, err := http.NewRequest(http.MethodGet, fileURL, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Referer", "https://gelbooru.com/")
+	req.Header.Set("User-Agent", "Gobot/1.0 (Telegram Bot; +https://github.com/Brawl345/gobot)")
+
+	resp, err := httpUtils.DefaultHttpClient.Do(req)
+	if err != nil {
+		return err
+	}
+	defer func(body io.ReadCloser) {
+		if closeErr := body.Close(); closeErr != nil {
+			log.Err(closeErr).Msg("failed to close gelbooru response body")
+		}
+	}(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("gelbooru download: HTTP %d", resp.StatusCode)
+	}
+
+	file := gotgbot.InputFileByReader(path.Base(fileURL), resp.Body)
+
 	if post.IsImage() {
-		_, err = b.SendPhoto(c.EffectiveChat.Id, gotgbot.InputFileByURL(post.FileURL()), &gotgbot.SendPhotoOpts{
+		_, err = b.SendPhoto(c.EffectiveChat.Id, file, &gotgbot.SendPhotoOpts{
 			Caption: post.Caption(),
 			ReplyParameters: &gotgbot.ReplyParameters{
 				AllowSendingWithoutReply: true,
@@ -310,7 +336,7 @@ func (p *Plugin) sendPost(b *gotgbot.Bot, c *plugin.GobotContext, post *Post, re
 			HasSpoiler:          post.IsNSFW(),
 		})
 	} else if post.IsVideo() {
-		_, err = b.SendVideo(c.EffectiveChat.Id, gotgbot.InputFileByURL(post.FileURL()), &gotgbot.SendVideoOpts{
+		_, err = b.SendVideo(c.EffectiveChat.Id, file, &gotgbot.SendVideoOpts{
 			Caption: post.Caption(),
 			ReplyParameters: &gotgbot.ReplyParameters{
 				AllowSendingWithoutReply: true,
@@ -322,7 +348,7 @@ func (p *Plugin) sendPost(b *gotgbot.Bot, c *plugin.GobotContext, post *Post, re
 			HasSpoiler:          post.IsNSFW(),
 		})
 	} else if post.IsGIF() {
-		_, err = b.SendAnimation(c.EffectiveChat.Id, gotgbot.InputFileByURL(post.FileURL()), &gotgbot.SendAnimationOpts{
+		_, err = b.SendAnimation(c.EffectiveChat.Id, file, &gotgbot.SendAnimationOpts{
 			Caption: post.Caption(),
 			ReplyParameters: &gotgbot.ReplyParameters{
 				AllowSendingWithoutReply: true,
@@ -347,21 +373,24 @@ func (p *Plugin) sendPost(b *gotgbot.Bot, c *plugin.GobotContext, post *Post, re
 					IsDisabled: true,
 				},
 			})
-		} else {
-			_, err = b.SendDocument(c.EffectiveChat.Id, gotgbot.InputFileByURL(post.FileURL()), &gotgbot.SendDocumentOpts{
-				Caption: post.PostURL(),
-				ReplyParameters: &gotgbot.ReplyParameters{
-					AllowSendingWithoutReply: true,
-					MessageId:                c.EffectiveMessage.MessageId,
-				},
-				DisableNotification: true,
-				ParseMode:           gotgbot.ParseModeHTML,
-				ReplyMarkup:         replyMarkup,
-			})
+			return err
 		}
+		_, err = b.SendDocument(c.EffectiveChat.Id, file, &gotgbot.SendDocumentOpts{
+			Caption: post.PostURL(),
+			ReplyParameters: &gotgbot.ReplyParameters{
+				AllowSendingWithoutReply: true,
+				MessageId:                c.EffectiveMessage.MessageId,
+			},
+			DisableNotification: true,
+			ParseMode:           gotgbot.ParseModeHTML,
+			ReplyMarkup:         replyMarkup,
+		})
 	}
+	return err
+}
 
-	// If too big: send caption only
+func (p *Plugin) sendPost(b *gotgbot.Bot, c *plugin.GobotContext, post *Post, replyMarkup gotgbot.ReplyMarkup) error {
+	err := p.downloadAndSend(b, c, post, replyMarkup)
 	if err != nil {
 		_, err = b.SendMessage(c.EffectiveChat.Id, post.AltCaption(), &gotgbot.SendMessageOpts{
 			ReplyParameters: &gotgbot.ReplyParameters{
@@ -379,6 +408,5 @@ func (p *Plugin) sendPost(b *gotgbot.Bot, c *plugin.GobotContext, post *Post, re
 			},
 		})
 	}
-
 	return err
 }
