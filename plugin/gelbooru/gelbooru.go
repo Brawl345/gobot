@@ -17,6 +17,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -298,8 +299,43 @@ func (p *Plugin) fetchPost(b *gotgbot.Bot, c *plugin.GobotContext, requestUrl ur
 	return response, nil
 }
 
+func headContentLength(fileURL string) (int64, error) {
+	req, err := http.NewRequest(http.MethodHead, fileURL, nil)
+	if err != nil {
+		return 0, err
+	}
+	req.Header.Set("Referer", "https://gelbooru.com/")
+	req.Header.Set("User-Agent", "Gobot/1.0 (Telegram Bot; +https://github.com/Brawl345/gobot)")
+	resp, err := httpUtils.DefaultHttpClient.Do(req)
+	if err != nil {
+		return 0, err
+	}
+	resp.Body.Close()
+	return resp.ContentLength, nil
+}
+
 func (p *Plugin) downloadAndSend(b *gotgbot.Bot, c *plugin.GobotContext, post *Post, replyMarkup gotgbot.ReplyMarkup) error {
 	fileURL := post.FileURL()
+
+	// Size checks before downloading
+	if post.IsImage() && post.SampleUrl == "" {
+		size, err := headContentLength(fileURL)
+		if err != nil {
+			return err
+		}
+		if size > tgUtils.MaxPhotosizeUpload {
+			return fmt.Errorf("gelbooru image too large: %d bytes", size)
+		}
+	} else if post.IsVideo() {
+		size, err := headContentLength(fileURL)
+		if err != nil {
+			return err
+		}
+		if size > tgUtils.MaxFilesizeUpload {
+			return fmt.Errorf("gelbooru video too large: %d bytes", size)
+		}
+	}
+
 	req, err := http.NewRequest(http.MethodGet, fileURL, nil)
 	if err != nil {
 		return err
