@@ -54,6 +54,11 @@ type (
 )
 
 func (p *Post) FileURL() string {
+	// For GIFs, the sample URL is a static JPG which we don't want
+	if p.IsGIF() {
+		return p.FileUrl
+	}
+
 	if p.SampleUrl != "" {
 		return p.SampleUrl
 	}
@@ -156,7 +161,7 @@ func (p *Post) IsVideo() bool {
 }
 
 func (p *Post) IsGIF() bool {
-	if strings.HasSuffix(p.FileURL(), ".gif") {
+	if strings.HasSuffix(p.SampleUrl, ".gif") || strings.HasSuffix(p.FileUrl, ".gif") {
 		return true
 	}
 	return false

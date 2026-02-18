@@ -326,7 +326,7 @@ func (p *Plugin) downloadAndSend(b *gotgbot.Bot, c *plugin.GobotContext, post *P
 		if size > tgUtils.MaxPhotosizeUpload {
 			return fmt.Errorf("gelbooru image too large: %d bytes", size)
 		}
-	} else if post.IsVideo() {
+	} else {
 		size, err := headContentLength(fileURL)
 		if err != nil {
 			return err
@@ -359,19 +359,8 @@ func (p *Plugin) downloadAndSend(b *gotgbot.Bot, c *plugin.GobotContext, post *P
 
 	file := gotgbot.InputFileByReader(path.Base(fileURL), resp.Body)
 
-	if post.IsImage() {
-		_, err = b.SendPhoto(c.EffectiveChat.Id, file, &gotgbot.SendPhotoOpts{
-			Caption: post.Caption(),
-			ReplyParameters: &gotgbot.ReplyParameters{
-				AllowSendingWithoutReply: true,
-				MessageId:                c.EffectiveMessage.MessageId,
-			},
-			DisableNotification: true,
-			ReplyMarkup:         replyMarkup,
-			ParseMode:           gotgbot.ParseModeHTML,
-			HasSpoiler:          post.IsNSFW(),
-		})
-	} else if post.IsVideo() {
+	if post.IsVideo() || post.IsGIF() {
+		// GIFs are sent as videos since animations are buggy with larger filesizes
 		_, err = b.SendVideo(c.EffectiveChat.Id, file, &gotgbot.SendVideoOpts{
 			Caption: post.Caption(),
 			ReplyParameters: &gotgbot.ReplyParameters{
@@ -383,8 +372,8 @@ func (p *Plugin) downloadAndSend(b *gotgbot.Bot, c *plugin.GobotContext, post *P
 			ParseMode:           gotgbot.ParseModeHTML,
 			HasSpoiler:          post.IsNSFW(),
 		})
-	} else if post.IsGIF() {
-		_, err = b.SendAnimation(c.EffectiveChat.Id, file, &gotgbot.SendAnimationOpts{
+	} else if post.IsImage() {
+		_, err = b.SendPhoto(c.EffectiveChat.Id, file, &gotgbot.SendPhotoOpts{
 			Caption: post.Caption(),
 			ReplyParameters: &gotgbot.ReplyParameters{
 				AllowSendingWithoutReply: true,
