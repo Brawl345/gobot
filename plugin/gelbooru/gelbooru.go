@@ -371,6 +371,7 @@ func (p *Plugin) downloadAndSend(b *gotgbot.Bot, c *plugin.GobotContext, post *P
 			ReplyMarkup:         replyMarkup,
 			ParseMode:           gotgbot.ParseModeHTML,
 			HasSpoiler:          post.IsNSFW(),
+			SupportsStreaming:   true,
 		})
 	} else if post.IsImage() {
 		_, err = b.SendPhoto(c.EffectiveChat.Id, file, &gotgbot.SendPhotoOpts{
