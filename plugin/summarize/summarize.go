@@ -20,7 +20,7 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 
-	"github.com/go-shiori/go-readability"
+	"codeberg.org/readeck/go-readability/v2"
 )
 
 const (
@@ -244,14 +244,29 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		return err
 	}
 
-	if len(article.TextContent) < MinArticleLength {
+	var textContent strings.Builder
+	err = article.RenderText(&textContent)
+	if err != nil {
+		log.Err(err).
+			Str("pageUrl", pageUrl).
+			Msg("Failed to render text content from article")
+
+		_, err := msg.Reply(b,
+			fmt.Sprintf("❌ Text konnte nicht extrahiert werden: <code>%v</code>", utils.Escape(err.Error())),
+			utils.DefaultSendOptions())
+		return err
+	}
+
+	articleText := textContent.String()
+
+	if len(articleText) < MinArticleLength {
 		_, err := msg.Reply(b,
 			"❌ Artikel-Inhalt ist zu kurz.",
 			utils.DefaultSendOptions())
 		return err
 	}
 
-	if len(article.TextContent) > int(math.Ceil(maxArticleLength)) {
+	if len(articleText) > int(math.Ceil(maxArticleLength)) {
 		_, err := msg.Reply(b,
 			"❌ Artikel-Inhalt ist zu lang.",
 			utils.DefaultSendOptions())
@@ -267,7 +282,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 			},
 			{
 				Role:    User,
-				Content: article.TextContent,
+				Content: articleText,
 			},
 		},
 		PresencePenalty: PresencePenalty,

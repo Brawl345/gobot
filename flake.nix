@@ -27,7 +27,7 @@
       };
 
       overlays.default = final: prev: {
-        gobot = self.packages.${prev.system}.default;
+        gobot = self.packages.${prev.stdenv.hostPlatform.system}.default;
       };
 
       devShells = forAllSystems (pkgs: {
@@ -51,8 +51,8 @@
           src = pkgs.lib.cleanSource self;
 
           # Update the hash if go dependencies change!
-          # vendorHash = pkgs.lib.fakeHash;
-          vendorHash = "sha256-Rp3RFLcDl02hok8tWMRja62csW8fR2qvCXhVwulReoo=";
+#           vendorHash = pkgs.lib.fakeHash;
+          vendorHash = "sha256-wFOg6rfx82y9xVMtotORxB5Clvus4eyE3K3ncNdfaj8=";
 
           ldflags = [
             "-s"
@@ -67,7 +67,7 @@
           };
         };
 
-        default = self.packages.${pkgs.system}.gobot;
+        default = self.packages.${pkgs.stdenv.hostPlatform.system}.gobot;
       });
     };
 }
