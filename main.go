@@ -35,7 +35,7 @@ func main() {
 
 	log.Info().Msgf("Logged in as @%s (%d)", b.GoTgBot.Username, b.GoTgBot.Id)
 
-	channel := make(chan os.Signal)
+	channel := make(chan os.Signal, 1)
 	signal.Notify(channel, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
 		<-channel
