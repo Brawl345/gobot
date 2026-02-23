@@ -1,12 +1,12 @@
 package model
 
-type GoogleImages struct {
+type ImageSearchImages struct {
 	QueryID      int64
 	CurrentIndex int
-	Images       []Image
+	Images       []ImageSearchImage
 }
 
-type Image interface {
+type ImageSearchImage interface {
 	ImageLink() string
 	ContextLink() string
 	IsGIF() bool

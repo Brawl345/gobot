@@ -1,0 +1,9 @@
+### Image search
+GET https://api.search.brave.com/res/v1/images/search
+    ?count=10
+    &safesearch=strict
+    &spellcheck=false
+    &country=DE
+    &search_lang=de
+    &q=shirakami fubuki
+X-Subscription-Token: {{brave_search_api_key}}

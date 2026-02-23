@@ -13,43 +13,24 @@ import (
 )
 
 type (
-	googleImagesService struct {
+	braveImagesService struct {
 		*sqlx.DB
 		log *logger.Logger
 	}
-
-	Image struct {
-		QueryID    int64  `db:"query_id"`
-		ImageURL   string `db:"image_url"`
-		ContextURL string `db:"context_url"`
-		GIF        bool   `db:"is_gif"`
-	}
 )
 
-func (i Image) ImageLink() string {
-	return i.ImageURL
-}
-
-func (i Image) ContextLink() string {
-	return i.ContextURL
-}
-
-func (i Image) IsGIF() bool {
-	return i.GIF
-}
-
-func NewGoogleImagesService(db *sqlx.DB) *googleImagesService {
-	return &googleImagesService{
+func NewBraveImagesService(db *sqlx.DB) *braveImagesService {
+	return &braveImagesService{
 		DB:  db,
-		log: logger.New("googleImagesService"),
+		log: logger.New("braveImagesService"),
 	}
 }
 
-func (db *googleImagesService) GetImages(query string) (model.ImageSearchImages, error) {
+func (db *braveImagesService) GetImages(query string) (model.ImageSearchImages, error) {
 	query = strings.ToLower(query)
 	const selectQuery = `SELECT query_id, image_url, context_url, is_gif, current_index
-		FROM google_images gi
-		RIGHT JOIN google_images_queries giq ON giq.id = gi.query_id
+		FROM brave_images bi
+		RIGHT JOIN brave_images_queries biq ON biq.id = bi.query_id
 		WHERE query = ?`
 
 	rows, err := db.Queryx(selectQuery, query)
@@ -83,10 +64,10 @@ func (db *googleImagesService) GetImages(query string) (model.ImageSearchImages,
 	}, nil
 }
 
-func (db *googleImagesService) GetImagesFromQueryID(queryID int64) (model.ImageSearchImages, error) {
+func (db *braveImagesService) GetImagesFromQueryID(queryID int64) (model.ImageSearchImages, error) {
 	const selectQuery = `SELECT image_url, context_url, is_gif, current_index
-		FROM google_images gi
-		RIGHT JOIN google_images_queries giq ON giq.id = gi.query_id
+		FROM brave_images bi
+		RIGHT JOIN brave_images_queries biq ON biq.id = bi.query_id
 		WHERE query_id = ?`
 
 	rows, err := db.Queryx(selectQuery, queryID)
@@ -120,7 +101,7 @@ func (db *googleImagesService) GetImagesFromQueryID(queryID int64) (model.ImageS
 
 }
 
-func (db *googleImagesService) SaveImages(query string, wrapper *model.ImageSearchImages) (int64, error) {
+func (db *braveImagesService) SaveImages(query string, wrapper *model.ImageSearchImages) (int64, error) {
 	query = strings.ToLower(query)
 	tx, err := db.BeginTxx(context.Background(), nil)
 	if err != nil {
@@ -134,7 +115,7 @@ func (db *googleImagesService) SaveImages(query string, wrapper *model.ImageSear
 		}
 	}(tx)
 
-	const insertSearchQuery = `INSERT INTO google_images_queries (query, current_index) VALUES (?, ?)`
+	const insertSearchQuery = `INSERT INTO brave_images_queries (query, current_index) VALUES (?, ?)`
 	res, err := tx.Exec(insertSearchQuery, query, wrapper.CurrentIndex)
 	if err != nil {
 		return 0, err
@@ -152,7 +133,7 @@ func (db *googleImagesService) SaveImages(query string, wrapper *model.ImageSear
 			valueStrings = append(valueStrings, "(?, ?, ?, ?)")
 			valueArgs = append(valueArgs, lastInsertID, image.ImageLink(), image.ContextLink(), image.IsGIF())
 		}
-		insertImages := fmt.Sprintf("INSERT INTO google_images (query_id, image_url, context_url, is_gif) VALUES %s",
+		insertImages := fmt.Sprintf("INSERT INTO brave_images (query_id, image_url, context_url, is_gif) VALUES %s",
 			strings.Join(valueStrings, ","))
 		_, err = tx.Exec(insertImages, valueArgs...)
 		if err != nil {
@@ -167,8 +148,8 @@ func (db *googleImagesService) SaveImages(query string, wrapper *model.ImageSear
 	return lastInsertID, nil
 }
 
-func (db *googleImagesService) SaveIndex(queryID int64, index int) error {
-	const updateQuery = `UPDATE google_images_queries SET current_index = ? WHERE id = ?`
+func (db *braveImagesService) SaveIndex(queryID int64, index int) error {
+	const updateQuery = `UPDATE brave_images_queries SET current_index = ? WHERE id = ?`
 	_, err := db.Exec(updateQuery, index, queryID)
 	return err
 }

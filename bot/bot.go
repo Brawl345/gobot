@@ -17,6 +17,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/allow"
 	"github.com/Brawl345/gobot/plugin/amazon_ref_cleaner"
 	"github.com/Brawl345/gobot/plugin/birthdays"
+	"github.com/Brawl345/gobot/plugin/brave_images"
 	"github.com/Brawl345/gobot/plugin/calc"
 	"github.com/Brawl345/gobot/plugin/cleverbot"
 	"github.com/Brawl345/gobot/plugin/creds"
@@ -105,6 +106,8 @@ func New(db *sqlx.DB) (*Gobot, error) {
 	// Plugin-specific services
 	afkService := sql.NewAfkService(db)
 	birthdayService := sql.NewBirthdayService(db)
+	braveImagesService := sql.NewBraveImagesService(db)
+	braveImagesCleanupService := sql.NewBraveImagesCleanupService(db)
 	cleverbotService := sql.NewCleverbotService(db)
 	fileService := sql.NewFileService(db)
 	geminiService := sql.NewGeminiService(db)
@@ -125,6 +128,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		allow.New(allowService),
 		amazon_ref_cleaner.New(),
 		birthdays.New(bot, birthdayService),
+		brave_images.New(credentialService, braveImagesService, braveImagesCleanupService),
 		calc.New(),
 		cleverbot.New(credentialService, cleverbotService),
 		creds.New(credentialService),

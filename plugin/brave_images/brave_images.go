@@ -1,4 +1,4 @@
-package google_images
+package brave_images
 
 import (
 	"errors"
@@ -19,12 +19,12 @@ import (
 	"github.com/rs/xid"
 )
 
-var log = logger.New("google_images")
+var log = logger.New("brave_images")
 
 type (
 	Plugin struct {
-		credentialService   model.CredentialService
-		googleImagesService Service
+		credentialService  model.CredentialService
+		braveImagesService Service
 	}
 
 	CleanupService interface {
@@ -39,14 +39,14 @@ type (
 	}
 )
 
-func New(credentialService model.CredentialService, googleImagesService Service, cleanupService CleanupService) *Plugin {
+func New(credentialService model.CredentialService, braveImagesService Service, cleanupService CleanupService) *Plugin {
 	time.AfterFunc(24*time.Hour, func() {
 		cleanup(cleanupService)
 	})
 
 	return &Plugin{
-		credentialService:   credentialService,
-		googleImagesService: googleImagesService,
+		credentialService:  credentialService,
+		braveImagesService: braveImagesService,
 	}
 }
 
@@ -58,20 +58,20 @@ func cleanup(cleanupService CleanupService) {
 
 	err := cleanupService.Cleanup()
 	if err != nil {
-		log.Error().Err(err).Msg("error cleaning up google images")
+		log.Error().Err(err).Msg("error cleaning up brave images")
 	}
 
 }
 
 func (p *Plugin) Name() string {
-	return "google_images"
+	return "brave_images"
 }
 
 func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return []gotgbot.BotCommand{
 		{
-			Command:     "i",
-			Description: "<Suchbegriff> - Nach Bildern suchen (Deprecated)",
+			Command:     "bi",
+			Description: "<Suchbegriff> - Nach Bildern suchen",
 		},
 	}
 }
@@ -79,11 +79,11 @@ func (p *Plugin) Commands() []gotgbot.BotCommand {
 func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	return []plugin.Handler{
 		&plugin.CommandHandler{
-			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/i(?:@%s)? (.+)$`, botInfo.Username)),
+			Trigger:     regexp.MustCompile(fmt.Sprintf(`(?i)^/bi(?:@%s)? (.+)$`, botInfo.Username)),
 			HandlerFunc: p.onImageSearch,
 		},
 		&plugin.CallbackHandler{
-			Trigger:      regexp.MustCompile(`^i:(\d+)$`),
+			Trigger:      regexp.MustCompile(`^bi:(\d+)$`),
 			HandlerFunc:  p.onImageSearchCallback,
 			DeleteButton: true,
 			Cooldown:     5 * time.Second,
@@ -92,21 +92,11 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
-	apiKey := p.credentialService.GetKey("google_api_key")
+	apiKey := p.credentialService.GetKey("brave_search_api_key")
 	if apiKey == "" {
-		log.Warn().Msg("google_api_key not found")
+		log.Warn().Msg("brave_search_api_key not found")
 		_, err := c.EffectiveMessage.Reply(b,
-			"❌ <code>google_api_key</code> fehlt.",
-			utils.DefaultSendOptions(),
-		)
-		return err
-	}
-
-	searchEngineID := p.credentialService.GetKey("google_search_engine_id")
-	if searchEngineID == "" {
-		log.Warn().Msg("google_search_engine_id not found")
-		_, err := c.EffectiveMessage.Reply(b,
-			"❌ <code>google_search_engine_id</code> fehlt.",
+			"❌ <code>brave_search_api_key</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
 		return err
@@ -122,7 +112,7 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 			return err
 		}
 
-		wrapper, err = p.googleImagesService.GetImagesFromQueryID(queryID)
+		wrapper, err = p.braveImagesService.GetImagesFromQueryID(queryID)
 		if err != nil {
 			return err
 		}
@@ -130,30 +120,27 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 			return ErrNoImagesFound
 		}
 	} else {
-		wrapper, err = p.googleImagesService.GetImages(query)
+		wrapper, err = p.braveImagesService.GetImages(query)
 	}
 	if err != nil {
-		return fmt.Errorf("error getting google images from db: %w", err)
+		return fmt.Errorf("error getting brave images from db: %w", err)
 	}
 
 	if len(wrapper.Images) == 0 {
 		_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadPhoto, nil)
 		requestUrl := url.URL{
 			Scheme: "https",
-			Host:   "customsearch.googleapis.com",
-			Path:   "/customsearch/v1",
+			Host:   "api.search.brave.com",
+			Path:   "/res/v1/images/search",
 		}
 
 		q := requestUrl.Query()
-		q.Set("key", apiKey)
-		q.Set("cx", searchEngineID)
 		q.Set("q", query)
-		q.Set("hl", "de")
-		q.Set("gl", "de")
-		q.Set("num", "10")
-		q.Set("safe", "active")
-		q.Set("searchType", "image")
-		q.Set("fields", "items(link,mime,image/contextLink)")
+		q.Set("country", "DE")
+		q.Set("search_lang", "de")
+		q.Set("count", "10")
+		q.Set("safesearch", "strict")
+		q.Set("spellcheck", "false")
 
 		requestUrl.RawQuery = q.Encode()
 
@@ -162,27 +149,30 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 			Method:   httpUtils.MethodGet,
 			URL:      requestUrl.String(),
 			Response: &response,
+			Headers: map[string]string{
+				"X-Subscription-Token": apiKey,
+			},
 		})
 
 		if err != nil {
-			return fmt.Errorf("error getting google images: %w", err)
+			return fmt.Errorf("error getting brave images: %w", err)
 		}
 
-		if len(response.Items) == 0 {
+		if len(response.Results) == 0 {
 			return ErrNoImagesFound
 		}
 
-		items := make([]model.ImageSearchImage, len(response.Items))
-		for i, v := range response.Items {
+		items := make([]model.ImageSearchImage, len(response.Results))
+		for i, v := range response.Results {
 			items[i] = v
 		}
 
 		wrapper.Images = items
-		queryID, err := p.googleImagesService.SaveImages(query, &model.ImageSearchImages{
+		queryID, err := p.braveImagesService.SaveImages(query, &model.ImageSearchImages{
 			Images: wrapper.Images,
 		})
 		if err != nil {
-			return fmt.Errorf("error saving google images: %w", err)
+			return fmt.Errorf("error saving brave images: %w", err)
 		}
 		wrapper.QueryID = queryID
 	}
@@ -205,7 +195,7 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 				{
 					{
 						Text:         "Nächstes Bild",
-						CallbackData: fmt.Sprintf("i:%d", wrapper.QueryID),
+						CallbackData: fmt.Sprintf("bi:%d", wrapper.QueryID),
 					},
 				},
 			},
@@ -252,7 +242,7 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 	}
 
 	if success {
-		err = p.googleImagesService.SaveIndex(wrapper.QueryID, index)
+		err = p.braveImagesService.SaveIndex(wrapper.QueryID, index)
 		if err != nil {
 			log.Err(err).
 				Msg("error saving to db")
@@ -271,6 +261,8 @@ func (p *Plugin) onImageSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 			_, err = c.EffectiveMessage.Reply(b, "❌ Keine Bilder gefunden.", utils.DefaultSendOptions())
 		} else if errors.Is(err, ErrCouldNotDownloadAnyImage) {
 			_, err = c.EffectiveMessage.Reply(b, "❌ Es konnte kein Bild heruntergeladen werden.", utils.DefaultSendOptions())
+		} else if errors.As(err, &httpError) && httpError.StatusCode == http.StatusUnprocessableEntity {
+			_, err = c.EffectiveMessage.Reply(b, "❌ Ungültige Suchanfrage.", utils.DefaultSendOptions())
 		} else if errors.As(err, &httpError) && httpError.StatusCode == http.StatusTooManyRequests {
 			_, err = c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht. Bitte versuche es morgen erneut.", utils.DefaultSendOptions())
 		} else {
