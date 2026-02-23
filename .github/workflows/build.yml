@@ -20,12 +20,13 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version-file: 'go.mod'
+          cache-dependency-path: 'go.sum'
 
       - name: Build
         env:
@@ -38,7 +39,7 @@ jobs:
         run: for x in dist/$NAME-windows-*; do mv $x $x.exe; done
 
       - name: Upload binary
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ${{env.NAME}}-${{ matrix.GOOS }}-${{ matrix.GOARCH }}-${{github.sha}}
           path: dist/*
