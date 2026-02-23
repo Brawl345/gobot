@@ -130,19 +130,20 @@ func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			var telegramErr *gotgbot.TelegramError
 
 			if errors.As(err, &telegramErr) {
-				if telegramErr.Description == tgUtils.ErrBlockedByUser {
+				switch telegramErr.Description {
+				case tgUtils.ErrBlockedByUser:
 					log.Warn().
 						Int64("to_user_id", userID).
 						Msg("User blocked the bot")
-				} else if telegramErr.Description == tgUtils.ErrNotStartedByUser {
+				case tgUtils.ErrNotStartedByUser:
 					log.Warn().
 						Int64("to_user_id", userID).
 						Msg("User didn't start the bot")
-				} else if telegramErr.Description == tgUtils.ErrUserIsDeactivated {
+				case tgUtils.ErrUserIsDeactivated:
 					log.Warn().
 						Int64("to_user_id", userID).
 						Msg("User account is deactivated")
-				} else {
+				default:
 					log.Err(err).
 						Int64("to_user_id", userID).
 						Msg("error while sending notification")
@@ -165,10 +166,11 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 		var telegramErr *gotgbot.TelegramError
 
 		if errors.As(err, &telegramErr) {
-			if telegramErr.Description == tgUtils.ErrBlockedByUser {
+			switch telegramErr.Description {
+			case tgUtils.ErrBlockedByUser:
 				_, err := c.EffectiveMessage.Reply(b, "😭 Du hast mich blockiert T__T", utils.DefaultSendOptions())
 				return err
-			} else if telegramErr.Description == tgUtils.ErrNotStartedByUser {
+			case tgUtils.ErrNotStartedByUser:
 				_, err := c.EffectiveMessage.Reply(b, "ℹ Bitte starte mich vor dem Aktivieren zuerst privat.", utils.DefaultSendOptions())
 				return err
 			}
@@ -182,6 +184,7 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Msg("error while sending test message")
 		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Ich wollte dir eine Nachricht senden, aber das hat nicht funktioniert Bitte den Administrator des Bots um Hilfe und sende ihm folgenden Fehler-Code:%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
+		return err
 	}
 
 	_, err = testMsg.Delete(b, nil)
@@ -200,6 +203,7 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Msg("error during enabled check")
 		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
+		return err
 	}
 
 	if enabled {
@@ -217,6 +221,7 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Msg("error while enabling notifications")
 		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
+		return err
 	}
 
 	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
@@ -236,6 +241,7 @@ func (p *Plugin) disableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Msg("error during enabled check")
 		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
+		return err
 	}
 
 	if !enabled {

@@ -91,7 +91,7 @@ func loop(sb *strings.Builder, url string, depth int) {
 	if err != nil {
 		var httpErr *httpUtils.HttpError
 		if errors.As(err, &httpErr) {
-			sb.WriteString(fmt.Sprintf("➡ <b>HTTP-Status %d %s</b>\n", httpErr.StatusCode, httpErr.StatusText()))
+			_, _ = fmt.Fprintf(sb, "➡ <b>HTTP-Status %d %s</b>\n", httpErr.StatusCode, httpErr.StatusText())
 			return
 		}
 		sb.WriteString("❌ <b>Nicht erreichbar</b>\n")
@@ -100,7 +100,7 @@ func loop(sb *strings.Builder, url string, depth int) {
 			Msg("Error expanding url")
 		return
 	}
-	sb.WriteString(fmt.Sprintf("➡ %s\n", expandedUrl))
+	_, _ = fmt.Fprintf(sb, "➡ %s\n", expandedUrl)
 	if depth >= MaxDepth {
 		sb.WriteString("➡ ...\n")
 		return

@@ -242,10 +242,8 @@ func MultiPartFormRequestWithHeaders(url string, headers map[string]string, para
 	}
 
 	req.Header.Set("Content-Type", writer.FormDataContentType())
-	if headers != nil {
-		for key, value := range headers {
-			req.Header.Set(key, value)
-		}
+	for key, value := range headers {
+		req.Header.Set(key, value)
 	}
 
 	return DefaultHttpClient.Do(req)

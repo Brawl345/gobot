@@ -378,7 +378,7 @@ func onMessage(msg *gotgbot.Message) string {
 				reset,
 			),
 		)
-	} else if msg.Photo != nil && len(msg.Photo) > 0 { // Photo: https://core.telegram.org/bots/api#photosize
+	} else if len(msg.Photo) > 0 { // Photo: https://core.telegram.org/bots/api#photosize
 		bestResolutionPhoto := tgUtils.GetBestResolution(msg.Photo)
 		sb.WriteString(
 			fmt.Sprintf(
@@ -661,12 +661,7 @@ func onCallback(callback *gotgbot.CallbackQuery) string {
 	}
 
 	// Sender
-	sb.WriteString(
-		fmt.Sprintf(
-			"%s",
-			printUser(&callback.From),
-		),
-	)
+	sb.WriteString(printUser(&callback.From))
 
 	// Begin message
 	sb.WriteString(
@@ -732,12 +727,7 @@ func onInlineQuery(query *gotgbot.InlineQuery) string {
 	}
 
 	// Sender
-	sb.WriteString(
-		fmt.Sprintf(
-			"%s",
-			printUser(&query.From),
-		),
-	)
+	sb.WriteString(printUser(&query.From))
 
 	// Begin message
 	sb.WriteString(

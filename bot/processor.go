@@ -139,7 +139,7 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 				// More to be added when needed
 				case msg.Document != nil:
 					matched = command == tgUtils.DocumentMsg
-				case msg.Photo != nil && len(msg.Photo) > 0:
+				case len(msg.Photo) > 0:
 					matched = command == tgUtils.PhotoMsg
 				case msg.Location != nil:
 					matched = command == tgUtils.LocationMsg

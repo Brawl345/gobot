@@ -110,9 +110,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 			return err
 		}
 
-		if strings.HasSuffix(apiBase, "/") {
-			apiBase = apiBase[:len(apiBase)-1]
-		}
+		apiBase = strings.TrimSuffix(apiBase, "/")
 	}
 	apiUrlGenerate := fmt.Sprintf("%s%s", apiBase, ApiPathGenerate)
 	apiUrlUpload := fmt.Sprintf("%s%s", apiBase, ApiPathUpload)

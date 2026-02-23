@@ -96,9 +96,10 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}(file)
 
 	fileEnding := ".ogg"
-	if c.EffectiveMessage.Voice.MimeType == "audio/mpeg" {
+	switch c.EffectiveMessage.Voice.MimeType {
+	case "audio/mpeg":
 		fileEnding = ".mp3"
-	} else if c.EffectiveMessage.Voice.MimeType == "audio/mp4" {
+	case "audio/mp4":
 		fileEnding = ".m4a"
 	}
 

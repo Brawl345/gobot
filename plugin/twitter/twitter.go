@@ -311,11 +311,12 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 	quoteResult := result.QuotedStatusResult.Result
 
 	if quoteResult.Typename == "TweetUnavailable" {
-		if quoteResult.Reason == "NsfwLoggedOut" {
+		switch quoteResult.Reason {
+		case "NsfwLoggedOut":
 			sb.WriteString("<i>Tweet kann nicht angezeigt werden, weil er sensible Inhalte enthält.</i>")
-		} else if quoteResult.Reason == "Protected" {
+		case "Protected":
 			sb.WriteString("\"<i>🔓 Der Account-Inhaber hat beschränkt, wer seine Tweets ansehen kann.</i>")
-		} else {
+		default:
 			sb.WriteString(fmt.Sprintf("<i>❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code></i>", result.Reason))
 		}
 	}

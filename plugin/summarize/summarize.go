@@ -129,9 +129,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		return err
 	}
 
-	if strings.HasSuffix(apiUrl, "/") {
-		apiUrl = apiUrl[:len(apiUrl)-1]
-	}
+	apiUrl = strings.TrimSuffix(apiUrl, "/")
 
 	var ctxWindow float64
 	ctxWindowStr := p.credentialService.GetKey("summarize_ctx_window")

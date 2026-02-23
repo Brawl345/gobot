@@ -71,11 +71,12 @@ func (daily *Daily) Forecast(day int) (string, error) {
 
 	var sb strings.Builder
 
-	if day == 0 {
+	switch day {
+	case 0:
 		sb.WriteString("<b>Heute:</b> ")
-	} else if day == 1 {
+	case 1:
 		sb.WriteString("<b>Morgen:</b> ")
-	} else {
+	default:
 		dateParsed, err := time.Parse("2006-01-02", daily.Time[day])
 		if err != nil {
 			return "", err

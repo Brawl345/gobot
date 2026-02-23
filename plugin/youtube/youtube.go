@@ -323,22 +323,24 @@ func (p *Plugin) OnYouTubeLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 	text := constructText(&video)
 
 	msg, err := c.EffectiveMessage.Reply(b, text, utils.DefaultSendOptions())
-	if err == nil {
-		modifiedText, err := deArrow(text, &video)
-		if err != nil {
-			log.Err(err).
-				Str("videoID", videoID).
-				Msg("Error while contacting DeArrow API")
-			return nil
-		}
-
-		_, _, err = msg.EditText(b, modifiedText, &gotgbot.EditMessageTextOpts{
-			ParseMode: gotgbot.ParseModeHTML,
-			LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
-				IsDisabled: true,
-			},
-		})
+	if err != nil {
+		return err
 	}
+
+	modifiedText, err := deArrow(text, &video)
+	if err != nil {
+		log.Err(err).
+			Str("videoID", videoID).
+			Msg("Error while contacting DeArrow API")
+		return nil
+	}
+
+	_, _, err = msg.EditText(b, modifiedText, &gotgbot.EditMessageTextOpts{
+		ParseMode: gotgbot.ParseModeHTML,
+		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+			IsDisabled: true,
+		},
+	})
 
 	return err
 }
@@ -424,19 +426,21 @@ func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 		ParseMode:           gotgbot.ParseModeHTML,
 	})
 
-	if err == nil {
-		modifiedText, err := deArrow(text, &video)
-		if err != nil {
-			log.Err(err).
-				Str("videoID", videoID).
-				Msg("Error while contacting DeArrow API")
-			return nil
-		}
-
-		_, _, err = msg.EditText(b, modifiedText, &gotgbot.EditMessageTextOpts{
-			ParseMode: gotgbot.ParseModeHTML,
-		})
+	if err != nil {
+		return err
 	}
+
+	modifiedText, err := deArrow(text, &video)
+	if err != nil {
+		log.Err(err).
+			Str("videoID", videoID).
+			Msg("Error while contacting DeArrow API")
+		return nil
+	}
+
+	_, _, err = msg.EditText(b, modifiedText, &gotgbot.EditMessageTextOpts{
+		ParseMode: gotgbot.ParseModeHTML,
+	})
 
 	return err
 }

@@ -310,7 +310,11 @@ func headContentLength(fileURL string) (int64, error) {
 	if err != nil {
 		return 0, err
 	}
-	resp.Body.Close()
+	err = resp.Body.Close()
+	if err != nil {
+		log.Err(err).Msg("failed to close HEAD response body")
+		return 0, err
+	}
 	return resp.ContentLength, nil
 }
 
