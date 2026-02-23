@@ -34,6 +34,11 @@ jobs:
           GOARCH: ${{ matrix.GOARCH }}
         run: go build -ldflags="-s -w" -o dist/$NAME-$GOOS-$GOARCH
 
+      - name: Lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+
       - name: Rename binaries (Windows)
         if: matrix.GOOS == 'windows'
         run: for x in dist/$NAME-windows-*; do mv $x $x.exe; done
