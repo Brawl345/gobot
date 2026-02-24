@@ -223,8 +223,9 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 				InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 					{
 						{
-							Text: "...weitere?",
-							Url:  article.URL,
+							Text:  "...weitere?",
+							Url:   article.URL,
+							Style: gotgbot.KeyboardButtonStylePrimary,
 						},
 					},
 				},

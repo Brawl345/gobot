@@ -97,6 +97,7 @@ func (p *Plugin) OnGet(b *gotgbot.Bot, c plugin.GobotContext) error {
 					{
 						Text:         "Verbergen",
 						CallbackData: "creds_hide",
+						Style:        gotgbot.KeyboardButtonStyleDanger,
 					},
 				},
 			},

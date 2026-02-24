@@ -135,8 +135,9 @@ func (p *Plugin) onGoogleSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
 				{
 					{
-						Text: fmt.Sprintf("%s Ergebnisse", strings.ReplaceAll(response.SearchInformation.FormattedTotalResults, ",", ".")),
-						Url:  fmt.Sprintf("https://www.google.com/search?q=%s", url.QueryEscape(query)),
+						Text:  fmt.Sprintf("%s Ergebnisse", strings.ReplaceAll(response.SearchInformation.FormattedTotalResults, ",", ".")),
+						Url:   fmt.Sprintf("https://www.google.com/search?q=%s", url.QueryEscape(query)),
+						Style: gotgbot.KeyboardButtonStylePrimary,
 					},
 				},
 			},
