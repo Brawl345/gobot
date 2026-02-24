@@ -74,7 +74,7 @@ func (p *Plugin) onCleverbot(b *gotgbot.Bot, c plugin.GobotContext) error {
 	apiKey := p.credentialService.GetKey("cleverbot_api_key")
 	if apiKey == "" {
 		log.Warn().Msg("cleverbot_api_key not found")
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"❌ <code>cleverbot_api_key</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
@@ -111,7 +111,7 @@ func (p *Plugin) onCleverbot(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", requestUrl).
 			Msg("error contacting cleverbot")
-		_, err = c.EffectiveMessage.Reply(b,
+		_, err = c.EffectiveMessage.ReplyMessage(b,
 			fmt.Sprintf("❌ Fehler bei der Kommunikation mit dem Cleverbot.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions(),
 		)
@@ -126,7 +126,7 @@ func (p *Plugin) onCleverbot(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Int64("chat_id", c.EffectiveChat.Id).
 				Msg("error resetting state")
 		}
-		_, err = c.EffectiveMessage.Reply(b, "😴 Cleverbot müde...",
+		_, err = c.EffectiveMessage.ReplyMessage(b, "😴 Cleverbot müde...",
 			&gotgbot.SendMessageOpts{ReplyParameters: &gotgbot.ReplyParameters{AllowSendingWithoutReply: true}})
 		return err
 	}
@@ -150,7 +150,7 @@ func (p *Plugin) onCleverbot(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}
 
-	_, err = c.EffectiveMessage.Reply(
+	_, err = c.EffectiveMessage.ReplyMessage(
 		b,
 		response.Output,
 		&gotgbot.SendMessageOpts{
@@ -172,7 +172,7 @@ func (p *Plugin) onReset(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("error resetting state")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Zurücksetzen des Cleverbot-Status.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Fehler beim Zurücksetzen des Cleverbot-Status.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}

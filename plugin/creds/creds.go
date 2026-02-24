@@ -68,7 +68,7 @@ func (p *Plugin) OnGet(b *gotgbot.Bot, c plugin.GobotContext) error {
 	creds := p.credentialService.GetAllCredentials()
 
 	if len(creds) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "<i>Noch keine Schlüssel eingetragen</i>", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "<i>Noch keine Schlüssel eingetragen</i>", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -89,7 +89,7 @@ func (p *Plugin) OnGet(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}
 
-	_, err := c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+	_, err := c.EffectiveMessage.ReplyMessage(b, sb.String(), &gotgbot.SendMessageOpts{
 		ParseMode: gotgbot.ParseModeHTML,
 		ReplyMarkup: &gotgbot.InlineKeyboardMarkup{
 			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
@@ -119,11 +119,11 @@ func (p *Plugin) OnAdd(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Error adding key")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Fehler beim Speichern des Schlüssels", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Fehler beim Speichern des Schlüssels", utils.DefaultSendOptions())
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "✅ Schlüssel gespeichert.", utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.ReplyMessage(b, "✅ Schlüssel gespeichert.", utils.DefaultSendOptions())
 	return err
 }
 
@@ -141,7 +141,7 @@ func (p *Plugin) OnDelete(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Msg("Error deleting key")
 
-		_, err := c.EffectiveMessage.Reply(
+		_, err := c.EffectiveMessage.ReplyMessage(
 			b,
 			fmt.Sprintf("❌ Fehler beim Löschen des Schlüssels.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions(),
@@ -149,12 +149,12 @@ func (p *Plugin) OnDelete(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, "✅ Schlüssel gelöscht.", utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.ReplyMessage(b, "✅ Schlüssel gelöscht.", utils.DefaultSendOptions())
 	return err
 }
 
 func (p *Plugin) OnHide(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, err := b.DeleteMessage(c.EffectiveChat.Id, c.EffectiveMessage.MessageId, nil)
+	_, err := c.EffectiveMessage.Delete(b, nil)
 	if err != nil {
 		log.Err(err).Send()
 	}

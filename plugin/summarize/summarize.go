@@ -96,7 +96,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 	apiKey := p.credentialService.GetKey("summarize_api_key")
 	if apiKey == "" {
 		log.Warn().Msg("summarize_api_key not found")
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"❌ <code>summarize_api_key</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
@@ -122,7 +122,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 
 	if !strings.HasPrefix(apiUrl, "http://") && !strings.HasPrefix(apiUrl, "https://") {
 		log.Warn().Msg("summarize_api_url is invalid")
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"❌ <code>summarize_api_url</code> ist ungültig.",
 			utils.DefaultSendOptions(),
 		)
@@ -138,7 +138,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		ctxWindow, err = strconv.ParseFloat(ctxWindowStr, 64)
 		if err != nil {
 			log.Err(err).Msg("Failed to parse summarize_ctx_window")
-			_, err := c.EffectiveMessage.Reply(b,
+			_, err := c.EffectiveMessage.ReplyMessage(b,
 				"❌ <code>summarize_ctx_window</code> ist ungültig.",
 				utils.DefaultSendOptions(),
 			)
@@ -161,7 +161,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 	}
 
 	if len(pageUrls) == 0 {
-		_, err := msg.Reply(b, "❌ Keine Links gefunden", utils.DefaultSendOptions())
+		_, err := msg.ReplyMessage(b, "❌ Keine Links gefunden", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -173,7 +173,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 			Str("pageUrl", pageUrl).
 			Msg("Failed to parse URL")
 
-		_, err := msg.Reply(b, "❌ Die URL konnte nicht geparst werden.", utils.DefaultSendOptions())
+		_, err := msg.ReplyMessage(b, "❌ Die URL konnte nicht geparst werden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -183,7 +183,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 			Str("pageUrl", pageUrl).
 			Msg("Failed to create request")
 
-		_, err := msg.Reply(b,
+		_, err := msg.ReplyMessage(b,
 			fmt.Sprintf("❌ Text konnte nicht extrahiert werden: <code>%v</code>", utils.Escape(err.Error())),
 			utils.DefaultSendOptions())
 		return err
@@ -197,7 +197,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 			Str("pageUrl", pageUrl).
 			Msg("Failed to fetch URL")
 
-		_, err := msg.Reply(b,
+		_, err := msg.ReplyMessage(b,
 			fmt.Sprintf("❌ Text konnte nicht extrahiert werden: <code>%v</code>", utils.Escape(err.Error())),
 			utils.DefaultSendOptions())
 		return err
@@ -215,7 +215,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 			Int("status_code", resp.StatusCode).
 			Msg("Got non-200 status code")
 
-		_, err := msg.Reply(b, fmt.Sprintf("❌ Die Seite konnte nicht geladen werden (HTTP %d).", resp.StatusCode), utils.DefaultSendOptions())
+		_, err := msg.ReplyMessage(b, fmt.Sprintf("❌ Die Seite konnte nicht geladen werden (HTTP %d).", resp.StatusCode), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -226,7 +226,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 			Str("content_type", contentType).
 			Msg("Content-Type is not text/html")
 
-		_, err := msg.Reply(b, "❌ Die URL verweist nicht auf eine HTML-Seite.", utils.DefaultSendOptions())
+		_, err := msg.ReplyMessage(b, "❌ Die URL verweist nicht auf eine HTML-Seite.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -236,7 +236,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 			Str("pageUrl", pageUrl).
 			Msg("Failed to extract text content from URL")
 
-		_, err := msg.Reply(b,
+		_, err := msg.ReplyMessage(b,
 			fmt.Sprintf("❌ Text konnte nicht extrahiert werden: <code>%v</code>", utils.Escape(err.Error())),
 			utils.DefaultSendOptions())
 		return err
@@ -249,7 +249,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 			Str("pageUrl", pageUrl).
 			Msg("Failed to render text content from article")
 
-		_, err := msg.Reply(b,
+		_, err := msg.ReplyMessage(b,
 			fmt.Sprintf("❌ Text konnte nicht extrahiert werden: <code>%v</code>", utils.Escape(err.Error())),
 			utils.DefaultSendOptions())
 		return err
@@ -258,14 +258,14 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 	articleText := textContent.String()
 
 	if len(articleText) < MinArticleLength {
-		_, err := msg.Reply(b,
+		_, err := msg.ReplyMessage(b,
 			"❌ Artikel-Inhalt ist zu kurz.",
 			utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(articleText) > int(math.Ceil(maxArticleLength)) {
-		_, err := msg.Reply(b,
+		_, err := msg.ReplyMessage(b,
 			"❌ Artikel-Inhalt ist zu lang.",
 			utils.DefaultSendOptions())
 		return err
@@ -304,7 +304,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 	if err != nil {
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == http.StatusTooManyRequests {
-				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())
+				_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())
 				return err
 			}
 		}
@@ -314,7 +314,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 			Str("guid", guid).
 			Str("pageUrl", pageUrl).
 			Msg("Failed to send POST request")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -327,7 +327,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 			Str("message", response.Error.Message).
 			Str("type", response.Error.Type).
 			Msg("Got error from model API")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -336,7 +336,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		log.Error().
 			Str("pageUrl", pageUrl).
 			Msg("Got no answer from ChatGPT")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort vom KI-Modell erhalten", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Keine Antwort vom KI-Modell erhalten", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -344,6 +344,6 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 	sb.WriteString("<b>Zusammenfassung:</b>\n")
 	sb.WriteString(utils.Escape(response.Choices[0].Message.Content))
 
-	_, err = msg.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = msg.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

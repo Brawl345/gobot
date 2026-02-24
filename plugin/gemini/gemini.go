@@ -88,7 +88,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 	apiKey := p.credentialService.GetKey("google_generative_language_api_key")
 	if apiKey == "" {
 		log.Warn().Msg("google_generative_language_api_key not found")
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"❌ <code>google_generative_language_api_key</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
@@ -103,7 +103,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 		if !strings.HasPrefix(apiBase, "http://") && !strings.HasPrefix(apiBase, "https://") {
 			log.Warn().Msg("google_gemini_proxy is invalid")
-			_, err := c.EffectiveMessage.Reply(b,
+			_, err := c.EffectiveMessage.ReplyMessage(b,
 				"❌ <code>google_gemini_proxy</code> ist ungültig.",
 				utils.DefaultSendOptions(),
 			)
@@ -187,7 +187,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		if fileSize > tgUtils.MaxFilesizeDownload {
 			log.Warn().
 				Msgf("File is too big: %d", fileSize)
-			_, err := c.EffectiveMessage.Reply(b, "❌Das Bild ist zu groß.", utils.DefaultSendOptions())
+			_, err := c.EffectiveMessage.ReplyMessage(b, "❌Das Bild ist zu groß.", utils.DefaultSendOptions())
 			return err
 		}
 
@@ -196,7 +196,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 			log.Err(err).
 				Interface("photo", photo).
 				Msg("Failed to get photo from Telegram")
-			_, err := c.EffectiveMessage.Reply(b, "❌ Konnte Bild nicht von Telegram herunterladen.", utils.DefaultSendOptions())
+			_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Konnte Bild nicht von Telegram herunterladen.", utils.DefaultSendOptions())
 			return err
 		}
 
@@ -223,7 +223,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Str("guid", guid).
 				Str("api_url", apiUrlUpload).
 				Msg("error while uploading file")
-			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 			return err
 		}
 
@@ -233,7 +233,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Str("guid", guid).
 				Interface("fileUploadResponse", fileUploadResponse).
 				Msg("error while uploading file")
-			_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 			return err
 		}
 
@@ -332,19 +332,19 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 						Msg("error resetting Gemini data")
 				}
 
-				_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten, Konversation wird zurückgesetzt.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+				_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten, Konversation wird zurückgesetzt.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 				return err
 			}
 
 			if httpError.StatusCode == http.StatusTooManyRequests {
-				_, err := c.EffectiveMessage.Reply(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())
+				_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())
 				return err
 			}
 		}
 
 		var netErr net.Error
 		if errors.As(err, &netErr) && netErr.Timeout() {
-			_, err := c.EffectiveMessage.Reply(b, "❌ Timeout, bitte erneut versuchen.", utils.DefaultSendOptions())
+			_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Timeout, bitte erneut versuchen.", utils.DefaultSendOptions())
 			return err
 		}
 
@@ -353,7 +353,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", apiUrlGenerate).
 			Msg("Failed to send POST request")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -363,7 +363,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Error().
 			Str("url", apiUrlGenerate).
 			Msg("Got no answer from Gemini")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Antwort von Gemini erhalten (eventuell gefiltert).", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Keine Antwort von Gemini erhalten (eventuell gefiltert).", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -439,7 +439,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		parseMode = gotgbot.ParseModeHTML
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, output, &gotgbot.SendMessageOpts{
+	_, err = c.EffectiveMessage.ReplyMessage(b, output, &gotgbot.SendMessageOpts{
 		ReplyParameters: &gotgbot.ReplyParameters{
 			AllowSendingWithoutReply: true,
 		},
@@ -461,7 +461,7 @@ func (p *Plugin) reset(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("error resetting history")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Zurücksetzen der Gemini-History.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Fehler beim Zurücksetzen der Gemini-History.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}

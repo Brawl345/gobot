@@ -46,7 +46,7 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadDocument, nil)
 
 	if c.EffectiveMessage.Document.FileSize > tgUtils.MaxFilesizeDownload {
-		_, err := c.EffectiveMessage.Reply(b, "❌ DLC-Container ist größer als 20 MB.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ DLC-Container ist größer als 20 MB.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -55,7 +55,7 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Interface("file", c.EffectiveMessage.Document).
 			Msg("Failed to download file")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Konnte Datei nicht von Telegram herunterladen.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Konnte Datei nicht von Telegram herunterladen.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -71,7 +71,7 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Interface("file", c.EffectiveMessage.Document).
 			Msg("Failed to read file")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Konnte Datei nicht lesen.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Konnte Datei nicht lesen.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -81,12 +81,12 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Interface("file", c.EffectiveMessage.Document).
 			Msg("Failed to decrypt file")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Konnte DLC-Container nicht entschlüsseln.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Konnte DLC-Container nicht entschlüsseln.", utils.DefaultSendOptions())
 		return err
 	}
 
 	if !dlc.HasLinks() {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Keine Links gefunden.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Keine Links gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -131,11 +131,10 @@ func (p *Plugin) OnFile(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sbCaption.WriteString(".")
 	}
 
-	_, err = b.SendDocument(c.EffectiveChat.Id, document, &gotgbot.SendDocumentOpts{
+	_, err = c.EffectiveMessage.ReplyDocument(b, document, &gotgbot.SendDocumentOpts{
 		Caption: sbCaption.String(),
 		ReplyParameters: &gotgbot.ReplyParameters{
 			AllowSendingWithoutReply: true,
-			MessageId:                c.EffectiveMessage.MessageId,
 		},
 		DisableNotification: true,
 		ParseMode:           gotgbot.ParseModeHTML,

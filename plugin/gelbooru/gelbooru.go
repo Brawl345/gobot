@@ -170,7 +170,7 @@ func (p *Plugin) onGelbooruLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("error making gelbooru request")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -214,7 +214,7 @@ func (p *Plugin) doGelbooruSearch(b *gotgbot.Bot, c *plugin.GobotContext, query 
 			Str("guid", guid).
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("error making gelbooru request")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -251,7 +251,7 @@ func (p *Plugin) fetchPost(b *gotgbot.Bot, c *plugin.GobotContext, requestUrl ur
 	apiKey := p.credentialService.GetKey("gelbooru_api_key")
 	if apiKey == "" {
 		log.Warn().Msg("gelbooru_api_key not found")
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"❌ <code>gelbooru_api_key</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
@@ -261,7 +261,7 @@ func (p *Plugin) fetchPost(b *gotgbot.Bot, c *plugin.GobotContext, requestUrl ur
 	userId := p.credentialService.GetKey("gelbooru_user_id")
 	if userId == "" {
 		log.Warn().Msg("gelbooru_user_id not found")
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"❌ <code>gelbooru_user_id</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
@@ -289,7 +289,7 @@ func (p *Plugin) fetchPost(b *gotgbot.Bot, c *plugin.GobotContext, requestUrl ur
 	}
 
 	if len(response.Post) == 0 {
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"❌ Nichts gefunden.",
 			utils.DefaultSendOptions(),
 		)
@@ -365,11 +365,10 @@ func (p *Plugin) downloadAndSend(b *gotgbot.Bot, c *plugin.GobotContext, post *P
 
 	if post.IsVideo() || post.IsGIF() {
 		// GIFs are sent as videos since animations are buggy with larger filesizes
-		_, err = b.SendVideo(c.EffectiveChat.Id, file, &gotgbot.SendVideoOpts{
+		_, err = c.EffectiveMessage.ReplyVideo(b, file, &gotgbot.SendVideoOpts{
 			Caption: post.Caption(),
 			ReplyParameters: &gotgbot.ReplyParameters{
 				AllowSendingWithoutReply: true,
-				MessageId:                c.EffectiveMessage.MessageId,
 			},
 			DisableNotification: true,
 			ReplyMarkup:         replyMarkup,
@@ -378,11 +377,10 @@ func (p *Plugin) downloadAndSend(b *gotgbot.Bot, c *plugin.GobotContext, post *P
 			SupportsStreaming:   true,
 		})
 	} else if post.IsImage() {
-		_, err = b.SendPhoto(c.EffectiveChat.Id, file, &gotgbot.SendPhotoOpts{
+		_, err = c.EffectiveMessage.ReplyPhoto(b, file, &gotgbot.SendPhotoOpts{
 			Caption: post.Caption(),
 			ReplyParameters: &gotgbot.ReplyParameters{
 				AllowSendingWithoutReply: true,
-				MessageId:                c.EffectiveMessage.MessageId,
 			},
 			DisableNotification: true,
 			ReplyMarkup:         replyMarkup,
@@ -391,10 +389,9 @@ func (p *Plugin) downloadAndSend(b *gotgbot.Bot, c *plugin.GobotContext, post *P
 		})
 	} else {
 		if post.IsNSFW() {
-			_, err = b.SendMessage(c.EffectiveChat.Id, post.AltCaption(), &gotgbot.SendMessageOpts{
+			_, err = c.EffectiveMessage.ReplyMessage(b, post.AltCaption(), &gotgbot.SendMessageOpts{
 				ReplyParameters: &gotgbot.ReplyParameters{
 					AllowSendingWithoutReply: true,
-					MessageId:                c.EffectiveMessage.MessageId,
 				},
 				DisableNotification: true,
 				ParseMode:           gotgbot.ParseModeHTML,
@@ -405,11 +402,10 @@ func (p *Plugin) downloadAndSend(b *gotgbot.Bot, c *plugin.GobotContext, post *P
 			})
 			return err
 		}
-		_, err = b.SendDocument(c.EffectiveChat.Id, file, &gotgbot.SendDocumentOpts{
+		_, err = c.EffectiveMessage.ReplyDocument(b, file, &gotgbot.SendDocumentOpts{
 			Caption: post.PostURL(),
 			ReplyParameters: &gotgbot.ReplyParameters{
 				AllowSendingWithoutReply: true,
-				MessageId:                c.EffectiveMessage.MessageId,
 			},
 			DisableNotification: true,
 			ParseMode:           gotgbot.ParseModeHTML,
@@ -422,10 +418,9 @@ func (p *Plugin) downloadAndSend(b *gotgbot.Bot, c *plugin.GobotContext, post *P
 func (p *Plugin) sendPost(b *gotgbot.Bot, c *plugin.GobotContext, post *Post, replyMarkup gotgbot.ReplyMarkup) error {
 	err := p.downloadAndSend(b, c, post, replyMarkup)
 	if err != nil {
-		_, err = b.SendMessage(c.EffectiveChat.Id, post.AltCaption(), &gotgbot.SendMessageOpts{
+		_, err = c.EffectiveMessage.ReplyMessage(b, post.AltCaption(), &gotgbot.SendMessageOpts{
 			ReplyParameters: &gotgbot.ReplyParameters{
 				AllowSendingWithoutReply: true,
-				MessageId:                c.EffectiveMessage.MessageId,
 			},
 			DisableNotification: true,
 			ParseMode:           gotgbot.ParseModeHTML,

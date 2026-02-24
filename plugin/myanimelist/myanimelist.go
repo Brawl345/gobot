@@ -66,7 +66,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 func (p *Plugin) onSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	query := c.Matches[1]
 	if len(query) < 3 {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Suchbegriff muss mindestens 3 Zeichen lang sein.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Suchbegriff muss mindestens 3 Zeichen lang sein.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -75,7 +75,7 @@ func (p *Plugin) onSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	clientID := p.credentialService.GetKey("mal_client_id")
 	if clientID == "" {
 		log.Warn().Msg("mal_client_id not found")
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"❌ <code>mal_client_id</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
@@ -110,12 +110,12 @@ func (p *Plugin) onSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", requestUrl.String()).
 			Msg("error getting myanimelist search results")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(response.Results) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Es wurde kein Anime gefunden.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Es wurde kein Anime gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -136,7 +136,7 @@ func (p *Plugin) onSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString("\n")
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }
 
@@ -146,7 +146,7 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	clientID := p.credentialService.GetKey("mal_client_id")
 	if clientID == "" {
 		log.Warn().Msg("mal_client_id not found")
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"❌ <code>mal_client_id</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
@@ -175,7 +175,7 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err != nil {
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == http.StatusNotFound {
-				_, err := c.EffectiveMessage.Reply(b, "❌ Anime nicht gefunden.", utils.DefaultSendOptions())
+				_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Anime nicht gefunden.", utils.DefaultSendOptions())
 				return err
 			}
 		}
@@ -186,7 +186,7 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("url", requestUrl.String()).
 			Msg("error getting myanimelist result")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -404,7 +404,7 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), &gotgbot.SendMessageOpts{
 		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
 			IsDisabled:       anime.GetMainPicture() == "" || anime.NSFW(),
 			Url:              anime.GetMainPicture(),

@@ -69,7 +69,7 @@ func (p *Plugin) onGPS(b *gotgbot.Bot, c plugin.GobotContext) error {
 	venue, err := p.geocodingService.Geocode(c.Matches[1])
 	if err != nil {
 		if errors.Is(err, model.ErrAddressNotFound) {
-			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
+			_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
 			return err
 		}
 
@@ -78,14 +78,13 @@ func (p *Plugin) onGPS(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("location", c.Matches[1]).
 			Msg("Failed to get coordinates for location")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Koordinaten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Fehler beim Abrufen der Koordinaten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
-	_, err = b.SendVenue(c.EffectiveChat.Id, venue.Location.Latitude, venue.Location.Longitude, venue.Title, venue.Address, &gotgbot.SendVenueOpts{
+	_, err = c.EffectiveMessage.ReplyVenue(b, venue.Location.Latitude, venue.Location.Longitude, venue.Title, venue.Address, &gotgbot.SendVenueOpts{
 		ReplyParameters: &gotgbot.ReplyParameters{
 			AllowSendingWithoutReply: true,
-			MessageId:                c.EffectiveMessage.MessageId,
 		},
 		DisableNotification: true,
 	})
@@ -139,7 +138,7 @@ func (p *Plugin) onLocation(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	if response.DisplayName != "" {
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf(
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf(
 			"<a href=\"https://maps.google.com/maps?q=%s,%s&ll=%s,%s&z=16\">%s</a>",
 			lat, lon, lat, lon, utils.Escape(response.DisplayName),
 		), utils.DefaultSendOptions())

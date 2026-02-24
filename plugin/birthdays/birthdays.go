@@ -131,7 +131,7 @@ func (p *Plugin) onSetBirthday(b *gotgbot.Bot, c plugin.GobotContext) error {
 	birthday, err := time.Parse("02.01.2006", c.Matches[1])
 
 	if err != nil {
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"❌ <b>Ungültiges Datum.</b> Bitte im Format <code>TT.MM.JJJJ</code> eingeben.",
 			utils.DefaultSendOptions(),
 		)
@@ -139,17 +139,17 @@ func (p *Plugin) onSetBirthday(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	if birthday.IsZero() {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Ungültiges Datum.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Ungültiges Datum.", utils.DefaultSendOptions())
 		return err
 	}
 
 	if birthday.After(time.Now()) {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Ich glaube nicht, dass du erst noch geboren werden musst.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Ich glaube nicht, dass du erst noch geboren werden musst.", utils.DefaultSendOptions())
 		return err
 	}
 
 	if birthday.Before(time.Date(1900, 1, 1, 0, 0, 0, 0, time.Local)) {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Ich glaube nicht, dass du so alt bist.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Ich glaube nicht, dass du so alt bist.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -176,7 +176,7 @@ func (p *Plugin) onDeleteBirthday(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to delete birthday")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -195,11 +195,11 @@ func (p *Plugin) onEnableBirthdayNotifications(b *gotgbot.Bot, c plugin.GobotCon
 			Int64("chat_id", c.EffectiveChat.Id).
 			Str("guid", guid).
 			Msg("Failed to get birthday notification state")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 	if enabled {
-		_, err := c.EffectiveMessage.Reply(b, "💡 Geburtsagsbenachrichtigungen sind in dieser Gruppe schon aktiv.",
+		_, err := c.EffectiveMessage.ReplyMessage(b, "💡 Geburtsagsbenachrichtigungen sind in dieser Gruppe schon aktiv.",
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -211,7 +211,7 @@ func (p *Plugin) onEnableBirthdayNotifications(b *gotgbot.Bot, c plugin.GobotCon
 			Int64("chat_id", c.EffectiveChat.Id).
 			Str("guid", guid).
 			Msg("Failed to enable birthday notifications")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -230,11 +230,11 @@ func (p *Plugin) onDisableBirthdayNotifications(b *gotgbot.Bot, c plugin.GobotCo
 			Int64("chat_id", c.EffectiveChat.Id).
 			Str("guid", guid).
 			Msg("Failed to get birthday notification state")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 	if !enabled {
-		_, err := c.EffectiveMessage.Reply(b, "💡 Geburtsagsbenachrichtigungen sind in dieser Gruppe nicht aktiv.",
+		_, err := c.EffectiveMessage.ReplyMessage(b, "💡 Geburtsagsbenachrichtigungen sind in dieser Gruppe nicht aktiv.",
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -246,7 +246,7 @@ func (p *Plugin) onDisableBirthdayNotifications(b *gotgbot.Bot, c plugin.GobotCo
 			Int64("chat_id", c.EffectiveChat.Id).
 			Str("guid", guid).
 			Msg("Failed to disable birthday notifications")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -265,11 +265,11 @@ func (p *Plugin) listBirthdays(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("chat_id", c.EffectiveChat.Id).
 			Str("guid", guid).
 			Msg("Failed to get birthday notification state")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 	if !enabled {
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"💡 Geburtsagsbenachrichtigungen sind in dieser Gruppe nicht aktiv, daher werden keine Geburtstage gelistet.",
 			utils.DefaultSendOptions())
 		return err
@@ -282,12 +282,12 @@ func (p *Plugin) listBirthdays(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("chat_id", c.EffectiveChat.Id).
 			Str("guid", guid).
 			Msg("Failed to get birthdays")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(users) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "💡 Es wurden noch keine Geburtstage eingespeichert.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "💡 Es wurden noch keine Geburtstage eingespeichert.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -316,7 +316,7 @@ func (p *Plugin) listBirthdays(b *gotgbot.Bot, c plugin.GobotContext) error {
 		)
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err
 
 }

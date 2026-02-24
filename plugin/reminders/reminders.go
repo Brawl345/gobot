@@ -107,7 +107,7 @@ func (p *Plugin) onAddDateTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) er
 		log.Err(err).
 			Str("day", c.Matches[1]).
 			Msg("Failed to parse hour")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -116,7 +116,7 @@ func (p *Plugin) onAddDateTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) er
 		log.Err(err).
 			Str("month", c.Matches[2]).
 			Msg("Failed to parse minutes")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -125,7 +125,7 @@ func (p *Plugin) onAddDateTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) er
 		log.Err(err).
 			Str("hour", c.Matches[1]).
 			Msg("Failed to parse hour")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -134,7 +134,7 @@ func (p *Plugin) onAddDateTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) er
 		log.Err(err).
 			Str("minute", c.Matches[2]).
 			Msg("Failed to parse minutes")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -146,7 +146,7 @@ func (p *Plugin) onAddDateTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) er
 			Int64("day", day).
 			Int64("month", month).
 			Msg("Unsupported unit")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib ein gültiges Datum an.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte gib ein gültiges Datum an.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -172,7 +172,7 @@ func (p *Plugin) onAddDateTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) er
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to save reminder")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -180,7 +180,7 @@ func (p *Plugin) onAddDateTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) er
 		p.sendReminder(b, id)
 	})
 
-	_, err = c.EffectiveMessage.Reply(b,
+	_, err = c.EffectiveMessage.ReplyMessage(b,
 		fmt.Sprintf("🕒 Erinnerung eingestellt für den <b>%s</b>.",
 			remindTime.Format("02.01.2006 um 15:04:05 Uhr"),
 		),
@@ -195,7 +195,7 @@ func (p *Plugin) onAddTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) error 
 		log.Err(err).
 			Str("hour", c.Matches[1]).
 			Msg("Failed to parse hour")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -204,7 +204,7 @@ func (p *Plugin) onAddTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) error 
 		log.Err(err).
 			Str("minute", c.Matches[2]).
 			Msg("Failed to parse minutes")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -214,7 +214,7 @@ func (p *Plugin) onAddTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) error 
 			Int64("hour", hour).
 			Int64("minute", minute).
 			Msg("Unsupported unit")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte gib eine gültige Uhrzeit an.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -240,7 +240,7 @@ func (p *Plugin) onAddTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) error 
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to save reminder")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -248,7 +248,7 @@ func (p *Plugin) onAddTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) error 
 		p.sendReminder(b, id)
 	})
 
-	_, err = c.EffectiveMessage.Reply(b,
+	_, err = c.EffectiveMessage.ReplyMessage(b,
 		fmt.Sprintf("🕒 Erinnerung eingestellt für den <b>%s</b>.",
 			remindTime.Format("02.01.2006 um 15:04:05 Uhr"),
 		),
@@ -262,7 +262,7 @@ func (p *Plugin) onAddDeltaReminder(b *gotgbot.Bot, c plugin.GobotContext) error
 		log.Err(err).
 			Str("duration", c.Matches[1]).
 			Msg("Failed to parse amount")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Bitte wähle eine kürzere Dauer.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte wähle eine kürzere Dauer.", utils.DefaultSendOptions())
 		return err
 	}
 	unit := c.Matches[2]
@@ -281,12 +281,12 @@ func (p *Plugin) onAddDeltaReminder(b *gotgbot.Bot, c plugin.GobotContext) error
 		log.Err(err).
 			Str("unit", unit).
 			Msg("Unsupported unit")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Bitte wähle als Zeitangabe entweder 's', 'm' oder 'h'.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte wähle als Zeitangabe entweder 's', 'm' oder 'h'.", utils.DefaultSendOptions())
 		return err
 	}
 
 	if remindTime.After(time.Now().AddDate(1, 0, 0)) {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Bitte wähle eine kürzere Dauer.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte wähle eine kürzere Dauer.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -296,7 +296,7 @@ func (p *Plugin) onAddDeltaReminder(b *gotgbot.Bot, c plugin.GobotContext) error
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to save reminder")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -304,7 +304,7 @@ func (p *Plugin) onAddDeltaReminder(b *gotgbot.Bot, c plugin.GobotContext) error
 		p.sendReminder(b, id)
 	})
 
-	_, err = c.EffectiveMessage.Reply(b,
+	_, err = c.EffectiveMessage.ReplyMessage(b,
 		fmt.Sprintf("🕒 Erinnerung eingestellt für den <b>%s</b>.",
 			remindTime.Format("02.01.2006 um 15:04:05 Uhr"),
 		),
@@ -317,7 +317,7 @@ func (p *Plugin) onDeleteReminder(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err := p.reminderService.DeleteReminder(c.EffectiveChat, c.EffectiveUser, id)
 	if err != nil {
 		if errors.Is(err, model.ErrNotFound) {
-			_, err := c.EffectiveMessage.Reply(b, "❌ Diese Erinnerung existiert nicht.", &gotgbot.SendMessageOpts{
+			_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Diese Erinnerung existiert nicht.", &gotgbot.SendMessageOpts{
 				ReplyParameters: &gotgbot.ReplyParameters{
 					AllowSendingWithoutReply: true,
 				},
@@ -334,7 +334,7 @@ func (p *Plugin) onDeleteReminder(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to delete reminder")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -350,12 +350,12 @@ func (p *Plugin) onGetReminders(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("guid", guid).
 			Msg("Failed to get reminders")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Es ist ein Fehler aufgetreten.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Es ist ein Fehler aufgetreten.", utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(reminders) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "💡 Es wurden noch keine Erinnerungen eingespeichert.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "💡 Es wurden noch keine Erinnerungen eingespeichert.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -374,7 +374,7 @@ func (p *Plugin) onGetReminders(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	sb.WriteString("\n<i>Zum Entfernen einer Erinnerung: <code>/remind_delete ID</code></i>")
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err
 
 }

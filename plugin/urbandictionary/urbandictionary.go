@@ -60,12 +60,12 @@ func onUrbanDictionary(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("query", query).
 			Msg("Failed to search urban dictionary")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(response.List) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Nichts gefunden.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Nichts gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -109,6 +109,6 @@ func onUrbanDictionary(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString(fmt.Sprintf(" - 👎 %s", utils.FormatThousand(term.Downvotes)))
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

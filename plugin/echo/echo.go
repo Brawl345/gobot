@@ -37,7 +37,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func onEcho(b *gotgbot.Bot, c plugin.GobotContext) error {
-	_, err := c.EffectiveMessage.Reply(b, c.Matches[1], &gotgbot.SendMessageOpts{
+	_, err := c.EffectiveMessage.ReplyMessage(b, c.Matches[1], &gotgbot.SendMessageOpts{
 		ReplyParameters: &gotgbot.ReplyParameters{
 			AllowSendingWithoutReply: true,
 		},

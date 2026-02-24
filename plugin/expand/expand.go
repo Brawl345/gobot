@@ -121,7 +121,7 @@ func onExpand(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	if len(shortUrls) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "Keine Links gefunden", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "Keine Links gefunden", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -146,7 +146,7 @@ func onExpand(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString("💡 <i>...weitere Links ignoriert</i>\n")
 	}
 
-	_, err := c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err := c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }
 
@@ -161,7 +161,7 @@ func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if strings.HasPrefix(c.EffectiveMessage.ReplyToMessage.Text, "/expand") ||
 		strings.HasPrefix(c.EffectiveMessage.ReplyToMessage.Caption, "/expand") {
-		_, err := c.EffectiveMessage.Reply(b, "😠", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "😠", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -174,7 +174,7 @@ func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	if len(shortUrls) == 0 {
-		_, err := c.EffectiveMessage.ReplyToMessage.Reply(b, "Keine Links gefunden", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyToMessage.ReplyMessage(b, "Keine Links gefunden", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -197,6 +197,6 @@ func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString("💡 <i>...weitere Links ignoriert</i>\n")
 	}
 
-	_, err := c.EffectiveMessage.ReplyToMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err := c.EffectiveMessage.ReplyToMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

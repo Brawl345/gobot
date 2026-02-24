@@ -93,12 +93,12 @@ func (p *Plugin) onWeather(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if err != nil {
 		if errors.Is(err, model.ErrHomeAddressNotSet) {
-			_, err := c.EffectiveMessage.Reply(b, "🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
+			_, err := c.EffectiveMessage.ReplyMessage(b, "🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
 				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions())
 			return err
 		}
 		if errors.Is(err, model.ErrAddressNotFound) {
-			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
+			_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
 			return err
 		}
 		guid := xid.New().String()
@@ -107,7 +107,7 @@ func (p *Plugin) onWeather(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error getting location")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -126,7 +126,7 @@ func (p *Plugin) onWeather(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Err(err).
 			Str("guid", guid).
 			Msg("error getting weather")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -259,7 +259,7 @@ func (p *Plugin) onWeather(b *gotgbot.Bot, c plugin.GobotContext) error {
 		),
 	)
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }
 
@@ -276,12 +276,12 @@ func (p *Plugin) onForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if err != nil {
 		if errors.Is(err, model.ErrHomeAddressNotSet) {
-			_, err := c.EffectiveMessage.Reply(b, "🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
+			_, err := c.EffectiveMessage.ReplyMessage(b, "🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
 				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions())
 			return err
 		}
 		if errors.Is(err, model.ErrAddressNotFound) {
-			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
+			_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
 			return err
 		}
 		guid := xid.New().String()
@@ -290,7 +290,7 @@ func (p *Plugin) onForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error getting location")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -309,7 +309,7 @@ func (p *Plugin) onForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Err(err).
 			Str("guid", guid).
 			Msg("error getting weather")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -338,7 +338,7 @@ func (p *Plugin) onForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString("\n")
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }
 
@@ -355,12 +355,12 @@ func (p *Plugin) onHourlyForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if err != nil {
 		if errors.Is(err, model.ErrHomeAddressNotSet) {
-			_, err := c.EffectiveMessage.Reply(b, "🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
+			_, err := c.EffectiveMessage.ReplyMessage(b, "🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
 				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions())
 			return err
 		}
 		if errors.Is(err, model.ErrAddressNotFound) {
-			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
+			_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
 			return err
 		}
 		guid := xid.New().String()
@@ -369,7 +369,7 @@ func (p *Plugin) onHourlyForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error getting location")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -388,7 +388,7 @@ func (p *Plugin) onHourlyForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Err(err).
 			Str("guid", guid).
 			Msg("error getting weather")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -423,6 +423,6 @@ func (p *Plugin) onHourlyForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

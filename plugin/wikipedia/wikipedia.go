@@ -82,7 +82,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("query", query).
 			Msg("Failed to unescape query")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -119,7 +119,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err != nil {
 		var noSuchHostErr *net.DNSError
 		if errors.As(err, &noSuchHostErr) {
-			_, err := c.EffectiveMessage.Reply(b, "❌ Diese Wikipedia-Sprachversion existiert nicht.", nil)
+			_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Diese Wikipedia-Sprachversion existiert nicht.", nil)
 			return err
 		}
 
@@ -128,19 +128,19 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("query", query).
 			Msg("Failed to get Wikipedia response")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(response.Query.Pages) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Artikel nicht gefunden.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Artikel nicht gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
 	article := response.Query.Pages[0]
 	if article.Missing {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Artikel nicht gefunden.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Artikel nicht gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -149,7 +149,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("query", query).
 			Str("invalid_reason", article.InvalidReason).
 			Msg("Invalid article")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Artikel nicht gefunden.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Artikel nicht gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -195,7 +195,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Str("guid", guid).
 				Str("query", query).
 				Msg("Failed to get disambiugation response")
-			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 				utils.DefaultSendOptions())
 			return err
 		}
@@ -214,7 +214,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 			}
 		}
 
-		_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+		_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), &gotgbot.SendMessageOpts{
 			ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
 			LinkPreviewOptions:  &gotgbot.LinkPreviewOptions{IsDisabled: true},
 			DisableNotification: true,
@@ -242,7 +242,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Str("query", query).
 				Str("section", section).
 				Msg("Failed to unescape section")
-			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 				utils.DefaultSendOptions())
 			return err
 		}
@@ -277,6 +277,6 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 		),
 	)
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

@@ -62,7 +62,7 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	apiKey := p.credentialService.GetKey("timezonedb_api_key")
 	if apiKey == "" {
 		log.Warn().Msg("timezonedb_api_key not found")
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"❌ <code>timezonedb_api_key</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
@@ -78,7 +78,7 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	venue, err := p.geocodingService.Geocode(location)
 	if err != nil {
 		if errors.Is(err, model.ErrAddressNotFound) {
-			_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
+			_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
 			return err
 		}
 
@@ -87,7 +87,7 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("location", c.Matches[1]).
 			Msg("Failed to get coordinates for location")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Koordinaten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Fehler beim Abrufen der Koordinaten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -122,7 +122,7 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("url", requestUrl.String()).
 			Msg("error requesting API")
 
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -132,7 +132,7 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("status", response.Status).
 			Str("message", response.Message).
 			Msg("got unexpected response from API")
-		_, err := c.EffectiveMessage.Reply(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Ort nicht gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -154,6 +154,6 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 		),
 	)
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

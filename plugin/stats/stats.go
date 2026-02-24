@@ -56,13 +56,13 @@ func (p *Plugin) OnStats(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to get statistics")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Abrufen der Statistiken.%s", utils.EmbedGUID(guid)),
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Fehler beim Abrufen der Statistiken.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(users) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "<i>Es wurden noch keine Statistiken erstellt.</i>", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "<i>Es wurden noch keine Statistiken erstellt.</i>", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -104,6 +104,6 @@ func (p *Plugin) OnStats(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 	sb.WriteString(fmt.Sprintf("<b>GESAMT:</b> %s", utils.FormatThousand(totalCount)))
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err
 }

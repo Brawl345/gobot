@@ -61,7 +61,7 @@ func onReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 	text = strings.ReplaceAll(text, c.Matches[1], replacement)
 	text = utils.Escape(text)
 
-	_, err := c.EffectiveMessage.ReplyToMessage.Reply(b, "<b>Du meintest wohl:</b>\n"+text, &gotgbot.SendMessageOpts{
+	_, err := c.EffectiveMessage.ReplyToMessage.ReplyMessage(b, "<b>Du meintest wohl:</b>\n"+text, &gotgbot.SendMessageOpts{
 		ReplyParameters: &gotgbot.ReplyParameters{
 			AllowSendingWithoutReply: true,
 		},
@@ -91,7 +91,7 @@ func onRegexReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	re, err := regexp.Compile(c.Matches[1])
 	if err != nil {
-		_, err = c.EffectiveMessage.Reply(b,
+		_, err = c.EffectiveMessage.ReplyMessage(b,
 			fmt.Sprintf("❌ Fehler beim Erstellen des regulären Ausdrucks: <code>%v</code>", err),
 			utils.DefaultSendOptions(),
 		)
@@ -101,6 +101,6 @@ func onRegexReplace(b *gotgbot.Bot, c plugin.GobotContext) error {
 	text = re.ReplaceAllString(text, c.Matches[2])
 	text = utils.Escape(text)
 
-	_, err = c.EffectiveMessage.ReplyToMessage.Reply(b, "<b>Du meintest wohl:</b>\n"+text, utils.DefaultSendOptions())
+	_, err = c.EffectiveMessage.ReplyToMessage.ReplyMessage(b, "<b>Du meintest wohl:</b>\n"+text, utils.DefaultSendOptions())
 	return err
 }

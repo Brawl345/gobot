@@ -157,7 +157,7 @@ func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if c.EffectiveUser.Username == "" {
-		_, err := c.EffectiveMessage.Reply(b, "😕 Du benötigst einen Benutzernamen um dieses Feature zu nutzen.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "😕 Du benötigst einen Benutzernamen um dieses Feature zu nutzen.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -168,10 +168,10 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 		if errors.As(err, &telegramErr) {
 			switch telegramErr.Description {
 			case tgUtils.ErrBlockedByUser:
-				_, err := c.EffectiveMessage.Reply(b, "😭 Du hast mich blockiert T__T", utils.DefaultSendOptions())
+				_, err := c.EffectiveMessage.ReplyMessage(b, "😭 Du hast mich blockiert T__T", utils.DefaultSendOptions())
 				return err
 			case tgUtils.ErrNotStartedByUser:
-				_, err := c.EffectiveMessage.Reply(b, "ℹ Bitte starte mich vor dem Aktivieren zuerst privat.", utils.DefaultSendOptions())
+				_, err := c.EffectiveMessage.ReplyMessage(b, "ℹ Bitte starte mich vor dem Aktivieren zuerst privat.", utils.DefaultSendOptions())
 				return err
 			}
 		}
@@ -182,7 +182,7 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error while sending test message")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Ich wollte dir eine Nachricht senden, aber das hat nicht funktioniert Bitte den Administrator des Bots um Hilfe und sende ihm folgenden Fehler-Code:%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Ich wollte dir eine Nachricht senden, aber das hat nicht funktioniert Bitte den Administrator des Bots um Hilfe und sende ihm folgenden Fehler-Code:%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -201,13 +201,13 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error during enabled check")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
 
 	if enabled {
-		_, err := c.EffectiveMessage.Reply(b, "💡 Du wirst in dieser Gruppe schon über neue Erwähnungen informiert.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "💡 Du wirst in dieser Gruppe schon über neue Erwähnungen informiert.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -219,7 +219,7 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error while enabling notifications")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -239,13 +239,13 @@ func (p *Plugin) disableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error during enabled check")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
 
 	if !enabled {
-		_, err := c.EffectiveMessage.Reply(b, "💡 Du wirst in dieser Gruppe nicht über neue Erwähnungen informiert.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "💡 Du wirst in dieser Gruppe nicht über neue Erwähnungen informiert.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -257,7 +257,7 @@ func (p *Plugin) disableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error while disabling notifications")
-		_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}

@@ -55,7 +55,7 @@ func (p *Plugin) onGoogleSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	apiKey := p.credentialService.GetKey("google_api_key")
 	if apiKey == "" {
 		log.Warn().Msg("google_api_key not found")
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"❌ <code>google_api_key</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
@@ -65,7 +65,7 @@ func (p *Plugin) onGoogleSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	searchEngineID := p.credentialService.GetKey("google_search_engine_id")
 	if searchEngineID == "" {
 		log.Warn().Msg("google_search_engine_id not found")
-		_, err := c.EffectiveMessage.Reply(b,
+		_, err := c.EffectiveMessage.ReplyMessage(b,
 			"❌ <code>google_search_engine_id</code> fehlt.",
 			utils.DefaultSendOptions(),
 		)
@@ -105,12 +105,12 @@ func (p *Plugin) onGoogleSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Str("query", query).
 			Msg("Error while requesting google search")
-		_, err := c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
 	if len(response.Items) == 0 {
-		_, err := c.EffectiveMessage.Reply(b, "❌ Es wurden keine Ergebnisse gefunden.", utils.DefaultSendOptions())
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Es wurden keine Ergebnisse gefunden.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -126,7 +126,7 @@ func (p *Plugin) onGoogleSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 		)
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), &gotgbot.SendMessageOpts{
 		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
 		LinkPreviewOptions:  &gotgbot.LinkPreviewOptions{IsDisabled: true},
 		DisableNotification: true,

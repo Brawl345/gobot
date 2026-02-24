@@ -180,7 +180,7 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString(apiResponse.Text)
 	}
 
-	_, err = c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), &gotgbot.SendMessageOpts{
 		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
 		LinkPreviewOptions:  &gotgbot.LinkPreviewOptions{IsDisabled: true},
 		DisableNotification: true,

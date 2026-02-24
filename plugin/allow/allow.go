@@ -55,7 +55,7 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 func (p *Plugin) OnAllow(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if tgUtils.IsReply(c.EffectiveMessage) { // Allow user
 		if c.EffectiveMessage.ReplyToMessage.From.IsBot {
-			_, err := c.EffectiveMessage.Reply(b, "🤖🤖🤖", utils.DefaultSendOptions())
+			_, err := c.EffectiveMessage.ReplyMessage(b, "🤖🤖🤖", utils.DefaultSendOptions())
 			return err
 		}
 
@@ -78,7 +78,7 @@ func (p *Plugin) OnAllow(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Str("guid", guid).
 				Int64("chat_id", c.EffectiveMessage.ReplyToMessage.From.Id).
 				Msg("Failed to allow user")
-			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Erlauben des Nutzers.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Fehler beim Erlauben des Nutzers.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 			return err
 		}
 
@@ -107,7 +107,7 @@ func (p *Plugin) OnAllow(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Int64("chat_id", c.EffectiveMessage.ReplyToMessage.From.Id).
 				Msg("Failed to allow chat")
 
-			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Erlauben des Chats.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Fehler beim Erlauben des Chats.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 			return err
 		}
 
@@ -122,7 +122,7 @@ func (p *Plugin) OnAllow(b *gotgbot.Bot, c plugin.GobotContext) error {
 func (p *Plugin) OnDeny(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if tgUtils.IsReply(c.EffectiveMessage) { // Deny user
 		if c.EffectiveMessage.ReplyToMessage.From.IsBot {
-			_, err := c.EffectiveMessage.Reply(b, "🤖🤖🤖", utils.DefaultSendOptions())
+			_, err := c.EffectiveMessage.ReplyMessage(b, "🤖🤖🤖", utils.DefaultSendOptions())
 			return err
 		}
 
@@ -144,7 +144,7 @@ func (p *Plugin) OnDeny(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Int64("chat_id", c.EffectiveMessage.ReplyToMessage.From.Id).
 				Msg("Failed to deny user")
 
-			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Verweigern des Nutzers.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Fehler beim Verweigern des Nutzers.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 			return err
 		}
 
@@ -172,7 +172,7 @@ func (p *Plugin) OnDeny(b *gotgbot.Bot, c plugin.GobotContext) error {
 				Str("guid", guid).
 				Int64("chat_id", c.EffectiveMessage.ReplyToMessage.From.Id).
 				Msg("Failed to deny chat")
-			_, err = c.EffectiveMessage.Reply(b, fmt.Sprintf("❌ Fehler beim Verweigern des Chats.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+			_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Fehler beim Verweigern des Chats.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 			return err
 		}
 

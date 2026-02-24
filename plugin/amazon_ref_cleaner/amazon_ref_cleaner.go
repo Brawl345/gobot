@@ -112,7 +112,7 @@ func onAmazonLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString(link + "\n")
 	}
 
-	_, err := c.EffectiveMessage.Reply(b, sb.String(), &gotgbot.SendMessageOpts{
+	_, err := c.EffectiveMessage.ReplyMessage(b, sb.String(), &gotgbot.SendMessageOpts{
 		DisableNotification: true,
 		ParseMode:           gotgbot.ParseModeHTML,
 		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
