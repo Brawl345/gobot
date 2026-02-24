@@ -21,9 +21,6 @@ const (
 	MaxPhotosizeUpload          = 10000000 // Max filesize of photos that can be uploaded to Telegram = 10 MB
 	MaxPhotosizeThroughTelegram = 5000000  // Max filesize of photos that Telegram can send automatically = 5 MB
 
-	ChatMemberStatusCreator       = "creator"
-	ChatMemberStatusAdministrator = "administrator"
-
 	EntityTextLink    EntityType = "text_link"
 	EntityTypeMention EntityType = "mention"
 	EntityTypeURL     EntityType = "url"

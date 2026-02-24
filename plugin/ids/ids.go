@@ -9,7 +9,6 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
-	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 	"golang.org/x/exp/slices"
@@ -93,9 +92,9 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var admins []int64
 	var creator int64
 	for _, u := range adminsAndCreators {
-		if u.GetStatus() == tgUtils.ChatMemberStatusCreator {
+		if u.GetStatus() == gotgbot.ChatMemberStatusOwner {
 			creator = u.GetUser().Id
-		} else if u.GetStatus() == tgUtils.ChatMemberStatusAdministrator {
+		} else if u.GetStatus() == gotgbot.ChatMemberStatusAdministrator {
 			admins = append(admins, u.GetUser().Id)
 		}
 	}
