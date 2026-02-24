@@ -95,7 +95,7 @@ func onShrugInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 				},
 			},
 		},
-		&gotgbot.AnswerInlineQueryOpts{CacheTime: InlineQueryCacheTime},
+		&gotgbot.AnswerInlineQueryOpts{CacheTime: utils.Ptr(int64(InlineQueryCacheTime))},
 	)
 	return err
 }
@@ -117,7 +117,7 @@ func onLennyFaceInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 				},
 			},
 		},
-		&gotgbot.AnswerInlineQueryOpts{CacheTime: InlineQueryCacheTime},
+		&gotgbot.AnswerInlineQueryOpts{CacheTime: utils.Ptr(int64(InlineQueryCacheTime))},
 	)
 	return err
 }
@@ -139,7 +139,7 @@ func onLookOfDisapprovalInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 				},
 			},
 		},
-		&gotgbot.AnswerInlineQueryOpts{CacheTime: InlineQueryCacheTime},
+		&gotgbot.AnswerInlineQueryOpts{CacheTime: utils.Ptr(int64(InlineQueryCacheTime))},
 	)
 	return err
 }

@@ -358,7 +358,7 @@ func (p *Processor) onInlineQuery(b *gotgbot.Bot, ctx *ext.Context) error {
 		_, err := ctx.InlineQuery.Answer(b,
 			nil,
 			&gotgbot.AnswerInlineQueryOpts{
-				CacheTime:  utils.InlineQueryFailureCacheTime,
+				CacheTime:  utils.Ptr(utils.InlineQueryFailureCacheTime),
 				IsPersonal: true,
 			})
 		return err
@@ -382,7 +382,7 @@ func (p *Processor) onInlineQuery(b *gotgbot.Bot, ctx *ext.Context) error {
 				if !p.managerService.IsPluginEnabled(plg.Name()) {
 					log.Printf("Plugin %s is disabled globally", plg.Name())
 					_, err := ctx.InlineQuery.Answer(b, nil, &gotgbot.AnswerInlineQueryOpts{
-						CacheTime:  utils.InlineQueryFailureCacheTime,
+						CacheTime:  utils.Ptr(utils.InlineQueryFailureCacheTime),
 						IsPersonal: true,
 					})
 					return err
@@ -391,7 +391,7 @@ func (p *Processor) onInlineQuery(b *gotgbot.Bot, ctx *ext.Context) error {
 				if handler.AdminOnly && !tgUtils.IsAdmin(ctx.EffectiveUser) {
 					log.Print("User is not an admin.")
 					_, err := ctx.InlineQuery.Answer(b, nil, &gotgbot.AnswerInlineQueryOpts{
-						CacheTime:  utils.InlineQueryFailureCacheTime,
+						CacheTime:  utils.Ptr(utils.InlineQueryFailureCacheTime),
 						IsPersonal: true,
 					})
 					return err
@@ -401,7 +401,7 @@ func (p *Processor) onInlineQuery(b *gotgbot.Bot, ctx *ext.Context) error {
 					isAllowed := p.allowService.IsUserAllowed(ctx.EffectiveUser)
 					if !isAllowed {
 						_, err := ctx.InlineQuery.Answer(b, nil, &gotgbot.AnswerInlineQueryOpts{
-							CacheTime:  utils.InlineQueryFailureCacheTime,
+							CacheTime:  utils.Ptr(utils.InlineQueryFailureCacheTime),
 							IsPersonal: true,
 						})
 						return err

@@ -166,7 +166,7 @@ func onConvertFromToInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 			b,
 			nil,
 			&gotgbot.AnswerInlineQueryOpts{
-				CacheTime:  utils.InlineQueryFailureCacheTime,
+				CacheTime:  utils.Ptr(utils.InlineQueryFailureCacheTime),
 				IsPersonal: true,
 			},
 		)
@@ -188,7 +188,7 @@ func onConvertFromToInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 				},
 			},
 		},
-		&gotgbot.AnswerInlineQueryOpts{CacheTime: InlineQueryCacheTime},
+		&gotgbot.AnswerInlineQueryOpts{CacheTime: utils.Ptr(int64(InlineQueryCacheTime))},
 	)
 	return err
 }
@@ -203,7 +203,7 @@ func onConvertToEURInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 			b,
 			nil,
 			&gotgbot.AnswerInlineQueryOpts{
-				CacheTime:  utils.InlineQueryFailureCacheTime,
+				CacheTime:  utils.Ptr(utils.InlineQueryFailureCacheTime),
 				IsPersonal: true,
 			},
 		)
@@ -224,7 +224,7 @@ func onConvertToEURInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 				},
 			},
 		},
-		&gotgbot.AnswerInlineQueryOpts{CacheTime: InlineQueryCacheTime},
+		&gotgbot.AnswerInlineQueryOpts{CacheTime: utils.Ptr(int64(InlineQueryCacheTime))},
 	)
 	return err
 }

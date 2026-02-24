@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	codeberg.org/readeck/go-readability/v2 v2.1.1
-	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.33
+	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.34
 	github.com/go-sql-driver/mysql v1.9.3
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1

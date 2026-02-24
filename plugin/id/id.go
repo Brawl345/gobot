@@ -99,7 +99,7 @@ func onIdInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 				},
 			},
 		},
-		&gotgbot.AnswerInlineQueryOpts{CacheTime: InlineQueryCacheTime, IsPersonal: true},
+		&gotgbot.AnswerInlineQueryOpts{CacheTime: utils.Ptr(int64(InlineQueryCacheTime)), IsPersonal: true},
 	)
 	return err
 }
