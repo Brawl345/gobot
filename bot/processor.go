@@ -104,10 +104,7 @@ func (p *Processor) onMessage(b *gotgbot.Bot, ctx *ext.Context) error {
 	text := msg.GetText()
 
 	for _, plg := range p.managerService.Plugins() {
-		plg := plg
 		for _, h := range plg.Handlers(&b.User) {
-			h := h
-
 			handler, ok := h.(*plugin.CommandHandler)
 			if !ok {
 				continue
@@ -249,10 +246,7 @@ func (p *Processor) onCallback(b *gotgbot.Bot, ctx *ext.Context) error {
 	}
 
 	for _, plg := range p.managerService.Plugins() {
-		plg := plg
 		for _, h := range plg.Handlers(&b.User) {
-			h := h
-
 			handler, ok := h.(*plugin.CallbackHandler)
 			if !ok {
 				continue
@@ -371,9 +365,7 @@ func (p *Processor) onInlineQuery(b *gotgbot.Bot, ctx *ext.Context) error {
 	}
 
 	for _, plg := range p.managerService.Plugins() {
-		plg := plg
 		for _, h := range plg.Handlers(&b.User) {
-			h := h
 			handler, ok := h.(*plugin.InlineHandler)
 			if !ok {
 				continue

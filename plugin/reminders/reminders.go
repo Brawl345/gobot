@@ -46,7 +46,6 @@ func New(bot *gotgbot.Bot, service Service) *Plugin {
 	}
 
 	for _, reminder := range reminders {
-		reminder := reminder
 		if time.Now().After(reminder.Time) {
 			p.sendReminder(bot, reminder.ID)
 		} else {

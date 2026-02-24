@@ -75,7 +75,6 @@ func GetBestResolution(photo []gotgbot.PhotoSize) *gotgbot.PhotoSize {
 	var filesize int64
 	var bestResolution *gotgbot.PhotoSize
 	for _, photoSize := range photo {
-		photoSize := photoSize
 		if photoSize.FileSize > filesize {
 			filesize = photoSize.FileSize
 			bestResolution = &photoSize

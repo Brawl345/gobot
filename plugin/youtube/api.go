@@ -121,7 +121,6 @@ func (d *DeArrowResponse) GetBestTitle() string {
 	maxVotes := -1
 	var title string
 	for _, t := range d.Titles {
-		t := t
 		if t.Votes > maxVotes && !t.Original {
 			maxVotes = t.Votes
 			title = t.Title
