@@ -51,8 +51,8 @@
           src = pkgs.lib.cleanSource self;
 
           # Update the hash if go dependencies change!
-#           vendorHash = pkgs.lib.fakeHash;
-          vendorHash = "sha256-wFOg6rfx82y9xVMtotORxB5Clvus4eyE3K3ncNdfaj8=";
+          # vendorHash = pkgs.lib.fakeHash;
+          vendorHash = "sha256-skilfQc0aHPwFLjQSH4oKUP/ARK52ZtcfgHmzckAovk=";
 
           ldflags = [
             "-s"
