@@ -109,7 +109,7 @@ func (p *Plugin) getVideoInfo(videoID string) (Video, error) {
 	return response.Items[0], nil
 }
 
-func deArrow(originalText string, video *Video) (string, error) {
+func deArrow(b *gotgbot.Bot, msg *gotgbot.Message, originalText string, video *Video, disableLinkPreview bool) error {
 	// https://wiki.sponsor.ajay.app/w/API_Docs/DeArrow#GET_/api/branding
 	deArrowUrl := fmt.Sprintf("https://sponsor.ajay.app/api/branding/?videoID=%s", video.ID)
 	var deArrowResponse DeArrowResponse
@@ -124,10 +124,10 @@ func deArrow(originalText string, video *Video) (string, error) {
 		if errors.As(err, &httpError) {
 			if httpError.StatusCode == http.StatusInternalServerError ||
 				httpError.StatusCode == http.StatusNotFound { // API seems to throw 500 for some empty responses
-				return "", nil
+				return nil
 			}
 		}
-		return "", err
+		return err
 	}
 
 	alternativeTitle := deArrowResponse.GetBestTitle()
@@ -141,10 +141,18 @@ func deArrow(originalText string, video *Video) (string, error) {
 			),
 			1,
 		)
-		return modifiedText, nil
+
+		_, _, err := msg.EditText(b, modifiedText, &gotgbot.EditMessageTextOpts{
+			ParseMode: gotgbot.ParseModeHTML,
+			LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
+				IsDisabled: disableLinkPreview,
+			},
+		})
+
+		return err
 	}
 
-	return "", nil
+	return nil
 }
 
 func constructText(video *Video) string {
@@ -327,22 +335,15 @@ func (p *Plugin) OnYouTubeLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	modifiedText, err := deArrow(text, &video)
+	err = deArrow(b, msg, text, &video, true)
 	if err != nil {
 		log.Err(err).
 			Str("videoID", videoID).
 			Msg("Error while contacting DeArrow API")
-		return nil
+		return err
 	}
 
-	_, _, err = msg.EditText(b, modifiedText, &gotgbot.EditMessageTextOpts{
-		ParseMode: gotgbot.ParseModeHTML,
-		LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
-			IsDisabled: true,
-		},
-	})
-
-	return err
+	return nil
 }
 
 func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
@@ -430,17 +431,13 @@ func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	modifiedText, err := deArrow(text, &video)
+	err = deArrow(b, msg, text, &video, false)
 	if err != nil {
 		log.Err(err).
 			Str("videoID", videoID).
 			Msg("Error while contacting DeArrow API")
-		return nil
+		return err
 	}
 
-	_, _, err = msg.EditText(b, modifiedText, &gotgbot.EditMessageTextOpts{
-		ParseMode: gotgbot.ParseModeHTML,
-	})
-
-	return err
+	return nil
 }
