@@ -268,9 +268,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	summary := strings.TrimSpace(article.Text)
-	if len(summary) > 400 {
-		summary = summary[:400] + "..."
-	}
+	summary = utils.TruncateText(summary, 400, "...")
 	sb.WriteString(
 		fmt.Sprintf(
 			"%s\n",

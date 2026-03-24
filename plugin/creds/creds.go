@@ -82,10 +82,12 @@ func (p *Plugin) OnGet(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var sb strings.Builder
 
 	for _, key := range keys {
-		if len(creds[key]) > 300 {
-			sb.WriteString(fmt.Sprintf("<b>%s</b>:\n<code>%s...</code>\n", key, creds[key][:297]))
+		value := creds[key]
+		runes := []rune(value)
+		if len(runes) > 300 {
+			sb.WriteString(fmt.Sprintf("<b>%s</b>:\n<code>%s...</code>\n", key, utils.TruncateText(value, 297)))
 		} else {
-			sb.WriteString(fmt.Sprintf("<b>%s</b>:\n<code>%s</code>\n", key, creds[key]))
+			sb.WriteString(fmt.Sprintf("<b>%s</b>:\n<code>%s</code>\n", key, value))
 		}
 	}
 

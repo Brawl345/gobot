@@ -396,12 +396,7 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	// Synopsis
 	if anime.Synopsis != "" {
 		sb.WriteString("\n")
-		if len(anime.Synopsis) > SynopsisThreshold {
-			sb.WriteString(utils.Escape(anime.Synopsis[:SynopsisThreshold]))
-			sb.WriteString("...")
-		} else {
-			sb.WriteString(utils.Escape(anime.Synopsis))
-		}
+		sb.WriteString(utils.Escape(utils.TruncateText(anime.Synopsis, SynopsisThreshold, "...")))
 	}
 
 	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), &gotgbot.SendMessageOpts{

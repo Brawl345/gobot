@@ -418,11 +418,11 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		output = fmt.Sprintf("🔎🌐 %s", output)
 	}
 
-	if len(output) > tgUtils.MaxMessageLength {
+	if len([]rune(output)) > tgUtils.MaxMessageLength {
 		if inputChars > tgUtils.MaxMessageLength {
-			output = output[:tgUtils.MaxMessageLength-75] + "..." // More space for the message below
+			output = utils.TruncateText(output, tgUtils.MaxMessageLength-75) + "..."
 		} else {
-			output = output[:tgUtils.MaxMessageLength-12] + "..."
+			output = utils.TruncateText(output, tgUtils.MaxMessageLength-12) + "..."
 		}
 	} else {
 		if groundingUsed {

@@ -10,6 +10,7 @@ import (
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
+	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -174,11 +175,7 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var sb strings.Builder
 
 	sb.WriteString("💬 ")
-	if len(apiResponse.Text) > tgUtils.MaxMessageLength {
-		sb.WriteString(apiResponse.Text[:tgUtils.MaxMessageLength-10])
-	} else {
-		sb.WriteString(apiResponse.Text)
-	}
+	sb.WriteString(utils.TruncateText(apiResponse.Text, tgUtils.MaxMessageLength-10, "..."))
 
 	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), &gotgbot.SendMessageOpts{
 		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},

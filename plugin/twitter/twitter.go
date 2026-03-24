@@ -238,9 +238,9 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 			tweet = strings.ReplaceAll(tweet, entity.Url, entity.ExpandedUrl)
 		}
 
-		if len(tweet) > MaxNoteLength {
+		if len([]rune(tweet)) > MaxNoteLength {
 			tweet = fmt.Sprintf("%s...\n<a href=\"https://x.com/%s/status/%s\">Weiterlesen...</a>",
-				utils.Escape(tweet[:MaxNoteLength]),
+				utils.Escape(utils.TruncateText(tweet, MaxNoteLength)),
 				result.Core.UserResults.Result.Core.ScreenName,
 				result.RestId,
 			)
@@ -345,9 +345,9 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 				tweet = strings.ReplaceAll(tweet, entity.Url, entity.ExpandedUrl)
 			}
 
-			if len(tweet) > MaxNoteLength {
+			if len([]rune(tweet)) > MaxNoteLength {
 				tweet = fmt.Sprintf("%s...\n<a href=\"https://x.com/%s/status/%s\">Zitat weiterlesen...</a>",
-					utils.Escape(tweet[:MaxNoteLength]),
+					utils.Escape(utils.TruncateText(tweet, MaxNoteLength)),
 					quoteResultSub.Core.UserResults.Result.Core.ScreenName,
 					quoteResultSub.RestId,
 				)

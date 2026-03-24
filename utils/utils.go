@@ -81,3 +81,15 @@ func TimestampToTime(timestamp int64) time.Time {
 func Ptr[T any](v T) *T {
 	return &v
 }
+
+func TruncateText(text string, maxLength int, suffix ...string) string {
+	runes := []rune(text)
+	if len(runes) <= maxLength {
+		return text
+	}
+	result := string(runes[:maxLength])
+	if len(suffix) > 0 {
+		return result + suffix[0]
+	}
+	return result
+}
