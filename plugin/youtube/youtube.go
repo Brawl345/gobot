@@ -340,7 +340,7 @@ func (p *Plugin) OnYouTubeLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("videoID", videoID).
 			Msg("Error while contacting DeArrow API")
-		return err
+		return nil
 	}
 
 	return nil
@@ -436,7 +436,7 @@ func (p *Plugin) onYouTubeSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Err(err).
 			Str("videoID", videoID).
 			Msg("Error while contacting DeArrow API")
-		return err
+		return nil
 	}
 
 	return nil
