@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/sosodev/duration"
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 var ErrNoVideoFound = errors.New("no video found")

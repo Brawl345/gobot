@@ -14,7 +14,7 @@ import (
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 var log = logger.New("expand")

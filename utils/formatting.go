@@ -7,7 +7,6 @@ import (
 	"strings"
 
 	"github.com/sosodev/duration"
-	"golang.org/x/exp/constraints"
 )
 
 // Do not escape ampersands, because they are not parsed by Telegram
@@ -26,7 +25,13 @@ func RoundAndFormatThousand(n float64) string {
 	return FormatThousand(int64(math.Round(n)))
 }
 
-func FormatThousand[T constraints.Integer](n T) string {
+// Integer constraint
+type Integer interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr
+}
+
+func FormatThousand[T Integer](n T) string {
 	// TODO: Replace with https://stackoverflow.com/a/46811454/3146627
 	// 	when https://youtrack.jetbrains.com/issue/GO-5841 is fixed
 	in := strconv.FormatInt(int64(n), 10)

@@ -12,7 +12,6 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/rubenv/sql-migrate v1.8.1
 	github.com/sosodev/duration v1.4.0
-	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa
 )
 
 require (

@@ -7,7 +7,7 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2"
 
 	"github.com/Brawl345/gobot/model"
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 type allowService struct {

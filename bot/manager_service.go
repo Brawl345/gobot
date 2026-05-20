@@ -4,7 +4,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/PaulSonOfLars/gotgbot/v2"
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 type managerService struct {

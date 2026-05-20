@@ -12,7 +12,7 @@ import (
 	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 var log = logger.New("notify")
