@@ -20,6 +20,7 @@ var log = logger.New("wikipedia")
 
 const (
 	maxNumDisambiguationList = 5
+	userAgent                = "Gobot/1.0 (Telegram Bot; +https://github.com/Brawl345/gobot)"
 )
 
 type Plugin struct{}
@@ -113,7 +114,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
 		Method:   httpUtils.MethodGet,
 		URL:      requestUrl.String(),
-		Headers:  map[string]string{"User-Agent": "Gobot/1.0 (Telegram Bot; +https://github.com/Brawl345/gobot)"},
+		Headers:  map[string]string{"User-Agent": userAgent},
 		Response: &response,
 	})
 	if err != nil {
@@ -186,6 +187,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 		err := httpUtils.MakeRequest(httpUtils.RequestOptions{
 			Method:   httpUtils.MethodGet,
 			URL:      requestUrl.String(),
+			Headers:  map[string]string{"User-Agent": userAgent},
 			Response: &response,
 		})
 		if err != nil {
