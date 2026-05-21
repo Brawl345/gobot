@@ -127,9 +127,7 @@ func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 		_, err := b.SendMessage(userID, sb.String(), utils.DefaultSendOptions())
 
 		if err != nil {
-			var telegramErr *gotgbot.TelegramError
-
-			if errors.As(err, &telegramErr) {
+			if telegramErr, ok := errors.AsType[*gotgbot.TelegramError](err); ok {
 				switch telegramErr.Description {
 				case tgUtils.ErrBlockedByUser:
 					log.Warn().
@@ -163,9 +161,7 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	testMsg, err := b.SendMessage(c.EffectiveUser.Id, "✅", utils.DefaultSendOptions())
 	if err != nil {
-		var telegramErr *gotgbot.TelegramError
-
-		if errors.As(err, &telegramErr) {
+		if telegramErr, ok := errors.AsType[*gotgbot.TelegramError](err); ok {
 			switch telegramErr.Description {
 			case tgUtils.ErrBlockedByUser:
 				_, err := c.EffectiveMessage.ReplyMessage(b, "😭 Du hast mich blockiert T__T", utils.DefaultSendOptions())

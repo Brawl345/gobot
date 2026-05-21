@@ -72,7 +72,6 @@ func calculate(expr string) (string, error) {
 
 	var resp string
 	var errorResp string
-	var httpError *httpUtils.HttpError
 
 	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
 		Method:        httpUtils.MethodGet,
@@ -82,7 +81,7 @@ func calculate(expr string) (string, error) {
 	})
 
 	if err != nil {
-		if errors.As(err, &httpError) && httpError.StatusCode == http.StatusBadRequest {
+		if httpError, ok := errors.AsType[*httpUtils.HttpError](err); ok && httpError.StatusCode == http.StatusBadRequest {
 			return "", &ApiError{Message: errorResp}
 		}
 
@@ -98,8 +97,7 @@ func onCalc(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	result, err := calculate(c.Matches[1])
 	if err != nil {
-		var apiError *ApiError
-		if errors.As(err, &apiError) {
+		if apiError, ok := errors.AsType[*ApiError](err); ok {
 			_, err = c.EffectiveMessage.ReplyMessage(b,
 				fmt.Sprintf("❌ <b>Fehler:</b> <i>%s</i>", utils.Escape(apiError.Error())),
 				utils.DefaultSendOptions(),
@@ -131,8 +129,7 @@ func onCalcInline(b *gotgbot.Bot, c plugin.GobotContext) error {
 	result, err := calculate(c.Matches[1])
 
 	if err != nil {
-		var apiError *ApiError
-		if errors.As(err, &apiError) {
+		if _, ok := errors.AsType[*ApiError](err); ok {
 			log.Debug().Err(err).Msg("user input fail")
 		} else {
 			log.Err(err).Msg("failed to calculate")

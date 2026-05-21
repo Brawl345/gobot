@@ -129,7 +129,6 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 	requestUrl.RawQuery = q.Encode()
 
 	var tweetResponse TweetResponse
-	var httpError *httpUtils.HttpError
 	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
 		Method: httpUtils.MethodGet,
 		URL:    requestUrl.String(),
@@ -144,7 +143,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 	})
 
 	if err != nil {
-		if errors.As(err, &httpError) {
+		if httpError, ok := errors.AsType[*httpUtils.HttpError](err); ok {
 			if httpError.StatusCode == http.StatusForbidden {
 				log.Debug().Msg("Renewing guest token")
 				err = p.renewToken()

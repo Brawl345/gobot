@@ -117,8 +117,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 		Response: &response,
 	})
 	if err != nil {
-		var noSuchHostErr *net.DNSError
-		if errors.As(err, &noSuchHostErr) {
+		if _, ok := errors.AsType[*net.DNSError](err); ok {
 			_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Diese Wikipedia-Sprachversion existiert nicht.", nil)
 			return err
 		}

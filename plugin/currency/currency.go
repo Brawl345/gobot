@@ -78,14 +78,13 @@ func convertCurrency(amount, from, to string) (string, error) {
 	}
 
 	var response Response
-	var httpError *httpUtils.HttpError
 	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
 		Method:   httpUtils.MethodGet,
 		URL:      fmt.Sprintf(ApiUrl, amount, from, to),
 		Response: &response,
 	})
 	if err != nil {
-		if errors.As(err, &httpError) && httpError.StatusCode == http.StatusNotFound {
+		if httpError, ok := errors.AsType[*httpUtils.HttpError](err); ok && httpError.StatusCode == http.StatusNotFound {
 			return "", ErrBadCurrency
 		}
 		return "", err

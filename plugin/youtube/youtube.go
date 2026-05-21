@@ -113,7 +113,6 @@ func deArrow(b *gotgbot.Bot, msg *gotgbot.Message, originalText string, video *V
 	// https://wiki.sponsor.ajay.app/w/API_Docs/DeArrow#GET_/api/branding
 	deArrowUrl := fmt.Sprintf("https://sponsor.ajay.app/api/branding/?videoID=%s", video.ID)
 	var deArrowResponse DeArrowResponse
-	var httpError *httpUtils.HttpError
 	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
 		Method:   httpUtils.MethodGet,
 		URL:      deArrowUrl,
@@ -121,7 +120,7 @@ func deArrow(b *gotgbot.Bot, msg *gotgbot.Message, originalText string, video *V
 	})
 
 	if err != nil {
-		if errors.As(err, &httpError) {
+		if httpError, ok := errors.AsType[*httpUtils.HttpError](err); ok {
 			if httpError.StatusCode == http.StatusInternalServerError ||
 				httpError.StatusCode == http.StatusNotFound { // API seems to throw 500 for some empty responses
 				return nil

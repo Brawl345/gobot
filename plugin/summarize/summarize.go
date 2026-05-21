@@ -303,7 +303,6 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 	}
 
 	var response Response
-	var httpError *httpUtils.HttpError
 
 	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
 		Method: httpUtils.MethodPost,
@@ -316,7 +315,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 	})
 
 	if err != nil {
-		if errors.As(err, &httpError) {
+		if httpError, ok := errors.AsType[*httpUtils.HttpError](err); ok {
 			if httpError.StatusCode == http.StatusTooManyRequests {
 				_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Rate-Limit erreicht.", utils.DefaultSendOptions())
 				return err

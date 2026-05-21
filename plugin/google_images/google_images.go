@@ -263,13 +263,12 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 
 func (p *Plugin) onImageSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 	err := p.doImageSearch(b, &c)
-	var httpError *httpUtils.HttpError
 	if err != nil {
 		if errors.Is(err, ErrNoImagesFound) {
 			_, err = c.EffectiveMessage.ReplyMessage(b, "❌ Keine Bilder gefunden.", utils.DefaultSendOptions())
 		} else if errors.Is(err, ErrCouldNotDownloadAnyImage) {
 			_, err = c.EffectiveMessage.ReplyMessage(b, "❌ Es konnte kein Bild heruntergeladen werden.", utils.DefaultSendOptions())
-		} else if errors.As(err, &httpError) && httpError.StatusCode == http.StatusTooManyRequests {
+		} else if httpError, ok := errors.AsType[*httpUtils.HttpError](err); ok && httpError.StatusCode == http.StatusTooManyRequests {
 			_, err = c.EffectiveMessage.ReplyMessage(b, "❌ Rate-Limit erreicht. Bitte versuche es morgen erneut.", utils.DefaultSendOptions())
 		} else {
 			guid := xid.New().String()

@@ -89,8 +89,7 @@ func expandUrl(url string) (string, error) {
 func loop(sb *strings.Builder, url string, depth int) {
 	expandedUrl, err := expandUrl(url)
 	if err != nil {
-		var httpErr *httpUtils.HttpError
-		if errors.As(err, &httpErr) {
+		if httpErr, ok := errors.AsType[*httpUtils.HttpError](err); ok {
 			sb.WriteString(fmt.Sprintf("➡ <b>HTTP-Status %d %s</b>\n", httpErr.StatusCode, httpErr.StatusText()))
 			return
 		}

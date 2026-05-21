@@ -99,8 +99,7 @@ func AddRectionWithFallback(b *gotgbot.Bot, message *gotgbot.Message, emoji stri
 		},
 	})
 
-	var telegramErr *gotgbot.TelegramError
-	if err != nil && errors.As(err, &telegramErr) && telegramErr.Description == ErrReactionInvalid {
+	if telegramErr, ok := errors.AsType[*gotgbot.TelegramError](err); err != nil && ok && telegramErr.Description == ErrReactionInvalid {
 		fallback := cmp.Or(opts.Fallback, emoji)
 		sendMessageOpts := cmp.Or(opts.SendMessageOpts, utils.DefaultSendOptions())
 

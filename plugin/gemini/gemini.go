@@ -304,9 +304,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 		if err == nil {
 			break
 		}
-
-		var httpError *httpUtils.HttpError
-		if errors.As(err, &httpError) {
+		if httpError, ok := errors.AsType[*httpUtils.HttpError](err); ok {
 			if httpError.StatusCode == http.StatusInternalServerError {
 				log.Warn().
 					Err(err).
@@ -341,9 +339,7 @@ func (p *Plugin) onGemini(b *gotgbot.Bot, c plugin.GobotContext) error {
 				return err
 			}
 		}
-
-		var netErr net.Error
-		if errors.As(err, &netErr) && netErr.Timeout() {
+		if netErr, ok := errors.AsType[net.Error](err); ok && netErr.Timeout() {
 			_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Timeout, bitte erneut versuchen.", utils.DefaultSendOptions())
 			return err
 		}

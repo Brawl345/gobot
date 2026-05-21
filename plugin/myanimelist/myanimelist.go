@@ -154,7 +154,6 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	var anime Anime
-	var httpError *httpUtils.HttpError
 
 	requestUrl := url.URL{
 		Scheme: "https",
@@ -173,7 +172,7 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 	})
 
 	if err != nil {
-		if errors.As(err, &httpError) {
+		if httpError, ok := errors.AsType[*httpUtils.HttpError](err); ok {
 			if httpError.StatusCode == http.StatusNotFound {
 				_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Anime nicht gefunden.", utils.DefaultSendOptions())
 				return err
