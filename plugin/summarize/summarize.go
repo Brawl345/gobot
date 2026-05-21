@@ -27,11 +27,12 @@ const (
 	MinArticleLength        = 500
 	DefaultApiUrl           = "https://api.openai.com/v1/chat/completions"
 	DefaultApiModel         = "gpt-4o-mini"
+	DefaultNewApiModel      = "gpt-5.5"
 	DefaultMaxArticleLength = 128000 * 4.8
 	MaxOutputTokens         = 1000
 	PresencePenalty         = 1.0
 	Temperature             = 0.3
-	SystemPrompt            = "Fasse den folgenden Artikel in fünf kurzen Stichpunkten zusammen. Antworte IMMER nur Deutsch. Formatiere deine Ausgabe wie folgt:\n" +
+	SystemPrompt            = "Fasse den folgenden Artikel in drei bis fünf kurzen Stichpunkten zusammen. Antworte IMMER nur Deutsch. Formatiere deine Ausgabe wie folgt:\n" +
 		"Der Artikel handelt von [Zusammenfassung in einem Satz]\n\n" +
 		"- [Stichpunkt 1]..."
 )
@@ -103,9 +104,15 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		return err
 	}
 
+	useNewOpenAIModels := strings.EqualFold(p.credentialService.GetKey("summarize_use_new_openai_models"), "true")
+
 	chatModel := p.credentialService.GetKey("summarize_model")
 	if chatModel == "" {
-		chatModel = DefaultApiModel
+		if useNewOpenAIModels {
+			chatModel = DefaultNewApiModel
+		} else {
+			chatModel = DefaultApiModel
+		}
 	}
 
 	// Must be the direct URL to an OpenAI-compatible API - nothing will be appended. Slashes at the end will be removed.
@@ -283,9 +290,16 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 				Content: articleText,
 			},
 		},
-		PresencePenalty: PresencePenalty,
-		MaxTokens:       MaxOutputTokens,
-		Temperature:     Temperature,
+	}
+
+	if useNewOpenAIModels {
+		request.MaxCompletionTokens = MaxOutputTokens
+	} else {
+		presencePenalty := float32(PresencePenalty)
+		temperature := float32(Temperature)
+		request.PresencePenalty = &presencePenalty
+		request.MaxTokens = MaxOutputTokens
+		request.Temperature = &temperature
 	}
 
 	var response Response

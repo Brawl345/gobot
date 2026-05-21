@@ -7,11 +7,12 @@ const (
 
 type (
 	Request struct {
-		Model           string       `json:"model"`
-		Messages        []ApiMessage `json:"messages"`
-		PresencePenalty float32      `json:"presence_penalty"`
-		MaxTokens       int          `json:"max_tokens"`
-		Temperature     float32      `json:"temperature"`
+		Model               string       `json:"model"`
+		Messages            []ApiMessage `json:"messages"`
+		PresencePenalty     *float32     `json:"presence_penalty,omitempty"`
+		MaxTokens           int          `json:"max_tokens,omitempty"`
+		MaxCompletionTokens int          `json:"max_completion_tokens,omitempty"`
+		Temperature         *float32     `json:"temperature,omitempty"`
 	}
 
 	ApiMessage struct {
