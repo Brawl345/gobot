@@ -187,8 +187,8 @@ func (p *Plugin) notifyIfAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	if mentionedUsername == "" ||
-		mentionedUsername == strings.ToLower(b.Username) ||
-		mentionedUsername == strings.ToLower(c.EffectiveSender.Username()) {
+		strings.EqualFold(mentionedUsername, b.Username) ||
+		strings.EqualFold(mentionedUsername, c.EffectiveSender.Username()) {
 		return nil
 	}
 

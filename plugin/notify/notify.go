@@ -79,8 +79,8 @@ func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 	for _, entity := range tgUtils.ParseAnyEntityTypes(c.EffectiveMessage, []tgUtils.EntityType{tgUtils.EntityTypeMention}) {
 		username := strings.TrimPrefix(entity.Text, "@")
 		username = strings.ToLower(username)
-		if !slices.Contains(mentionedUsernames, username) && username !=
-			strings.ToLower(c.EffectiveUser.Username) {
+		if !slices.Contains(mentionedUsernames, username) &&
+			!strings.EqualFold(username, c.EffectiveUser.Username) {
 			mentionedUsernames = append(mentionedUsernames, username)
 		}
 	}

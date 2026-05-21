@@ -33,5 +33,5 @@ func (gi GoogleImage) ContextLink() string {
 }
 
 func (gi GoogleImage) IsGIF() bool {
-	return strings.ToLower(gi.Mime) == "image/gif"
+	return strings.EqualFold(gi.Mime, "image/gif")
 }
