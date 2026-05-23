@@ -51,6 +51,14 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 	url := c.Matches[1]
 	ext := c.Matches[2]
 
+	if err := httpUtils.IsPrivateURL(url); err != nil {
+		log.Warn().
+			Str("url", url).
+			Err(err).
+			Msg("Blocked SSRF attempt")
+		return nil
+	}
+
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {
 		log.Err(err).

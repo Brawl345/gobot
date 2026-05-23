@@ -8,13 +8,14 @@ import (
 	"strings"
 	"time"
 
+	"slices"
+
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
-	"slices"
 )
 
 var log = logger.New("expand")
@@ -61,6 +62,10 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 }
 
 func expandUrl(url string) (string, error) {
+	if err := httpUtils.IsPrivateURL(url); err != nil {
+		return "", fmt.Errorf("blocked private URL: %w", err)
+	}
+
 	req, err := http.NewRequest("HEAD", url, nil)
 	if err != nil {
 		return "", err
@@ -103,9 +108,9 @@ func loop(sb *strings.Builder, url string, depth int) {
 	if depth >= MaxDepth {
 		sb.WriteString("➡ ...\n")
 		return
-	} else {
-		loop(sb, expandedUrl, depth+1)
 	}
+
+	loop(sb, expandedUrl, depth+1)
 }
 
 func onExpand(b *gotgbot.Bot, c plugin.GobotContext) error {

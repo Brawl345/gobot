@@ -8,6 +8,7 @@ import (
 	"mime/multipart"
 	"net"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
@@ -275,4 +276,35 @@ func DownloadFileFromGetFile(b *gotgbot.Bot, file *gotgbot.File) (io.ReadCloser,
 	}
 
 	return resp.Body, nil
+}
+
+// IsPrivateURL returns an error if the given rawURL resolves to a loopback,
+// private, or link-local address, preventing SSRF attacks.
+func IsPrivateURL(rawURL string) error {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %w", err)
+	}
+
+	host := parsed.Hostname()
+	if host == "" {
+		return fmt.Errorf("URL has no host")
+	}
+
+	addrs, err := net.LookupHost(host)
+	if err != nil {
+		return fmt.Errorf("could not resolve host %q: %w", host, err)
+	}
+
+	for _, addr := range addrs {
+		ip := net.ParseIP(addr)
+		if ip == nil {
+			continue
+		}
+		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+			return fmt.Errorf("host %q resolves to a private/internal address (%s)", host, ip)
+		}
+	}
+
+	return nil
 }
