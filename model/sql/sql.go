@@ -4,13 +4,11 @@ import (
 	"cmp"
 	"database/sql"
 	"embed"
-	"fmt"
 	"os"
-	"strings"
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
-	_ "github.com/go-sql-driver/mysql"
+	mysqlDriver "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	migrate "github.com/rubenv/sql-migrate"
 )
@@ -21,36 +19,33 @@ var log = logger.New("db")
 var embeddedMigrations embed.FS
 
 func New() (*sqlx.DB, error) {
-	host := cmp.Or(strings.TrimSpace(os.Getenv("MYSQL_HOST")), "localhost")
-	port := cmp.Or(strings.TrimSpace(os.Getenv("MYSQL_PORT")), "3306")
-	user := strings.TrimSpace(os.Getenv("MYSQL_USER"))
-	password := strings.TrimSpace(os.Getenv("MYSQL_PASSWORD"))
-	dbname := strings.TrimSpace(os.Getenv("MYSQL_DB"))
-	tls := cmp.Or(strings.TrimSpace(os.Getenv("MYSQL_TLS")), "false")
-	socket := strings.TrimSpace(os.Getenv("MYSQL_SOCKET"))
+	socket := os.Getenv("MYSQL_SOCKET")
 
-	var connectionString string
+	cfg := mysqlDriver.NewConfig()
+	cfg.User = os.Getenv("MYSQL_USER")
+	cfg.Passwd = os.Getenv("MYSQL_PASSWORD")
+	cfg.DBName = os.Getenv("MYSQL_DB")
+	cfg.ParseTime = true
+	cfg.Loc = time.Local
+	cfg.Collation = "utf8mb4_unicode_ci"
+	cfg.RejectReadOnly = true
+
 	if socket != "" {
-		connectionString = fmt.Sprintf(
-			"%s@unix(%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-			user,
-			socket,
-			dbname,
-		)
+		cfg.Net = "unix"
+		cfg.Addr = socket
 	} else {
-		connectionString = fmt.Sprintf(
-			"%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local&tls=%s",
-			user,
-			password,
-			host,
-			port,
-			dbname,
-			tls,
-		)
+		cfg.Net = "tcp"
+		cfg.Addr = cmp.Or(os.Getenv("MYSQL_HOST"), "localhost") + ":" + cmp.Or(os.Getenv("MYSQL_PORT"), "3306")
+		cfg.TLSConfig = cmp.Or(os.Getenv("MYSQL_TLS"), "false")
 	}
 
-	db, err := sqlx.Connect("mysql", connectionString)
+	connector, err := mysqlDriver.NewConnector(cfg)
 	if err != nil {
+		return nil, err
+	}
+
+	db := sqlx.NewDb(sql.OpenDB(connector), "mysql")
+	if err := db.Ping(); err != nil {
 		return nil, err
 	}
 
