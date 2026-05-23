@@ -3,6 +3,7 @@ package main
 import (
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
 	"github.com/Brawl345/gobot/utils"
@@ -21,6 +22,15 @@ func main() {
 		log.Err(err).Send()
 	} else {
 		log.Info().Msgf("Gobot-%s, %v", versionInfo.Revision, versionInfo.LastCommit)
+	}
+
+	adminIDStr := os.Getenv("ADMIN_ID")
+	if adminIDStr == "" {
+		log.Fatal().Msg("ADMIN_ID environment variable is required")
+	}
+	adminID, err := strconv.ParseInt(adminIDStr, 10, 64)
+	if err != nil || adminID == 0 {
+		log.Fatal().Msgf("ADMIN_ID must be a valid non-zero Telegram user ID, got: %q", adminIDStr)
 	}
 
 	db, err := sql.New()
