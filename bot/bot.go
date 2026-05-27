@@ -32,6 +32,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/google_images"
 	"github.com/Brawl345/gobot/plugin/google_search"
 	"github.com/Brawl345/gobot/plugin/gps"
+	"github.com/Brawl345/gobot/plugin/gpt"
 	"github.com/Brawl345/gobot/plugin/home"
 	"github.com/Brawl345/gobot/plugin/id"
 	"github.com/Brawl345/gobot/plugin/ids"
@@ -111,6 +112,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 	cleverbotService := sql.NewCleverbotService(db)
 	fileService := sql.NewFileService(db)
 	geminiService := sql.NewGeminiService(db)
+	gptService := sql.NewGPTService(db)
 	googleImagesService := sql.NewGoogleImagesService(db)
 	googleImagesCleanupService := sql.NewGoogleImagesCleanupService(db)
 	gelbooruService := sql.NewGelbooruService(db)
@@ -139,6 +141,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		expand.New(),
 		gelbooru.New(credentialService, gelbooruService, gelbooruCleanupService),
 		gemini.New(credentialService, geminiService),
+		gpt.New(credentialService, gptService),
 		getfile.New(credentialService, fileService),
 		google_images.New(credentialService, googleImagesService, googleImagesCleanupService),
 		google_search.New(credentialService),

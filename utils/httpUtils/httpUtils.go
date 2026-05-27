@@ -37,6 +37,9 @@ type (
 		// ErrorResponse can either be a pointer to a JSON struct or a pointer to a string.
 		// NOTE: An error will still be returned!
 		ErrorResponse any
+		// ResponseHeaders receives the response headers if non-nil. Populated on
+		// both success and error responses (but not on transport-level errors).
+		ResponseHeaders *http.Header
 
 		Client *http.Client
 	}
@@ -75,21 +78,23 @@ func init() {
 }
 
 func createHTTPClient() *http.Client {
+	return NewHTTPClientWithTimeout(15 * time.Second)
+}
+
+func NewHTTPClientWithTimeout(responseHeaderTimeout time.Duration) *http.Client {
 	transport := http.DefaultTransport.(*http.Transport).Clone()
 	transport.DialContext = (&net.Dialer{
 		Timeout:   30 * time.Second,
 		KeepAlive: 30 * time.Second,
 	}).DialContext
 	transport.TLSHandshakeTimeout = 7 * time.Second
-	transport.ResponseHeaderTimeout = 15 * time.Second
+	transport.ResponseHeaderTimeout = responseHeaderTimeout
 	transport.MaxIdleConnsPerHost = 20
 	transport.IdleConnTimeout = 5 * time.Minute
 
-	client := &http.Client{
+	return &http.Client{
 		Transport: transport,
 	}
-
-	return client
 }
 
 func MakeRequest(opts RequestOptions) error {
@@ -151,6 +156,10 @@ func MakeRequest(opts RequestOptions) error {
 			log.Err(err).Msg("Failed to close response body")
 		}
 	}(resp.Body)
+
+	if opts.ResponseHeaders != nil {
+		*opts.ResponseHeaders = resp.Header
+	}
 
 	if resp.StatusCode != http.StatusOK {
 		if opts.ErrorResponse != nil {
