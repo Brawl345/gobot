@@ -18,6 +18,9 @@ import (
 var (
 	log               = logger.New("httpUtils")
 	DefaultHttpClient *http.Client
+	// SSRFSafeClient follows redirects but re-validates each hop through
+	// IsPrivateURL to prevent SSRF via redirect to internal addresses.
+	SSRFSafeClient *http.Client
 )
 
 type (
@@ -57,6 +60,18 @@ const (
 
 func init() {
 	DefaultHttpClient = createHTTPClient()
+	SSRFSafeClient = &http.Client{
+		Transport: DefaultHttpClient.Transport,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			if len(via) >= 10 {
+				return fmt.Errorf("stopped after 10 redirects")
+			}
+			if err := IsPrivateURL(req.URL.String()); err != nil {
+				return fmt.Errorf("redirect blocked: %w", err)
+			}
+			return nil
+		},
+	}
 }
 
 func createHTTPClient() *http.Client {

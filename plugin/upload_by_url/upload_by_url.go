@@ -67,7 +67,11 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return nil
 	}
 	req.Header.Set("User-Agent", utils.UserAgent)
-	client := &http.Client{Timeout: 5 * time.Second}
+	client := &http.Client{
+		Transport:     httpUtils.DefaultHttpClient.Transport,
+		Timeout:       5 * time.Second,
+		CheckRedirect: httpUtils.SSRFSafeClient.CheckRedirect,
+	}
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Err(err).
@@ -133,7 +137,7 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("url", url).
 			Msg("Failed to send file through Telegram")
 
-		resp, err := httpUtils.DefaultHttpClient.Get(url)
+		resp, err := httpUtils.SSRFSafeClient.Get(url)
 		if err != nil {
 			log.Err(err).
 				Str("url", url).

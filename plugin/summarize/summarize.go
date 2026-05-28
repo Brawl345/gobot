@@ -174,6 +174,15 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 
 	pageUrl := pageUrls[0] // only summarize the first URL for now
 
+	if err := httpUtils.IsPrivateURL(pageUrl); err != nil {
+		log.Warn().
+			Str("pageUrl", pageUrl).
+			Err(err).
+			Msg("Blocked SSRF attempt")
+		_, err := msg.ReplyMessage(b, "❌ Die URL ist nicht erlaubt.", utils.DefaultSendOptions())
+		return err
+	}
+
 	parsedURL, err := url.Parse(pageUrl)
 	if err != nil {
 		log.Err(err).
@@ -198,7 +207,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 
 	req.Header.Set("User-Agent", utils.UserAgent)
 
-	resp, err := httpUtils.DefaultHttpClient.Do(req)
+	resp, err := httpUtils.SSRFSafeClient.Do(req)
 	if err != nil {
 		log.Err(err).
 			Str("pageUrl", pageUrl).
