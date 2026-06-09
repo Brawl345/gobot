@@ -184,6 +184,11 @@ func (p *Plugin) OnMedia(b *gotgbot.Bot, c plugin.GobotContext) error {
 		fileName += ".mp4"
 	}
 
+	fileName = filepath.Base(fileName)
+	if !filepath.IsLocal(fileName) || fileName == "." {
+		fileName = uniqueID
+	}
+
 	out, err := os.Create(filepath.Join(savePath, fileName))
 	if err != nil {
 		return err
