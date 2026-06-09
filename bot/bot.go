@@ -220,7 +220,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 
 		webhookSecret := strings.TrimSpace(os.Getenv("WEBHOOK_SECRET"))
 		if webhookSecret == "" {
-			log.Warn().Msg("WEBHOOK_SECRET not set, it's STRONGLY RECOMMENDED to set one!")
+			return nil, fmt.Errorf("WEBHOOK_SECRET must be set in webhook mode to prevent forged updates")
 		}
 
 		webhookOpts := ext.WebhookOpts{
