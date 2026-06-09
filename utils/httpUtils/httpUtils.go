@@ -10,6 +10,8 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
@@ -27,7 +29,42 @@ var (
 	// cgnatNet is the 100.64.0.0/10 carrier-grade NAT range, which is not
 	// covered by net.IP.IsPrivate but must still be treated as internal.
 	cgnatNet = &net.IPNet{IP: net.IPv4(100, 64, 0, 0), Mask: net.CIDRMask(10, 32)}
+
+	// botTokenInURL matches the "bot<id>:<token>" segment of Telegram API URLs
+	// so it can be stripped before logging.
+	botTokenInURL = regexp.MustCompile(`bot[0-9]+:[A-Za-z0-9_-]+`)
+
+	// sensitiveHeaders are header names whose values must be redacted from logs.
+	sensitiveHeaders = map[string]struct{}{
+		"authorization":       {},
+		"proxy-authorization": {},
+		"api-key":             {},
+		"x-api-key":           {},
+		"x-goog-api-key":      {},
+		"x-auth-token":        {},
+	}
 )
+
+// redactURL masks a Telegram bot token embedded in a URL before logging.
+func redactURL(u string) string {
+	return botTokenInURL.ReplaceAllString(u, "bot[REDACTED]")
+}
+
+// redactHeaders returns a copy of h with sensitive header values masked.
+func redactHeaders(h map[string]string) map[string]string {
+	if h == nil {
+		return nil
+	}
+	redacted := make(map[string]string, len(h))
+	for k, v := range h {
+		if _, ok := sensitiveHeaders[strings.ToLower(k)]; ok {
+			redacted[k] = "[REDACTED]"
+		} else {
+			redacted[k] = v
+		}
+	}
+	return redacted
+}
 
 type (
 	HTTPMethod string
@@ -157,9 +194,9 @@ func NewHTTPClientWithTimeout(responseHeaderTimeout time.Duration) *http.Client 
 func MakeRequest(opts RequestOptions) error {
 	log.Debug().
 		Str("method", string(opts.Method)).
-		Str("url", opts.URL).
+		Str("url", redactURL(opts.URL)).
 		Interface("body", opts.Body).
-		Interface("headers", opts.Headers).
+		Interface("headers", redactHeaders(opts.Headers)).
 		Send()
 
 	var reqBody io.Reader
@@ -240,7 +277,7 @@ func MakeRequest(opts RequestOptions) error {
 			}
 
 			log.Debug().
-				Str("url", opts.URL).
+				Str("url", redactURL(opts.URL)).
 				Interface("result", opts.ErrorResponse).
 				Send()
 		}
@@ -268,7 +305,7 @@ func MakeRequest(opts RequestOptions) error {
 	}
 
 	log.Debug().
-		Str("url", opts.URL).
+		Str("url", redactURL(opts.URL)).
 		Interface("result", opts.Response).
 		Send()
 
@@ -281,9 +318,9 @@ func MultiPartFormRequest(url string, params []MultiPartParam, files []MultiPart
 
 func MultiPartFormRequestWithHeaders(url string, headers map[string]string, params []MultiPartParam, files []MultiPartFile) (*http.Response, error) {
 	log.Debug().
-		Str("url", url).
+		Str("url", redactURL(url)).
 		Interface("params", params).
-		Interface("headers", headers).
+		Interface("headers", redactHeaders(headers)).
 		Send()
 
 	var b bytes.Buffer
@@ -343,7 +380,7 @@ func DownloadFile(b *gotgbot.Bot, fileID string) (io.ReadCloser, error) {
 func DownloadFileFromGetFile(b *gotgbot.Bot, file *gotgbot.File) (io.ReadCloser, error) {
 	fileUrl := file.URL(b, nil)
 	log.Debug().
-		Str("url", fileUrl).
+		Str("url", redactURL(fileUrl)).
 		Send()
 	resp, err := DefaultHttpClient.Get(fileUrl)
 	if err != nil {
