@@ -68,7 +68,7 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 	req.Header.Set("User-Agent", utils.UserAgent)
 	client := &http.Client{
-		Transport:     httpUtils.DefaultHttpClient.Transport,
+		Transport:     httpUtils.SSRFSafeClient.Transport,
 		Timeout:       5 * time.Second,
 		CheckRedirect: httpUtils.SSRFSafeClient.CheckRedirect,
 	}

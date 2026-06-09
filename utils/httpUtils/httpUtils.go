@@ -2,6 +2,7 @@ package httpUtils
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,9 +19,14 @@ import (
 var (
 	log               = logger.New("httpUtils")
 	DefaultHttpClient *http.Client
-	// SSRFSafeClient follows redirects but re-validates each hop through
-	// IsPrivateURL to prevent SSRF via redirect to internal addresses.
+	// SSRFSafeClient guards against SSRF: its transport resolves and validates
+	// every address at dial time (also covering redirects), so an attacker
+	// cannot point it at an internal address even via DNS rebinding.
 	SSRFSafeClient *http.Client
+
+	// cgnatNet is the 100.64.0.0/10 carrier-grade NAT range, which is not
+	// covered by net.IP.IsPrivate but must still be treated as internal.
+	cgnatNet = &net.IPNet{IP: net.IPv4(100, 64, 0, 0), Mask: net.CIDRMask(10, 32)}
 )
 
 type (
@@ -63,18 +69,69 @@ const (
 
 func init() {
 	DefaultHttpClient = createHTTPClient()
+
+	ssrfSafeTransport := http.DefaultTransport.(*http.Transport).Clone()
+	ssrfSafeTransport.DialContext = ssrfSafeDialContext
+	ssrfSafeTransport.TLSHandshakeTimeout = 7 * time.Second
+	ssrfSafeTransport.ResponseHeaderTimeout = 15 * time.Second
+	ssrfSafeTransport.MaxIdleConnsPerHost = 20
+	ssrfSafeTransport.IdleConnTimeout = 5 * time.Minute
+
 	SSRFSafeClient = &http.Client{
-		Transport: DefaultHttpClient.Transport,
+		Transport: ssrfSafeTransport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			if len(via) >= 10 {
 				return fmt.Errorf("stopped after 10 redirects")
 			}
-			if err := IsPrivateURL(req.URL.String()); err != nil {
-				return fmt.Errorf("redirect blocked: %w", err)
-			}
 			return nil
 		},
 	}
+}
+
+// ssrfSafeDialContext resolves the target host and refuses to connect if any
+// resolved address is internal, then dials a validated IP directly. Dialing
+// the exact IP that was validated closes the DNS-rebinding TOCTOU window.
+func ssrfSafeDialContext(ctx context.Context, network, addr string) (net.Conn, error) {
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return nil, err
+	}
+
+	ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+	if err != nil {
+		return nil, fmt.Errorf("could not resolve host %q: %w", host, err)
+	}
+
+	for _, ip := range ips {
+		if isBlockedIP(ip.IP) {
+			return nil, fmt.Errorf("host %q resolves to a private/internal address (%s)", host, ip.IP)
+		}
+	}
+
+	dialer := &net.Dialer{Timeout: 30 * time.Second, KeepAlive: 30 * time.Second}
+	var firstErr error
+	for _, ip := range ips {
+		conn, err := dialer.DialContext(ctx, network, net.JoinHostPort(ip.IP.String(), port))
+		if err != nil {
+			firstErr = err
+			continue
+		}
+		return conn, nil
+	}
+	return nil, firstErr
+}
+
+// isBlockedIP reports whether ip is loopback, private, link-local,
+// unspecified (0.0.0.0/::) or in the carrier-grade NAT range.
+func isBlockedIP(ip net.IP) bool {
+	if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() ||
+		ip.IsLinkLocalMulticast() || ip.IsUnspecified() {
+		return true
+	}
+	if v4 := ip.To4(); v4 != nil && cgnatNet.Contains(v4) {
+		return true
+	}
+	return false
 }
 
 func createHTTPClient() *http.Client {
@@ -325,7 +382,7 @@ func IsPrivateURL(rawURL string) error {
 		if ip == nil {
 			continue
 		}
-		if ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+		if isBlockedIP(ip) {
 			return fmt.Errorf("host %q resolves to a private/internal address (%s)", host, ip)
 		}
 	}
