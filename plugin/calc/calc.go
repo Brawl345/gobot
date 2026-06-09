@@ -19,7 +19,7 @@ import (
 )
 
 const (
-	ApiUrl               = "http://api.mathjs.org/v4/?expr=%s"
+	ApiUrl               = "https://api.mathjs.org/v4/?expr=%s"
 	InlineQueryCacheTime = 7200
 )
 
