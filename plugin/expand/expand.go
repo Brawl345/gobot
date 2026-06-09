@@ -104,7 +104,7 @@ func loop(sb *strings.Builder, url string, depth int) {
 			Msg("Error expanding url")
 		return
 	}
-	sb.WriteString(fmt.Sprintf("➡ %s\n", expandedUrl))
+	sb.WriteString(fmt.Sprintf("➡ %s\n", utils.Escape(expandedUrl)))
 	if depth >= MaxDepth {
 		sb.WriteString("➡ ...\n")
 		return
@@ -141,7 +141,7 @@ func onExpand(b *gotgbot.Bot, c plugin.GobotContext) error {
 		if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
 			url = fmt.Sprintf("http://%s", url)
 		}
-		sb.WriteString(fmt.Sprintf("%s\n", url))
+		sb.WriteString(fmt.Sprintf("%s\n", utils.Escape(url)))
 		loop(&sb, url, 1)
 		sb.WriteString("\n")
 	}
@@ -192,7 +192,7 @@ func onExpandFromReply(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var sb strings.Builder
 
 	for _, url := range shortUrls {
-		sb.WriteString(fmt.Sprintf("%s\n", url))
+		sb.WriteString(fmt.Sprintf("%s\n", utils.Escape(url)))
 		loop(&sb, url, 1)
 		sb.WriteString("\n")
 	}
