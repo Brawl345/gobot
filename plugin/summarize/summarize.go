@@ -25,6 +25,7 @@ import (
 
 const (
 	MinArticleLength        = 500
+	MaxPageSize             = 25 * 1024 * 1024
 	DefaultApiUrl           = "https://api.openai.com/v1/chat/completions"
 	DefaultApiModel         = "gpt-4o-mini"
 	DefaultNewApiModel      = "gpt-5.5"
@@ -246,7 +247,7 @@ func (p *Plugin) summarize(b *gotgbot.Bot, c plugin.GobotContext, msg *gotgbot.M
 		return err
 	}
 
-	article, err := readability.FromReader(resp.Body, parsedURL)
+	article, err := readability.FromReader(io.LimitReader(resp.Body, MaxPageSize), parsedURL)
 	if err != nil {
 		log.Err(err).
 			Str("pageUrl", pageUrl).
