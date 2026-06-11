@@ -11,14 +11,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
 )
 
 const (
-	BraveSearchURL    = "https://api.search.brave.com/res/v1/web/search"
-	MaxSourceLinks    = 10
-	BraveDefaultCount = 5
-	BraveMaxCount     = 20
+	BraveSearchURL = "https://api.search.brave.com/res/v1/web/search"
+	MaxSourceLinks = 10
+	// HTML length budget for the links section so the escaped GPT output
+	// always keeps a positive share of tgUtils.MaxMessageLength
+	MaxSourceLinksLength = 2000
+	BraveDefaultCount    = 5
+	BraveMaxCount        = 20
 )
 
 type (
@@ -167,9 +171,15 @@ func braveSearch(query, braveKey string, count int, country, freshness string) (
 		if !ok || httpErr.StatusCode != http.StatusTooManyRequests {
 			return nil, "", fmt.Errorf("brave search failed: %w", err)
 		}
+		lastErr = err
+		if attempt == braveMaxRetries-1 {
+			break
+		}
 
-		wait := time.Duration(1<<attempt) * time.Second // 1s, 2s, 4s
+		wait := time.Duration(1<<attempt) * time.Second // 1s, 2s
+		// Brave sends the header comma-separated: "<per-second>, <per-month>"
 		if raw := respHeaders.Get("X-RateLimit-Reset"); raw != "" {
+			raw = strings.TrimSpace(strings.SplitN(raw, ",", 2)[0])
 			if secs, parseErr := strconv.Atoi(raw); parseErr == nil && secs > 0 {
 				if secs > braveMaxWaitSecs {
 					return nil, "", fmt.Errorf("brave search rate limited, reset in %ds (too long to wait)", secs)
@@ -183,7 +193,6 @@ func braveSearch(query, braveKey string, count int, country, freshness string) (
 			Dur("wait", wait).
 			Msg("brave search rate limited, retrying")
 		time.Sleep(wait)
-		lastErr = err
 	}
 	if lastErr != nil {
 		return nil, "", fmt.Errorf("brave search failed after %d attempts: %w", braveMaxRetries, lastErr)
@@ -215,19 +224,40 @@ func searchLinks(results []BraveWebResult) string {
 	}
 	var sb strings.Builder
 	sb.WriteString("(")
-	for i, r := range results {
-		host := r.URL
-		if parsed, err := url.Parse(r.URL); err == nil {
-			host = strings.TrimPrefix(parsed.Hostname(), "www.")
+	seen := make(map[string]struct{}, len(results))
+	written := 0
+	truncated := false
+	for _, r := range results {
+		if _, dup := seen[r.URL]; dup {
+			continue
 		}
-		_, _ = fmt.Fprintf(&sb, `<a href="%s">%s</a>`, r.URL, host)
-		if i < len(results)-1 {
-			sb.WriteString(", ")
-		}
-		if i == MaxSourceLinks-1 && len(results) > MaxSourceLinks {
-			sb.WriteString("...")
+		seen[r.URL] = struct{}{}
+		if written == MaxSourceLinks {
+			truncated = true
 			break
 		}
+		host := r.URL
+		if parsed, err := url.Parse(r.URL); err == nil && parsed.Hostname() != "" {
+			host = strings.TrimPrefix(parsed.Hostname(), "www.")
+		}
+		link := fmt.Sprintf(`<a href="%s">%s</a>`, utils.Escape(r.URL), utils.Escape(host))
+		sep := ""
+		if written > 0 {
+			sep = ", "
+		}
+		if sb.Len()+len(sep)+len(link) > MaxSourceLinksLength {
+			truncated = true
+			break
+		}
+		sb.WriteString(sep)
+		sb.WriteString(link)
+		written++
+	}
+	if written == 0 {
+		return ""
+	}
+	if truncated {
+		sb.WriteString("...")
 	}
 	sb.WriteString(")")
 	return sb.String()

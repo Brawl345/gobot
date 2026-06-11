@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"codeberg.org/readeck/go-readability/v2"
 	"github.com/Brawl345/gobot/utils"
@@ -16,6 +17,7 @@ import (
 
 const (
 	MaxFetchedContentLength = 50_000
+	MaxFetchedBodyBytes     = 5_000_000
 	FetchTimeout            = 30 * time.Second
 )
 
@@ -110,20 +112,8 @@ func fetchURLContent(rawURL, format string) (string, error) {
 	contentType := strings.ToLower(resp.Header.Get("Content-Type"))
 	isHTML := strings.Contains(contentType, "text/html")
 
-	if isHTML && format == "html" {
-		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, MaxFetchedContentLength+1))
-		if err != nil {
-			return "", fmt.Errorf("read failed: %w", err)
-		}
-		content := string(bodyBytes)
-		if len(content) > MaxFetchedContentLength {
-			content = content[:MaxFetchedContentLength] + "\n[INHALT ABGESCHNITTEN]"
-		}
-		return wrapUntrusted(content, rawURL), nil
-	}
-
-	if isHTML {
-		article, err := readability.FromReader(resp.Body, req.URL)
+	if isHTML && format != "html" {
+		article, err := readability.FromReader(io.LimitReader(resp.Body, MaxFetchedBodyBytes), req.URL)
 		if err != nil {
 			return "", fmt.Errorf("readability failed: %w", err)
 		}
@@ -131,26 +121,34 @@ func fetchURLContent(rawURL, format string) (string, error) {
 		if err := article.RenderText(&sb); err != nil {
 			return "", fmt.Errorf("text rendering failed: %w", err)
 		}
-		content := sb.String()
-		if len(content) > MaxFetchedContentLength {
-			content = content[:MaxFetchedContentLength] + "\n[INHALT ABGESCHNITTEN]"
-		}
-		return wrapUntrusted(content, rawURL), nil
+		return wrapUntrusted(truncateFetched(sb.String()), rawURL), nil
 	}
 
-	if strings.Contains(contentType, "text/") {
+	if isHTML || strings.Contains(contentType, "text/") {
 		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, MaxFetchedContentLength+1))
 		if err != nil {
 			return "", fmt.Errorf("read failed: %w", err)
 		}
-		content := string(bodyBytes)
-		if len(content) > MaxFetchedContentLength {
-			content = content[:MaxFetchedContentLength] + "\n[INHALT ABGESCHNITTEN]"
-		}
-		return wrapUntrusted(content, rawURL), nil
+		return wrapUntrusted(truncateFetched(string(bodyBytes)), rawURL), nil
 	}
 
 	return "", fmt.Errorf("unsupported content type: %s", contentType)
+}
+
+func truncateFetched(content string) string {
+	if len(content) <= MaxFetchedContentLength {
+		return content
+	}
+	cut := content[:MaxFetchedContentLength]
+	// the byte cut may leave a partial UTF-8 rune at the end
+	for range utf8.UTFMax - 1 {
+		if r, size := utf8.DecodeLastRuneInString(cut); r == utf8.RuneError && size == 1 {
+			cut = cut[:len(cut)-1]
+			continue
+		}
+		break
+	}
+	return cut + "\n[INHALT ABGESCHNITTEN]"
 }
 
 func wrapUntrusted(content, rawURL string) string {

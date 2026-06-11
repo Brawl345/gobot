@@ -114,19 +114,32 @@ func (p *Plugin) sendWithRetry(req *Request, apiKey string) (Response, error) {
 		if err == nil {
 			return resp, nil
 		}
-		if httpError, ok := errors.AsType[*httpUtils.HttpError](err); ok {
-			if httpError.StatusCode == http.StatusInternalServerError {
-				log.Warn().
-					Err(err).
-					Int("retry_count", retryCount).
-					Msg("Received HTTP 500, retrying")
-				resp, err = p.makeRequest(req, apiKey)
-				continue
-			}
+		httpError, ok := errors.AsType[*httpUtils.HttpError](err)
+		if !ok || !isRetryableStatus(httpError.StatusCode) {
+			return resp, err
 		}
-		return resp, err
+		wait := time.Duration(1<<retryCount) * time.Second
+		log.Warn().
+			Err(err).
+			Int("status_code", httpError.StatusCode).
+			Int("retry_count", retryCount).
+			Dur("wait", wait).
+			Msg("Received server error, retrying")
+		time.Sleep(wait)
+		resp, err = p.makeRequest(req, apiKey)
 	}
 	return resp, err
+}
+
+func isRetryableStatus(statusCode int) bool {
+	switch statusCode {
+	case http.StatusInternalServerError,
+		http.StatusBadGateway,
+		http.StatusServiceUnavailable,
+		http.StatusGatewayTimeout:
+		return true
+	}
+	return false
 }
 
 func (p *Plugin) handleAPIError(b *gotgbot.Bot, c plugin.GobotContext, err error) error {
@@ -173,7 +186,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	systemInstruction := cmp.Or(p.credentialService.GetKey("openai_system_instruction"), DefaultSystemInstruction)
-	systemInstruction += fmt.Sprintf("\n\nHeute ist %s.", time.Now().Format("Mon, der 02.01.2006"))
+	systemInstruction += fmt.Sprintf("\n\nHeute ist %s.", utils.LocalizeDatestring(time.Now().Format("Monday, der 02.01.2006")))
 	braveKey := p.credentialService.GetKey("brave_search_api_key")
 
 	registeredTools := []Tool{NewWebfetchTool(c.EffectiveChat.Id), NewCalculatorTool()}
@@ -211,9 +224,12 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		if c.EffectiveMessage.ReplyToMessage.GetText() != "" {
 			inputText.WriteString("-- ZUSÄTZLICHER KONTEXT --\n")
 			inputText.WriteString("Dies ist zusätzlicher Kontext. Wiederhole diesen nicht wortwörtlich!\n\n")
-			inputText.WriteString(fmt.Sprintf("Nachricht von %s", c.EffectiveMessage.ReplyToMessage.From.FirstName))
-			if c.EffectiveMessage.ReplyToMessage.From.LastName != "" {
-				inputText.WriteString(fmt.Sprintf(" %s", c.EffectiveMessage.ReplyToMessage.From.LastName))
+			inputText.WriteString("Nachricht")
+			if from := c.EffectiveMessage.ReplyToMessage.From; from != nil {
+				inputText.WriteString(fmt.Sprintf(" von %s", from.FirstName))
+				if from.LastName != "" {
+					inputText.WriteString(fmt.Sprintf(" %s", from.LastName))
+				}
 			}
 			inputText.WriteString(":\n")
 			inputText.WriteString(c.EffectiveMessage.ReplyToMessage.GetText())
@@ -322,6 +338,18 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 			wg.Add(1)
 			go func(i int, call OutputItem) {
 				defer wg.Done()
+				// A panic here would kill the whole process; the handler-level
+				// recover in bot/processor.go does not cover this goroutine.
+				defer func() {
+					if r := recover(); r != nil {
+						log.Error().Interface("panic", r).Str("tool", call.Name).Msg("Tool panicked")
+						toolInputs[i] = FunctionCallOutput{
+							Type:   TypeFunctionCallOutput,
+							CallID: call.CallID,
+							Output: fmt.Sprintf("Error: tool panicked: %v", r),
+						}
+					}
+				}()
 				var toolOutput string
 				if tool, ok := toolMap[call.Name]; !ok {
 					toolOutput = fmt.Sprintf("Unknown tool: %s", call.Name)
@@ -381,6 +409,17 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	output := outputText.String()
 
+	if output == "" {
+		log.Error().Str("status", apiResponse.Status).Msg("Got no answer from GPT")
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Keine Antwort von GPT erhalten (eventuell gefiltert).", utils.DefaultSendOptions())
+		return err
+	}
+
+	if apiResponse.Status == StatusIncomplete {
+		log.Warn().Msg("GPT response is incomplete")
+		output += " […]"
+	}
+
 	if len(usedToolNames) > 0 {
 		var prefix strings.Builder
 		prefix.WriteString("⚒️")
@@ -397,12 +436,6 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		if srt, ok := t.(SearchResultsTool); ok {
 			allSearchResults = append(allSearchResults, srt.SearchResults()...)
 		}
-	}
-
-	if output == "" {
-		log.Error().Msg("Got no answer from GPT")
-		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Keine Antwort von GPT erhalten (eventuell gefiltert).", utils.DefaultSendOptions())
-		return err
 	}
 
 	if apiResponse.ID != "" {

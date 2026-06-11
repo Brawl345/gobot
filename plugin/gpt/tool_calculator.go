@@ -66,10 +66,13 @@ func (t *CalculatorTool) Emoji() string {
 	return "🧮"
 }
 
+const maxParseDepth = 500
+
 // parser holds state for recursive-descent parsing.
 type parser struct {
 	input string
 	pos   int
+	depth int
 }
 
 func evalExpression(expr string) (float64, error) {
@@ -126,7 +129,7 @@ func (p *parser) parseExpr() (float64, error) {
 
 // parseTerm handles * and /.
 func (p *parser) parseTerm() (float64, error) {
-	left, err := p.parsePower()
+	left, err := p.parseUnary()
 	if err != nil {
 		return 0, err
 	}
@@ -136,7 +139,7 @@ func (p *parser) parseTerm() (float64, error) {
 			break
 		}
 		p.pos++
-		right, err := p.parsePower()
+		right, err := p.parseUnary()
 		if err != nil {
 			return 0, err
 		}
@@ -149,9 +152,36 @@ func (p *parser) parseTerm() (float64, error) {
 	return left, nil
 }
 
-// parsePower handles ^ (right-associative).
+// parseUnary handles unary signs. It binds weaker than ^ so that
+// -2^2 == -(2^2) == -4, matching mathematical convention.
+func (p *parser) parseUnary() (float64, error) {
+	neg := false
+	for {
+		ch, ok := p.peek()
+		if !ok || (ch != '-' && ch != '+') {
+			break
+		}
+		if ch == '-' {
+			neg = !neg
+		}
+		p.pos++
+	}
+	val, err := p.parsePower()
+	if neg {
+		val = -val
+	}
+	return val, err
+}
+
+// parsePower handles ^ (right-associative). Every recursion cycle in the
+// parser passes through here, so this is where the depth limit lives.
 func (p *parser) parsePower() (float64, error) {
-	base, err := p.parseUnary()
+	p.depth++
+	defer func() { p.depth-- }()
+	if p.depth > maxParseDepth {
+		return 0, fmt.Errorf("expression too deeply nested")
+	}
+	base, err := p.parsePrimary()
 	if err != nil {
 		return 0, err
 	}
@@ -160,26 +190,11 @@ func (p *parser) parsePower() (float64, error) {
 		return base, nil
 	}
 	p.pos++
-	exp, err := p.parsePower()
+	exp, err := p.parseUnary()
 	if err != nil {
 		return 0, err
 	}
 	return math.Pow(base, exp), nil
-}
-
-// parseUnary handles unary minus.
-func (p *parser) parseUnary() (float64, error) {
-	ch, ok := p.peek()
-	if ok && ch == '-' {
-		p.pos++
-		val, err := p.parseUnary()
-		return -val, err
-	}
-	if ok && ch == '+' {
-		p.pos++
-		return p.parseUnary()
-	}
-	return p.parsePrimary()
 }
 
 // parsePrimary handles numbers, parentheses, and named functions/constants.
