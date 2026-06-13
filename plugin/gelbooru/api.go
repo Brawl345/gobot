@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -84,11 +85,32 @@ func (p *Post) Caption() string {
 
 	sb.WriteString(fmt.Sprintf("🔗 <a href=\"%s\">Post #%d</a> - ", p.PostURL(), p.Id))
 	sb.WriteString(fmt.Sprintf("🖼️ <a href=\"%s\">Direktlink</a>", p.DirectURL()))
-	if validSource := p.ValidSource(); validSource != "" {
-		sb.WriteString(fmt.Sprintf(" - 🌐 <a href=\"%s\">Quelle</a>\n", validSource))
-	}
+	sb.WriteString(sourceLinks(p.ValidSources()))
 
 	return sb.String()
+}
+
+// sourceLinks renders one or more source links using the host as link text.
+func sourceLinks(sources []string) string {
+	if len(sources) == 0 {
+		return ""
+	}
+
+	label := "Quelle"
+	if len(sources) > 1 {
+		label = "Quellen"
+	}
+
+	links := make([]string, len(sources))
+	for i, src := range sources {
+		host := src
+		if parsedURL, err := url.Parse(src); err == nil {
+			host = strings.TrimPrefix(parsedURL.Host, "www.")
+		}
+		links[i] = fmt.Sprintf("<a href=\"%s\">%s</a>", src, host)
+	}
+
+	return fmt.Sprintf(" - 🌐 %s: %s\n", label, strings.Join(links, ", "))
 }
 
 // AltCaption is used when the media is too big or invalid type
@@ -100,9 +122,7 @@ func (p *Post) AltCaption() string {
 		sb.WriteString("️🔞 <b>NSFW</b> - ")
 	}
 	sb.WriteString(fmt.Sprintf("🔗 <a href=\"%s\">Post #%d</a>", p.PostURL(), p.Id))
-	if validSource := p.ValidSource(); validSource != "" {
-		sb.WriteString(fmt.Sprintf(" - 🌐 <a href=\"%s\">Quelle</a>\n", validSource))
-	}
+	sb.WriteString(sourceLinks(p.ValidSources()))
 
 	return sb.String()
 }
@@ -111,18 +131,19 @@ func (p *Post) PostURL() string {
 	return fmt.Sprintf(PostURL, p.Id)
 }
 
-func (p *Post) ValidSource() string {
+// ValidSources returns all valid HTTP(S) source URLs. Gelbooru separates
+// multiple sources by whitespace or "|".
+func (p *Post) ValidSources() []string {
 	if p.Source == "" {
-		return ""
+		return nil
 	}
 
-	sources := strings.Split(p.Source, "|")
-	for _, src := range sources {
-		src = strings.TrimSpace(src)
-		if src == "" {
-			continue
-		}
+	parts := strings.FieldsFunc(p.Source, func(r rune) bool {
+		return unicode.IsSpace(r) || r == '|'
+	})
 
+	var sources []string
+	for _, src := range parts {
 		parsedURL, err := url.Parse(src)
 		if err != nil {
 			continue
@@ -136,10 +157,10 @@ func (p *Post) ValidSource() string {
 			continue
 		}
 
-		return src
+		sources = append(sources, src)
 	}
 
-	return ""
+	return sources
 }
 
 func (p *Post) IsImage() bool {
