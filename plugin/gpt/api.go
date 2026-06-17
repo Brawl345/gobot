@@ -32,10 +32,13 @@ type (
 		Content []any  `json:"content"`
 	}
 
+	// FunctionCallOutput carries a tool result; Output is either a plain string
+	// or an []InputImage when a tool returns visual content (see the Responses
+	// API function_call_output schema).
 	FunctionCallOutput struct {
 		Type   string `json:"type"`
 		CallID string `json:"call_id"`
-		Output string `json:"output"`
+		Output any    `json:"output"`
 	}
 
 	Property struct {
@@ -107,7 +110,8 @@ type (
 
 	Tool interface {
 		Definition() FunctionTool
-		Execute(arguments string) (string, error)
+		// Execute returns either a string or an []InputImage for visual results.
+		Execute(arguments string) (any, error)
 		Emoji() string
 	}
 )

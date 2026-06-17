@@ -2,6 +2,7 @@ package gpt
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,8 +19,18 @@ import (
 const (
 	MaxFetchedContentLength = 50_000
 	MaxFetchedBodyBytes     = 5_000_000
+	MaxFetchedImageBytes    = 20_000_000
 	FetchTimeout            = 30 * time.Second
 )
+
+// supportedImageTypes maps image content types accepted by the OpenAI vision
+// API to the MIME type used in the data URL.
+var supportedImageTypes = map[string]string{
+	"image/png":  "image/png",
+	"image/jpeg": "image/jpeg",
+	"image/webp": "image/webp",
+	"image/gif":  "image/gif",
+}
 
 type WebfetchTool struct {
 	chatID int64
@@ -33,7 +44,7 @@ func (t *WebfetchTool) Definition() FunctionTool {
 	return FunctionTool{
 		Type:        "function",
 		Name:        "webfetch",
-		Description: "Ruft den Inhalt einer URL ab. Nutze dieses Tool wenn du eine Website lesen musst, um eine Frage zu beantworten.",
+		Description: "Ruft den Inhalt einer URL ab. Nutze dieses Tool wenn du eine Website lesen musst, um eine Frage zu beantworten. Zeigt auf die URL auf ein Bild (PNG, JPEG, WebP, GIF), wird das Bild abgerufen und kann direkt analysiert werden.",
 		Parameters: FunctionParameters{
 			Type: "object",
 			Properties: map[string]Property{
@@ -54,7 +65,7 @@ func (t *WebfetchTool) Definition() FunctionTool {
 	}
 }
 
-func (t *WebfetchTool) Execute(arguments string) (string, error) {
+func (t *WebfetchTool) Execute(arguments string) (any, error) {
 	var args struct {
 		URL    string `json:"url"`
 		Format string `json:"format"`
@@ -74,7 +85,7 @@ func (t *WebfetchTool) Emoji() string {
 	return "🌐"
 }
 
-func fetchURLContent(rawURL, format string) (string, error) {
+func fetchURLContent(rawURL, format string) (any, error) {
 	if !strings.HasPrefix(rawURL, "http://") && !strings.HasPrefix(rawURL, "https://") {
 		return "", fmt.Errorf("invalid URL scheme")
 	}
@@ -110,6 +121,23 @@ func fetchURLContent(rawURL, format string) (string, error) {
 	}
 
 	contentType := strings.ToLower(resp.Header.Get("Content-Type"))
+	mediaType := strings.TrimSpace(strings.SplitN(contentType, ";", 2)[0])
+
+	if mimeType, ok := supportedImageTypes[mediaType]; ok {
+		imageBytes, err := io.ReadAll(io.LimitReader(resp.Body, MaxFetchedImageBytes+1))
+		if err != nil {
+			return nil, fmt.Errorf("read failed: %w", err)
+		}
+		if len(imageBytes) > MaxFetchedImageBytes {
+			return nil, fmt.Errorf("image too large (max %d bytes)", MaxFetchedImageBytes)
+		}
+		encoded := base64.StdEncoding.EncodeToString(imageBytes)
+		return []InputImage{{
+			Type:     TypeInputImage,
+			ImageURL: fmt.Sprintf("data:%s;base64,%s", mimeType, encoded),
+		}}, nil
+	}
+
 	isHTML := strings.Contains(contentType, "text/html")
 
 	if isHTML && format != "html" {

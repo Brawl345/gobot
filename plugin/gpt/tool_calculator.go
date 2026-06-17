@@ -35,7 +35,7 @@ func (t *CalculatorTool) Definition() FunctionTool {
 	}
 }
 
-func (t *CalculatorTool) Execute(arguments string) (string, error) {
+func (t *CalculatorTool) Execute(arguments string) (any, error) {
 	var args struct {
 		Expression string `json:"expression"`
 	}

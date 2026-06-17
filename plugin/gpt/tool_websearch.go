@@ -90,7 +90,7 @@ func (t *WebsearchTool) Definition() FunctionTool {
 	}
 }
 
-func (t *WebsearchTool) Execute(arguments string) (string, error) {
+func (t *WebsearchTool) Execute(arguments string) (any, error) {
 	var args struct {
 		Query     string `json:"query"`
 		Count     int    `json:"count"`

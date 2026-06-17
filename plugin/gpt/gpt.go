@@ -350,7 +350,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 						}
 					}
 				}()
-				var toolOutput string
+				var toolOutput any
 				if tool, ok := toolMap[call.Name]; !ok {
 					toolOutput = fmt.Sprintf("Unknown tool: %s", call.Name)
 				} else {
