@@ -28,7 +28,7 @@ const (
 	MaxPageSize             = 25 * 1024 * 1024
 	DefaultApiUrl           = "https://api.openai.com/v1/chat/completions"
 	DefaultApiModel         = "gpt-4o-mini"
-	DefaultNewApiModel      = "gpt-5.5"
+	DefaultNewApiModel      = "gpt-5.6-terra"
 	DefaultMaxArticleLength = 128000 * 4.8
 	MaxOutputTokens         = 1000
 	PresencePenalty         = 1.0
