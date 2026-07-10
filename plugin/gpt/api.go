@@ -2,7 +2,7 @@ package gpt
 
 const (
 	ApiURL = "https://api.openai.com/v1/responses"
-	Model  = "gpt-5.5"
+	Model  = "gpt-5.6-sol"
 
 	TypeInputText          = "input_text"
 	TypeInputImage         = "input_image"
