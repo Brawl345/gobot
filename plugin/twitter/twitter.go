@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Brawl345/gobot/logger"
@@ -26,6 +27,7 @@ const (
 
 type (
 	Plugin struct {
+		mu         sync.Mutex
 		guestToken string
 	}
 )
@@ -76,8 +78,16 @@ func (p *Plugin) renewToken() error {
 		return errors.New("guest token is empty")
 	}
 
+	p.mu.Lock()
 	p.guestToken = tokenResponse.GuestToken
+	p.mu.Unlock()
 	return nil
+}
+
+func (p *Plugin) getToken() string {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	return p.guestToken
 }
 
 func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
@@ -88,7 +98,8 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 
-	if p.guestToken == "" {
+	guestToken := p.getToken()
+	if guestToken == "" {
 		err := p.renewToken()
 
 		if err != nil {
@@ -99,6 +110,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 			_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 			return err
 		}
+		guestToken = p.getToken()
 	}
 
 	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
@@ -135,7 +147,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		Headers: map[string]string{
 			"Authorization":             bearerToken,
 			"User-Agent":                utils.UserAgent,
-			"X-Guest-Token":             p.guestToken,
+			"X-Guest-Token":             guestToken,
 			"X-Twitter-Active-User":     "yes",
 			"X-Twitter-Client-Language": "de",
 		},
@@ -156,6 +168,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 					_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 					return err
 				}
+				guestToken = p.getToken()
 
 				// Try request the tweet again
 				err = httpUtils.MakeRequest(httpUtils.RequestOptions{
@@ -164,7 +177,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 					Headers: map[string]string{
 						"Authorization":             bearerToken,
 						"User-Agent":                utils.UserAgent,
-						"X-Guest-Token":             p.guestToken,
+						"X-Guest-Token":             guestToken,
 						"X-Twitter-Active-User":     "yes",
 						"X-Twitter-Client-Language": "de",
 					},
@@ -204,9 +217,9 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 			if result.Tombstone.Text.Text != "" {
 				tombstoneText := result.Tombstone.Text.Text
 				tombstoneText = strings.ReplaceAll(tombstoneText, "Mehr efahren", "")
-				_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ %s", tombstoneText), utils.DefaultSendOptions())
+				_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ %s", utils.Escape(tombstoneText)), utils.DefaultSendOptions())
 			} else {
-				_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code>", result.Reason), utils.DefaultSendOptions())
+				_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code>", utils.Escape(result.Reason)), utils.DefaultSendOptions())
 			}
 			return err
 		}
@@ -300,7 +313,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	// Community Notes / "Birdwatch"
 	if result.BirdwatchPivot.DestinationUrl != "" {
-		sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre.</b>", result.BirdwatchPivot.DestinationUrl))
+		sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre.</b>", utils.Escape(result.BirdwatchPivot.DestinationUrl)))
 
 		// TODO: Links need to be replaced and it's kinda annoying
 		//sb.WriteString(utils.Escape(result.BirdwatchPivot.Subtitle.Text))
@@ -316,7 +329,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		case "Protected":
 			sb.WriteString("\"<i>🔓 Der Account-Inhaber hat beschränkt, wer seine Tweets ansehen kann.</i>")
 		default:
-			sb.WriteString(fmt.Sprintf("<i>❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code></i>", result.Reason))
+			sb.WriteString(fmt.Sprintf("<i>❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code></i>", utils.Escape(result.Reason)))
 		}
 	}
 
@@ -407,7 +420,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 		// Community Notes / "Birdwatch"
 		if quoteResultSub.BirdwatchPivot.DestinationUrl != "" {
-			sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre.</b>", quoteResultSub.BirdwatchPivot.DestinationUrl))
+			sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre.</b>", utils.Escape(quoteResultSub.BirdwatchPivot.DestinationUrl)))
 
 			// TODO: Links need to be replaced and it's kinda annoying
 			//sb.WriteString(utils.Escape(quoteResultSub.BirdwatchPivot.Subtitle.Text))
