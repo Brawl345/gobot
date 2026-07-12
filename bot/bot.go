@@ -257,3 +257,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 func (b *Gobot) Start() {
 	b.updater.Idle()
 }
+
+func (b *Gobot) Stop() error {
+	return b.updater.Stop()
+}

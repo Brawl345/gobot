@@ -50,7 +50,9 @@ func main() {
 	go func() {
 		<-channel
 		log.Info().Msg("Stopping...")
-		os.Exit(0)
+		if err := b.Stop(); err != nil {
+			log.Err(err).Msg("Failed to stop gracefully")
+		}
 	}()
 
 	b.Start()
