@@ -97,7 +97,7 @@ func (d *DLC) GeneratedBy() string {
 	sb.WriteString("Generiert von ")
 
 	if generator.URL != "" {
-		sb.WriteString(fmt.Sprintf("<a href=\"%s\">", generator.URL))
+		sb.WriteString(fmt.Sprintf("<a href=\"%s\">", utils.Escape(string(generator.URL))))
 	}
 
 	sb.WriteString(utils.Escape(string(generator.App)))

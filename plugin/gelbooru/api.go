@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"strings"
 	"unicode"
+
+	"github.com/Brawl345/gobot/utils"
 )
 
 const (
@@ -83,8 +85,8 @@ func (p *Post) IsNSFW() bool {
 func (p *Post) Caption() string {
 	var sb strings.Builder
 
-	sb.WriteString(fmt.Sprintf("🔗 <a href=\"%s\">Post #%d</a> - ", p.PostURL(), p.Id))
-	sb.WriteString(fmt.Sprintf("🖼️ <a href=\"%s\">Direktlink</a>", p.DirectURL()))
+	sb.WriteString(fmt.Sprintf("🔗 <a href=\"%s\">Post #%d</a> - ", utils.Escape(p.PostURL()), p.Id))
+	sb.WriteString(fmt.Sprintf("🖼️ <a href=\"%s\">Direktlink</a>", utils.Escape(p.DirectURL())))
 	sb.WriteString(sourceLinks(p.ValidSources()))
 
 	return sb.String()
@@ -107,7 +109,7 @@ func sourceLinks(sources []string) string {
 		if parsedURL, err := url.Parse(src); err == nil {
 			host = strings.TrimPrefix(parsedURL.Host, "www.")
 		}
-		links[i] = fmt.Sprintf("<a href=\"%s\">%s</a>", src, host)
+		links[i] = fmt.Sprintf("<a href=\"%s\">%s</a>", utils.Escape(src), utils.Escape(host))
 	}
 
 	return fmt.Sprintf(" - 🌐 %s: %s\n", label, strings.Join(links, ", "))
@@ -121,7 +123,7 @@ func (p *Post) AltCaption() string {
 	if p.IsNSFW() {
 		sb.WriteString("️🔞 <b>NSFW</b> - ")
 	}
-	sb.WriteString(fmt.Sprintf("🔗 <a href=\"%s\">Post #%d</a>", p.PostURL(), p.Id))
+	sb.WriteString(fmt.Sprintf("🔗 <a href=\"%s\">Post #%d</a>", utils.Escape(p.PostURL()), p.Id))
 	sb.WriteString(sourceLinks(p.ValidSources()))
 
 	return sb.String()
