@@ -12,6 +12,17 @@ import (
 
 var log = logger.New("utils")
 
+var germanTimezone = loadGermanTimezone()
+
+func loadGermanTimezone() *time.Location {
+	timezone, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		log.Err(err).Msg("Failed to load timezone, using UTC")
+		return time.UTC
+	}
+	return timezone
+}
+
 type (
 	VersionInfo struct {
 		GoVersion  string
@@ -66,12 +77,7 @@ func ReadVersionInfo() (VersionInfo, error) {
 }
 
 func GermanTimezone() *time.Location {
-	timezone, err := time.LoadLocation("Europe/Berlin")
-	if err != nil {
-		log.Err(err).Msg("Failed to load timezone, using UTC")
-		timezone, _ = time.LoadLocation("UTC")
-	}
-	return timezone
+	return germanTimezone
 }
 
 func TimestampToTime(timestamp int64) time.Time {
