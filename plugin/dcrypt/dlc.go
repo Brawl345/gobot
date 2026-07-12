@@ -19,6 +19,8 @@ import (
 var (
 	RcKey = []byte("cb99b5cbc24db398")
 	RcIV  = []byte("9bc24cb995cb8db3")
+
+	rcRegex = regexp.MustCompile(`<rc>(.+)</rc>`)
 )
 
 const ApiUrl = "http://service.jdownloader.org/dlcrypt/service.php?srcType=dlc&destType=pylo&data=%s"
@@ -196,8 +198,7 @@ func DecryptDLC(data []byte) (DLC, error) {
 }
 
 func extractRC(dlcContent string) ([]byte, error) {
-	re := regexp.MustCompile(`<rc>(.+)</rc>`)
-	matches := re.FindStringSubmatch(dlcContent)
+	matches := rcRegex.FindStringSubmatch(dlcContent)
 	if len(matches) < 2 {
 		return nil, errors.New("RC not found in API response")
 	}
