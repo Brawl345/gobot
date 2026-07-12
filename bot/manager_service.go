@@ -1,16 +1,19 @@
 package bot
 
 import (
+	"slices"
+	"sync"
+
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/PaulSonOfLars/gotgbot/v2"
-	"slices"
 )
 
 type managerService struct {
 	chatsPluginsService    model.ChatsPluginsService
 	pluginService          model.PluginService
 	plugins                []plugin.Plugin
+	mu                     sync.RWMutex
 	enabledPlugins         []string
 	disabledPluginsForChat map[int64][]string
 }
@@ -47,6 +50,9 @@ func (service *managerService) SetPlugins(plugins []plugin.Plugin) {
 }
 
 func (service *managerService) EnablePlugin(name string) error {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
 	if slices.Contains(service.enabledPlugins, name) {
 		return model.ErrAlreadyExists
 	}
@@ -64,7 +70,9 @@ func (service *managerService) EnablePlugin(name string) error {
 	return model.ErrNotFound
 }
 
-func (service *managerService) IsPluginDisabledForChat(chat *gotgbot.Chat, name string) bool {
+// isPluginDisabledForChat reports whether the plugin is disabled for the chat.
+// The caller must hold at least a read lock.
+func (service *managerService) isPluginDisabledForChat(chat *gotgbot.Chat, name string) bool {
 	disabledPlugins, exists := service.disabledPluginsForChat[chat.Id]
 	if !exists {
 		return false
@@ -72,8 +80,17 @@ func (service *managerService) IsPluginDisabledForChat(chat *gotgbot.Chat, name 
 	return slices.Contains(disabledPlugins, name)
 }
 
+func (service *managerService) IsPluginDisabledForChat(chat *gotgbot.Chat, name string) bool {
+	service.mu.RLock()
+	defer service.mu.RUnlock()
+	return service.isPluginDisabledForChat(chat, name)
+}
+
 func (service *managerService) EnablePluginForChat(chat *gotgbot.Chat, name string) error {
-	if !service.IsPluginDisabledForChat(chat, name) {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
+	if !service.isPluginDisabledForChat(chat, name) {
 		return model.ErrAlreadyExists
 	}
 
@@ -95,6 +112,9 @@ func (service *managerService) EnablePluginForChat(chat *gotgbot.Chat, name stri
 }
 
 func (service *managerService) DisablePlugin(name string) error {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
 	if !slices.Contains(service.enabledPlugins, name) {
 		return model.ErrNotFound
 	}
@@ -109,7 +129,10 @@ func (service *managerService) DisablePlugin(name string) error {
 }
 
 func (service *managerService) DisablePluginForChat(chat *gotgbot.Chat, name string) error {
-	if service.IsPluginDisabledForChat(chat, name) {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
+	if service.isPluginDisabledForChat(chat, name) {
 		return model.ErrAlreadyExists
 	}
 
@@ -129,5 +152,7 @@ func (service *managerService) DisablePluginForChat(chat *gotgbot.Chat, name str
 }
 
 func (service *managerService) IsPluginEnabled(name string) bool {
+	service.mu.RLock()
+	defer service.mu.RUnlock()
 	return slices.Contains(service.enabledPlugins, name)
 }
