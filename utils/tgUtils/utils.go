@@ -5,10 +5,16 @@ import (
 	"errors"
 	"os"
 	"strconv"
+	"sync"
 
 	"github.com/Brawl345/gobot/utils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 )
+
+var adminId = sync.OnceValue(func() int64 {
+	id, _ := strconv.ParseInt(os.Getenv("ADMIN_ID"), 10, 64)
+	return id
+})
 
 // ParseAnyEntityTypes is a simplied version of ParseEntityTypes that accepts a slice instead of a map for entites types
 // that should be parsed. It also uses caption entites when they exist.
@@ -52,8 +58,7 @@ func ContainsMedia(message *gotgbot.Message) bool {
 }
 
 func IsAdmin(user *gotgbot.User) bool {
-	adminId, _ := strconv.ParseInt(os.Getenv("ADMIN_ID"), 10, 64)
-	return adminId == user.Id
+	return adminId() == user.Id
 }
 
 func FromGroup(message gotgbot.MaybeInaccessibleMessage) bool {
