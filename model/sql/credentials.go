@@ -27,7 +27,7 @@ func NewCredentialService(db *sqlx.DB) *credentialService {
 	s.credentials = make(map[string]string)
 
 	if err != nil {
-		log.Err(err)
+		log.Err(err).Msg("Failed to load credentials")
 	} else {
 		for _, cred := range credentials {
 			s.credentials[cred.Name] = cred.Value
