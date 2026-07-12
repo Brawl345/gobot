@@ -72,6 +72,7 @@ func expandUrl(url string) (string, error) {
 	}
 	req.Header.Set("User-Agent", utils.UserAgent)
 	client := &http.Client{
+		Transport: httpUtils.SSRFSafeClient.Transport,
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
