@@ -512,7 +512,7 @@ func (p *Plugin) onReset(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if err := p.reset(b, c); err != nil {
 		return err
 	}
-	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
 		Fallback: "✅",
 	})
 }

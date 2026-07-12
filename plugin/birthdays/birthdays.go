@@ -162,7 +162,7 @@ func (p *Plugin) onSetBirthday(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Msg("Failed to set birthday")
 	}
 
-	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍",
 		&tgUtils.ReactionFallbackOpts{
 			Fallback: "✅ <b>Dein Geburtstag wurde gespeichert.</b>",
 		},
@@ -180,7 +180,7 @@ func (p *Plugin) onDeleteBirthday(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍",
 		&tgUtils.ReactionFallbackOpts{
 			Fallback: "✅ <b>Dein Geburtstag wurde gelöscht.</b>\nTja, ich schätze du alterst nicht mehr.",
 		},
@@ -215,7 +215,7 @@ func (p *Plugin) onEnableBirthdayNotifications(b *gotgbot.Bot, c plugin.GobotCon
 		return err
 	}
 
-	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍",
 		&tgUtils.ReactionFallbackOpts{
 			Fallback: "✅ Geburtstagsbenachrichtigungen wurden aktiviert.",
 		},
@@ -250,7 +250,7 @@ func (p *Plugin) onDisableBirthdayNotifications(b *gotgbot.Bot, c plugin.GobotCo
 		return err
 	}
 
-	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍",
+	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍",
 		&tgUtils.ReactionFallbackOpts{
 			Fallback: "✅ Geburtstagsbenachrichtigungen wurden deaktiviert.",
 		},

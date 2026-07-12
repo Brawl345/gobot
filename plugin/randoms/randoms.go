@@ -121,7 +121,7 @@ func (p *Plugin) delRandom(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
 		Fallback: "<b>✅ Text gelöscht!</b>",
 	})
 }

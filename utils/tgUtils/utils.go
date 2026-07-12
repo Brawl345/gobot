@@ -94,8 +94,8 @@ type ReactionFallbackOpts struct {
 	Fallback        string
 }
 
-// AddRectionWithFallback adds a reaction to a message. If reactions are disabled, a Fallback message is sent instead
-func AddRectionWithFallback(b *gotgbot.Bot, message *gotgbot.Message, emoji string, opts *ReactionFallbackOpts) error {
+// AddReactionWithFallback adds a reaction to a message. If reactions are disabled, a Fallback message is sent instead
+func AddReactionWithFallback(b *gotgbot.Bot, message *gotgbot.Message, emoji string, opts *ReactionFallbackOpts) error {
 	_, err := message.SetReaction(b, &gotgbot.SetMessageReactionOpts{
 		Reaction: []gotgbot.ReactionType{
 			gotgbot.ReactionTypeEmoji{

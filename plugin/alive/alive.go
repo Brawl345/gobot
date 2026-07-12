@@ -49,7 +49,7 @@ func onAliveCheck(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	randomEmoji := emojis[rand.Intn(len(emojis))]
 
-	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, randomEmoji, &tgUtils.ReactionFallbackOpts{
+	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, randomEmoji, &tgUtils.ReactionFallbackOpts{
 		Fallback: fmt.Sprintf("<b>Ich bin da, %s!</b>", utils.Escape(c.EffectiveSender.FirstName())),
 		SendMessageOpts: &gotgbot.SendMessageOpts{
 			ParseMode: gotgbot.ParseModeHTML,

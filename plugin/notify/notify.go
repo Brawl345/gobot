@@ -6,13 +6,14 @@ import (
 	"regexp"
 	"strings"
 
+	"slices"
+
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	tgUtils "github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"slices"
 )
 
 var log = logger.New("notify")
@@ -220,7 +221,7 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
 		Fallback: "✅ Du wirst jetzt über neue Erwähnungen in dieser Gruppe informiert!\n" +
 			"Nutze <code>/notify_disable</code> zum Deaktivieren.",
 	})
@@ -258,7 +259,7 @@ func (p *Plugin) disableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
 		Fallback: "✅ Du wirst nicht mehr über neue Erwähnungen in dieser Gruppe informiert.",
 	})
 }

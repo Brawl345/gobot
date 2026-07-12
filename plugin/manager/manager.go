@@ -86,7 +86,7 @@ func (p *Plugin) OnEnable(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
 		Fallback: "✅ Plugin wurde aktiviert",
 	})
 }
@@ -116,7 +116,7 @@ func (p *Plugin) OnEnableInChat(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
 		Fallback: "✅ Plugin wurde für diesen Chat wieder aktiviert",
 	})
 }
@@ -145,7 +145,7 @@ func (p *Plugin) OnDisable(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
 		Fallback: "✅ Plugin wurde deaktiviert",
 	})
 }
@@ -180,7 +180,7 @@ func (p *Plugin) OnDisableInChat(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	return tgUtils.AddRectionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
+	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
 		Fallback: "✅ Plugin wurde für diesen Chat deaktiviert",
 	})
 }
