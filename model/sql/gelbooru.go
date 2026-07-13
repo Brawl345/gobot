@@ -2,6 +2,7 @@ package sql
 
 import (
 	"database/sql"
+	"errors"
 	"strings"
 
 	"github.com/Brawl345/gobot/logger"
@@ -26,7 +27,7 @@ func (db *gelbooruService) GetQuery(queryID int64) (string, error) {
 	var query string
 	err := db.Get(&query, selectQuery, queryID)
 	if err != nil {
-		if err == sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			return "", model.ErrQueryNotFound
 		}
 		return "", err
@@ -43,7 +44,7 @@ func (db *gelbooruService) SaveQuery(query string) (int64, error) {
 	if err == nil {
 		return existingID, nil
 	}
-	if err != sql.ErrNoRows {
+	if !errors.Is(err, sql.ErrNoRows) {
 		return 0, err
 	}
 
