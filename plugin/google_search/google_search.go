@@ -119,7 +119,7 @@ func (p *Plugin) onGoogleSearch(b *gotgbot.Bot, c plugin.GobotContext) error {
 		sb.WriteString(
 			fmt.Sprintf(
 				"<a href=\"%s\">%s</a> - <code>%s</code>\n",
-				item.Link,
+				utils.Escape(item.Link),
 				utils.Escape(item.Title),
 				utils.Escape(item.DisplayLink),
 			),

@@ -197,8 +197,8 @@ func (p *Plugin) doImageSearch(b *gotgbot.Bot, c *plugin.GobotContext) error {
 		image := wrapper.Images[index]
 		caption := fmt.Sprintf(
 			"<a href=\"%s\">🖼 Vollbild</a> • <a href=\"%s\">🌐 Seite aufrufen</a>",
-			image.ImageLink(),
-			image.ContextLink(),
+			utils.Escape(image.ImageLink()),
+			utils.Escape(image.ContextLink()),
 		)
 		replyMarkup := &gotgbot.InlineKeyboardMarkup{
 			InlineKeyboard: [][]gotgbot.InlineKeyboardButton{
