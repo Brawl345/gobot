@@ -306,7 +306,7 @@ func headContentLength(fileURL string) (int64, error) {
 	}
 	req.Header.Set("Referer", "https://gelbooru.com/")
 	req.Header.Set("User-Agent", "Gobot/1.0 (Telegram Bot; +https://github.com/Brawl345/gobot)")
-	resp, err := httpUtils.DefaultHttpClient.Do(req)
+	resp, err := httpUtils.SSRFSafeClient.Do(req)
 	if err != nil {
 		return 0, err
 	}
@@ -347,7 +347,7 @@ func (p *Plugin) downloadAndSend(b *gotgbot.Bot, c *plugin.GobotContext, post *P
 	req.Header.Set("Referer", "https://gelbooru.com/")
 	req.Header.Set("User-Agent", "Gobot/1.0 (Telegram Bot; +https://github.com/Brawl345/gobot)")
 
-	resp, err := httpUtils.DefaultHttpClient.Do(req)
+	resp, err := httpUtils.SSRFSafeClient.Do(req)
 	if err != nil {
 		return err
 	}
@@ -361,7 +361,7 @@ func (p *Plugin) downloadAndSend(b *gotgbot.Bot, c *plugin.GobotContext, post *P
 		return fmt.Errorf("gelbooru download: HTTP %d", resp.StatusCode)
 	}
 
-	file := gotgbot.InputFileByReader(path.Base(fileURL), resp.Body)
+	file := gotgbot.InputFileByReader(path.Base(fileURL), io.LimitReader(resp.Body, tgUtils.MaxFilesizeUpload))
 
 	if post.IsVideo() || post.IsGIF() {
 		// GIFs are sent as videos since animations are buggy with larger filesizes
