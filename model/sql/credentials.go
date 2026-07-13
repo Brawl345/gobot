@@ -2,6 +2,7 @@ package sql
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
@@ -11,6 +12,7 @@ import (
 type credentialService struct {
 	*sqlx.DB
 	log         *logger.Logger
+	mu          sync.RWMutex
 	credentials map[string]string
 }
 
@@ -38,10 +40,18 @@ func NewCredentialService(db *sqlx.DB) *credentialService {
 }
 
 func (db *credentialService) GetAllCredentials() map[string]string {
-	return db.credentials
+	db.mu.RLock()
+	defer db.mu.RUnlock()
+	credentials := make(map[string]string, len(db.credentials))
+	for name, value := range db.credentials {
+		credentials[name] = value
+	}
+	return credentials
 }
 
 func (db *credentialService) GetKey(name string) string {
+	db.mu.RLock()
+	defer db.mu.RUnlock()
 	return db.credentials[name]
 }
 
@@ -50,7 +60,9 @@ func (db *credentialService) SetKey(name, value string) error {
 	_, err := db.Exec(query, name, value, value)
 
 	if err == nil {
+		db.mu.Lock()
 		db.credentials[name] = value
+		db.mu.Unlock()
 	}
 
 	return err
@@ -68,7 +80,9 @@ func (db *credentialService) DeleteKey(name string) error {
 		return errors.New("❌ Key nicht gefunden")
 	}
 
+	db.mu.Lock()
 	delete(db.credentials, name)
+	db.mu.Unlock()
 
 	return err
 }
