@@ -136,11 +136,6 @@ func (p *Plugin) OnVoice(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}(resp.Body)
 
-	if err != nil {
-		log.Err(err).Msg("Failed to read body")
-		return nil
-	}
-
 	if resp.StatusCode != http.StatusOK {
 		var errorResponse ApiErrorResponse
 		err = json.NewDecoder(resp.Body).Decode(&errorResponse)
