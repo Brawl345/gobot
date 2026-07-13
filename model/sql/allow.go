@@ -2,6 +2,7 @@ package sql
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -11,6 +12,7 @@ import (
 )
 
 type allowService struct {
+	mu           sync.RWMutex
 	allowedChats []int64
 	chatService  model.ChatService
 	userService  model.UserService
@@ -41,14 +43,21 @@ func (service *allowService) IsUserAllowed(user *gotgbot.User) bool {
 		return true
 	}
 
+	service.mu.RLock()
+	defer service.mu.RUnlock()
 	return slices.Contains(service.allowedChats, user.Id)
 }
 
 func (service *allowService) IsChatAllowed(chat *gotgbot.Chat) bool {
+	service.mu.RLock()
+	defer service.mu.RUnlock()
 	return slices.Contains(service.allowedChats, chat.Id)
 }
 
 func (service *allowService) AllowUser(user *gotgbot.User) error {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
 	err := service.userService.Allow(user)
 	if err != nil {
 		return err
@@ -62,17 +71,26 @@ func (service *allowService) DenyUser(user *gotgbot.User) error {
 	if tgUtils.IsAdmin(user) {
 		return errors.New("cannot deny admin")
 	}
+
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
 	err := service.userService.Deny(user)
 	if err != nil {
 		return err
 	}
 
 	index := slices.Index(service.allowedChats, user.Id)
-	service.allowedChats = slices.Delete(service.allowedChats, index, index+1)
+	if index >= 0 {
+		service.allowedChats = slices.Delete(service.allowedChats, index, index+1)
+	}
 	return nil
 }
 
 func (service *allowService) AllowChat(chat *gotgbot.Chat) error {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
 	err := service.chatService.Allow(chat)
 	if err != nil {
 		return err
@@ -83,12 +101,17 @@ func (service *allowService) AllowChat(chat *gotgbot.Chat) error {
 }
 
 func (service *allowService) DenyChat(chat *gotgbot.Chat) error {
+	service.mu.Lock()
+	defer service.mu.Unlock()
+
 	err := service.chatService.Deny(chat)
 	if err != nil {
 		return err
 	}
 
 	index := slices.Index(service.allowedChats, chat.Id)
-	service.allowedChats = slices.Delete(service.allowedChats, index, index+1)
+	if index >= 0 {
+		service.allowedChats = slices.Delete(service.allowedChats, index, index+1)
+	}
 	return nil
 }
