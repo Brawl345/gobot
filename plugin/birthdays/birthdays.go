@@ -107,6 +107,11 @@ func (p *Plugin) scheduleNewRun(bot *gotgbot.Bot) {
 func (p *Plugin) onNewDay(bot *gotgbot.Bot) {
 	log.Debug().Msg("Checking for birthdays")
 	defer p.scheduleNewRun(bot)
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error().Interface("panic", r).Msg("Recovered from panic in onNewDay")
+		}
+	}()
 
 	birthdayList, err := p.birthdayService.TodaysBirthdays()
 	if err != nil {
@@ -160,6 +165,8 @@ func (p *Plugin) onSetBirthday(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Time("birthday", birthday).
 			Msg("Failed to set birthday")
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
 	}
 
 	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍",
