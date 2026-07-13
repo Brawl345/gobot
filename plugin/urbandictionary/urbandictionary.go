@@ -75,7 +75,7 @@ func onUrbanDictionary(b *gotgbot.Bot, c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b><a href=\"%s\">%s</a></b>\n",
-			term.Permalink,
+			utils.Escape(term.Permalink),
 			utils.Escape(term.Word),
 		),
 	)
