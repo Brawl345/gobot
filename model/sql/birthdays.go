@@ -90,7 +90,11 @@ func (db *birthdayService) TodaysBirthdays() (map[int64][]model.User, error) {
 	AND MONTH(u.birthday) = MONTH(NOW())`
 	birthdayList := make(map[int64][]model.User)
 
-	rows, _ := db.Queryx(query)
+	rows, err := db.Queryx(query)
+	if err != nil {
+		db.log.Err(err).Send()
+		return nil, err
+	}
 	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
 		if err != nil {
@@ -107,6 +111,11 @@ func (db *birthdayService) TodaysBirthdays() (map[int64][]model.User, error) {
 		}
 
 		birthdayList[chatID] = append(birthdayList[chatID], user)
+	}
+
+	if err := rows.Err(); err != nil {
+		db.log.Err(err).Send()
+		return nil, err
 	}
 
 	return birthdayList, nil
