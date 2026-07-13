@@ -25,7 +25,7 @@ type (
 	Service interface {
 		BackAgain(chat *gotgbot.Chat, user *gotgbot.Sender) error
 		IsAFK(chat *gotgbot.Chat, user *gotgbot.Sender) (bool, model.AFKData, error)
-		IsAFKByUsername(chat *gotgbot.Chat, username string) (bool, model.AFKData, error)
+		AFKByUsernames(chat *gotgbot.Chat, usernames []string) (map[string]model.AFKData, error)
 		SetAFK(chat *gotgbot.Chat, user *gotgbot.Sender, now time.Time) error
 		SetAFKWithReason(chat *gotgbot.Chat, user *gotgbot.Sender, reason string) error
 	}
@@ -179,51 +179,71 @@ func (p *Plugin) checkAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) notifyIfAFK(b *gotgbot.Bot, c plugin.GobotContext) error {
-	var mentionedUsername string
+	seen := make(map[string]struct{})
+	var usernames []string
 
 	for _, entity := range tgUtils.ParseAnyEntityTypes(c.EffectiveMessage, []tgUtils.EntityType{tgUtils.EntityTypeMention}) {
-		username := strings.TrimPrefix(entity.Text, "@")
-		mentionedUsername = strings.ToLower(username)
+		mentionedUsername := strings.ToLower(strings.TrimPrefix(entity.Text, "@"))
+
+		if mentionedUsername == "" ||
+			strings.EqualFold(mentionedUsername, b.Username) ||
+			strings.EqualFold(mentionedUsername, c.EffectiveSender.Username()) {
+			continue
+		}
+
+		if _, ok := seen[mentionedUsername]; ok {
+			continue
+		}
+		seen[mentionedUsername] = struct{}{}
+		usernames = append(usernames, mentionedUsername)
 	}
 
-	if mentionedUsername == "" ||
-		strings.EqualFold(mentionedUsername, b.Username) ||
-		strings.EqualFold(mentionedUsername, c.EffectiveSender.Username()) {
+	if len(usernames) == 0 {
 		return nil
 	}
 
-	isAFK, data, err := p.afkService.IsAFKByUsername(c.EffectiveChat, mentionedUsername)
+	afkUsers, err := p.afkService.AFKByUsernames(c.EffectiveChat, usernames)
 	if err != nil {
 		log.Err(err).
 			Int64("chat_id", c.EffectiveChat.Id).
-			Str("username", mentionedUsername).
 			Msg("Failure to check AFK")
 		return nil
 	}
 
-	if !isAFK {
-		return nil
-	}
-
 	var sb strings.Builder
-	sb.WriteString(
-		fmt.Sprintf(
+	for _, username := range usernames {
+		data, ok := afkUsers[username]
+		if !ok {
+			continue
+		}
+
+		line := fmt.Sprintf(
 			"⚠️ <b>%s ist zurzeit AFK!</b> <i>(🕒 seit %s",
 			utils.Escape(data.FirstName),
 			data.Duration().Round(time.Second),
-		),
-	)
-
-	if data.Reason.Valid {
-		sb.WriteString(
-			fmt.Sprintf(
-				", 💬 %s",
-				utils.Escape(data.Reason.String),
-			),
 		)
+
+		if data.Reason.Valid {
+			line += fmt.Sprintf(", 💬 %s", utils.Escape(data.Reason.String))
+		}
+
+		line += ")</i>"
+
+		addition := line
+		if sb.Len() > 0 {
+			addition = "\n" + line
+		}
+
+		if len([]rune(sb.String()))+len([]rune(addition)) > tgUtils.MaxMessageLength {
+			break
+		}
+
+		sb.WriteString(addition)
 	}
 
-	sb.WriteString(")</i>")
+	if sb.Len() == 0 {
+		return nil
+	}
 
 	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
 	return err

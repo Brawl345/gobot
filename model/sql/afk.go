@@ -3,6 +3,7 @@ package sql
 import (
 	"database/sql"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -71,22 +72,53 @@ func (db *afkService) BackAgain(chat *gotgbot.Chat, user *gotgbot.Sender) error 
 	return err
 }
 
-func (db *afkService) IsAFKByUsername(chat *gotgbot.Chat, username string) (bool, model.AFKData, error) {
-	const query = `SELECT afk_since, afk_reason, first_name
+// AFKByUsernames returns the AFK data for every given username that is
+// currently AFK in the chat, keyed by lowercased username.
+func (db *afkService) AFKByUsernames(chat *gotgbot.Chat, usernames []string) (map[string]model.AFKData, error) {
+	result := make(map[string]model.AFKData)
+	if len(usernames) == 0 {
+		return result, nil
+	}
+
+	const query = `SELECT afk_since, afk_reason, first_name, username
 	FROM chats_users
 	LEFT JOIN users ON chats_users.user_id = users.id
 	WHERE chat_id = ?
 	  AND in_group = TRUE
-	  AND username = ?
+	  AND username IN (?)
 	  AND afk_since IS NOT NULL`
 
-	var afkData model.AFKData
-	err := db.Get(&afkData, query, chat.Id, username)
+	q, args, err := sqlx.In(query, chat.Id, usernames)
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return false, afkData, nil
-		}
-		return false, afkData, err
+		return nil, err
 	}
-	return true, afkData, nil
+	q = db.Rebind(q)
+
+	rows, err := db.Queryx(q, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer func(rows *sqlx.Rows) {
+		err := rows.Close()
+		if err != nil {
+			db.log.Err(err).Send()
+		}
+	}(rows)
+
+	for rows.Next() {
+		var row struct {
+			model.AFKData
+			Username string `db:"username"`
+		}
+		if err := rows.StructScan(&row); err != nil {
+			return nil, err
+		}
+		result[strings.ToLower(row.Username)] = row.AFKData
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
