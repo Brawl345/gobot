@@ -14,12 +14,13 @@ type Response struct {
 }
 
 func (r *Response) GmtOffsetFormatted() string {
-	var sign string
-	if r.GmtOffset > 0 {
-		sign = "+"
+	sign := "+"
+	offset := r.GmtOffset
+	if offset < 0 {
+		sign = "-"
+		offset = -offset
 	}
-	hours := r.GmtOffset / 3600
-	minutes := (r.GmtOffset % 3600) / 60
-	formattedStr := fmt.Sprintf("%s%02d:%02d", sign, hours, minutes)
-	return formattedStr
+	hours := offset / 3600
+	minutes := (offset % 3600) / 60
+	return fmt.Sprintf("%s%02d:%02d", sign, hours, minutes)
 }
