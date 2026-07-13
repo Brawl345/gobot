@@ -147,6 +147,10 @@ func DecryptDLC(data []byte) (DLC, error) {
 		data = append(data, bytes.Repeat([]byte("="), 4-padding)...)
 	}
 
+	if len(data) <= 88 {
+		return DLC{}, errors.New("DLC file is too short")
+	}
+
 	encryptedDlcKey := data[len(data)-88:]
 	encryptedDlcData, err := base64.StdEncoding.DecodeString(string(data[:len(data)-88]))
 	if err != nil {
@@ -208,6 +212,10 @@ func extractRC(dlcContent string) ([]byte, error) {
 		return nil, err
 	}
 
+	if len(rc) < 16 {
+		return nil, errors.New("decoded RC is too short")
+	}
+
 	return rc[:16], nil
 }
 
@@ -215,6 +223,10 @@ func decryptData(data []byte, key []byte, iv []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(data)%aes.BlockSize != 0 {
+		return nil, errors.New("input is not a multiple of the block size")
 	}
 
 	mode := cipher.NewCBCDecrypter(block, iv)
