@@ -156,7 +156,7 @@ func onFileLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 		fileName := path.Base(url)
 
-		file := gotgbot.InputFileByReader(fileName, resp.Body)
+		file := gotgbot.InputFileByReader(fileName, io.LimitReader(resp.Body, tgUtils.MaxFilesizeUpload))
 		if slices.Contains(audioExt, ext) {
 			_, err = c.EffectiveMessage.ReplyAudio(b, file, nil)
 		} else if slices.Contains(videoExt, ext) {
