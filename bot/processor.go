@@ -296,7 +296,7 @@ func (p *Processor) onCallback(b *gotgbot.Bot, ctx *ext.Context) error {
 				return err
 			}
 
-			if tgUtils.FromGroup(msg) && p.managerService.IsPluginDisabledForChat(ctx.EffectiveChat, plg.Name()) {
+			if msg != nil && tgUtils.FromGroup(msg) && p.managerService.IsPluginDisabledForChat(ctx.EffectiveChat, plg.Name()) {
 				log.Printf("Plugin %s is disabled for this chat", plg.Name())
 				_, err := ctx.CallbackQuery.Answer(b, &gotgbot.AnswerCallbackQueryOpts{
 					Text:      "Dieser Befehl ist nicht verfügbar.",
@@ -314,7 +314,7 @@ func (p *Processor) onCallback(b *gotgbot.Bot, ctx *ext.Context) error {
 				return err
 			}
 
-			if handler.Cooldown > 0 {
+			if handler.Cooldown > 0 && msg != nil {
 				callbackTime := utils.TimestampToTime(ctx.CallbackQuery.Message.GetDate())
 				currentTime := time.Now()
 				waitTime := handler.Cooldown - currentTime.Sub(callbackTime)
@@ -343,11 +343,16 @@ func (p *Processor) onCallback(b *gotgbot.Bot, ctx *ext.Context) error {
 
 			namedMatches := namedMatchesOf(command, matches)
 
+			var chatId int64
+			if ctx.EffectiveChat != nil {
+				chatId = ctx.EffectiveChat.Id
+			}
+
 			go func() {
 				defer func() {
 					if r := recover(); r != nil {
 						log.Err(errors.New("panic")).
-							Int64("chat_id", ctx.EffectiveChat.Id).
+							Int64("chat_id", chatId).
 							Str("callback_data", callback.Data).
 							Str("component", plg.Name()).
 							Msgf("%s", r)
@@ -360,7 +365,7 @@ func (p *Processor) onCallback(b *gotgbot.Bot, ctx *ext.Context) error {
 				})
 				if err != nil {
 					log.Err(err).
-						Int64("chat_id", ctx.EffectiveChat.Id).
+						Int64("chat_id", chatId).
 						Str("callback_data", callback.Data).
 						Str("component", plg.Name()).
 						Send()
