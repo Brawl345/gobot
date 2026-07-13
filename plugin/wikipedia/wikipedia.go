@@ -63,6 +63,45 @@ func (p *Plugin) Handlers(botInfo *gotgbot.User) []plugin.Handler {
 	}
 }
 
+func fetchArticle(lang, titles string, exintro, explaintext bool) (*Response, error) {
+	requestUrl := url.URL{
+		Scheme: "https",
+		Host:   fmt.Sprintf("%s.wikipedia.org", lang),
+		Path:   "/w/api.php",
+	}
+
+	q := requestUrl.Query()
+	q.Set("action", "query")
+	q.Set("titles", titles)
+	q.Set("format", "json")
+	q.Set("prop", "info|pageprops|extracts")
+	q.Set("redirects", "1")
+	q.Set("formatversion", "2")
+	q.Set("inprop", "url")
+	q.Set("ppprop", "disambiguation")
+	if exintro {
+		q.Set("exintro", "1")
+	}
+	if explaintext {
+		q.Set("explaintext", "1")
+	}
+
+	requestUrl.RawQuery = q.Encode()
+
+	var response Response
+	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
+		Method:   httpUtils.MethodGet,
+		URL:      requestUrl.String(),
+		Headers:  map[string]string{"User-Agent": userAgent},
+		Response: &response,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &response, nil
+}
+
 func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 	query := c.NamedMatches["query"]
 	lang := c.NamedMatches["lang"]
@@ -88,35 +127,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	requestUrl := url.URL{
-		Scheme: "https",
-		Host:   fmt.Sprintf("%s.wikipedia.org", lang),
-		Path:   "/w/api.php",
-	}
-
-	q := requestUrl.Query()
-	q.Set("action", "query")
-	q.Set("titles", query)
-	q.Set("format", "json")
-	q.Set("prop", "info|pageprops|extracts")
-	q.Set("redirects", "1")
-	q.Set("formatversion", "2")
-	q.Set("inprop", "url")
-	q.Set("ppprop", "disambiguation")
-	if section == "" {
-		q.Set("exintro", "1")
-	}
-	q.Set("explaintext", "1")
-
-	requestUrl.RawQuery = q.Encode()
-
-	var response Response
-	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
-		Method:   httpUtils.MethodGet,
-		URL:      requestUrl.String(),
-		Headers:  map[string]string{"User-Agent": userAgent},
-		Response: &response,
-	})
+	response, err := fetchArticle(lang, query, section == "", true)
 	if err != nil {
 		if _, ok := errors.AsType[*net.DNSError](err); ok {
 			_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Diese Wikipedia-Sprachversion existiert nicht.", nil)
@@ -158,38 +169,14 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 	sb.WriteString(
 		fmt.Sprintf(
 			"<b><a href=\"%s\">%s</a></b>\n",
-			article.URL,
+			utils.Escape(article.URL),
 			utils.Escape(article.Title),
 		),
 	)
 
 	if article.Pageprops.Disambiguation {
 		// Need to parse the disambiguation page manually
-		requestUrl := url.URL{
-			Scheme: "https",
-			Host:   fmt.Sprintf("%s.wikipedia.org", lang),
-			Path:   "/w/api.php",
-		}
-
-		q := requestUrl.Query()
-		q.Set("action", "query")
-		q.Set("titles", article.Title)
-		q.Set("format", "json")
-		q.Set("prop", "info|pageprops|extracts")
-		q.Set("redirects", "1")
-		q.Set("formatversion", "2")
-		q.Set("inprop", "url")
-		q.Set("ppprop", "disambiguation")
-
-		requestUrl.RawQuery = q.Encode()
-
-		var response Response
-		err := httpUtils.MakeRequest(httpUtils.RequestOptions{
-			Method:   httpUtils.MethodGet,
-			URL:      requestUrl.String(),
-			Headers:  map[string]string{"User-Agent": userAgent},
-			Response: &response,
-		})
+		disambResponse, err := fetchArticle(lang, article.Title, false, false)
 		if err != nil {
 			guid := xid.New().String()
 			log.Err(err).
@@ -201,7 +188,7 @@ func onArticle(b *gotgbot.Bot, c plugin.GobotContext) error {
 			return err
 		}
 
-		matches := regexDisambiguation.FindAllStringSubmatch(response.Query.Pages[0].Text, -1)
+		matches := regexDisambiguation.FindAllStringSubmatch(disambResponse.Query.Pages[0].Text, -1)
 		sb.WriteString("<i>Dies ist eine Begriffsklärungsseite.</i>\n")
 		if len(matches) > 0 {
 			sb.WriteString("\n<b>Meintest du:</b>\n")
