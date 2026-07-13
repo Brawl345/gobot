@@ -76,15 +76,15 @@ type (
 				Id        string `json:"id"`
 				Text      string `json:"text"`
 				EntitySet struct {
-					UserMentions []interface{} `json:"user_mentions"`
+					UserMentions []any `json:"user_mentions"`
 					Urls         []struct {
 						DisplayUrl  string `json:"display_url"`
 						ExpandedUrl string `json:"expanded_url"`
 						Url         string `json:"url"`
 						Indices     []int  `json:"indices"`
 					} `json:"urls"`
-					Hashtags []interface{} `json:"hashtags"`
-					Symbols  []interface{} `json:"symbols"`
+					Hashtags []any `json:"hashtags"`
+					Symbols  []any `json:"symbols"`
 				} `json:"entity_set"`
 			} `json:"result"`
 		} `json:"note_tweet_results"`
@@ -137,8 +137,8 @@ type (
 					} `json:"focus_rects"`
 				} `json:"original_info"`
 			} `json:"media"`
-			UserMentions []interface{} `json:"user_mentions"`
-			Urls         []Url         `json:"urls"`
+			UserMentions []any `json:"user_mentions"`
+			Urls         []Url `json:"urls"`
 		} `json:"entities"`
 		ExtendedEntities struct {
 			Media []Medium `json:"media"`
@@ -197,25 +197,25 @@ type (
 						} `json:"urls"`
 					} `json:"url"`
 				} `json:"entities"`
-				FastFollowersCount      int           `json:"fast_followers_count"`
-				FavouritesCount         int           `json:"favourites_count"`
-				FollowersCount          int           `json:"followers_count"`
-				FriendsCount            int           `json:"friends_count"`
-				HasCustomTimelines      bool          `json:"has_custom_timelines"`
-				IsTranslator            bool          `json:"is_translator"`
-				ListedCount             int           `json:"listed_count"`
-				MediaCount              int           `json:"media_count"`
-				NormalFollowersCount    int           `json:"normal_followers_count"`
-				PinnedTweetIdsStr       []string      `json:"pinned_tweet_ids_str"`
-				PossiblySensitive       bool          `json:"possibly_sensitive"`
-				ProfileBannerUrl        string        `json:"profile_banner_url"`
-				ProfileInterstitialType string        `json:"profile_interstitial_type"`
-				Protected               bool          `json:"protected"`
-				StatusesCount           int           `json:"statuses_count"`
-				TranslatorType          string        `json:"translator_type"`
-				Url                     string        `json:"url"`
-				VerifiedType            string        `json:"verified_type"`
-				WithheldInCountries     []interface{} `json:"withheld_in_countries"`
+				FastFollowersCount      int      `json:"fast_followers_count"`
+				FavouritesCount         int      `json:"favourites_count"`
+				FollowersCount          int      `json:"followers_count"`
+				FriendsCount            int      `json:"friends_count"`
+				HasCustomTimelines      bool     `json:"has_custom_timelines"`
+				IsTranslator            bool     `json:"is_translator"`
+				ListedCount             int      `json:"listed_count"`
+				MediaCount              int      `json:"media_count"`
+				NormalFollowersCount    int      `json:"normal_followers_count"`
+				PinnedTweetIdsStr       []string `json:"pinned_tweet_ids_str"`
+				PossiblySensitive       bool     `json:"possibly_sensitive"`
+				ProfileBannerUrl        string   `json:"profile_banner_url"`
+				ProfileInterstitialType string   `json:"profile_interstitial_type"`
+				Protected               bool     `json:"protected"`
+				StatusesCount           int      `json:"statuses_count"`
+				TranslatorType          string   `json:"translator_type"`
+				Url                     string   `json:"url"`
+				VerifiedType            string   `json:"verified_type"`
+				WithheldInCountries     []any    `json:"withheld_in_countries"`
 			} `json:"legacy"`
 			Location struct {
 				Location string `json:"location"`
@@ -333,9 +333,9 @@ type (
 					} `json:"device"`
 				} `json:"platform"`
 			} `json:"card_platform"`
-			Name            string        `json:"name"`
-			Url             string        `json:"url"`
-			UserRefsResults []interface{} `json:"user_refs_results"`
+			Name            string `json:"name"`
+			Url             string `json:"url"`
+			UserRefsResults []any  `json:"user_refs_results"`
 		} `json:"legacy"`
 	}
 

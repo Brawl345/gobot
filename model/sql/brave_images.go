@@ -128,7 +128,7 @@ func (db *braveImagesService) SaveImages(query string, wrapper *model.ImageSearc
 
 	if len(wrapper.Images) > 0 {
 		valueStrings := make([]string, 0, len(wrapper.Images))
-		valueArgs := make([]interface{}, 0, len(wrapper.Images)*4)
+		valueArgs := make([]any, 0, len(wrapper.Images)*4)
 		for _, image := range wrapper.Images {
 			valueStrings = append(valueStrings, "(?, ?, ?, ?)")
 			valueArgs = append(valueArgs, lastInsertID, image.ImageLink(), image.ContextLink(), image.IsGIF())
