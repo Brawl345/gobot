@@ -102,7 +102,22 @@ type (
 const (
 	MethodGet  HTTPMethod = http.MethodGet
 	MethodPost HTTPMethod = http.MethodPost
+
+	MaxResponseBodySize = 50 * 1024 * 1024
 )
+
+// readResponseBody reads r fully but stops at MaxResponseBodySize, returning an
+// error if the body exceeds the cap.
+func readResponseBody(r io.Reader) ([]byte, error) {
+	body, err := io.ReadAll(io.LimitReader(r, MaxResponseBodySize+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(body) > MaxResponseBodySize {
+		return nil, fmt.Errorf("response body exceeds %d bytes", MaxResponseBodySize)
+	}
+	return body, nil
+}
 
 func init() {
 	DefaultHttpClient = createHTTPClient()
@@ -257,7 +272,7 @@ func MakeRequest(opts RequestOptions) error {
 
 	if resp.StatusCode != http.StatusOK {
 		if opts.ErrorResponse != nil {
-			bodyBytes, err := io.ReadAll(resp.Body)
+			bodyBytes, err := readResponseBody(resp.Body)
 			if err != nil {
 				return &HttpError{
 					StatusCode: resp.StatusCode,
@@ -288,7 +303,7 @@ func MakeRequest(opts RequestOptions) error {
 	}
 
 	if opts.Response != nil {
-		bodyBytes, err := io.ReadAll(resp.Body)
+		bodyBytes, err := readResponseBody(resp.Body)
 		if err != nil {
 			return err
 		}
