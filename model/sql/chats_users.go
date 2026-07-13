@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"strings"
 
 	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
@@ -65,11 +66,6 @@ func (db *chatsUsersService) Create(chat *gotgbot.Chat, user *gotgbot.User) erro
 }
 
 func (db *chatsUsersService) CreateBatch(chat *gotgbot.Chat, users *[]gotgbot.User) error {
-	const insertRelationshipQuery = `INSERT INTO 
-    chats_users (chat_id, user_id, msg_count, in_group) 
-    VALUES (?, ?, 0, true)
-    ON DUPLICATE KEY UPDATE chat_id = chat_id, in_group = true`
-
 	tx, err := db.BeginTxx(context.Background(), nil)
 	if err != nil {
 		return err
@@ -87,20 +83,35 @@ func (db *chatsUsersService) CreateBatch(chat *gotgbot.Chat, users *[]gotgbot.Us
 		return err
 	}
 
-	// creating a query for every user is inefficient,
-	// but idc
+	userValues := make([]string, 0, len(*users))
+	userArgs := make([]any, 0, len(*users)*4)
+	relValues := make([]string, 0, len(*users))
+	relArgs := make([]any, 0, len(*users)*2)
+
 	for _, user := range *users {
 		if user.IsBot {
 			continue
 		}
 
-		err = db.Users.CreateTx(tx, &user)
-		if err != nil {
+		userValues = append(userValues, "(?, ?, ?, ?)")
+		userArgs = append(userArgs, user.Id, user.FirstName, NewNullString(user.LastName), NewNullString(user.Username))
+
+		relValues = append(relValues, "(?, ?, 0, true)")
+		relArgs = append(relArgs, chat.Id, user.Id)
+	}
+
+	if len(userValues) > 0 {
+		userQuery := `INSERT INTO users (id, first_name, last_name, username) VALUES ` +
+			strings.Join(userValues, ", ") +
+			` ON DUPLICATE KEY UPDATE first_name = VALUES(first_name), last_name = VALUES(last_name), username = VALUES(username)`
+		if _, err := tx.Exec(userQuery, userArgs...); err != nil {
 			return err
 		}
 
-		_, err := tx.Exec(insertRelationshipQuery, chat.Id, user.Id)
-		if err != nil {
+		relQuery := `INSERT INTO chats_users (chat_id, user_id, msg_count, in_group) VALUES ` +
+			strings.Join(relValues, ", ") +
+			` ON DUPLICATE KEY UPDATE in_group = true`
+		if _, err := tx.Exec(relQuery, relArgs...); err != nil {
 			return err
 		}
 	}
@@ -136,9 +147,9 @@ func (db *chatsUsersService) IsAllowed(chat *gotgbot.Chat, user *gotgbot.User) b
 		return true
 	}
 
-	const query = `SELECT 1 FROM chats, users
-	WHERE (chats.id = ? AND chats.allowed = true)
-	OR (users.id = ? AND users.allowed = true)`
+	const query = `SELECT
+		EXISTS(SELECT 1 FROM chats WHERE id = ? AND allowed = true)
+		OR EXISTS(SELECT 1 FROM users WHERE id = ? AND allowed = true)`
 
 	var isAllowed bool
 	err := db.Get(&isAllowed, query, chat.Id, user.Id)
