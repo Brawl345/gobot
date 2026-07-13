@@ -109,7 +109,7 @@ func onAmazonLink(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var sb strings.Builder
 	sb.WriteString("<b>Ohne Ref:</b>\n")
 	for _, link := range links {
-		sb.WriteString(link + "\n")
+		sb.WriteString(utils.Escape(link) + "\n")
 	}
 
 	_, err := c.EffectiveMessage.ReplyMessage(b, sb.String(), &gotgbot.SendMessageOpts{
