@@ -109,7 +109,7 @@ func (p *Plugin) onCleverbot(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Error().
 			Err(err).
 			Str("guid", guid).
-			Str("url", requestUrl).
+			Str("url", httpUtils.RedactURL(requestUrl)).
 			Msg("error contacting cleverbot")
 		_, err = c.EffectiveMessage.ReplyMessage(b,
 			fmt.Sprintf("❌ Fehler bei der Kommunikation mit dem Cleverbot.%s", utils.EmbedGUID(guid)),

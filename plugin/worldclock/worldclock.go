@@ -119,7 +119,7 @@ func (p *Plugin) onTime(b *gotgbot.Bot, c plugin.GobotContext) error {
 		log.Error().
 			Err(err).
 			Str("guid", guid).
-			Str("url", requestUrl.String()).
+			Str("url", httpUtils.RedactURL(requestUrl.String())).
 			Msg("error requesting API")
 
 		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),

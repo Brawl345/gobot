@@ -34,6 +34,10 @@ var (
 	// so it can be stripped before logging.
 	botTokenInURL = regexp.MustCompile(`bot[0-9]+:[A-Za-z0-9_-]+`)
 
+	// sensitiveQueryParam matches the value of query parameters that carry
+	// credentials so it can be stripped before logging.
+	sensitiveQueryParam = regexp.MustCompile(`(?i)([?&](?:key|api[_-]?key|token|access[_-]?token|auth|password|secret)=)[^&]*`)
+
 	// sensitiveHeaders are header names whose values must be redacted from logs.
 	sensitiveHeaders = map[string]struct{}{
 		"authorization":       {},
@@ -45,9 +49,11 @@ var (
 	}
 )
 
-// redactURL masks a Telegram bot token embedded in a URL before logging.
-func redactURL(u string) string {
-	return botTokenInURL.ReplaceAllString(u, "bot[REDACTED]")
+// RedactURL masks a Telegram bot token and sensitive query parameter values
+// embedded in a URL before logging.
+func RedactURL(u string) string {
+	u = botTokenInURL.ReplaceAllString(u, "bot[REDACTED]")
+	return sensitiveQueryParam.ReplaceAllString(u, "${1}[REDACTED]")
 }
 
 // redactHeaders returns a copy of h with sensitive header values masked.
@@ -209,7 +215,7 @@ func NewHTTPClientWithTimeout(responseHeaderTimeout time.Duration) *http.Client 
 func MakeRequest(opts RequestOptions) error {
 	log.Debug().
 		Str("method", string(opts.Method)).
-		Str("url", redactURL(opts.URL)).
+		Str("url", RedactURL(opts.URL)).
 		Interface("body", opts.Body).
 		Interface("headers", redactHeaders(opts.Headers)).
 		Send()
@@ -292,7 +298,7 @@ func MakeRequest(opts RequestOptions) error {
 			}
 
 			log.Debug().
-				Str("url", redactURL(opts.URL)).
+				Str("url", RedactURL(opts.URL)).
 				Interface("result", opts.ErrorResponse).
 				Send()
 		}
@@ -320,7 +326,7 @@ func MakeRequest(opts RequestOptions) error {
 	}
 
 	log.Debug().
-		Str("url", redactURL(opts.URL)).
+		Str("url", RedactURL(opts.URL)).
 		Interface("result", opts.Response).
 		Send()
 
@@ -333,7 +339,7 @@ func MultiPartFormRequest(url string, params []MultiPartParam, files []MultiPart
 
 func MultiPartFormRequestWithHeaders(url string, headers map[string]string, params []MultiPartParam, files []MultiPartFile) (*http.Response, error) {
 	log.Debug().
-		Str("url", redactURL(url)).
+		Str("url", RedactURL(url)).
 		Interface("params", params).
 		Interface("headers", redactHeaders(headers)).
 		Send()
@@ -395,7 +401,7 @@ func DownloadFile(b *gotgbot.Bot, fileID string) (io.ReadCloser, error) {
 func DownloadFileFromGetFile(b *gotgbot.Bot, file *gotgbot.File) (io.ReadCloser, error) {
 	fileUrl := file.URL(b, nil)
 	log.Debug().
-		Str("url", redactURL(fileUrl)).
+		Str("url", RedactURL(fileUrl)).
 		Send()
 	resp, err := DefaultHttpClient.Get(fileUrl)
 	if err != nil {
