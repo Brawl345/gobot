@@ -75,17 +75,17 @@ func (db *chatsUsersService) CreateBatch(chat *gotgbot.Chat, users *[]gotgbot.Us
 		return err
 	}
 
-	err = db.Chats.CreateTx(tx, chat)
-	if err != nil {
-		return err
-	}
-
 	defer func(tx *sqlx.Tx) {
 		err := tx.Rollback()
 		if err != nil && !errors.Is(err, sql.ErrTxDone) {
 			db.log.Err(err).Msg("failed to rollback transaction")
 		}
 	}(tx)
+
+	err = db.Chats.CreateTx(tx, chat)
+	if err != nil {
+		return err
+	}
 
 	// creating a query for every user is inefficient,
 	// but idc
