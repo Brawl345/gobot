@@ -38,7 +38,10 @@ func (db *homeService) GetHome(user *gotgbot.User) (gotgbot.Venue, error) {
 	var geocoding Home
 	err := db.Get(&geocoding, query, user.Id)
 	if err != nil {
-		return gotgbot.Venue{}, nil
+		if errors.Is(err, sql.ErrNoRows) {
+			return gotgbot.Venue{}, model.ErrHomeAddressNotSet
+		}
+		return gotgbot.Venue{}, err
 	}
 
 	if !geocoding.Address.Valid {
@@ -71,7 +74,7 @@ func (db *homeService) SetHome(user *gotgbot.User, venue *gotgbot.Venue) error {
 	const insertAddressQuery = `INSERT INTO geocoding 
     (address, latitude, longitude) 
 	VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE id = LAST_INSERT_ID(id)`
-	res, err := db.Exec(insertAddressQuery, venue.Address, venue.Location.Latitude, venue.Location.Longitude)
+	res, err := tx.Exec(insertAddressQuery, venue.Address, venue.Location.Latitude, venue.Location.Longitude)
 	if err != nil {
 		return err
 	}
