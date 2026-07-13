@@ -131,6 +131,22 @@ func (p *Plugin) onWeather(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
+	if len(response.Daily.Temperature2MMax) == 0 ||
+		len(response.Daily.Temperature2MMin) == 0 ||
+		len(response.Daily.Weathercode) == 0 ||
+		len(response.Daily.PrecipitationHours) == 0 ||
+		len(response.Daily.PrecipitationSum) == 0 ||
+		len(response.Daily.Sunrise) == 0 ||
+		len(response.Daily.Sunset) == 0 {
+		guid := xid.New().String()
+		log.Error().
+			Str("guid", guid).
+			Msg("weather response is missing daily data")
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+			utils.DefaultSendOptions())
+		return err
+	}
+
 	var sb strings.Builder
 
 	sb.WriteString(

@@ -65,7 +65,10 @@ func (temperature Temperature) Icon() string {
 }
 
 func (daily *Daily) Forecast(day int) (string, error) {
-	if day > len(daily.Time) {
+	if day >= len(daily.Time) ||
+		day >= len(daily.Temperature2MMax) ||
+		day >= len(daily.Temperature2MMin) ||
+		day >= len(daily.Weathercode) {
 		return "", fmt.Errorf("day %d is out of range", day)
 	}
 
@@ -110,7 +113,9 @@ func (daily *Daily) Forecast(day int) (string, error) {
 }
 
 func (hourly *Hourly) Forecast(hour int) (string, error) {
-	if hour > len(hourly.Time) {
+	if hour >= len(hourly.Time) ||
+		hour >= len(hourly.Temperature2M) ||
+		hour >= len(hourly.Weathercode) {
 		return "", fmt.Errorf("hour %d is out of range", hour)
 	}
 
