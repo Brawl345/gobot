@@ -3,6 +3,7 @@ package reminders
 import (
 	"errors"
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"strings"
@@ -138,7 +139,7 @@ func (p *Plugin) onAddDateTimeReminder(b *gotgbot.Bot, c plugin.GobotContext) er
 		return err
 	}
 
-	_, err = time.Parse("02.01.2006 15:05",
+	_, err = time.Parse("02.01.2006 15:04",
 		fmt.Sprintf("%02d.%02d.%d %02d:%02d", day, month, time.Now().Year(), hour, minute),
 	)
 	if err != nil {
@@ -268,15 +269,14 @@ func (p *Plugin) onAddDeltaReminder(b *gotgbot.Bot, c plugin.GobotContext) error
 	unit := c.Matches[2]
 	text := c.Matches[3]
 
-	remindTime := time.Now()
-
+	var unitDuration time.Duration
 	switch unit {
 	case "h":
-		remindTime = remindTime.Add(time.Duration(dur) * time.Hour)
+		unitDuration = time.Hour
 	case "m":
-		remindTime = remindTime.Add(time.Duration(dur) * time.Minute)
+		unitDuration = time.Minute
 	case "s":
-		remindTime = remindTime.Add(time.Duration(dur) * time.Second)
+		unitDuration = time.Second
 	default:
 		log.Err(err).
 			Str("unit", unit).
@@ -284,6 +284,15 @@ func (p *Plugin) onAddDeltaReminder(b *gotgbot.Bot, c plugin.GobotContext) error
 		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte wähle als Zeitangabe entweder 's', 'm' oder 'h'.", utils.DefaultSendOptions())
 		return err
 	}
+
+	// Guard against int64 overflow when scaling dur to a Duration, which would
+	// wrap to a negative offset and fire immediately.
+	if dur > int64(math.MaxInt64)/int64(unitDuration) {
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte wähle eine kürzere Dauer.", utils.DefaultSendOptions())
+		return err
+	}
+
+	remindTime := time.Now().Add(time.Duration(dur) * unitDuration)
 
 	if remindTime.After(time.Now().AddDate(1, 0, 0)) {
 		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Bitte wähle eine kürzere Dauer.", utils.DefaultSendOptions())
@@ -380,6 +389,12 @@ func (p *Plugin) onGetReminders(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) sendReminder(bot *gotgbot.Bot, id int64) {
+	defer func() {
+		if r := recover(); r != nil {
+			log.Error().Interface("panic", r).Int64("id", id).Msg("Recovered from panic in sendReminder")
+		}
+	}()
+
 	log.Debug().
 		Int64("id", id).
 		Msg("Sending reminder")
