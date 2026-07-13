@@ -113,7 +113,11 @@ func (db *chatsPluginsService) insertRelationship(tx *sqlx.Tx, chat *gotgbot.Cha
 func (db *chatsPluginsService) GetAllDisabled() (map[int64][]string, error) {
 	const query = `SELECT chat_id, plugin_name FROM chats_plugins WHERE enabled = false`
 
-	rows, _ := db.Queryx(query)
+	rows, err := db.Queryx(query)
+	if err != nil {
+		db.log.Err(err).Send()
+		return nil, err
+	}
 	defer func(rows *sqlx.Rows) {
 		err := rows.Close()
 		if err != nil {
@@ -133,6 +137,11 @@ func (db *chatsPluginsService) GetAllDisabled() (map[int64][]string, error) {
 		}
 
 		disabledPlugins[chatID] = append(disabledPlugins[chatID], pluginName)
+	}
+
+	if err := rows.Err(); err != nil {
+		db.log.Err(err).Send()
+		return nil, err
 	}
 
 	return disabledPlugins, nil
