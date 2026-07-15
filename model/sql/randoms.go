@@ -22,32 +22,22 @@ func NewRandomService(db *sqlx.DB) *randomService {
 	}
 }
 
-func (db *randomService) exists(random string) (bool, error) {
-	const query = `SELECT 1 FROM randoms WHERE text = ?`
-	var exists bool
-	err := db.Get(&exists, query, random)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return false, nil
-		}
-		return false, err
-	}
-	return exists, nil
-}
-
 func (db *randomService) DeleteRandom(random string) error {
-	exists, err := db.exists(random)
+	const query = `DELETE FROM randoms WHERE text = ?`
+
+	res, err := db.Exec(query, random)
 	if err != nil {
 		return err
 	}
-	if !exists {
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
 		return model.ErrNotFound
 	}
-
-	const query = `DELETE FROM randoms WHERE text = ?`
-
-	_, err = db.Exec(query, random)
-	return err
+	return nil
 }
 
 func (db *randomService) GetRandom() (string, error) {
@@ -70,15 +60,21 @@ func (db *randomService) GetRandom() (string, error) {
 }
 
 func (db *randomService) SaveRandom(random string) error {
-	exists, err := db.exists(random)
+	const query = `INSERT INTO randoms (text)
+	SELECT ? FROM DUAL
+	WHERE NOT EXISTS (SELECT 1 FROM randoms WHERE text = ?)`
+
+	res, err := db.Exec(query, random, random)
 	if err != nil {
 		return err
 	}
-	if exists {
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
 		return model.ErrAlreadyExists
 	}
-
-	const query = `INSERT INTO randoms (text) VALUES (?)`
-	_, err = db.Exec(query, random)
-	return err
+	return nil
 }

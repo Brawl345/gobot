@@ -24,36 +24,27 @@ func NewReminderService(db *sqlx.DB) *reminderService {
 }
 
 func (db *reminderService) DeleteReminder(chat *gotgbot.Chat, user *gotgbot.User, id string) error {
-	var exists bool
+	var res sql.Result
 	var err error
 	if chat.Type == gotgbot.ChatTypePrivate {
-		const existsQuery = `SELECT 1 FROM reminders WHERE id = ? AND chat_id IS NULL AND user_id = ?`
-		err = db.Get(&exists, existsQuery, id, user.Id)
+		const query = `DELETE FROM reminders WHERE id = ? AND chat_id IS NULL AND user_id = ?`
+		res, err = db.Exec(query, id, user.Id)
 	} else {
-		const existsQuery = `SELECT 1 FROM reminders WHERE id = ? AND chat_id = ?`
-		err = db.Get(&exists, existsQuery, id, chat.Id)
+		const query = `DELETE FROM reminders WHERE id = ? AND chat_id = ?`
+		res, err = db.Exec(query, id, chat.Id)
 	}
-
 	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return model.ErrNotFound
-		}
 		return err
 	}
 
-	if !exists {
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
 		return model.ErrNotFound
 	}
-
-	if chat.Type == gotgbot.ChatTypePrivate {
-		const query = `DELETE FROM reminders WHERE id = ? AND chat_id IS NULL AND user_id = ?`
-		_, err = db.Exec(query, id, user.Id)
-	} else {
-		const query = `DELETE FROM reminders WHERE id = ? AND chat_id = ?`
-		_, err = db.Exec(query, id, chat.Id)
-	}
-
-	return err
+	return nil
 }
 
 func (db *reminderService) DeleteReminderByID(id int64) error {

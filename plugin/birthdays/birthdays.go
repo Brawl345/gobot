@@ -1,6 +1,7 @@
 package birthdays
 
 import (
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -195,23 +196,12 @@ func (p *Plugin) onDeleteBirthday(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func (p *Plugin) onEnableBirthdayNotifications(b *gotgbot.Bot, c plugin.GobotContext) error {
-	enabled, err := p.birthdayService.BirthdayNotificationsEnabled(c.EffectiveChat)
-	if err != nil {
-		guid := xid.New().String()
-		log.Err(err).
-			Int64("chat_id", c.EffectiveChat.Id).
-			Str("guid", guid).
-			Msg("Failed to get birthday notification state")
-		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-		return err
-	}
-	if enabled {
+	err := p.birthdayService.EnableBirthdayNotifications(c.EffectiveChat)
+	if errors.Is(err, model.ErrAlreadyExists) {
 		_, err := c.EffectiveMessage.ReplyMessage(b, "💡 Geburtsagsbenachrichtigungen sind in dieser Gruppe schon aktiv.",
 			utils.DefaultSendOptions())
 		return err
 	}
-
-	err = p.birthdayService.EnableBirthdayNotifications(c.EffectiveChat)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
@@ -230,23 +220,12 @@ func (p *Plugin) onEnableBirthdayNotifications(b *gotgbot.Bot, c plugin.GobotCon
 }
 
 func (p *Plugin) onDisableBirthdayNotifications(b *gotgbot.Bot, c plugin.GobotContext) error {
-	enabled, err := p.birthdayService.BirthdayNotificationsEnabled(c.EffectiveChat)
-	if err != nil {
-		guid := xid.New().String()
-		log.Err(err).
-			Int64("chat_id", c.EffectiveChat.Id).
-			Str("guid", guid).
-			Msg("Failed to get birthday notification state")
-		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-		return err
-	}
-	if !enabled {
+	err := p.birthdayService.DisableBirthdayNotifications(c.EffectiveChat)
+	if errors.Is(err, model.ErrAlreadyExists) {
 		_, err := c.EffectiveMessage.ReplyMessage(b, "💡 Geburtsagsbenachrichtigungen sind in dieser Gruppe nicht aktiv.",
 			utils.DefaultSendOptions())
 		return err
 	}
-
-	err = p.birthdayService.DisableBirthdayNotifications(c.EffectiveChat)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).

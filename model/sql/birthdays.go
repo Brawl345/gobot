@@ -29,31 +29,39 @@ func (db *birthdayService) BirthdayNotificationsEnabled(chat *gotgbot.Chat) (boo
 }
 
 func (db *birthdayService) EnableBirthdayNotifications(chat *gotgbot.Chat) error {
-	enabled, err := db.BirthdayNotificationsEnabled(chat)
+	const query = `UPDATE chats SET birthday_notifications_enabled = true
+	WHERE id = ? AND birthday_notifications_enabled = false`
+	res, err := db.Exec(query, chat.Id)
 	if err != nil {
 		return err
 	}
-	if enabled {
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
 		return model.ErrAlreadyExists
 	}
-
-	const query = `UPDATE chats SET birthday_notifications_enabled = true WHERE id = ?`
-	_, err = db.Exec(query, chat.Id)
-	return err
+	return nil
 }
 
 func (db *birthdayService) DisableBirthdayNotifications(chat *gotgbot.Chat) error {
-	enabled, err := db.BirthdayNotificationsEnabled(chat)
+	const query = `UPDATE chats SET birthday_notifications_enabled = false
+	WHERE id = ? AND birthday_notifications_enabled = true`
+	res, err := db.Exec(query, chat.Id)
 	if err != nil {
 		return err
 	}
-	if !enabled {
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
 		return model.ErrAlreadyExists
 	}
-
-	const query = `UPDATE chats SET birthday_notifications_enabled = false WHERE id = ?`
-	_, err = db.Exec(query, chat.Id)
-	return err
+	return nil
 }
 
 func (db *birthdayService) SetBirthday(user *gotgbot.User, birthday time.Time) error {

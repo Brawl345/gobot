@@ -18,9 +18,7 @@ func NewBraveImagesCleanupService(db *sqlx.DB) *braveImagesCleanupService {
 }
 
 func (db *braveImagesCleanupService) Cleanup() error {
-	const query = `DELETE biq, b FROM brave_images_queries biq
-   RIGHT JOIN brave_images b ON biq.id = b.query_id
-   WHERE biq.created_at < NOW() - INTERVAL 7 DAY`
+	const query = `DELETE FROM brave_images_queries WHERE created_at < NOW() - INTERVAL 7 DAY`
 	_, err := db.Exec(query)
 	return err
 }

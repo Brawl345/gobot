@@ -2,7 +2,6 @@ package sql
 
 import (
 	"github.com/Brawl345/gobot/logger"
-	"github.com/Brawl345/gobot/model"
 	"github.com/jmoiron/sqlx"
 )
 
@@ -43,15 +42,10 @@ func (db *pluginService) Enable(pluginName string) error {
 }
 
 func (db *pluginService) GetAllEnabled() ([]string, error) {
-	const query = `SELECT name, enabled FROM plugins WHERE enabled = 1`
+	const query = `SELECT name FROM plugins WHERE enabled = 1`
 
 	var enabledPlugins []string
-	var plugins []model.Plugin
-	err := db.Select(&plugins, query)
-
-	for _, plugin := range plugins {
-		enabledPlugins = append(enabledPlugins, plugin.Name)
-	}
+	err := db.Select(&enabledPlugins, query)
 
 	return enabledPlugins, err
 }

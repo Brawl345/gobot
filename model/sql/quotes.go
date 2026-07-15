@@ -43,45 +43,40 @@ func (db *quoteService) GetQuote(chat *gotgbot.Chat) (string, error) {
 	return quote, err
 }
 
-func (db *quoteService) exists(chat *gotgbot.Chat, quote string) (bool, error) {
-	const query = `SELECT 1 FROM quotes WHERE chat_id = ? AND quote = ?`
-	var exists bool
-	err := db.Get(&exists, query, chat.Id, quote)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			return false, nil
-		}
-		return false, err
-	}
-	return exists, nil
-}
-
 func (db *quoteService) SaveQuote(chat *gotgbot.Chat, quote string) error {
-	exists, err := db.exists(chat, quote)
+	const query = `INSERT INTO quotes (chat_id, quote)
+	SELECT ?, ? FROM DUAL
+	WHERE NOT EXISTS (SELECT 1 FROM quotes WHERE chat_id = ? AND quote = ?)`
+
+	res, err := db.Exec(query, chat.Id, quote, chat.Id, quote)
 	if err != nil {
 		return err
 	}
-	if exists {
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
 		return model.ErrAlreadyExists
 	}
-
-	const query = `INSERT INTO quotes (chat_id, quote) VALUES (?, ?)`
-
-	_, err = db.Exec(query, chat.Id, quote)
-	return err
+	return nil
 }
 
 func (db *quoteService) DeleteQuote(chat *gotgbot.Chat, quote string) error {
-	exists, err := db.exists(chat, quote)
+	const query = `DELETE FROM quotes WHERE chat_id = ? AND quote = ?`
+
+	res, err := db.Exec(query, chat.Id, quote)
 	if err != nil {
 		return err
 	}
-	if !exists {
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rows == 0 {
 		return model.ErrNotFound
 	}
-
-	const query = `DELETE FROM quotes WHERE chat_id = ? AND quote = ?`
-
-	_, err = db.Exec(query, chat.Id, quote)
-	return err
+	return nil
 }
