@@ -188,6 +188,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 	systemInstruction := cmp.Or(p.credentialService.GetKey("openai_system_instruction"), DefaultSystemInstruction)
 	systemInstruction += fmt.Sprintf("\n\nHeute ist %s.", utils.LocalizeDatestring(time.Now().Format("Monday, der 02.01.2006")))
 	braveKey := p.credentialService.GetKey("brave_search_api_key")
+	gptModel := cmp.Or(p.credentialService.GetKey("openai_model"), DefaultModel)
 
 	registeredTools := []Tool{NewWebfetchTool(c.EffectiveChat.Id), NewCalculatorTool()}
 	if braveKey != "" {
@@ -298,7 +299,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 
 	req := &Request{
-		Model: Model,
+		Model: gptModel,
 		Input: []any{
 			InputMessage{Role: RoleUser, Content: content},
 		},
@@ -374,7 +375,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		wg.Wait()
 
 		toolReq := &Request{
-			Model:              Model,
+			Model:              gptModel,
 			Input:              toolInputs,
 			Instructions:       systemInstruction,
 			Store:              true,
