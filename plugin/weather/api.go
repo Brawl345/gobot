@@ -13,7 +13,8 @@ type (
 	PrecipitationSum float64
 
 	Response struct {
-		CurrentWeather struct {
+		UtcOffsetSeconds int `json:"utc_offset_seconds"`
+		CurrentWeather   struct {
 			Temperature Temperature `json:"temperature"`
 			Weathercode Weathercode `json:"weathercode"`
 		} `json:"current_weather"`

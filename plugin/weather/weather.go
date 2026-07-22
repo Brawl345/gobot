@@ -112,7 +112,7 @@ func (p *Plugin) onWeather(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_hours&hourly=precipitation&current_weather=true&timezone=Europe/Berlin", venue.Location.Latitude, venue.Location.Longitude)
+	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_hours&hourly=precipitation&current_weather=true&timezone=auto", venue.Location.Latitude, venue.Location.Longitude)
 
 	var response Response
 	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
@@ -311,7 +311,7 @@ func (p *Plugin) onForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=Europe/Berlin", venue.Location.Latitude, venue.Location.Longitude)
+	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&daily=weathercode,temperature_2m_max,temperature_2m_min&timezone=auto", venue.Location.Latitude, venue.Location.Longitude)
 
 	var response Response
 	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
@@ -390,7 +390,7 @@ func (p *Plugin) onHourlyForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,weathercode&timezone=Europe/Berlin", venue.Location.Latitude, venue.Location.Longitude)
+	requestUrl := fmt.Sprintf("https://api.open-meteo.com/v1/forecast?latitude=%f&longitude=%f&hourly=temperature_2m,weathercode&timezone=auto", venue.Location.Latitude, venue.Location.Longitude)
 
 	var response Response
 	err = httpUtils.MakeRequest(httpUtils.RequestOptions{
@@ -418,9 +418,10 @@ func (p *Plugin) onHourlyForecast(b *gotgbot.Bot, c plugin.GobotContext) error {
 		),
 	)
 
-	for hour := range response.Hourly.Time {
-		currentHour := time.Now().Hour()
+	loc := time.FixedZone("", response.UtcOffsetSeconds)
+	currentHour := time.Now().In(loc).Hour()
 
+	for hour := range response.Hourly.Time {
 		forecast, err := response.Hourly.Forecast(hour + currentHour)
 		if err != nil {
 			guid := xid.New().String()

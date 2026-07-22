@@ -5,4 +5,4 @@ GET https://api.open-meteo.com/v1/forecast
     &daily=weathercode,temperature_2m_max,temperature_2m_min,sunrise,sunset,precipitation_sum,precipitation_hours
     &hourly=temperature_2m,precipitation,weathercode,snow_depth
     &current_weather=true
-    &timezone=Europe%2FBerlin
+    &timezone=auto
