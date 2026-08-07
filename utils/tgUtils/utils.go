@@ -89,6 +89,34 @@ func GetBestResolution(photo []gotgbot.PhotoSize) *gotgbot.PhotoSize {
 	return bestResolution
 }
 
+// EphemeralReplyTo builds the addressing for an answer that only the sender of message and the bot can see.
+// The returned receiverUserId is 0 outside of groups, which makes the answer a regular one. An incoming
+// ephemeral message carries no message ID, so it is replied to via its ephemeral ID instead.
+func EphemeralReplyTo(message *gotgbot.Message) (receiverUserId int64, replyParameters *gotgbot.ReplyParameters) {
+	if !FromGroup(message) || message.From == nil {
+		return 0, &gotgbot.ReplyParameters{MessageId: message.MessageId, AllowSendingWithoutReply: true}
+	}
+
+	if message.EphemeralMessageId != 0 {
+		return message.From.Id, &gotgbot.ReplyParameters{EphemeralMessageId: message.EphemeralMessageId}
+	}
+
+	return message.From.Id, &gotgbot.ReplyParameters{MessageId: message.MessageId}
+}
+
+// ReplyEphemeral replies to a message in a group so that only its sender and the bot can see the answer.
+// Outside of groups it falls back to a regular reply.
+func ReplyEphemeral(b *gotgbot.Bot, message *gotgbot.Message, text string, opts *gotgbot.SendMessageOpts) (*gotgbot.Message, error) {
+	if opts == nil {
+		opts = utils.DefaultSendOptions()
+	}
+
+	ephemeralOpts := *opts
+	ephemeralOpts.ReceiverUserId, ephemeralOpts.ReplyParameters = EphemeralReplyTo(message)
+
+	return b.SendMessage(message.Chat.Id, text, &ephemeralOpts)
+}
+
 type ReactionFallbackOpts struct {
 	SendMessageOpts *gotgbot.SendMessageOpts
 	Fallback        string

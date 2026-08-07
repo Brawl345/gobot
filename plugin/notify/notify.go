@@ -46,10 +46,12 @@ func (p *Plugin) Commands() []gotgbot.BotCommand {
 		{
 			Command:     "notify",
 			Description: "Über neue Erwähnungen informiert werden",
+			IsEphemeral: true,
 		},
 		{
 			Command:     "notify_disable",
 			Description: "Nicht mehr über neue Erwähnungen informiert werden",
+			IsEphemeral: true,
 		},
 	}
 }
@@ -156,7 +158,7 @@ func (p *Plugin) notify(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 	if c.EffectiveUser.Username == "" {
-		_, err := c.EffectiveMessage.ReplyMessage(b, "😕 Du benötigst einen Benutzernamen um dieses Feature zu nutzen.", utils.DefaultSendOptions())
+		_, err := tgUtils.ReplyEphemeral(b, c.EffectiveMessage, "😕 Du benötigst einen Benutzernamen um dieses Feature zu nutzen.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -165,10 +167,10 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 		if telegramErr, ok := errors.AsType[*gotgbot.TelegramError](err); ok {
 			switch telegramErr.Description {
 			case tgUtils.ErrBlockedByUser:
-				_, err := c.EffectiveMessage.ReplyMessage(b, "😭 Du hast mich blockiert T__T", utils.DefaultSendOptions())
+				_, err := tgUtils.ReplyEphemeral(b, c.EffectiveMessage, "😭 Du hast mich blockiert T__T", utils.DefaultSendOptions())
 				return err
 			case tgUtils.ErrNotStartedByUser:
-				_, err := c.EffectiveMessage.ReplyMessage(b, "ℹ Bitte starte mich vor dem Aktivieren zuerst privat.", utils.DefaultSendOptions())
+				_, err := tgUtils.ReplyEphemeral(b, c.EffectiveMessage, "ℹ Bitte starte mich vor dem Aktivieren zuerst privat.", utils.DefaultSendOptions())
 				return err
 			}
 		}
@@ -179,7 +181,7 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error while sending test message")
-		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Ich wollte dir eine Nachricht senden, aber das hat nicht funktioniert Bitte den Administrator des Bots um Hilfe und sende ihm folgenden Fehler-Code:%s", utils.EmbedGUID(guid)),
+		_, err = tgUtils.ReplyEphemeral(b, c.EffectiveMessage, fmt.Sprintf("❌ Ich wollte dir eine Nachricht senden, aber das hat nicht funktioniert Bitte den Administrator des Bots um Hilfe und sende ihm folgenden Fehler-Code:%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -198,13 +200,13 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error during enabled check")
-		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = tgUtils.ReplyEphemeral(b, c.EffectiveMessage, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
 
 	if enabled {
-		_, err := c.EffectiveMessage.ReplyMessage(b, "💡 Du wirst in dieser Gruppe schon über neue Erwähnungen informiert.", utils.DefaultSendOptions())
+		_, err := tgUtils.ReplyEphemeral(b, c.EffectiveMessage, "💡 Du wirst in dieser Gruppe schon über neue Erwähnungen informiert.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -216,15 +218,14 @@ func (p *Plugin) enableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error while enabling notifications")
-		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = tgUtils.ReplyEphemeral(b, c.EffectiveMessage, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
 
-	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
-		Fallback: "✅ Du wirst jetzt über neue Erwähnungen in dieser Gruppe informiert!\n" +
-			"Nutze <code>/notify_disable</code> zum Deaktivieren.",
-	})
+	_, err = tgUtils.ReplyEphemeral(b, c.EffectiveMessage, "✅ Du wirst jetzt über neue Erwähnungen in dieser Gruppe informiert!\n"+
+		"Nutze <code>/notify_disable</code> zum Deaktivieren.", utils.DefaultSendOptions())
+	return err
 }
 
 func (p *Plugin) disableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
@@ -236,13 +237,13 @@ func (p *Plugin) disableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error during enabled check")
-		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = tgUtils.ReplyEphemeral(b, c.EffectiveMessage, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
 
 	if !enabled {
-		_, err := c.EffectiveMessage.ReplyMessage(b, "💡 Du wirst in dieser Gruppe nicht über neue Erwähnungen informiert.", utils.DefaultSendOptions())
+		_, err := tgUtils.ReplyEphemeral(b, c.EffectiveMessage, "💡 Du wirst in dieser Gruppe nicht über neue Erwähnungen informiert.", utils.DefaultSendOptions())
 		return err
 	}
 
@@ -254,12 +255,11 @@ func (p *Plugin) disableNotify(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error while disabling notifications")
-		_, err = c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err = tgUtils.ReplyEphemeral(b, c.EffectiveMessage, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
 
-	return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍", &tgUtils.ReactionFallbackOpts{
-		Fallback: "✅ Du wirst nicht mehr über neue Erwähnungen in dieser Gruppe informiert.",
-	})
+	_, err = tgUtils.ReplyEphemeral(b, c.EffectiveMessage, "✅ Du wirst nicht mehr über neue Erwähnungen in dieser Gruppe informiert.", utils.DefaultSendOptions())
+	return err
 }

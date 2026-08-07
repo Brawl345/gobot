@@ -5,13 +5,15 @@ import (
 	"regexp"
 	"strings"
 
+	"slices"
+
 	"github.com/Brawl345/gobot/logger"
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
-	"slices"
 )
 
 var log = logger.New("ids")
@@ -41,6 +43,7 @@ func (p *Plugin) Commands() []gotgbot.BotCommand {
 		{
 			Command:     "ids",
 			Description: "Zeigt die IDs der User in diesem Chat an",
+			IsEphemeral: true,
 		},
 	}
 }
@@ -63,7 +66,7 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to get all users in chat")
-		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := tgUtils.ReplyEphemeral(b, c.EffectiveMessage, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -74,7 +77,7 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to count members in chat")
-		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := tgUtils.ReplyEphemeral(b, c.EffectiveMessage, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -85,7 +88,7 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Str("guid", guid).
 			Int64("chat_id", c.EffectiveChat.Id).
 			Msg("Failed to get admins and creators in chat")
-		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		_, err := tgUtils.ReplyEphemeral(b, c.EffectiveMessage, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
 
@@ -143,6 +146,6 @@ func (p *Plugin) onIds(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	sb.WriteString("<i>(Bots sind nicht gelistet)</i>")
 
-	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
+	_, err = tgUtils.ReplyEphemeral(b, c.EffectiveMessage, sb.String(), utils.DefaultSendOptions())
 	return err
 }

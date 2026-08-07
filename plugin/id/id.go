@@ -28,8 +28,14 @@ func (p *Plugin) Name() string {
 func (p *Plugin) Commands() []gotgbot.BotCommand {
 	return []gotgbot.BotCommand{
 		{
+			Command:     "id",
+			Description: "Deine Telegram-Informationen anzeigen",
+			IsEphemeral: true,
+		},
+		{
 			Command:     "whoami",
 			Description: "Deine Telegram-Informationen anzeigen",
+			IsEphemeral: true,
 		},
 	}
 }
@@ -68,7 +74,7 @@ func onId(b *gotgbot.Bot, c plugin.GobotContext) error {
 		))
 	}
 
-	_, err := c.EffectiveMessage.ReplyMessage(b, sb.String(), utils.DefaultSendOptions())
+	_, err := tgUtils.ReplyEphemeral(b, c.EffectiveMessage, sb.String(), utils.DefaultSendOptions())
 	return err
 }
 

@@ -9,6 +9,7 @@ import (
 	"github.com/Brawl345/gobot/model"
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -34,10 +35,12 @@ func (p *Plugin) Commands() []gotgbot.BotCommand {
 		{
 			Command:     "home",
 			Description: "<Ort> - Heimatort setzen",
+			IsEphemeral: true,
 		},
 		{
 			Command:     "home_delete",
 			Description: "Heimatort löschen",
+			IsEphemeral: true,
 		},
 	}
 }
@@ -68,7 +71,7 @@ func (p *Plugin) onGetHome(b *gotgbot.Bot, c plugin.GobotContext) error {
 	venue, err := p.homeService.GetHome(c.EffectiveUser)
 	if err != nil {
 		if errors.Is(err, model.ErrHomeAddressNotSet) {
-			_, err = c.EffectiveMessage.ReplyMessage(b, "🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
+			_, err = tgUtils.ReplyEphemeral(b, c.EffectiveMessage, "🏠 Dein Heimatort wurde noch nicht gesetzt.\n"+
 				"Setze ihn mit <code>/home ORT</code>", utils.DefaultSendOptions())
 			return err
 		}
@@ -79,15 +82,15 @@ func (p *Plugin) onGetHome(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error getting home")
-		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err := tgUtils.ReplyEphemeral(b, c.EffectiveMessage, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
 
-	_, err = c.EffectiveMessage.ReplyVenue(b, venue.Location.Latitude, venue.Location.Longitude, venue.Title, venue.Address, &gotgbot.SendVenueOpts{
-		ReplyParameters: &gotgbot.ReplyParameters{
-			AllowSendingWithoutReply: true,
-		},
+	receiverUserId, replyParameters := tgUtils.EphemeralReplyTo(c.EffectiveMessage)
+	_, err = b.SendVenue(c.EffectiveChat.Id, venue.Location.Latitude, venue.Location.Longitude, venue.Title, venue.Address, &gotgbot.SendVenueOpts{
+		ReceiverUserId:      receiverUserId,
+		ReplyParameters:     replyParameters,
 		DisableNotification: true,
 	})
 	return err
@@ -100,7 +103,7 @@ func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if err != nil {
 		if errors.Is(err, model.ErrAddressNotFound) {
-			_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Es wurde kein Ort gefunden.", utils.DefaultSendOptions())
+			_, err := tgUtils.ReplyEphemeral(b, c.EffectiveMessage, "❌ Es wurde kein Ort gefunden.", utils.DefaultSendOptions())
 			return err
 		}
 		guid := xid.New().String()
@@ -108,7 +111,7 @@ func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Err(err).
 			Str("guid", guid).
 			Msg("error getting location")
-		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err := tgUtils.ReplyEphemeral(b, c.EffectiveMessage, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
@@ -121,16 +124,16 @@ func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Int64("user_id", c.EffectiveUser.Id).
 			Str("guid", guid).
 			Msg("error setting home")
-		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
+		_, err := tgUtils.ReplyEphemeral(b, c.EffectiveMessage, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)),
 			utils.DefaultSendOptions())
 		return err
 	}
 	venue.Title = "✅ Wohnort festgelegt"
 
-	_, err = c.EffectiveMessage.ReplyVenue(b, venue.Location.Latitude, venue.Location.Longitude, venue.Title, venue.Address, &gotgbot.SendVenueOpts{
-		ReplyParameters: &gotgbot.ReplyParameters{
-			AllowSendingWithoutReply: true,
-		},
+	receiverUserId, replyParameters := tgUtils.EphemeralReplyTo(c.EffectiveMessage)
+	_, err = b.SendVenue(c.EffectiveChat.Id, venue.Location.Latitude, venue.Location.Longitude, venue.Title, venue.Address, &gotgbot.SendVenueOpts{
+		ReceiverUserId:      receiverUserId,
+		ReplyParameters:     replyParameters,
 		DisableNotification: true,
 	})
 	return err
@@ -149,6 +152,6 @@ func (p *Plugin) onDeleteHome(b *gotgbot.Bot, c plugin.GobotContext) error {
 			utils.DefaultSendOptions())
 		return err
 	}
-	_, err = c.EffectiveMessage.ReplyMessage(b, "✅ Wohnort gelöscht", utils.DefaultSendOptions())
+	_, err = tgUtils.ReplyEphemeral(b, c.EffectiveMessage, "✅ Wohnort gelöscht", utils.DefaultSendOptions())
 	return err
 }
