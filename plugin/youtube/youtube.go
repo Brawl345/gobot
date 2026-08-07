@@ -141,7 +141,8 @@ func deArrow(b *gotgbot.Bot, msg *gotgbot.Message, originalText string, video *V
 			1,
 		)
 
-		_, _, err := msg.EditText(b, modifiedText, &gotgbot.EditMessageTextOpts{
+		_, _, err := msg.EditText(b, &gotgbot.EditMessageTextOpts{
+			Text:      modifiedText,
 			ParseMode: gotgbot.ParseModeHTML,
 			LinkPreviewOptions: &gotgbot.LinkPreviewOptions{
 				IsDisabled: disableLinkPreview,
