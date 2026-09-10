@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -44,7 +45,7 @@ func (t *WebfetchTool) Definition() FunctionTool {
 	return FunctionTool{
 		Type:        "function",
 		Name:        "webfetch",
-		Description: "Ruft den Inhalt einer URL ab. Nutze dieses Tool wenn du eine Website lesen musst, um eine Frage zu beantworten. Zeigt auf die URL auf ein Bild (PNG, JPEG, WebP, GIF), wird das Bild abgerufen und kann direkt analysiert werden.",
+		Description: "Ruft den Inhalt einer URL ab. Nutze dieses Tool wenn du eine Website lesen musst, um eine Frage zu beantworten. Zeigt auf die URL auf ein Bild (PNG, JPEG, WebP, GIF), wird das Bild abgerufen und kann direkt analysiert werden. GitHub-Dateilinks liefern den Quelltext der Datei; ein Zeilen-Anker wie #L10-L20 schneidet den Bereich aus.",
 		Parameters: FunctionParameters{
 			Type: "object",
 			Properties: map[string]Property{
@@ -90,35 +91,40 @@ func fetchURLContent(rawURL, format string) (any, error) {
 		return "", fmt.Errorf("invalid URL scheme")
 	}
 
-	if err := httpUtils.IsPrivateURL(rawURL); err != nil {
-		return "", fmt.Errorf("URL not allowed: %w", err)
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return "", fmt.Errorf("invalid URL: %w", err)
 	}
+	target, fallback, lines := rewriteURL(parsed)
 
 	ctx, cancel := context.WithTimeout(context.Background(), FetchTimeout)
 	defer cancel()
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, rawURL, nil)
+	resp, err := fetchOnce(ctx, target, format)
 	if err != nil {
-		return "", fmt.Errorf("invalid URL: %w", err)
+		return "", err
 	}
-	req.Header.Set("User-Agent", utils.UserAgent)
-	if format == "html" {
-		req.Header.Set("Accept", "text/html,*/*;q=0.8")
-	} else {
-		req.Header.Set("Accept", "text/html,text/plain;q=0.9,*/*;q=0.8")
-	}
+	defer func() {
+		_ = resp.Body.Close()
+	}()
 
-	resp, err := httpUtils.SSRFSafeClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("fetch failed: %w", err)
+	// GitHub raw URLs built for branches 404 on tags and commits; retry the plain ref form.
+	if resp.StatusCode == http.StatusNotFound && fallback != nil {
+		if retry, retryErr := fetchOnce(ctx, fallback, format); retryErr == nil {
+			if retry.StatusCode == http.StatusOK {
+				_ = resp.Body.Close()
+				resp = retry
+			} else {
+				_ = retry.Body.Close()
+			}
+		}
 	}
-	defer func(body io.ReadCloser) {
-		_ = body.Close()
-	}(resp.Body)
 
 	if resp.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("HTTP %d", resp.StatusCode)
 	}
+
+	effectiveURL := resp.Request.URL.String()
 
 	contentType := strings.ToLower(resp.Header.Get("Content-Type"))
 	mediaType := strings.TrimSpace(strings.SplitN(contentType, ";", 2)[0])
@@ -141,7 +147,7 @@ func fetchURLContent(rawURL, format string) (any, error) {
 	isHTML := strings.Contains(contentType, "text/html")
 
 	if isHTML && format != "html" {
-		article, err := readability.FromReader(io.LimitReader(resp.Body, MaxFetchedBodyBytes), req.URL)
+		article, err := readability.FromReader(io.LimitReader(resp.Body, MaxFetchedBodyBytes), resp.Request.URL)
 		if err != nil {
 			return "", fmt.Errorf("readability failed: %w", err)
 		}
@@ -149,18 +155,49 @@ func fetchURLContent(rawURL, format string) (any, error) {
 		if err := article.RenderText(&sb); err != nil {
 			return "", fmt.Errorf("text rendering failed: %w", err)
 		}
-		return wrapUntrusted(truncateFetched(sb.String()), rawURL), nil
+		return wrapUntrusted(truncateFetched(sb.String()), effectiveURL), nil
 	}
 
 	if isHTML || strings.Contains(contentType, "text/") {
-		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, MaxFetchedContentLength+1))
+		limit := MaxFetchedContentLength + 1
+		if !lines.empty() {
+			limit = MaxFetchedBodyBytes
+		}
+		bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, int64(limit)))
 		if err != nil {
 			return "", fmt.Errorf("read failed: %w", err)
 		}
-		return wrapUntrusted(truncateFetched(string(bodyBytes)), rawURL), nil
+		body := string(bodyBytes)
+		if !lines.empty() {
+			body = sliceLines(body, lines)
+		}
+		return wrapUntrusted(truncateFetched(body), effectiveURL), nil
 	}
 
 	return "", fmt.Errorf("unsupported content type: %s", contentType)
+}
+
+func fetchOnce(ctx context.Context, target *url.URL, format string) (*http.Response, error) {
+	if err := httpUtils.IsPrivateURL(target.String()); err != nil {
+		return nil, fmt.Errorf("URL not allowed: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("invalid URL: %w", err)
+	}
+	req.Header.Set("User-Agent", utils.UserAgent)
+	if format == "html" {
+		req.Header.Set("Accept", "text/html,*/*;q=0.8")
+	} else {
+		req.Header.Set("Accept", "text/html,text/plain;q=0.9,*/*;q=0.8")
+	}
+
+	resp, err := httpUtils.SSRFSafeClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("fetch failed: %w", err)
+	}
+	return resp, nil
 }
 
 func truncateFetched(content string) string {
