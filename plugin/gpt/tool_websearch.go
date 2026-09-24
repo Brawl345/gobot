@@ -46,15 +46,16 @@ type (
 	}
 
 	WebsearchTool struct {
-		apiKey  string
-		chatID  int64
-		mu      sync.Mutex
-		results []BraveWebResult
+		apiKey    string
+		chatID    int64
+		citations *Citations
+		mu        sync.Mutex
+		results   []BraveWebResult
 	}
 )
 
-func NewWebsearchTool(apiKey string, chatID int64) *WebsearchTool {
-	return &WebsearchTool{apiKey: apiKey, chatID: chatID}
+func NewWebsearchTool(apiKey string, chatID int64, citations *Citations) *WebsearchTool {
+	return &WebsearchTool{apiKey: apiKey, chatID: chatID, citations: citations}
 }
 
 func (t *WebsearchTool) Definition() FunctionTool {
@@ -104,14 +105,32 @@ func (t *WebsearchTool) Execute(arguments string) (any, error) {
 		Str("query", args.Query).
 		Int64("chat_id", t.chatID).
 		Msg("websearch tool call")
-	results, output, err := braveSearch(args.Query, t.apiKey, args.Count, args.Country, args.Freshness)
+	results, err := braveSearch(args.Query, t.apiKey, args.Count, args.Country, args.Freshness)
 	if err != nil {
 		return "", err
+	}
+	if len(results) == 0 {
+		return "No results found.", nil
 	}
 	t.mu.Lock()
 	t.results = append(t.results, results...)
 	t.mu.Unlock()
-	return output, nil
+
+	turn := t.citations.NextTurn()
+	var sb strings.Builder
+	for i, r := range results {
+		age := r.Age
+		if age == "" {
+			age = r.PageAge
+		}
+		marker := t.citations.Add(fmt.Sprintf("turn%dsearch%d", turn, i), r.URL)
+		_, _ = fmt.Fprintf(&sb, "--- Result %d ---\nCitation Marker: %s\nTitle: %s\nLink: %s\n", i+1, marker, stripCitationChars(r.Title), r.URL)
+		if age != "" {
+			_, _ = fmt.Fprintf(&sb, "Age: %s\n", age)
+		}
+		_, _ = fmt.Fprintf(&sb, "Snippet: %s\n\n", stripCitationChars(sanitizeSnippet(r.Description)))
+	}
+	return strings.TrimRight(sb.String(), "\n"), nil
 }
 
 func (t *WebsearchTool) Emoji() string {
@@ -129,7 +148,7 @@ const (
 	braveMaxWaitSecs = 5
 )
 
-func braveSearch(query, braveKey string, count int, country, freshness string) ([]BraveWebResult, string, error) {
+func braveSearch(query, braveKey string, count int, country, freshness string) ([]BraveWebResult, error) {
 	if count <= 0 {
 		count = BraveDefaultCount
 	}
@@ -169,7 +188,7 @@ func braveSearch(query, braveKey string, count int, country, freshness string) (
 
 		httpErr, ok := errors.AsType[*httpUtils.HttpError](err)
 		if !ok || httpErr.StatusCode != http.StatusTooManyRequests {
-			return nil, "", fmt.Errorf("brave search failed: %w", err)
+			return nil, fmt.Errorf("brave search failed: %w", err)
 		}
 		lastErr = err
 		if attempt == braveMaxRetries-1 {
@@ -182,7 +201,7 @@ func braveSearch(query, braveKey string, count int, country, freshness string) (
 			raw = strings.TrimSpace(strings.SplitN(raw, ",", 2)[0])
 			if secs, parseErr := strconv.Atoi(raw); parseErr == nil && secs > 0 {
 				if secs > braveMaxWaitSecs {
-					return nil, "", fmt.Errorf("brave search rate limited, reset in %ds (too long to wait)", secs)
+					return nil, fmt.Errorf("brave search rate limited, reset in %ds (too long to wait)", secs)
 				}
 				wait = time.Duration(secs) * time.Second
 			}
@@ -195,27 +214,10 @@ func braveSearch(query, braveKey string, count int, country, freshness string) (
 		time.Sleep(wait)
 	}
 	if lastErr != nil {
-		return nil, "", fmt.Errorf("brave search failed after %d attempts: %w", braveMaxRetries, lastErr)
+		return nil, fmt.Errorf("brave search failed after %d attempts: %w", braveMaxRetries, lastErr)
 	}
 
-	results := result.Web.Results
-	if len(results) == 0 {
-		return nil, "No results found.", nil
-	}
-
-	var sb strings.Builder
-	for i, r := range results {
-		age := r.Age
-		if age == "" {
-			age = r.PageAge
-		}
-		_, _ = fmt.Fprintf(&sb, "--- Result %d ---\nTitle: %s\nLink: %s\n", i+1, r.Title, r.URL)
-		if age != "" {
-			_, _ = fmt.Fprintf(&sb, "Age: %s\n", age)
-		}
-		_, _ = fmt.Fprintf(&sb, "Snippet: %s\n\n", sanitizeSnippet(r.Description))
-	}
-	return results, strings.TrimRight(sb.String(), "\n"), nil
+	return result.Web.Results, nil
 }
 
 func searchLinks(results []BraveWebResult) string {

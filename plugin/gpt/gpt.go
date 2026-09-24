@@ -187,12 +187,14 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	systemInstruction := cmp.Or(p.credentialService.GetKey("openai_system_instruction"), DefaultSystemInstruction)
 	systemInstruction += fmt.Sprintf("\n\nHeute ist %s.", utils.LocalizeDatestring(time.Now().Format("Monday, der 02.01.2006")))
+	systemInstruction += "\n\n" + CitationInstruction
 	braveKey := p.credentialService.GetKey("brave_search_api_key")
 	gptModel := cmp.Or(p.credentialService.GetKey("openai_model"), DefaultModel)
 
-	registeredTools := []Tool{NewWebfetchTool(c.EffectiveChat.Id), NewCalculatorTool()}
+	citations := NewCitations()
+	registeredTools := []Tool{NewWebfetchTool(c.EffectiveChat.Id, citations), NewCalculatorTool()}
 	if braveKey != "" {
-		registeredTools = append(registeredTools, NewWebsearchTool(braveKey, c.EffectiveChat.Id))
+		registeredTools = append(registeredTools, NewWebsearchTool(braveKey, c.EffectiveChat.Id, citations))
 	}
 
 	toolDefs := make([]FunctionTool, len(registeredTools))
@@ -408,9 +410,9 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}
 
-	output := outputText.String()
+	segments := citations.Resolve(outputText.String())
 
-	if output == "" {
+	if strings.TrimSpace(plainText(segments)) == "" {
 		log.Error().Str("status", apiResponse.Status).Msg("Got no answer from GPT")
 		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Keine Antwort von GPT erhalten (eventuell gefiltert).", utils.DefaultSendOptions())
 		return err
@@ -418,7 +420,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if apiResponse.Status == StatusIncomplete {
 		log.Warn().Msg("GPT response is incomplete")
-		output += " […]"
+		segments = append(segments, citedSegment{text: " […]"})
 	}
 
 	if len(usedToolNames) > 0 {
@@ -429,7 +431,8 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 				prefix.WriteString(t.Emoji())
 			}
 		}
-		output = prefix.String() + " " + output
+		prefix.WriteString(" ")
+		segments = append([]citedSegment{{text: prefix.String()}}, segments...)
 	}
 
 	var allSearchResults []BraveWebResult
@@ -448,35 +451,25 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}
 
-	links := searchLinks(allSearchResults)
-	parseMode := ""
+	hasInlineCitations := hasCitationLinks(segments)
+	links := ""
+	if !hasInlineCitations {
+		links = searchLinks(allSearchResults)
+	}
 
-	if links != "" {
-		// Trim the raw output so the escaped version plus the links section
-		// stays within Telegram's limit. Truncating raw (then escaping)
-		// guarantees we never cut inside an HTML entity like "&lt;".
-		budget := tgUtils.MaxMessageLength - len([]rune(links)) - 1
-		runes := []rune(output)
-		truncated := false
-		for len([]rune(utils.Escape(string(runes)))) > budget {
-			overflow := len([]rune(utils.Escape(string(runes)))) - budget
-			drop := overflow
-			if drop > len(runes) {
-				drop = len(runes)
-			}
-			runes = runes[:len(runes)-drop]
-			truncated = true
-			if len(runes) == 0 {
-				break
-			}
-		}
-		if truncated && len(runes) > 3 {
-			runes = append(runes[:len(runes)-3], []rune("...")...)
-		}
-		output = utils.Escape(string(runes)) + "\n" + links
+	var output, parseMode string
+	switch {
+	case links != "":
+		output = renderCitedHTML(segments, tgUtils.MaxMessageLength-len([]rune(links))-1) + "\n" + links
 		parseMode = gotgbot.ParseModeHTML
-	} else if len([]rune(output)) > tgUtils.MaxMessageLength {
-		output = utils.TruncateText(output, tgUtils.MaxMessageLength-3) + "..."
+	case hasInlineCitations:
+		output = renderCitedHTML(segments, tgUtils.MaxMessageLength)
+		parseMode = gotgbot.ParseModeHTML
+	default:
+		output = plainText(segments)
+		if len([]rune(output)) > tgUtils.MaxMessageLength {
+			output = utils.TruncateText(output, tgUtils.MaxMessageLength-3) + "..."
+		}
 	}
 
 	_, err = c.EffectiveMessage.ReplyMessage(b, output, &gotgbot.SendMessageOpts{
