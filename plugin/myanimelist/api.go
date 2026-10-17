@@ -1,6 +1,7 @@
 package myanimelist
 
 import (
+	"fmt"
 	"strings"
 	"time"
 
@@ -114,6 +115,27 @@ func (a *Anime) GetMediaType() string {
 	default:
 		return a.MediaType
 	}
+}
+
+func (a *Anime) EpisodeDurationFormatted() string {
+	totalMinutes := a.AverageEpisodeDuration / 60
+	hours := totalMinutes / 60
+	minutes := totalMinutes % 60
+
+	var parts []string
+	switch {
+	case hours == 1:
+		parts = append(parts, "1 Stunde")
+	case hours > 1:
+		parts = append(parts, fmt.Sprintf("%d Stunden", hours))
+	}
+	switch {
+	case minutes == 1:
+		parts = append(parts, "1 Minute")
+	case minutes > 1:
+		parts = append(parts, fmt.Sprintf("%d Minuten", minutes))
+	}
+	return strings.Join(parts, " ")
 }
 
 func (a *Anime) GetStatus() string {

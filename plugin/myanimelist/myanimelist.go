@@ -291,10 +291,15 @@ func (p *Plugin) onAnime(b *gotgbot.Bot, c plugin.GobotContext) error {
 		)
 
 		if anime.AverageEpisodeDuration >= 60 {
+			perEpisode := ""
+			if anime.NumEpisodes > 1 {
+				perEpisode = " pro Episode"
+			}
 			sb.WriteString(
 				fmt.Sprintf(
-					" <i>(%d Minuten pro Episode)</i>",
-					anime.AverageEpisodeDuration/60,
+					" <i>(%s%s)</i>",
+					anime.EpisodeDurationFormatted(),
+					perEpisode,
 				),
 			)
 		}
