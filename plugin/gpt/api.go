@@ -2,10 +2,11 @@ package gpt
 
 const (
 	ApiURL       = "https://api.openai.com/v1/responses"
-	DefaultModel = "gpt-5.6-sol"
+	DefaultModel = "gpt-5.6-terra"
 
 	TypeInputText          = "input_text"
 	TypeInputImage         = "input_image"
+	TypeInputFile          = "input_file"
 	TypeMessage            = "message"
 	TypeOutputText         = "output_text"
 	TypeFunctionCall       = "function_call"
@@ -25,6 +26,14 @@ type (
 	InputImage struct {
 		Type     string `json:"type"`
 		ImageURL string `json:"image_url"`
+		Detail   string `json:"detail,omitempty"`
+	}
+
+	InputFile struct {
+		Type     string `json:"type"`
+		Filename string `json:"filename"`
+		FileData string `json:"file_data"`
+		Detail   string `json:"detail,omitempty"`
 	}
 
 	InputMessage struct {
@@ -33,8 +42,8 @@ type (
 	}
 
 	// FunctionCallOutput carries a tool result; Output is either a plain string
-	// or an []InputImage when a tool returns visual content (see the Responses
-	// API function_call_output schema).
+	// or a list of InputText/InputImage/InputFile parts when a tool returns visual content
+	// (see the Responses API function_call_output schema).
 	FunctionCallOutput struct {
 		Type   string `json:"type"`
 		CallID string `json:"call_id"`
@@ -110,7 +119,7 @@ type (
 
 	Tool interface {
 		Definition() FunctionTool
-		// Execute returns either a string or an []InputImage for visual results.
+		// Execute returns either a string or a list of InputText/InputImage/InputFile parts for visual results.
 		Execute(arguments string) (any, error)
 		Emoji() string
 	}

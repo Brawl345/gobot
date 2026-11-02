@@ -168,9 +168,14 @@ func braveSearch(query, braveKey string, count int, country, freshness string) (
 		params.Set("freshness", freshness)
 	}
 
-	reqURL := BraveSearchURL + "?" + params.Encode()
-
 	var result BraveSearchResponse
+	if err := braveGet(BraveSearchURL+"?"+params.Encode(), braveKey, query, &result); err != nil {
+		return nil, err
+	}
+	return result.Web.Results, nil
+}
+
+func braveGet(reqURL, braveKey, query string, result any) error {
 	var lastErr error
 	for attempt := range braveMaxRetries {
 		var respHeaders http.Header
@@ -178,17 +183,16 @@ func braveSearch(query, braveKey string, count int, country, freshness string) (
 			Method:          httpUtils.MethodGet,
 			URL:             reqURL,
 			Headers:         map[string]string{"X-Subscription-Token": braveKey, "Accept": "application/json"},
-			Response:        &result,
+			Response:        result,
 			ResponseHeaders: &respHeaders,
 		})
 		if err == nil {
-			lastErr = nil
-			break
+			return nil
 		}
 
 		httpErr, ok := errors.AsType[*httpUtils.HttpError](err)
 		if !ok || httpErr.StatusCode != http.StatusTooManyRequests {
-			return nil, fmt.Errorf("brave search failed: %w", err)
+			return fmt.Errorf("brave search failed: %w", err)
 		}
 		lastErr = err
 		if attempt == braveMaxRetries-1 {
@@ -201,7 +205,7 @@ func braveSearch(query, braveKey string, count int, country, freshness string) (
 			raw = strings.TrimSpace(strings.SplitN(raw, ",", 2)[0])
 			if secs, parseErr := strconv.Atoi(raw); parseErr == nil && secs > 0 {
 				if secs > braveMaxWaitSecs {
-					return nil, fmt.Errorf("brave search rate limited, reset in %ds (too long to wait)", secs)
+					return fmt.Errorf("brave search rate limited, reset in %ds (too long to wait)", secs)
 				}
 				wait = time.Duration(secs) * time.Second
 			}
@@ -213,11 +217,7 @@ func braveSearch(query, braveKey string, count int, country, freshness string) (
 			Msg("brave search rate limited, retrying")
 		time.Sleep(wait)
 	}
-	if lastErr != nil {
-		return nil, fmt.Errorf("brave search failed after %d attempts: %w", braveMaxRetries, lastErr)
-	}
-
-	return result.Web.Results, nil
+	return fmt.Errorf("brave search failed after %d attempts: %w", braveMaxRetries, lastErr)
 }
 
 func searchLinks(results []BraveWebResult) string {

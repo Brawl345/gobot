@@ -141,7 +141,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		expand.New(),
 		gelbooru.New(credentialService, gelbooruService, gelbooruCleanupService),
 		gemini.New(credentialService, geminiService),
-		gpt.New(credentialService, gptService),
+		gpt.New(credentialService, geocodingService, gptService),
 		getfile.New(credentialService, fileService),
 		google_images.New(credentialService, googleImagesService, googleImagesCleanupService),
 		google_search.New(credentialService),

@@ -1,6 +1,7 @@
 package gpt
 
 import (
+	"bytes"
 	"context"
 	"encoding/base64"
 	"encoding/json"
@@ -8,6 +9,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 	"unicode/utf8"
@@ -21,6 +23,7 @@ const (
 	MaxFetchedContentLength = 50_000
 	MaxFetchedBodyBytes     = 5_000_000
 	MaxFetchedImageBytes    = 20_000_000
+	MaxFetchedFileBytes     = 20_000_000
 	FetchTimeout            = 30 * time.Second
 )
 
@@ -31,6 +34,29 @@ var supportedImageTypes = map[string]string{
 	"image/jpeg": "image/jpeg",
 	"image/webp": "image/webp",
 	"image/gif":  "image/gif",
+}
+
+var supportedDocumentTypes = map[string]string{
+	"application/pdf":    ".pdf",
+	"application/msword": ".doc",
+	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": ".docx",
+	"application/vnd.ms-excel": ".xls",
+	"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":         ".xlsx",
+	"application/vnd.ms-powerpoint":                                             ".ppt",
+	"application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
+	"application/vnd.oasis.opendocument.text":                                   ".odt",
+	"application/rtf": ".rtf",
+}
+
+func documentFilename(u *url.URL, ext string) string {
+	name := path.Base(u.Path)
+	if name == "." || name == "/" || name == "" {
+		name = "document"
+	}
+	if !strings.EqualFold(path.Ext(name), ext) {
+		name += ext
+	}
+	return name
 }
 
 type WebfetchTool struct {
@@ -46,7 +72,7 @@ func (t *WebfetchTool) Definition() FunctionTool {
 	return FunctionTool{
 		Type:        "function",
 		Name:        "webfetch",
-		Description: "Ruft den Inhalt einer URL ab. Nutze dieses Tool wenn du eine Website lesen musst, um eine Frage zu beantworten. Zeigt auf die URL auf ein Bild (PNG, JPEG, WebP, GIF), wird das Bild abgerufen und kann direkt analysiert werden. GitHub-Dateilinks liefern den Quelltext der Datei; ein Zeilen-Anker wie #L10-L20 schneidet den Bereich aus.",
+		Description: "Ruft den Inhalt einer URL ab. Nutze dieses Tool wenn du eine Website lesen musst, um eine Frage zu beantworten. Zeigt die URL auf ein Bild (PNG, JPEG, WebP, GIF) oder ein Dokument (PDF, Word, Excel, PowerPoint, ODT, RTF), wird die Datei abgerufen und kann direkt gelesen werden. GitHub-Dateilinks liefern den Quelltext der Datei; ein Zeilen-Anker wie #L10-L20 schneidet den Bereich aus.",
 		Parameters: FunctionParameters{
 			Type: "object",
 			Properties: map[string]Property{
@@ -147,6 +173,39 @@ func fetchURLContent(rawURL, format string, cite func(effectiveURL string) strin
 			Type:     TypeInputImage,
 			ImageURL: fmt.Sprintf("data:%s;base64,%s", mimeType, encoded),
 		}}, nil
+	}
+
+	if mediaType == "application/octet-stream" || mediaType == "binary/octet-stream" || mediaType == "" {
+		head, err := io.ReadAll(io.LimitReader(resp.Body, 512))
+		if err != nil {
+			return "", fmt.Errorf("read failed: %w", err)
+		}
+		if http.DetectContentType(head) == "application/pdf" {
+			mediaType = "application/pdf"
+		}
+		resp.Body = io.NopCloser(io.MultiReader(bytes.NewReader(head), resp.Body))
+	}
+
+	if ext, ok := supportedDocumentTypes[mediaType]; ok {
+		fileBytes, err := io.ReadAll(io.LimitReader(resp.Body, MaxFetchedFileBytes+1))
+		if err != nil {
+			return nil, fmt.Errorf("read failed: %w", err)
+		}
+		if len(fileBytes) > MaxFetchedFileBytes {
+			return nil, fmt.Errorf("file too large (max %d bytes)", MaxFetchedFileBytes)
+		}
+		return []any{
+			InputText{
+				Type: TypeInputText,
+				Text: wrapUntrusted("The document follows as a file.", effectiveURL, cite(effectiveURL)),
+			},
+			InputFile{
+				Type:     TypeInputFile,
+				Filename: documentFilename(resp.Request.URL, ext),
+				FileData: fmt.Sprintf("data:%s;base64,%s", mediaType, base64.StdEncoding.EncodeToString(fileBytes)),
+				Detail:   "low",
+			},
+		}, nil
 	}
 
 	isHTML := strings.Contains(contentType, "text/html")

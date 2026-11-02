@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"net"
 	"net/http"
 	"regexp"
@@ -27,7 +28,7 @@ const (
 	MaxRetries               = 3
 	MaxOutputTokens          = 2000
 	MaxToolCallRounds        = 3
-	DefaultSystemInstruction = "Du befindest dich in einer Telegram-Gruppenkonversation mit mehreren Nutzern. Nachrichten sind mit dem jeweiligen Nutzernamen vorangestellt. Antworte nur auf Deutsch. Markdown ist DEAKTIVIERT. HTML ist DEAKTIVIERT. Bilder-Analyse ist AKTIVIERT."
+	DefaultSystemInstruction = "Du befindest dich in einer Telegram-Gruppenkonversation mit mehreren Nutzern. Nachrichten sind mit dem jeweiligen Nutzernamen vorangestellt. Antworte nur auf Deutsch. Bilder-Analyse ist AKTIVIERT."
 )
 
 var (
@@ -38,6 +39,7 @@ var (
 type (
 	Plugin struct {
 		credentialService model.CredentialService
+		geocodingService  model.GeocodingService
 		gptService        Service
 	}
 
@@ -48,9 +50,10 @@ type (
 	}
 )
 
-func New(credentialService model.CredentialService, gptService Service) *Plugin {
+func New(credentialService model.CredentialService, geocodingService model.GeocodingService, gptService Service) *Plugin {
 	return &Plugin{
 		credentialService: credentialService,
+		geocodingService:  geocodingService,
 		gptService:        gptService,
 	}
 }
@@ -187,14 +190,22 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	systemInstruction := cmp.Or(p.credentialService.GetKey("openai_system_instruction"), DefaultSystemInstruction)
 	systemInstruction += fmt.Sprintf("\n\nHeute ist %s.", utils.LocalizeDatestring(time.Now().Format("Monday, der 02.01.2006")))
+	systemInstruction += "\n\n" + RichInstruction
 	systemInstruction += "\n\n" + CitationInstruction
 	braveKey := p.credentialService.GetKey("brave_search_api_key")
 	gptModel := cmp.Or(p.credentialService.GetKey("openai_model"), DefaultModel)
 
 	citations := NewCitations()
-	registeredTools := []Tool{NewWebfetchTool(c.EffectiveChat.Id, citations), NewCalculatorTool()}
+	registeredTools := []Tool{
+		NewWebfetchTool(c.EffectiveChat.Id, citations),
+		NewCalculatorTool(),
+		NewGeocodeTool(p.geocodingService, c.EffectiveChat.Id),
+	}
 	if braveKey != "" {
-		registeredTools = append(registeredTools, NewWebsearchTool(braveKey, c.EffectiveChat.Id, citations))
+		registeredTools = append(registeredTools,
+			NewWebsearchTool(braveKey, c.EffectiveChat.Id, citations),
+			NewImagesearchTool(braveKey, c.EffectiveChat.Id),
+		)
 	}
 
 	toolDefs := make([]FunctionTool, len(registeredTools))
@@ -223,8 +234,9 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 	var inputText strings.Builder
 
 	if tgUtils.IsReply(c.EffectiveMessage) {
-		photo = tgUtils.GetBestResolution(c.EffectiveMessage.ReplyToMessage.Photo)
-		if c.EffectiveMessage.ReplyToMessage.GetText() != "" {
+		replyText, replyPhotos := replyContent(c.EffectiveMessage.ReplyToMessage)
+		photo = tgUtils.GetBestResolution(replyPhotos)
+		if replyText != "" {
 			inputText.WriteString("-- ZUSÄTZLICHER KONTEXT --\n")
 			inputText.WriteString("Dies ist zusätzlicher Kontext. Wiederhole diesen nicht wortwörtlich!\n\n")
 			inputText.WriteString("Nachricht")
@@ -235,7 +247,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 				}
 			}
 			inputText.WriteString(":\n")
-			inputText.WriteString(c.EffectiveMessage.ReplyToMessage.GetText())
+			inputText.WriteString(replyText)
 
 			if c.EffectiveMessage.Quote != nil && c.EffectiveMessage.Quote.Text != "" {
 				inputText.WriteString("\n-- Beziehe dich nur auf folgenden Textteil: --\n")
@@ -423,6 +435,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		segments = append(segments, citedSegment{text: " […]"})
 	}
 
+	var toolPrefix string
 	if len(usedToolNames) > 0 {
 		var prefix strings.Builder
 		prefix.WriteString("⚒️")
@@ -431,14 +444,17 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 				prefix.WriteString(t.Emoji())
 			}
 		}
-		prefix.WriteString(" ")
-		segments = append([]citedSegment{{text: prefix.String()}}, segments...)
+		toolPrefix = prefix.String()
 	}
 
 	var allSearchResults []BraveWebResult
+	richMedia := make(map[string]fetchedImage)
 	for _, t := range registeredTools {
 		if srt, ok := t.(SearchResultsTool); ok {
 			allSearchResults = append(allSearchResults, srt.SearchResults()...)
+		}
+		if rmt, ok := t.(RichMediaTool); ok {
+			maps.Copy(richMedia, rmt.RichMedia())
 		}
 	}
 
@@ -455,6 +471,21 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 	links := ""
 	if !hasInlineCitations {
 		links = searchLinks(allSearchResults)
+	}
+
+	if sendRich(b, c, segments, toolPrefix, links, richMedia) {
+		return nil
+	}
+	for i := range segments {
+		segments[i].text = stripRichMedia(segments[i].text)
+	}
+	if strings.TrimSpace(plainText(segments)) == "" {
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Die Bilder konnten nicht gesendet werden.", utils.DefaultSendOptions())
+		return err
+	}
+
+	if toolPrefix != "" {
+		segments = append([]citedSegment{{text: toolPrefix + " "}}, segments...)
 	}
 
 	var output, parseMode string
