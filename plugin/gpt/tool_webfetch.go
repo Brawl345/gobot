@@ -115,6 +115,10 @@ func (t *WebfetchTool) Emoji() string {
 	return "🌐"
 }
 
+func (t *WebfetchTool) MaxCalls() int {
+	return 4
+}
+
 // fetchURLContent calls cite with the final URL of a text result and embeds
 // the returned citation marker.
 func fetchURLContent(rawURL, format string, cite func(effectiveURL string) string) (any, error) {

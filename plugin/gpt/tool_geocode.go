@@ -67,3 +67,7 @@ func (t *GeocodeTool) Execute(arguments string) (any, error) {
 func (t *GeocodeTool) Emoji() string {
 	return "📍"
 }
+
+func (t *GeocodeTool) MaxCalls() int {
+	return 3
+}

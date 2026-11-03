@@ -27,7 +27,7 @@ import (
 const (
 	MaxRetries               = 3
 	MaxOutputTokens          = 2000
-	MaxToolCallRounds        = 3
+	MaxToolCallRounds        = 8
 	DefaultSystemInstruction = "Du befindest dich in einer Telegram-Gruppenkonversation mit mehreren Nutzern. Nachrichten sind mit dem jeweiligen Nutzernamen vorangestellt. Antworte nur auf Deutsch. Bilder-Analyse ist AKTIVIERT."
 )
 
@@ -331,7 +331,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return p.handleAPIError(b, c, err)
 	}
 
-	usedToolNames := make(map[string]struct{})
+	callCounts := make(map[string]int)
 
 	for round := range MaxToolCallRounds {
 		var calls []OutputItem
@@ -347,10 +347,20 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
 
 		toolInputs := make([]any, len(calls))
-		var mu sync.Mutex
 		var wg sync.WaitGroup
 
 		for i, call := range calls {
+			if tool, ok := toolMap[call.Name]; ok {
+				callCounts[call.Name]++
+				if callCounts[call.Name] > tool.MaxCalls() {
+					toolInputs[i] = FunctionCallOutput{
+						Type:   TypeFunctionCallOutput,
+						CallID: call.CallID,
+						Output: fmt.Sprintf("Error: %s may only be called %d times per answer. Answer with the information you already have.", call.Name, tool.MaxCalls()),
+					}
+					continue
+				}
+			}
 			wg.Add(1)
 			go func(i int, call OutputItem) {
 				defer wg.Done()
@@ -376,9 +386,6 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 					} else {
 						toolOutput = result
 					}
-					mu.Lock()
-					usedToolNames[call.Name] = struct{}{}
-					mu.Unlock()
 				}
 				toolInputs[i] = FunctionCallOutput{
 					Type:   TypeFunctionCallOutput,
@@ -396,14 +403,14 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Store:              true,
 			MaxOutputTokens:    MaxOutputTokens,
 			PreviousResponseID: apiResponse.ID,
-			Tools:              toolDefs,
 			Reasoning:          Reasoning{Effort: "none"},
 		}
-
-		// In the final round, drop tools so the model is forced to produce a
-		// text answer instead of requesting more tool calls we can't satisfy.
-		if round == MaxToolCallRounds-1 {
-			toolReq.Tools = nil
+		if round < MaxToolCallRounds-1 {
+			for _, def := range toolDefs {
+				if callCounts[def.Name] < toolMap[def.Name].MaxCalls() {
+					toolReq.Tools = append(toolReq.Tools, def)
+				}
+			}
 		}
 
 		apiResponse, err = p.sendWithRetry(toolReq, apiKey)
@@ -437,11 +444,11 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	var toolPrefix string
-	if len(usedToolNames) > 0 {
+	if len(callCounts) > 0 {
 		var prefix strings.Builder
 		prefix.WriteString("⚒️")
 		for _, t := range registeredTools {
-			if _, used := usedToolNames[t.Definition().Name]; used {
+			if callCounts[t.Definition().Name] > 0 {
 				prefix.WriteString(t.Emoji())
 			}
 		}

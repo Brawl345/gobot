@@ -137,6 +137,10 @@ func (t *WebsearchTool) Emoji() string {
 	return "🔎"
 }
 
+func (t *WebsearchTool) MaxCalls() int {
+	return 3
+}
+
 func (t *WebsearchTool) SearchResults() []BraveWebResult {
 	t.mu.Lock()
 	defer t.mu.Unlock()

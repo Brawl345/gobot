@@ -126,5 +126,6 @@ type (
 		// Execute returns either a string or a list of InputText/InputImage/InputFile parts for visual results.
 		Execute(arguments string) (any, error)
 		Emoji() string
+		MaxCalls() int
 	}
 )

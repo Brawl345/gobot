@@ -67,7 +67,7 @@ func (t *ChartTool) Definition() FunctionTool {
 	return FunctionTool{
 		Type:        "function",
 		Name:        "chart",
-		Description: "Rendert ein Diagramm als Bild (Balken, horizontale Balken, Linie, Torte) und liefert eine Chart-URL samt Vorschau. Nur sinnvoll, wenn Zahlen visuell klarer werden, z. B. Umfragen, Wahlergebnisse, Zeitreihen oder Vergleiche. Die Daten müssen aus Tool-Ergebnissen oder dem Gespräch stammen, nie erfunden.",
+		Description: "Rendert ein Diagramm als Bild (Balken, horizontale Balken, Linie, Torte) und liefert eine Chart-URL samt Vorschau. Unaufgefordert aufrufen, sobald die Antwort vergleichbare Zahlen enthält, z. B. Umfragen, Sonntagsfrage, Wahlergebnisse, Zeitreihen, Ranglisten oder Vergleiche. Die Daten müssen aus Tool-Ergebnissen oder dem Gespräch stammen, nie erfunden.",
 		Parameters: FunctionParameters{
 			Type: "object",
 			Properties: map[string]Property{
@@ -142,6 +142,10 @@ func (t *ChartTool) Execute(arguments string) (any, error) {
 
 func (t *ChartTool) Emoji() string {
 	return "📊"
+}
+
+func (t *ChartTool) MaxCalls() int {
+	return 2
 }
 
 func (a chartArgs) validate() error {

@@ -187,6 +187,10 @@ func (t *ImagesearchTool) Emoji() string {
 	return "🖼️"
 }
 
+func (t *ImagesearchTool) MaxCalls() int {
+	return 2
+}
+
 // Brave's thumbnail proxy passes upstream errors (e.g. 429) through and fails for Telegram's fetcher, so images are downloaded here and uploaded with the message.
 func fetchImages(results []BraveImageResult) []imageCandidate {
 	fetched := make([]*imageCandidate, len(results))

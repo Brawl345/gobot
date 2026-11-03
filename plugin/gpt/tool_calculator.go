@@ -66,6 +66,10 @@ func (t *CalculatorTool) Emoji() string {
 	return "🧮"
 }
 
+func (t *CalculatorTool) MaxCalls() int {
+	return 10
+}
+
 const maxParseDepth = 500
 
 // parser holds state for recursive-descent parsing.
