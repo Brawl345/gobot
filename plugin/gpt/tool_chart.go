@@ -73,7 +73,7 @@ func (t *ChartTool) Definition() FunctionTool {
 			Properties: map[string]Property{
 				"type": {
 					Type:        "string",
-					Description: "bar: senkrechte Balken; horizontal_bar: bei langen Beschriftungen oder Ranglisten; line: Zeitreihen; pie: Anteile eines Ganzen (genau eine Serie, keine negativen Werte)",
+					Description: "pie: Werte sind Teile einer Gesamtsumme, z. B. Verkäufe nach Region, Marktanteile, Sitzverteilung, Budgetaufteilung (genau eine Serie, 2-8 Segmente, keine negativen Werte); bar: unabhängige Werte nebeneinander, z. B. Umfragewerte von Parteien oder Vergleich mehrerer Serien; horizontal_bar: bei langen Beschriftungen oder Ranglisten; line: Zeitreihen",
 					Enum:        []string{"bar", "horizontal_bar", "line", "pie"},
 				},
 				"title":    str("Titel des Diagramms"),
@@ -288,7 +288,9 @@ func barChartOption(a chartArgs, values [][]float64, names []string, colors []ch
 		}
 	}
 
+	nonNegative := minValue(values) >= 0
 	seriesColors := colors
+	zeroAnchor := false
 	if len(a.Colors) > 0 {
 		seriesColors = labelColors(a.Colors, len(a.Labels), theme)
 		if horizontal {
@@ -300,6 +302,14 @@ func barChartOption(a chartArgs, values [][]float64, names []string, colors []ch
 			split[i][i] = v
 		}
 		values = split
+		// Stacked charts lower the axis minimum by 1 before applying Min, so Min=0 is ignored when the smallest value is below 1; a zero-height series keeps the minimum at 0.
+		if nonNegative {
+			anchor := slices.Repeat([]float64{charts.GetNullValue()}, len(labels))
+			anchor[0] = 0
+			values = append(values, anchor)
+			seriesColors = append(seriesColors, charts.ColorTransparent)
+			zeroAnchor = true
+		}
 	}
 
 	opt := charts.NewBarChartOptionWithData(values)
@@ -312,7 +322,7 @@ func barChartOption(a chartArgs, values [][]float64, names []string, colors []ch
 			opt.SeriesList[i].Name = names[i]
 		}
 		opt.SeriesList[i].Label = charts.SeriesLabel{
-			Show:           new(true),
+			Show:           new(!zeroAnchor || i < len(opt.SeriesList)-1),
 			FontStyle:      charts.FontStyle{FontSize: 15, FontColor: theme.GetLabelTextColor()},
 			ValueFormatter: format,
 		}
@@ -320,7 +330,7 @@ func barChartOption(a chartArgs, values [][]float64, names []string, colors []ch
 	opt.CategoryAxis.Labels = labels
 	opt.CategoryAxis.LabelFontStyle = charts.FontStyle{FontSize: 14}
 	valueAxis := charts.ValueAxisOption{LabelFontStyle: charts.FontStyle{FontSize: 14}}
-	if minValue(values) >= 0 {
+	if nonNegative {
 		valueAxis.Min = new(0.0)
 	}
 	opt.ValueAxis = []charts.ValueAxisOption{valueAxis}
@@ -354,7 +364,7 @@ func labelColors(hex []string, n int, theme charts.ColorPalette) []charts.Color 
 
 func chartValueFormatter(unit string) charts.ValueFormatter {
 	suffix := ""
-	if unit != "" {
+	if unit = strings.TrimSpace(unit); unit != "" {
 		suffix = " " + unit
 	}
 	return func(v float64) string {

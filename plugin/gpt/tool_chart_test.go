@@ -102,6 +102,7 @@ func TestChartValueFormatter(t *testing.T) {
 		"percent": {"%", 25.5, "25,5 %"},
 		"round":   {"", 1.23456, "1,23"},
 		"integer": {"€", 3, "3 €"},
+		"padded":  {" Mio. ", 7.95, "7,95 Mio."},
 	}
 	for name, c := range cases {
 		if got := chartValueFormatter(c.unit)(c.val); got != c.want {
