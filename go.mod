@@ -5,6 +5,7 @@ go 1.26.0
 require (
 	codeberg.org/readeck/go-readability/v2 v2.1.2
 	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.36
+	github.com/go-analyze/charts v0.6.4
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/jmoiron/sqlx v1.4.0
 	github.com/joho/godotenv v1.5.1
@@ -18,9 +19,12 @@ require (
 require (
 	filippo.io/edwards25519 v1.2.0 // indirect
 	github.com/andybalholm/cascadia v1.3.4 // indirect
+	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/go-analyze/bulk v0.1.6 // indirect
 	github.com/go-gorp/gorp/v3 v3.1.0 // indirect
 	github.com/go-shiori/dom v0.0.0-20230515143342-73569d674e1c // indirect
 	github.com/gogs/chardet v0.0.0-20211120154057-b7413eaefb8f // indirect
+	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/itlightning/dateparse v0.2.1 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect

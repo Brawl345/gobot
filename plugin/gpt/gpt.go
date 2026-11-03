@@ -200,6 +200,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		NewWebfetchTool(c.EffectiveChat.Id, citations),
 		NewCalculatorTool(),
 		NewGeocodeTool(p.geocodingService, c.EffectiveChat.Id),
+		NewChartTool(c.EffectiveChat.Id),
 	}
 	if braveKey != "" {
 		registeredTools = append(registeredTools,

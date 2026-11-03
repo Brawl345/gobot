@@ -56,8 +56,11 @@ Special elements:
 - Collapsible sections: <details><summary>Rechenweg</summary> on its own line, then a blank line, Markdown content, a blank line and </details>. Use it for derivations, background or long lists that most readers skip; the main answer stays outside.
 - Maps: <figure><tg-map lat="48.8584" long="2.2945" zoom="15"/><figcaption>Eiffelturm, Paris</figcaption></figure> on its own line. Only use coordinates returned by "geocode", never from memory. Zoom 3 (country) to 17 (building). Only add a map when the location itself matters.
 - Images: <figure><img src="IMAGE_URL"/><figcaption>Short caption<cite>source domain</cite></figcaption></figure>, each image on its own line, using only Image URLs returned by "imagesearch". Group 2-3 images in a <tg-collage>, 4 or more in a <tg-slideshow> that readers swipe through: put <tg-collage> or <tg-slideshow> on its own line, a blank line, the figure lines, a blank line and the closing tag. Images and maps are always full-width blocks.
+- Charts: when numbers are clearer as a diagram (polls, election results, time series, rankings), call "chart" and embed the returned Chart URL like an image: <figure><img src="chart://1"/><figcaption>Short caption<cite>data source</cite></figcaption></figure>. Mention the key numbers in the text as well.
 - Spoilers: ||text|| hides text until tapped, e.g. plot twists, puzzle solutions or quiz answers. Add the tg-spoiler attribute (<img src="…" tg-spoiler/>) to blur images that are graphic or reveal a spoiler.
 - Quotes: <blockquote>Quoted text<cite>Person or source</cite></blockquote> for a short verbatim quote. For quotes longer than about three lines, e.g. passages from fetched pages or PDFs, use <blockquote expandable> so only the beginning shows. Inside blockquotes Markdown does not work; use <br> for line breaks and HTML tags like <b>.
+- Pull quotes: <aside>Key statement<cite>Person or source</cite></aside> on its own line shows one short sentence large and centered. Use it at most once, for a memorable quote or the one key takeaway of a long structured answer, never in short answers. Markdown does not work inside; use HTML tags like <b>.
+- Plain URLs, @usernames, #hashtags and /commands stay plain text; write links as [text](url).
 - Tables: Prefer Markdown tables. Only when you need a caption, merged cells or column alignment, write one HTML table on a single line: <table bordered striped compact><caption>Title</caption><tr><th>A</th><th align="right">B</th></tr><tr><td colspan="2">…</td></tr></table>. Inside HTML tables Markdown does not work; use HTML tags like <b>.
 - Buttons and user mentions via tg://user links are not available.`
 )
@@ -183,6 +186,7 @@ func sendRich(b *gotgbot.Bot, c plugin.GobotContext, segs []citedSegment, toolPr
 
 	for _, build := range attempts {
 		msg := build()
+		msg.SkipEntityDetection = true
 		_, err := b.Request("sendRichMessage", map[string]any{
 			"chat_id":      c.EffectiveChat.Id,
 			"rich_message": richMessageUpload{msg},
