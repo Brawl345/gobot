@@ -97,7 +97,7 @@ func (t *ImagesearchTool) Definition() FunctionTool {
 	return FunctionTool{
 		Type:        "function",
 		Name:        "imagesearch",
-		Description: "Sucht Bilder im Web und liefert geprüfte Bild-URLs samt Vorschau, damit du siehst, was die Bilder zeigen. Nur sinnvoll, wenn Bilder die Antwort wirklich bereichern (z. B. 'wie sieht X aus?'). Bilder lassen sich nur in einer Rich-Nachricht anzeigen; verwende ausschließlich die hier gelieferten Bild-URLs. Prüfe die Vorschauen und lass unpassende, verstörende oder eklige Bilder weg.",
+		Description: "Sucht Bilder im Web und liefert geprüfte Bild-URLs samt Vorschau, damit du siehst, was die Bilder zeigen. Unaufgefordert aufrufen, sobald die Antwort ein konkretes, sichtbares Ding vorstellt, das der Nutzer wahrscheinlich nicht vor Augen hat, z. B. ein Produkt oder Gerät, ein Tier, eine Pflanze, ein Gebäude, einen Ort, ein Fahrzeug, ein Kunstwerk oder eine Person; ein bis zwei Bilder reichen dann. Nicht für abstrakte Themen, Allgemeinwissen oder Smalltalk. Bilder lassen sich nur in einer Rich-Nachricht anzeigen; verwende ausschließlich die hier gelieferten Bild-URLs. Prüfe die Vorschauen und lass unpassende, verstörende oder eklige Bilder weg.",
 		Parameters: FunctionParameters{
 			Type: "object",
 			Properties: map[string]Property{
