@@ -332,6 +332,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	callCounts := make(map[string]int)
+	var earlierText strings.Builder
 
 	for round := range MaxToolCallRounds {
 		var calls []OutputItem
@@ -342,6 +343,12 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 		if len(calls) == 0 {
 			break
+		}
+		if text, _ := apiResponse.Text(); strings.TrimSpace(text) != "" {
+			if earlierText.Len() > 0 {
+				earlierText.WriteString("\n\n")
+			}
+			earlierText.WriteString(strings.TrimSpace(text))
 		}
 
 		_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
@@ -419,22 +426,31 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		}
 	}
 
-	var outputText strings.Builder
-	for _, out := range apiResponse.Output {
-		if out.Type == TypeMessage {
-			for _, part := range out.Content {
-				if part.Type == TypeOutputText {
-					outputText.WriteString(part.Text)
-				}
-			}
-		}
+	outputText, refusal := apiResponse.Text()
+	segments := citations.Resolve(outputText)
+	if strings.TrimSpace(plainText(segments)) == "" && earlierText.Len() > 0 {
+		segments = citations.Resolve(earlierText.String())
 	}
 
-	segments := citations.Resolve(outputText.String())
+	if strings.TrimSpace(plainText(segments)) == "" && refusal == "" && apiResponse.IsEmptyFinalAnswer() {
+		log.Info().
+			Str("response_id", apiResponse.ID).
+			Int64("chat_id", c.EffectiveChat.Id).
+			Msg("GPT chose to stay silent")
+		return tgUtils.AddReactionWithFallback(b, c.EffectiveMessage, "👍", nil)
+	}
 
 	if strings.TrimSpace(plainText(segments)) == "" {
-		log.Error().Str("status", apiResponse.Status).Msg("Got no answer from GPT")
-		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Keine Antwort von GPT erhalten (eventuell gefiltert).", utils.DefaultSendOptions())
+		log.Error().
+			Str("status", apiResponse.Status).
+			Str("response_id", apiResponse.ID).
+			Str("refusal", refusal).
+			Msg("Got no answer from GPT")
+		if refusal != "" {
+			_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ GPT verweigert die Antwort: %s", refusal), utils.DefaultSendOptions())
+			return err
+		}
+		_, err := c.EffectiveMessage.ReplyMessage(b, "❌ Keine Antwort von GPT erhalten.", utils.DefaultSendOptions())
 		return err
 	}
 

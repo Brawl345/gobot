@@ -1,5 +1,7 @@
 package gpt
 
+import "strings"
+
 const (
 	ApiURL       = "https://api.openai.com/v1/responses"
 	DefaultModel = "gpt-5.6-terra"
@@ -9,12 +11,16 @@ const (
 	TypeInputFile          = "input_file"
 	TypeMessage            = "message"
 	TypeOutputText         = "output_text"
+	TypeRefusal            = "refusal"
 	TypeFunctionCall       = "function_call"
 	TypeFunctionCallOutput = "function_call_output"
 
 	RoleUser = "user"
 
+	StatusCompleted  = "completed"
 	StatusIncomplete = "incomplete"
+
+	PhaseFinalAnswer = "final_answer"
 )
 
 type (
@@ -91,8 +97,9 @@ type (
 	}
 
 	OutputContent struct {
-		Type string `json:"type"`
-		Text string `json:"text"`
+		Type    string `json:"type"`
+		Text    string `json:"text"`
+		Refusal string `json:"refusal,omitempty"`
 	}
 
 	// OutputItem handles both "message" and "function_call" output types.
@@ -100,6 +107,7 @@ type (
 		Type string `json:"type"`
 		// "message" fields
 		Role    string          `json:"role,omitempty"`
+		Phase   string          `json:"phase,omitempty"`
 		Content []OutputContent `json:"content,omitempty"`
 		// "function_call" fields
 		CallID    string `json:"call_id,omitempty"`
@@ -112,7 +120,39 @@ type (
 		Status string       `json:"status"`
 		Output []OutputItem `json:"output"`
 	}
+)
 
+func (r Response) Text() (text, refusal string) {
+	var textSB, refusalSB strings.Builder
+	for _, out := range r.Output {
+		if out.Type != TypeMessage {
+			continue
+		}
+		for _, part := range out.Content {
+			switch part.Type {
+			case TypeOutputText:
+				textSB.WriteString(part.Text)
+			case TypeRefusal:
+				refusalSB.WriteString(part.Refusal)
+			}
+		}
+	}
+	return textSB.String(), refusalSB.String()
+}
+
+func (r Response) IsEmptyFinalAnswer() bool {
+	if r.Status != StatusCompleted {
+		return false
+	}
+	for _, out := range r.Output {
+		if out.Type == TypeMessage && out.Phase == PhaseFinalAnswer {
+			return true
+		}
+	}
+	return false
+}
+
+type (
 	APIErrorResponse struct {
 		Error struct {
 			Message string `json:"message"`
