@@ -2,7 +2,6 @@ package bot
 
 import (
 	"fmt"
-	"net/http"
 	"os"
 	"sort"
 	"strings"
@@ -54,6 +53,7 @@ import (
 	"github.com/Brawl345/gobot/plugin/wikipedia"
 	"github.com/Brawl345/gobot/plugin/worldclock"
 	"github.com/Brawl345/gobot/plugin/youtube"
+	"github.com/Brawl345/gobot/utils/httpUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/PaulSonOfLars/gotgbot/v2/ext"
 	"github.com/jmoiron/sqlx"
@@ -87,9 +87,11 @@ func New(db *sqlx.DB) (*Gobot, error) {
 	}
 
 	// Bot itself
+	tgClient := httpUtils.NewHTTPClientWithTimeout(30 * time.Second)
+	tgClient.Timeout = 30 * time.Second
 	bot, err := gotgbot.NewBot(strings.TrimSpace(os.Getenv("BOT_TOKEN")), &gotgbot.BotOpts{
 		BotClient: &gotgbot.BaseBotClient{
-			Client:             http.Client{Timeout: time.Second * 30},
+			Client:             *tgClient,
 			DefaultRequestOpts: &gotgbot.RequestOpts{Timeout: time.Second * 30},
 		},
 	})

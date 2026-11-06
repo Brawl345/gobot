@@ -134,6 +134,7 @@ func init() {
 	ssrfSafeTransport.ResponseHeaderTimeout = 15 * time.Second
 	ssrfSafeTransport.MaxIdleConnsPerHost = 20
 	ssrfSafeTransport.IdleConnTimeout = 5 * time.Minute
+	ssrfSafeTransport.HTTP2 = http2PingConfig()
 
 	SSRFSafeClient = &http.Client{
 		Transport: ssrfSafeTransport,
@@ -192,6 +193,14 @@ func isBlockedIP(ip net.IP) bool {
 	return false
 }
 
+// Without pings a silently dropped HTTP/2 connection stays pooled and every request on it times out.
+func http2PingConfig() *http.HTTP2Config {
+	return &http.HTTP2Config{
+		SendPingTimeout: 15 * time.Second,
+		PingTimeout:     10 * time.Second,
+	}
+}
+
 func createHTTPClient() *http.Client {
 	return NewHTTPClientWithTimeout(15 * time.Second)
 }
@@ -206,6 +215,7 @@ func NewHTTPClientWithTimeout(responseHeaderTimeout time.Duration) *http.Client 
 	transport.ResponseHeaderTimeout = responseHeaderTimeout
 	transport.MaxIdleConnsPerHost = 20
 	transport.IdleConnTimeout = 5 * time.Minute
+	transport.HTTP2 = http2PingConfig()
 
 	return &http.Client{
 		Transport: transport,
