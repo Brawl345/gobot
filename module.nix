@@ -112,6 +112,13 @@ in
         description = "Use webhook instead of long polling";
       };
 
+      listenHost = mkOption {
+        type = types.str;
+        default = "127.0.0.1";
+        example = "";
+        description = "Address the webhook server binds to. An empty string listens on all interfaces";
+      };
+
       port = mkOption {
         type = types.port;
         default = 8080;
@@ -208,8 +215,49 @@ in
           ++ optional (cfg.database.passwordFile != null) "MYSQL_PASSWORD:${cfg.database.passwordFile}";
 
         Restart = "always";
+        RestartSec = "5s";
         User = cfg.user;
         Group = defaultUser;
+        StateDirectory = "gobot";
+        StateDirectoryMode = "0700";
+        WorkingDirectory = "%S/gobot";
+
+        AmbientCapabilities = "";
+        CapabilityBoundingSet = "";
+        DevicePolicy = "closed";
+        LockPersonality = true;
+        MemoryDenyWriteExecute = true;
+        NoNewPrivileges = true;
+        PrivateDevices = true;
+        PrivateTmp = true;
+        PrivateUsers = true;
+        ProcSubset = "pid";
+        ProtectClock = true;
+        ProtectControlGroups = true;
+        ProtectHome = true;
+        ProtectHostname = true;
+        ProtectKernelLogs = true;
+        ProtectKernelModules = true;
+        ProtectKernelTunables = true;
+        ProtectProc = "invisible";
+        ProtectSystem = "strict";
+        RemoveIPC = true;
+        RestrictAddressFamilies = [
+          "AF_INET"
+          "AF_INET6"
+          "AF_NETLINK"
+          "AF_UNIX"
+        ];
+        RestrictNamespaces = true;
+        RestrictRealtime = true;
+        RestrictSUIDSGID = true;
+        SystemCallArchitectures = "native";
+        SystemCallFilter = [
+          "@system-service"
+          "~@privileged"
+          "~@resources"
+        ];
+        UMask = "0077";
       };
 
       environment = mkMerge [
@@ -222,6 +270,7 @@ in
           MYSQL_SOCKET = cfg.database.socket;
         }
         (mkIf cfg.webhook.enable {
+          LISTEN_HOST = cfg.webhook.listenHost;
           PORT = toString cfg.webhook.port;
           WEBHOOK_PUBLIC_URL = cfg.webhook.publicUrl;
           WEBHOOK_URL_PATH = cfg.webhook.urlPath;

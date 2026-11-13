@@ -2,6 +2,7 @@ package bot
 
 import (
 	"fmt"
+	"net"
 	"os"
 	"sort"
 	"strings"
@@ -192,6 +193,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		}
 	}
 
+	webhookHost := strings.TrimSpace(os.Getenv("LISTEN_HOST"))
 	webhookPort := strings.TrimSpace(os.Getenv("PORT"))
 	webhookURL := strings.TrimSpace(os.Getenv("WEBHOOK_PUBLIC_URL"))
 	webhookUrlPath := os.Getenv("WEBHOOK_URL_PATH")
@@ -215,6 +217,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		}
 	} else {
 		log.Debug().
+			Str("host", webhookHost).
 			Str("port", webhookPort).
 			Str("webhook_public_url", webhookURL).
 			Str("webhook_url_path", webhookUrlPath).
@@ -226,7 +229,7 @@ func New(db *sqlx.DB) (*Gobot, error) {
 		}
 
 		webhookOpts := ext.WebhookOpts{
-			ListenAddr:  fmt.Sprintf(":%s", webhookPort),
+			ListenAddr:  net.JoinHostPort(webhookHost, webhookPort),
 			SecretToken: webhookSecret,
 		}
 		err = updater.StartWebhook(bot, webhookUrlPath, webhookOpts)
