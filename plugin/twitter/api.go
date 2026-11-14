@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/Brawl345/gobot/utils"
-	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
 const (
@@ -411,33 +410,6 @@ func (m *Medium) Link() string {
 	}
 
 	return highestResURL
-}
-
-func (m *Medium) InputFile() gotgbot.InputFileOrString {
-	return gotgbot.InputFileByURL(m.Link())
-}
-
-func (m *Medium) Caption() string {
-	var caption string
-	if m.IsVideo() {
-		caption = m.Link()
-		if m.MediaStats.ViewCount > 0 {
-			plural := ""
-			if m.MediaStats.ViewCount != 1 {
-				plural = "e"
-			}
-			caption = fmt.Sprintf(
-				"%s (%s Aufruf%s)",
-				m.Link(),
-				utils.FormatThousand(m.MediaStats.ViewCount),
-				plural,
-			)
-		}
-	} else {
-		caption = m.Link()
-	}
-
-	return caption
 }
 
 func (l *Legacy) Metrics() string {

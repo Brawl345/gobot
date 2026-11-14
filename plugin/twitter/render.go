@@ -1,7 +1,6 @@
 package twitter
 
 import (
-	"bytes"
 	"cmp"
 	"fmt"
 	"regexp"
@@ -15,14 +14,6 @@ import (
 
 const collapseTextLength = 600
 
-type mediaMode int
-
-const (
-	mediaPrepared mediaMode = iota
-	mediaUploaded
-	mediaNone
-)
-
 var (
 	tcoRegex     = regexp.MustCompile(`https://t\.co/\w+`)
 	mentionRegex = regexp.MustCompile(`(^|[^\w])@(\w{1,15})`)
@@ -35,14 +26,14 @@ type tweetMessage struct {
 	uploads int
 }
 
-func renderTweet(result Result, prepared []*preparedMedium, mode mediaMode, spoiler bool) *tweetMessage {
+func renderTweet(result Result, prepared []*preparedMedium, withMedia, spoiler bool) *tweetMessage {
 	msg := &tweetMessage{}
 	link := statusLink(result.Core.UserResults.Result.Core.ScreenName, result.RestId)
 
 	msg.html.WriteString("<p>" + header(result.Core.UserResults, result.Legacy) + "</p>")
 	msg.html.WriteString(paragraph(tweetText(result.NoteTweet, result.Legacy, result.Article.ArticleResults.Result.Title)))
-	if mode != mediaNone {
-		msg.addMedia(prepared, mode, spoiler)
+	if withMedia {
+		msg.addMedia(prepared, spoiler)
 	}
 	msg.html.WriteString(pollTable(result.Card))
 	msg.html.WriteString(communityNote(result.BirdwatchPivot))
@@ -132,23 +123,22 @@ func paragraph(html string) string {
 	return "<p>" + html + "</p>"
 }
 
-func (msg *tweetMessage) addMedia(prepared []*preparedMedium, mode mediaMode, spoiler bool) {
+func (msg *tweetMessage) addMedia(prepared []*preparedMedium, spoiler bool) {
 	spoilerAttr := ""
 	if spoiler {
 		spoilerAttr = " tg-spoiler"
 	}
 
-	var tags, links []string
+	var tags, fullLinks, missingLinks []string
 	for _, p := range prepared {
-		if !p.usable() || (mode == mediaUploaded && p.data == nil) {
-			links = append(links, mediumLink(p, cmp.Or(p.fullURL, p.url, p.medium.Link()), "nicht ladbar"))
+		if !p.usable() {
+			missingLinks = append(missingLinks, mediumLink(p, cmpLink(p), len(prepared)))
 			continue
 		}
 
 		id := fmt.Sprintf("m%d", len(msg.media)+1)
-		file := gotgbot.InputFileByURL(p.url)
-		if p.data != nil && (mode == mediaUploaded || p.uploadOnly) {
-			file = gotgbot.InputFileByReader(id, bytes.NewReader(p.data))
+		file := p.inputFile(id)
+		if p.upload {
 			msg.uploads++
 		}
 
@@ -165,7 +155,7 @@ func (msg *tweetMessage) addMedia(prepared []*preparedMedium, mode mediaMode, sp
 		}
 
 		if p.fullURL != "" {
-			links = append(links, mediumLink(p, p.fullURL, "in voller Auflösung"))
+			fullLinks = append(fullLinks, mediumLink(p, p.fullURL, len(prepared)))
 		}
 	}
 
@@ -176,21 +166,31 @@ func (msg *tweetMessage) addMedia(prepared []*preparedMedium, mode mediaMode, sp
 	default:
 		msg.html.WriteString("<tg-collage>" + strings.Join(tags, "") + "</tg-collage>")
 	}
-	if len(links) > 0 {
-		msg.html.WriteString("<footer>" + strings.Join(links, " · ") + "</footer>")
+
+	var lines []string
+	if len(fullLinks) > 0 {
+		lines = append(lines, "🔍 Volle Auflösung: "+strings.Join(fullLinks, " · "))
+	}
+	if len(missingLinks) > 0 {
+		lines = append(lines, "⚠️ Nicht ladbar: "+strings.Join(missingLinks, " · "))
+	}
+	if len(lines) > 0 {
+		msg.html.WriteString("<footer>" + strings.Join(lines, "<br>") + "</footer>")
 	}
 }
 
-func mediumLink(p *preparedMedium, link, label string) string {
-	kind := "🖼 Bild"
+func mediumLink(p *preparedMedium, link string, total int) string {
+	label := "Bild"
 	if !p.medium.IsPhoto() {
-		kind = "🎬 Video"
+		label = "Video"
 	}
-	size := ""
+	if total > 1 {
+		label += fmt.Sprintf(" %d", p.position)
+	}
 	if p.fullSize > 0 {
-		size = fmt.Sprintf(" (%s MB)", utils.FormatThousand(p.fullSize/1_000_000))
+		label += fmt.Sprintf(" (%s MB)", utils.FormatThousand(p.fullSize/1_000_000))
 	}
-	return fmt.Sprintf(`%s <a href="%s">%s</a>%s`, kind, utils.Escape(link), label, size)
+	return fmt.Sprintf(`<a href="%s">%s</a>`, utils.Escape(link), label)
 }
 
 func footer(legacy Legacy, link string) string {

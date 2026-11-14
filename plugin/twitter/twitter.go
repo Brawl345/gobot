@@ -188,10 +188,9 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func sendTweet(b *gotgbot.Bot, c plugin.GobotContext, result Result, spoiler bool) error {
-	media := result.Legacy.ExtendedEntities.Media
-	prepared := prepareMedia(media)
+	prepared := prepareMedia(result.Legacy.ExtendedEntities.Media)
 
-	msg := renderTweet(result, prepared, mediaPrepared, spoiler)
+	msg := renderTweet(result, prepared, true, spoiler)
 	err := sendRichMessage(b, c, msg)
 	if err == nil {
 		return nil
@@ -199,16 +198,16 @@ func sendTweet(b *gotgbot.Bot, c plugin.GobotContext, result Result, spoiler boo
 	log.Err(err).Str("tweetID", result.RestId).Int("media", len(msg.media)).Msg("Failed to send rich message")
 
 	if len(prepared) > 0 {
-		downloadMissing(prepared)
-		msg = renderTweet(result, prepared, mediaUploaded, spoiler)
+		retryMedia(prepared)
+		msg = renderTweet(result, prepared, true, spoiler)
 		err = sendRichMessage(b, c, msg)
 		if err == nil {
 			return nil
 		}
-		log.Err(err).Str("tweetID", result.RestId).Int("media", len(msg.media)).Msg("Failed to send rich message with uploaded media")
+		log.Err(err).Str("tweetID", result.RestId).Int("media", len(msg.media)).Msg("Failed to send rich message on retry")
 	}
 
-	msg = renderTweet(result, prepared, mediaNone, spoiler)
+	msg = renderTweet(result, prepared, false, spoiler)
 	err = sendRichMessage(b, c, msg)
 	if err != nil {
 		guid := xid.New().String()
@@ -221,7 +220,7 @@ func sendTweet(b *gotgbot.Bot, c plugin.GobotContext, result Result, spoiler boo
 		return err
 	}
 
-	sendAlbums(b, c, media, spoiler)
+	sendAlbums(b, c, prepared, spoiler)
 	return nil
 }
 
