@@ -1,12 +1,14 @@
 package twitter
 
 import (
+	"bytes"
 	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"regexp"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -15,6 +17,7 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
+	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
@@ -449,103 +452,20 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 	// NOTE: Telegram does not support sending multiple *animations/GIFs* in an album
 	//	so we will handle them seperately
 	gifs := make([]Medium, 0, len(media))
+	albumMedia := make([]Medium, 0, len(media))
 	for _, medium := range media {
 		if medium.IsGIF() {
 			gifs = append(gifs, medium)
+		} else if medium.IsPhoto() || medium.IsVideo() {
+			albumMedia = append(albumMedia, medium)
 		}
 	}
 
-	if len(media) > 0 && len(media) != len(gifs) {
-		// Try album (photos + videos, no GIFs) first
-		_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadPhoto, nil)
-		album := make([]gotgbot.InputMedia, 0, len(media))
-
-		for _, medium := range media {
-			if medium.IsPhoto() {
-				album = append(album, gotgbot.InputMediaPhoto{Caption: medium.Caption(), Media: medium.InputFile()})
-			} else if medium.IsVideo() {
-				album = append(album, gotgbot.InputMediaVideo{Caption: medium.Caption(), Media: medium.InputFile()})
-			}
-		}
-
-		_, err := c.EffectiveMessage.ReplyMediaGroup(
-			b,
-			album,
-			&gotgbot.SendMediaGroupOpts{DisableNotification: true},
-		)
-		if err != nil {
-			// Group send failed - sending media manually as seperate messages
-			log.Err(err).Msg("Error while sending album")
-			msg, err := c.EffectiveMessage.ReplyMessage(b,
-				"<i>🕒 Medien werden heruntergeladen und gesendet...</i>",
-				utils.DefaultSendOptions(),
-			)
-			if err != nil {
-				// This would be very awkward
-				log.Err(err).Msg("Could not send initial 'download' message")
-			}
-
-			for _, medium := range media {
-				if medium.IsPhoto() {
-					_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadPhoto, nil)
-				} else {
-					_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadVideo, nil)
-				}
-
-				func() {
-					resp, err := httpUtils.DefaultHttpClient.Get(medium.Link())
-					log.Info().Str("url", medium.Link()).Msg("Downloading")
-					if err != nil {
-						log.Err(err).Str("url", medium.Link()).Msg("Error while downloading")
-						_, err := c.EffectiveMessage.ReplyMessage(b, medium.Caption(), &gotgbot.SendMessageOpts{
-							ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
-							DisableNotification: true,
-						})
-						if err != nil {
-							log.Err(err).Str("url", medium.Link()).Msg("Error while replying with link")
-						}
-						return
-					}
-
-					defer func(Body io.ReadCloser) {
-						err := Body.Close()
-						if err != nil {
-							log.Err(err).Msg("Error while closing body")
-						}
-					}(resp.Body)
-
-					if medium.IsPhoto() {
-						_, err = c.EffectiveMessage.ReplyPhoto(b, gotgbot.InputFileByReader(medium.IdStr, resp.Body),
-							&gotgbot.SendPhotoOpts{
-								ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
-								DisableNotification: true,
-							},
-						)
-					} else {
-						_, err = c.EffectiveMessage.ReplyVideo(b, gotgbot.InputFileByReader(medium.IdStr, resp.Body),
-							&gotgbot.SendVideoOpts{
-								Caption:             medium.Caption(),
-								ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
-								DisableNotification: true,
-								SupportsStreaming:   true,
-							},
-						)
-					}
-					if err != nil {
-						// Last resort: Send URL as text
-						log.Err(err).Str("url", medium.Link()).Msg("Error while replying with downloaded medium")
-						_, err := c.EffectiveMessage.ReplyMessage(b, medium.Caption(), &gotgbot.SendMessageOpts{
-							ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
-							DisableNotification: true,
-						})
-						if err != nil {
-							log.Err(err).Str("url", medium.Link()).Msg("Error while sending medium link")
-						}
-					}
-				}()
-			}
-
-			_, _ = msg.Delete(b, nil)
+	if len(albumMedia) > 0 {
+		albumCount := (len(albumMedia) + tgUtils.MaxAlbumSize - 1) / tgUtils.MaxAlbumSize
+		albumSize := (len(albumMedia) + albumCount - 1) / albumCount
+		for chunk := range slices.Chunk(albumMedia, albumSize) {
+			sendAlbum(b, c, chunk)
 		}
 	}
 
@@ -616,6 +536,158 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	return nil
+}
+
+func sendAlbum(b *gotgbot.Bot, c plugin.GobotContext, media []Medium) {
+	if len(media) > 1 {
+		files := make([]gotgbot.InputFileOrString, len(media))
+		for i, medium := range media {
+			files[i] = medium.InputFile()
+		}
+
+		err := replyAlbum(b, c, media, files)
+		if err == nil {
+			return
+		}
+		log.Err(err).Msg("Error while sending album")
+	}
+
+	msg, err := c.EffectiveMessage.ReplyMessage(b,
+		"<i>🕒 Medien werden heruntergeladen und gesendet...</i>",
+		utils.DefaultSendOptions(),
+	)
+	if err != nil {
+		log.Err(err).Msg("Could not send initial 'download' message")
+	}
+	defer func() {
+		if msg != nil {
+			_, _ = msg.Delete(b, nil)
+		}
+	}()
+
+	downloads := downloadMedia(media)
+
+	downloaded := make([]Medium, 0, len(media))
+	files := make([]gotgbot.InputFileOrString, 0, len(media))
+	failed := make([]Medium, 0, len(media))
+	for i, medium := range media {
+		if downloads[i] == nil {
+			failed = append(failed, medium)
+			continue
+		}
+		downloaded = append(downloaded, medium)
+		files = append(files, gotgbot.InputFileByReader(medium.IdStr, bytes.NewReader(downloads[i])))
+	}
+
+	albumSent := false
+	if len(downloaded) > 1 {
+		err := replyAlbum(b, c, downloaded, files)
+		if err == nil {
+			albumSent = true
+		} else {
+			log.Err(err).Msg("Error while sending album with downloaded media")
+		}
+	}
+
+	if !albumSent {
+		for i, medium := range downloaded {
+			err := replyMedium(b, c, medium, files[i])
+			if err != nil {
+				log.Err(err).Str("url", medium.Link()).Msg("Error while replying with downloaded medium")
+				failed = append(failed, medium)
+			}
+		}
+	}
+
+	for _, medium := range failed {
+		_, err := c.EffectiveMessage.ReplyMessage(b, medium.Caption(), &gotgbot.SendMessageOpts{
+			ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+			DisableNotification: true,
+		})
+		if err != nil {
+			log.Err(err).Str("url", medium.Link()).Msg("Error while sending medium link")
+		}
+	}
+}
+
+func replyAlbum(b *gotgbot.Bot, c plugin.GobotContext, media []Medium, files []gotgbot.InputFileOrString) error {
+	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadPhoto, nil)
+	album := make([]gotgbot.InputMedia, 0, len(media))
+	for i, medium := range media {
+		if medium.IsPhoto() {
+			album = append(album, gotgbot.InputMediaPhoto{Caption: medium.Caption(), Media: files[i]})
+		} else {
+			album = append(album, gotgbot.InputMediaVideo{Caption: medium.Caption(), Media: files[i], SupportsStreaming: true})
+		}
+	}
+
+	_, err := c.EffectiveMessage.ReplyMediaGroup(b, album, &gotgbot.SendMediaGroupOpts{DisableNotification: true})
+	return err
+}
+
+func replyMedium(b *gotgbot.Bot, c plugin.GobotContext, medium Medium, file gotgbot.InputFileOrString) error {
+	if medium.IsPhoto() {
+		_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadPhoto, nil)
+		_, err := c.EffectiveMessage.ReplyPhoto(b, file, &gotgbot.SendPhotoOpts{
+			ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+			DisableNotification: true,
+		})
+		return err
+	}
+
+	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadVideo, nil)
+	_, err := c.EffectiveMessage.ReplyVideo(b, file, &gotgbot.SendVideoOpts{
+		Caption:             medium.Caption(),
+		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
+		DisableNotification: true,
+		SupportsStreaming:   true,
+	})
+	return err
+}
+
+func downloadMedia(media []Medium) [][]byte {
+	results := make([][]byte, len(media))
+	var wg sync.WaitGroup
+	for i, medium := range media {
+		wg.Go(func() {
+			data, err := downloadMedium(medium.Link())
+			if err != nil {
+				log.Err(err).Str("url", medium.Link()).Msg("Error while downloading")
+				return
+			}
+			results[i] = data
+		})
+	}
+	wg.Wait()
+	return results
+}
+
+func downloadMedium(link string) ([]byte, error) {
+	log.Info().Str("url", link).Msg("Downloading")
+	resp, err := httpUtils.DefaultHttpClient.Get(link)
+	if err != nil {
+		return nil, err
+	}
+
+	defer func(Body io.ReadCloser) {
+		err := Body.Close()
+		if err != nil {
+			log.Err(err).Msg("Error while closing body")
+		}
+	}(resp.Body)
+
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
+	}
+
+	data, err := io.ReadAll(io.LimitReader(resp.Body, tgUtils.MaxFilesizeUpload+1))
+	if err != nil {
+		return nil, err
+	}
+	if len(data) > tgUtils.MaxFilesizeUpload {
+		return nil, errors.New("file too large")
+	}
+	return data, nil
 }
 
 func pollText(poll Poll) string {
