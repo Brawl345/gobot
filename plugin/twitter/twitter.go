@@ -1,14 +1,12 @@
 package twitter
 
 import (
-	"bytes"
 	"errors"
 	"fmt"
-	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 	"regexp"
-	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -17,16 +15,13 @@ import (
 	"github.com/Brawl345/gobot/plugin"
 	"github.com/Brawl345/gobot/utils"
 	"github.com/Brawl345/gobot/utils/httpUtils"
-	"github.com/Brawl345/gobot/utils/tgUtils"
 	"github.com/PaulSonOfLars/gotgbot/v2"
 	"github.com/rs/xid"
 )
 
 var log = logger.New("twitter")
 
-const (
-	MaxNoteLength = 500
-)
+const uploadTimeout = 3 * time.Minute
 
 type (
 	Plugin struct {
@@ -93,31 +88,7 @@ func (p *Plugin) getToken() string {
 	return p.guestToken
 }
 
-func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
-	isNsfw := strings.Contains(strings.ToLower(c.EffectiveMessage.GetText()), "nsfw")
-	if isNsfw {
-		return nil
-	}
-
-	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
-
-	guestToken := p.getToken()
-	if guestToken == "" {
-		err := p.renewToken()
-
-		if err != nil {
-			guid := xid.New().String()
-			log.Err(err).
-				Str("guid", guid).
-				Msg("Failed to get guest token")
-			_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-			return err
-		}
-		guestToken = p.getToken()
-	}
-
-	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
-	tweetID := c.Matches[1]
+func (p *Plugin) fetchTweet(tweetID string) (Result, error) {
 	requestUrl := url.URL{
 		Scheme: "https",
 		Host:   "x.com",
@@ -125,82 +96,61 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 
 	q := requestUrl.Query()
-
-	q.Set(
-		"variables",
-		fmt.Sprintf(tweetVariables, tweetID),
-	)
-
-	q.Set(
-		"features",
-		tweetFeatures,
-	)
-
-	q.Set(
-		"fieldToggles",
-		fieldToggles,
-	)
-
+	q.Set("variables", fmt.Sprintf(tweetVariables, tweetID))
+	q.Set("features", tweetFeatures)
+	q.Set("fieldToggles", fieldToggles)
 	requestUrl.RawQuery = q.Encode()
 
-	var tweetResponse TweetResponse
-	err := httpUtils.MakeRequest(httpUtils.RequestOptions{
-		Method: httpUtils.MethodGet,
-		URL:    requestUrl.String(),
-		Headers: map[string]string{
-			"Authorization":             bearerToken,
-			"User-Agent":                utils.UserAgent,
-			"X-Guest-Token":             guestToken,
-			"X-Twitter-Active-User":     "yes",
-			"X-Twitter-Client-Language": "de",
-		},
-		Response: &tweetResponse,
-	})
+	request := func() (Result, error) {
+		var tweetResponse TweetResponse
+		err := httpUtils.MakeRequest(httpUtils.RequestOptions{
+			Method: httpUtils.MethodGet,
+			URL:    requestUrl.String(),
+			Headers: map[string]string{
+				"Authorization":             bearerToken,
+				"User-Agent":                utils.UserAgent,
+				"X-Guest-Token":             p.getToken(),
+				"X-Twitter-Active-User":     "yes",
+				"X-Twitter-Client-Language": "de",
+			},
+			Response: &tweetResponse,
+		})
+		return tweetResponse.Data.TweetResult.Result, err
+	}
 
-	if err != nil {
-		if httpError, ok := errors.AsType[*httpUtils.HttpError](err); ok {
-			if httpError.StatusCode == http.StatusForbidden {
-				log.Debug().Msg("Renewing guest token")
-				err = p.renewToken()
-
-				if err != nil {
-					guid := xid.New().String()
-					log.Err(err).
-						Str("guid", guid).
-						Msg("Failed to get guest token")
-					_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-					return err
-				}
-				guestToken = p.getToken()
-
-				// Try request the tweet again
-				err = httpUtils.MakeRequest(httpUtils.RequestOptions{
-					Method: httpUtils.MethodGet,
-					URL:    requestUrl.String(),
-					Headers: map[string]string{
-						"Authorization":             bearerToken,
-						"User-Agent":                utils.UserAgent,
-						"X-Guest-Token":             guestToken,
-						"X-Twitter-Active-User":     "yes",
-						"X-Twitter-Client-Language": "de",
-					},
-					Response: &tweetResponse,
-				})
-			}
-		}
-
-		if err != nil {
-			guid := xid.New().String()
-			log.Err(err).
-				Str("guid", guid).
-				Str("tweetID", tweetID).
-				Msg("Failed to get tweet")
-			_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-			return err
+	if p.getToken() == "" {
+		if err := p.renewToken(); err != nil {
+			return Result{}, fmt.Errorf("failed to get guest token: %w", err)
 		}
 	}
 
-	result := tweetResponse.Data.TweetResult.Result
+	result, err := request()
+	if httpError, ok := errors.AsType[*httpUtils.HttpError](err); ok && httpError.StatusCode == http.StatusForbidden {
+		log.Debug().Msg("Renewing guest token")
+		if err := p.renewToken(); err != nil {
+			return Result{}, fmt.Errorf("failed to renew guest token: %w", err)
+		}
+		result, err = request()
+	}
+	return result, err
+}
+
+func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
+	isNsfw := strings.Contains(strings.ToLower(c.EffectiveMessage.GetText()), "nsfw")
+
+	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionTyping, nil)
+	tweetID := c.Matches[1]
+
+	result, err := p.fetchTweet(tweetID)
+	if err != nil {
+		guid := xid.New().String()
+		log.Err(err).
+			Str("guid", guid).
+			Str("tweetID", tweetID).
+			Msg("Failed to get tweet")
+		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
+		return err
+	}
 
 	if result.Typename == "TweetUnavailable" || result.Typename == "TweetTombstone" {
 		if result.Reason == "NsfwLoggedOut" || result.Reason == "NsfwViewerHasNoStatedAge" || result.Tombstone.Typename == "BlurredMediaTombstone" {
@@ -233,461 +183,82 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	sendOptions := &gotgbot.SendMessageOpts{
-		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
-		LinkPreviewOptions:  &gotgbot.LinkPreviewOptions{IsDisabled: true},
-		DisableNotification: true,
-		ParseMode:           gotgbot.ParseModeHTML,
+	spoiler := isNsfw || result.Legacy.PossiblySensitive
+	return sendTweet(b, c, result, spoiler)
+}
+
+func sendTweet(b *gotgbot.Bot, c plugin.GobotContext, result Result, spoiler bool) error {
+	media := result.Legacy.ExtendedEntities.Media
+	prepared := prepareMedia(media)
+
+	msg := renderTweet(result, prepared, mediaPrepared, spoiler)
+	err := sendRichMessage(b, c, msg)
+	if err == nil {
+		return nil
 	}
-	var sb strings.Builder
-	timezone := utils.GermanTimezone()
+	log.Err(err).Str("tweetID", result.RestId).Int("media", len(msg.media)).Msg("Failed to send rich message")
 
-	// Tweet author
-	sb.WriteString(fmt.Sprintf("%s\n", result.Core.UserResults.Author()))
-
-	// Text
-	if result.NoteTweet.NoteTweetResults.Result.Text != "" {
-		tweet := result.NoteTweet.NoteTweetResults.Result.Text
-
-		for _, entity := range result.NoteTweet.NoteTweetResults.Result.EntitySet.Urls {
-			tweet = strings.ReplaceAll(tweet, entity.Url, entity.ExpandedUrl)
+	if len(prepared) > 0 {
+		downloadMissing(prepared)
+		msg = renderTweet(result, prepared, mediaUploaded, spoiler)
+		err = sendRichMessage(b, c, msg)
+		if err == nil {
+			return nil
 		}
-
-		if len([]rune(tweet)) > MaxNoteLength {
-			tweet = fmt.Sprintf("%s...\n<a href=\"https://x.com/%s/status/%s\">Weiterlesen...</a>",
-				utils.Escape(utils.TruncateText(tweet, MaxNoteLength)),
-				result.Core.UserResults.Result.Core.ScreenName,
-				result.RestId,
-			)
-		}
-
-		sb.WriteString(fmt.Sprintf("%s\n", tweet))
-	} else if result.Legacy.FullText != "" {
-		// TODO: Withheld
-		tweet := result.Legacy.FullText
-
-		for _, entity := range result.Legacy.Entities.Urls {
-			tweet = strings.ReplaceAll(tweet, entity.Url, entity.ExpandedUrl)
-		}
-
-		// Above loop doesn't include e.g. GIFs
-		for _, extendedEntity := range result.Legacy.ExtendedEntities.Media {
-			tweet = strings.ReplaceAll(tweet, extendedEntity.Url, "")
-		}
-
-		sb.WriteString(fmt.Sprintf("%s\n", utils.Escape(tweet)))
+		log.Err(err).Str("tweetID", result.RestId).Int("media", len(msg.media)).Msg("Failed to send rich message with uploaded media")
 	}
 
-	// Poll
-	if result.Card.HasPoll() {
-		poll, err := result.Card.Poll()
-		if err != nil {
-			guid := xid.New().String()
-			log.Err(err).
-				Str("guid", guid).
-				Str("tweetID", tweetID).
-				Msg("Failed to parse poll")
-			_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-			return err
-		}
-
-		sb.WriteString(pollText(poll))
-	}
-
-	//	Created + Metrics (RT, Quotes, Likes, Bookmarks)
-	createdAt, err := time.Parse(time.RubyDate, result.Legacy.CreatedAt)
+	msg = renderTweet(result, prepared, mediaNone, spoiler)
+	err = sendRichMessage(b, c, msg)
 	if err != nil {
 		guid := xid.New().String()
 		log.Err(err).
 			Str("guid", guid).
-			Str("tweetID", tweetID).
-			Str("createdAt", result.Legacy.CreatedAt).
-			Msg("Failed to parse tweet created at")
+			Str("tweetID", result.RestId).
+			Str("html", msg.html.String()).
+			Msg("Failed to send rich message without media")
 		_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
 		return err
 	}
-	sb.WriteString(
-		fmt.Sprintf(
-			"📅 %s",
-			createdAt.In(timezone).Format("02.01.2006, 15:04:05 Uhr"),
-		),
-	)
-	sb.WriteString(result.Legacy.Metrics())
 
-	// Community Notes / "Birdwatch"
-	if result.BirdwatchPivot.DestinationUrl != "" {
-		sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre.</b>", utils.Escape(result.BirdwatchPivot.DestinationUrl)))
-
-		// TODO: Links need to be replaced and it's kinda annoying
-		//sb.WriteString(utils.Escape(result.BirdwatchPivot.Subtitle.Text))
-	}
-
-	// Quote
-	quoteResult := result.QuotedStatusResult.Result
-
-	if quoteResult.Typename == "TweetUnavailable" {
-		switch quoteResult.Reason {
-		case "NsfwLoggedOut":
-			sb.WriteString("<i>Tweet kann nicht angezeigt werden, weil er sensible Inhalte enthält.</i>")
-		case "Protected":
-			sb.WriteString("\"<i>🔓 Der Account-Inhaber hat beschränkt, wer seine Tweets ansehen kann.</i>")
-		default:
-			sb.WriteString(fmt.Sprintf("<i>❌ Der Tweet ist nicht einsehbar wegen: <code>%s</code></i>", utils.Escape(result.Reason)))
-		}
-	}
-
-	if quoteResult.Typename == "Tweet" || quoteResult.Typename == "TweetWithVisibilityResults" {
-		sb.WriteString("\n\n")
-
-		quoteResultSub := quoteResult.Tweet
-		if quoteResult.TweetSub.RestId != "" {
-			quoteResultSub = quoteResult.TweetSub
-		}
-
-		// Quote author
-		sb.WriteString(
-			fmt.Sprintf(
-				"<b>Zitat von</b> %s\n",
-				quoteResultSub.Core.UserResults.Author(),
-			),
-		)
-
-		// Quote Text
-		if quoteResultSub.NoteTweet.NoteTweetResults.Result.Text != "" {
-			tweet := quoteResultSub.NoteTweet.NoteTweetResults.Result.Text
-
-			for _, entity := range quoteResultSub.NoteTweet.NoteTweetResults.Result.EntitySet.Urls {
-				tweet = strings.ReplaceAll(tweet, entity.Url, entity.ExpandedUrl)
-			}
-
-			if len([]rune(tweet)) > MaxNoteLength {
-				tweet = fmt.Sprintf("%s...\n<a href=\"https://x.com/%s/status/%s\">Zitat weiterlesen...</a>",
-					utils.Escape(utils.TruncateText(tweet, MaxNoteLength)),
-					quoteResultSub.Core.UserResults.Result.Core.ScreenName,
-					quoteResultSub.RestId,
-				)
-			}
-
-			sb.WriteString(fmt.Sprintf("%s\n", tweet))
-		} else if quoteResultSub.Legacy.FullText != "" {
-			// TODO: Withheld
-			tweet := quoteResultSub.Legacy.FullText
-
-			for _, entity := range quoteResultSub.Legacy.Entities.Urls {
-				tweet = strings.ReplaceAll(tweet, entity.Url, entity.ExpandedUrl)
-			}
-
-			// Above loop doesn't include e.g. GIFs
-			for _, extendedEntity := range quoteResultSub.Legacy.ExtendedEntities.Media {
-				tweet = strings.ReplaceAll(tweet, extendedEntity.Url, extendedEntity.ExpandedUrl)
-			}
-
-			sb.WriteString(fmt.Sprintf("%s\n", utils.Escape(tweet)))
-		}
-
-		// Quote Poll
-		if quoteResultSub.Card.HasPoll() {
-			quotePoll, err := quoteResultSub.Card.Poll()
-			if err != nil {
-				guid := xid.New().String()
-				log.Err(err).
-					Str("guid", guid).
-					Str("tweetID", tweetID).
-					Msg("Failed to parse quote poll")
-				_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-				return err
-			}
-
-			sb.WriteString(pollText(quotePoll))
-		}
-
-		//	Quote Created + Metrics (RT, Quotes, Likes)
-		createdAt, err := time.Parse(time.RubyDate, quoteResultSub.Legacy.CreatedAt)
-		if err != nil {
-			guid := xid.New().String()
-			log.Err(err).
-				Str("guid", guid).
-				Str("tweetID", tweetID).
-				Str("createdAt", quoteResultSub.Legacy.CreatedAt).
-				Msg("Failed to parse quote tweet created at")
-			_, err := c.EffectiveMessage.ReplyMessage(b, fmt.Sprintf("❌ Es ist ein Fehler aufgetreten.%s", utils.EmbedGUID(guid)), utils.DefaultSendOptions())
-			return err
-		}
-		sb.WriteString(
-			fmt.Sprintf(
-				"📅 %s",
-				createdAt.In(timezone).Format("02.01.2006, 15:04:05 Uhr"),
-			),
-		)
-		sb.WriteString(quoteResultSub.Legacy.Metrics())
-
-		// Community Notes / "Birdwatch"
-		if quoteResultSub.BirdwatchPivot.DestinationUrl != "" {
-			sb.WriteString(fmt.Sprintf("\n\n<b>⚠️ Leser haben <a href=\"%s\">Kontext</a> hinzugefügt, der ihrer Meinung nach für andere wissenswert wäre.</b>", utils.Escape(quoteResultSub.BirdwatchPivot.DestinationUrl)))
-
-			// TODO: Links need to be replaced and it's kinda annoying
-			//sb.WriteString(utils.Escape(quoteResultSub.BirdwatchPivot.Subtitle.Text))
-		}
-	}
-
-	// Media
-	media := result.Legacy.ExtendedEntities.Media
-	if len(media) == 1 && (media[0].IsPhoto() || media[0].IsGIF()) { // One picture or GIF = send as preview
-		sendOptions.LinkPreviewOptions.IsDisabled = false
-		sendOptions.LinkPreviewOptions.Url = media[0].Link()
-		sendOptions.LinkPreviewOptions.PreferLargeMedia = true
-		_, err := c.EffectiveMessage.ReplyMessage(b,
-			sb.String(),
-			sendOptions,
-		)
-		return err
-	}
-
-	_, err = c.EffectiveMessage.ReplyMessage(b, sb.String(), sendOptions)
-	if err != nil {
-		return err
-	}
-
-	// Multiple media = send all as album
-	// NOTE: Telegram does not support sending multiple *animations/GIFs* in an album
-	//	so we will handle them seperately
-	gifs := make([]Medium, 0, len(media))
-	albumMedia := make([]Medium, 0, len(media))
-	for _, medium := range media {
-		if medium.IsGIF() {
-			gifs = append(gifs, medium)
-		} else if medium.IsPhoto() || medium.IsVideo() {
-			albumMedia = append(albumMedia, medium)
-		}
-	}
-
-	if len(albumMedia) > 0 {
-		albumCount := (len(albumMedia) + tgUtils.MaxAlbumSize - 1) / tgUtils.MaxAlbumSize
-		albumSize := (len(albumMedia) + albumCount - 1) / albumCount
-		for chunk := range slices.Chunk(albumMedia, albumSize) {
-			sendAlbum(b, c, chunk)
-		}
-	}
-
-	// Now to GIFs...
-	if len(gifs) > 0 {
-		_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadVideo, nil)
-		for _, gif := range gifs {
-
-			_, err := c.EffectiveMessage.ReplyAnimation(b,
-				gif.InputFile(),
-				&gotgbot.SendAnimationOpts{
-					Caption:             gif.Caption(),
-					ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
-					DisableNotification: true,
-				},
-			)
-
-			if err != nil {
-				func() {
-					_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadVideo, nil)
-
-					log.Err(err).Str("url", gif.Link()).Msg("Error while sending gif through Telegram")
-
-					resp, err := httpUtils.DefaultHttpClient.Get(gif.Link())
-					log.Info().Str("url", gif.Link()).Msg("Downloading gif")
-					if err != nil {
-						log.Err(err).Str("url", gif.Link()).Msg("Error while downloading gif")
-						_, err := c.EffectiveMessage.ReplyMessage(b, gif.Caption(), &gotgbot.SendMessageOpts{
-							ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
-							DisableNotification: true,
-						})
-						if err != nil {
-							log.Err(err).Str("url", gif.Link()).Msg("Error while replying with link")
-						}
-						return
-					}
-
-					defer func(Body io.ReadCloser) {
-						err := Body.Close()
-						if err != nil {
-							log.Err(err).Msg("Error while closing body")
-						}
-					}(resp.Body)
-
-					_, err = c.EffectiveMessage.ReplyAnimation(b, gotgbot.InputFileByReader(gif.IdStr, resp.Body),
-						&gotgbot.SendAnimationOpts{
-							Caption:             gif.Caption(),
-							ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
-							DisableNotification: true,
-						},
-					)
-
-					if err != nil {
-						// Last resort: Send URL as text
-						log.Err(err).Str("url", gif.Link()).Msg("Error while replying with downloaded gif")
-						_, err := c.EffectiveMessage.ReplyMessage(b, gif.Caption(), &gotgbot.SendMessageOpts{
-							ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
-							DisableNotification: true,
-						})
-						if err != nil {
-							log.Err(err).Str("url", gif.Link()).Msg("Error while sending gif link")
-						}
-					}
-				}()
-			}
-		}
-
-	}
-
+	sendAlbums(b, c, media, spoiler)
 	return nil
 }
 
-func sendAlbum(b *gotgbot.Bot, c plugin.GobotContext, media []Medium) {
-	if len(media) > 1 {
-		files := make([]gotgbot.InputFileOrString, len(media))
-		for i, medium := range media {
-			files[i] = medium.InputFile()
-		}
-
-		err := replyAlbum(b, c, media, files)
-		if err == nil {
-			return
-		}
-		log.Err(err).Msg("Error while sending album")
-	}
-
-	msg, err := c.EffectiveMessage.ReplyMessage(b,
-		"<i>🕒 Medien werden heruntergeladen und gesendet...</i>",
-		utils.DefaultSendOptions(),
-	)
-	if err != nil {
-		log.Err(err).Msg("Could not send initial 'download' message")
-	}
-	defer func() {
-		if msg != nil {
-			_, _ = msg.Delete(b, nil)
-		}
-	}()
-
-	downloads := downloadMedia(media)
-
-	downloaded := make([]Medium, 0, len(media))
-	files := make([]gotgbot.InputFileOrString, 0, len(media))
-	failed := make([]Medium, 0, len(media))
-	for i, medium := range media {
-		if downloads[i] == nil {
-			failed = append(failed, medium)
-			continue
-		}
-		downloaded = append(downloaded, medium)
-		files = append(files, gotgbot.InputFileByReader(medium.IdStr, bytes.NewReader(downloads[i])))
-	}
-
-	albumSent := false
-	if len(downloaded) > 1 {
-		err := replyAlbum(b, c, downloaded, files)
-		if err == nil {
-			albumSent = true
-		} else {
-			log.Err(err).Msg("Error while sending album with downloaded media")
-		}
-	}
-
-	if !albumSent {
-		for i, medium := range downloaded {
-			err := replyMedium(b, c, medium, files[i])
-			if err != nil {
-				log.Err(err).Str("url", medium.Link()).Msg("Error while replying with downloaded medium")
-				failed = append(failed, medium)
-			}
-		}
-	}
-
-	for _, medium := range failed {
-		_, err := c.EffectiveMessage.ReplyMessage(b, medium.Caption(), &gotgbot.SendMessageOpts{
-			ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
-			DisableNotification: true,
-		})
-		if err != nil {
-			log.Err(err).Str("url", medium.Link()).Msg("Error while sending medium link")
-		}
-	}
+type richMessageUpload struct {
+	gotgbot.InputRichMessage
 }
 
-func replyAlbum(b *gotgbot.Bot, c plugin.GobotContext, media []Medium, files []gotgbot.InputFileOrString) error {
-	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadPhoto, nil)
-	album := make([]gotgbot.InputMedia, 0, len(media))
-	for i, medium := range media {
-		if medium.IsPhoto() {
-			album = append(album, gotgbot.InputMediaPhoto{Caption: medium.Caption(), Media: files[i]})
-		} else {
-			album = append(album, gotgbot.InputMediaVideo{Caption: medium.Caption(), Media: files[i], SupportsStreaming: true})
+func (r richMessageUpload) Attach(_ string, w *multipart.Writer) error {
+	for _, m := range r.Media {
+		if err := m.Media.Attach("file_"+m.Id, w); err != nil {
+			return err
 		}
 	}
+	return nil
+}
 
-	_, err := c.EffectiveMessage.ReplyMediaGroup(b, album, &gotgbot.SendMediaGroupOpts{DisableNotification: true})
+func sendRichMessage(b *gotgbot.Bot, c plugin.GobotContext, msg *tweetMessage) error {
+	var opts *gotgbot.RequestOpts
+	if msg.uploads > 0 {
+		_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadVideo, nil)
+		opts = &gotgbot.RequestOpts{Timeout: uploadTimeout}
+	}
+
+	_, err := b.Request("sendRichMessage", map[string]any{
+		"chat_id": c.EffectiveChat.Id,
+		"rich_message": richMessageUpload{gotgbot.InputRichMessage{
+			Html:                msg.html.String(),
+			Media:               msg.media,
+			SkipEntityDetection: true,
+		}},
+		"reply_parameters": gotgbot.ReplyParameters{
+			MessageId:                c.EffectiveMessage.MessageId,
+			AllowSendingWithoutReply: true,
+		},
+		"disable_notification": true,
+	}, opts)
 	return err
-}
-
-func replyMedium(b *gotgbot.Bot, c plugin.GobotContext, medium Medium, file gotgbot.InputFileOrString) error {
-	if medium.IsPhoto() {
-		_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadPhoto, nil)
-		_, err := c.EffectiveMessage.ReplyPhoto(b, file, &gotgbot.SendPhotoOpts{
-			ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
-			DisableNotification: true,
-		})
-		return err
-	}
-
-	_, _ = c.EffectiveChat.SendAction(b, gotgbot.ChatActionUploadVideo, nil)
-	_, err := c.EffectiveMessage.ReplyVideo(b, file, &gotgbot.SendVideoOpts{
-		Caption:             medium.Caption(),
-		ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
-		DisableNotification: true,
-		SupportsStreaming:   true,
-	})
-	return err
-}
-
-func downloadMedia(media []Medium) [][]byte {
-	results := make([][]byte, len(media))
-	var wg sync.WaitGroup
-	for i, medium := range media {
-		wg.Go(func() {
-			data, err := downloadMedium(medium.Link())
-			if err != nil {
-				log.Err(err).Str("url", medium.Link()).Msg("Error while downloading")
-				return
-			}
-			results[i] = data
-		})
-	}
-	wg.Wait()
-	return results
-}
-
-func downloadMedium(link string) ([]byte, error) {
-	log.Info().Str("url", link).Msg("Downloading")
-	resp, err := httpUtils.DefaultHttpClient.Get(link)
-	if err != nil {
-		return nil, err
-	}
-
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
-			log.Err(err).Msg("Error while closing body")
-		}
-	}(resp.Body)
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("unexpected status code %d", resp.StatusCode)
-	}
-
-	data, err := io.ReadAll(io.LimitReader(resp.Body, tgUtils.MaxFilesizeUpload+1))
-	if err != nil {
-		return nil, err
-	}
-	if len(data) > tgUtils.MaxFilesizeUpload {
-		return nil, errors.New("file too large")
-	}
-	return data, nil
 }
 
 func pollText(poll Poll) string {

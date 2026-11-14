@@ -55,7 +55,8 @@ type (
 			ViewCount int `json:"viewCount"`
 		} `json:"mediaStats"`
 		VideoInfo struct {
-			Variants []struct {
+			DurationMillis int `json:"duration_millis"`
+			Variants       []struct {
 				Url     string `json:"url"`
 				Bitrate int    `json:"bitrate"`
 			} `json:"variants"`
@@ -146,7 +147,10 @@ type (
 		FavoriteCount             int    `json:"favorite_count"`
 		Favorited                 bool   `json:"favorited"`
 		FullText                  string `json:"full_text"`
+		InReplyToScreenName       string `json:"in_reply_to_screen_name"`
+		InReplyToStatusIdStr      string `json:"in_reply_to_status_id_str"`
 		IsQuoteStatus             bool   `json:"is_quote_status"`
+		QuotedStatusIdStr         string `json:"quoted_status_id_str"`
 		Lang                      string `json:"lang"`
 		PossiblySensitive         bool   `json:"possibly_sensitive"`
 		PossiblySensitiveEditable bool   `json:"possibly_sensitive_editable"`
@@ -236,13 +240,21 @@ type (
 		} `json:"unmention_info"`
 		Source string `json:"source"`
 
-		NoteTweet          NoteTweet `json:"note_tweet"`
-		Legacy             Legacy    `json:"legacy"`
+		NoteTweet NoteTweet `json:"note_tweet"`
+		Legacy    Legacy    `json:"legacy"`
+		Article   struct {
+			ArticleResults struct {
+				Result struct {
+					Title string `json:"title"`
+				} `json:"result"`
+			} `json:"article_results"`
+		} `json:"article"`
 		QuotedStatusResult struct {
 			Result struct {
 				Tweet
-				Reason   string `json:"reason"`
-				Typename string `json:"__typename"`
+				Reason    string    `json:"reason"`
+				Typename  string    `json:"__typename"`
+				Tombstone Tombstone `json:"tombstone"`
 
 				TweetSub Tweet `json:"tweet"`
 			} `json:"result"`
@@ -270,37 +282,30 @@ type (
 		Tombstone Tombstone `json:"tombstone"`
 	}
 
+	BirdwatchEntity struct {
+		FromIndex int `json:"fromIndex"`
+		ToIndex   int `json:"toIndex"`
+		Ref       struct {
+			Type    string `json:"type"`
+			Url     string `json:"url"`
+			UrlType string `json:"urlType"`
+		} `json:"ref"`
+	}
+
+	BirdwatchText struct {
+		Text     string            `json:"text"`
+		Entities []BirdwatchEntity `json:"entities"`
+	}
+
 	BirdwatchPivot struct {
-		DestinationUrl string `json:"destinationUrl"`
-		Footer         struct {
-			Text     string `json:"text"`
-			Entities []struct {
-				FromIndex int `json:"fromIndex"`
-				ToIndex   int `json:"toIndex"`
-				Ref       struct {
-					Type    string `json:"type"`
-					Url     string `json:"url"`
-					UrlType string `json:"urlType"`
-				} `json:"ref"`
-			} `json:"entities"`
-		} `json:"footer"`
-		Note struct {
+		DestinationUrl string        `json:"destinationUrl"`
+		Footer         BirdwatchText `json:"footer"`
+		Note           struct {
 			RestId string `json:"rest_id"`
 		} `json:"note"`
-		Subtitle struct {
-			Text     string `json:"text"`
-			Entities []struct {
-				FromIndex int `json:"fromIndex"`
-				ToIndex   int `json:"toIndex"`
-				Ref       struct {
-					Type    string `json:"type"`
-					Url     string `json:"url"`
-					UrlType string `json:"urlType"`
-				} `json:"ref"`
-			} `json:"entities"`
-		} `json:"subtitle"`
-		Title    string `json:"title"`
-		IconType string `json:"iconType"`
+		Subtitle BirdwatchText `json:"subtitle"`
+		Title    string        `json:"title"`
+		IconType string        `json:"iconType"`
 	}
 
 	Tombstone struct {
@@ -308,6 +313,7 @@ type (
 		Text     struct {
 			Text string `json:"text"`
 		} `json:"text"`
+		UserResults UserResult `json:"user_results"`
 	}
 
 	Card struct {
@@ -371,7 +377,7 @@ func (u *UserResult) Author() string {
 		sb.WriteString(" 🔒")
 	}
 
-	sb.WriteString("):")
+	sb.WriteString(")")
 
 	return sb.String()
 }
@@ -442,15 +448,6 @@ func (l *Legacy) Metrics() string {
 			fmt.Sprintf(
 				" | 🔁 %s",
 				utils.FormatThousand(l.RetweetCount),
-			),
-		)
-	}
-
-	if l.QuoteCount > 0 {
-		sb.WriteString(
-			fmt.Sprintf(
-				" | 💬 %s",
-				utils.FormatThousand(l.QuoteCount),
 			),
 		)
 	}
