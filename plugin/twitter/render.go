@@ -3,6 +3,7 @@ package twitter
 import (
 	"cmp"
 	"fmt"
+	"html"
 	"regexp"
 	"strings"
 	"time"
@@ -49,13 +50,29 @@ func statusLink(screenName, id string) string {
 func header(user UserResult, legacy Legacy) string {
 	h := user.Author()
 	if legacy.InReplyToScreenName != "" {
-		h += fmt.Sprintf(
-			` als Antwort an <a href="%s">@%s</a>`,
+		reply := fmt.Sprintf(
+			`<a href="%s">@%s</a>`,
 			statusLink(legacy.InReplyToScreenName, legacy.InReplyToStatusIdStr),
 			utils.Escape(legacy.InReplyToScreenName),
 		)
+		if name := replyName(user, legacy); name != "" {
+			reply = fmt.Sprintf("%s (%s)", utils.Escape(name), reply)
+		}
+		h += " <i>als Antwort an " + reply + "</i>"
 	}
 	return h + ":"
+}
+
+func replyName(user UserResult, legacy Legacy) string {
+	if strings.EqualFold(legacy.InReplyToScreenName, user.Result.Core.ScreenName) {
+		return user.Result.Core.Name
+	}
+	for _, mention := range legacy.Entities.UserMentions {
+		if strings.EqualFold(legacy.InReplyToScreenName, mention.ScreenName) {
+			return mention.Name
+		}
+	}
+	return ""
 }
 
 func tweetText(note NoteTweet, legacy Legacy, articleTitle string) string {
@@ -67,6 +84,12 @@ func tweetText(note NoteTweet, legacy Legacy, articleTitle string) string {
 		}
 	} else {
 		text = legacy.FullText
+		if len(legacy.DisplayTextRange) == 2 && legacy.DisplayTextRange[0] > 0 {
+			if runes := []rune(text); legacy.DisplayTextRange[0] <= len(runes) {
+				text = string(runes[legacy.DisplayTextRange[0]:])
+			}
+		}
+		text = html.UnescapeString(text)
 		for _, e := range legacy.Entities.Urls {
 			urls[e.Url] = e
 		}

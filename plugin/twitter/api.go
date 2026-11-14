@@ -62,6 +62,11 @@ type (
 		} `json:"video_info"`
 	}
 
+	UserMention struct {
+		Name       string `json:"name"`
+		ScreenName string `json:"screen_name"`
+	}
+
 	Url struct {
 		DisplayUrl  string `json:"display_url"`
 		ExpandedUrl string `json:"expanded_url"`
@@ -137,8 +142,8 @@ type (
 					} `json:"focus_rects"`
 				} `json:"original_info"`
 			} `json:"media"`
-			UserMentions []any `json:"user_mentions"`
-			Urls         []Url `json:"urls"`
+			UserMentions []UserMention `json:"user_mentions"`
+			Urls         []Url         `json:"urls"`
 		} `json:"entities"`
 		ExtendedEntities struct {
 			Media []Medium `json:"media"`
