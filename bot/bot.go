@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"os"
@@ -69,7 +70,7 @@ type (
 	}
 )
 
-func New(db *sqlx.DB) (*Gobot, error) {
+func New(ctx context.Context, db *sqlx.DB) (*Gobot, error) {
 	// General services
 	chatService := sql.NewChatService(db)
 	credentialService := sql.NewCredentialService(db)
@@ -95,10 +96,19 @@ func New(db *sqlx.DB) (*Gobot, error) {
 			Client:             *tgClient,
 			DefaultRequestOpts: &gotgbot.RequestOpts{Timeout: time.Second * 30},
 		},
+		DisableTokenCheck: true,
 	})
 	if err != nil {
 		return nil, err
 	}
+
+	me, err := retry(ctx, "getMe", func(ctx context.Context) (*gotgbot.User, error) {
+		return bot.GetMeWithContext(ctx, nil)
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to check bot token: %w", err)
+	}
+	bot.User = *me
 
 	dispatcher := ext.NewDispatcher(&ext.DispatcherOpts{
 		Processor: NewProcessor(allowService, chatsUsersService, managerSrvce, userService),
@@ -187,10 +197,14 @@ func New(db *sqlx.DB) (*Gobot, error) {
 			log.Warn().Msg("Too many commands, some will be ignored")
 			commands = commands[:100]
 		}
-		_, err = bot.SetMyCommands(commands, nil)
-		if err != nil {
-			log.Err(err).Msg("Failed to set commands")
-		}
+		go func() {
+			_, err := retry(ctx, "setMyCommands", func(ctx context.Context) (bool, error) {
+				return bot.SetMyCommandsWithContext(ctx, commands, nil)
+			})
+			if err != nil {
+				log.Err(err).Msg("Failed to set commands")
+			}
+		}()
 	}
 
 	webhookHost := strings.TrimSpace(os.Getenv("LISTEN_HOST"))
@@ -237,11 +251,13 @@ func New(db *sqlx.DB) (*Gobot, error) {
 			return nil, err
 		}
 
-		ok, err := bot.SetWebhook(webhookURL, &gotgbot.SetWebhookOpts{
-			AllowedUpdates:     allowedUpdates,
-			MaxConnections:     50,
-			DropPendingUpdates: true,
-			SecretToken:        webhookSecret,
+		ok, err := retry(ctx, "setWebhook", func(ctx context.Context) (bool, error) {
+			return bot.SetWebhookWithContext(ctx, webhookURL, &gotgbot.SetWebhookOpts{
+				AllowedUpdates:     allowedUpdates,
+				MaxConnections:     50,
+				DropPendingUpdates: true,
+				SecretToken:        webhookSecret,
+			})
 		})
 		if err != nil {
 			return nil, err

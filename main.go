@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"os"
 	"os/signal"
 	"strconv"
@@ -38,17 +40,22 @@ func main() {
 		log.Fatal().Err(err).Send()
 	}
 
-	b, err := bot.New(db)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
+	b, err := bot.New(ctx, db)
 	if err != nil {
+		if errors.Is(err, context.Canceled) {
+			log.Info().Msg("Stopped before startup finished")
+			return
+		}
 		log.Fatal().Err(err).Send()
 	}
 
 	log.Info().Msgf("Logged in as @%s (%d)", b.GoTgBot.Username, b.GoTgBot.Id)
 
-	channel := make(chan os.Signal, 1)
-	signal.Notify(channel, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
 	go func() {
-		<-channel
+		<-ctx.Done()
 		log.Info().Msg("Stopping...")
 		if err := b.Stop(); err != nil {
 			log.Err(err).Msg("Failed to stop gracefully")
