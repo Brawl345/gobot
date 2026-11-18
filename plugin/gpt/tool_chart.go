@@ -21,6 +21,9 @@ const (
 	ChartHeight    = 720
 	ChartMaxLabels = 40
 	ChartMaxSeries = 8
+
+	chartPadding        = 24
+	chartValueAxisWidth = 100
 )
 
 var chartHexColor = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
@@ -194,13 +197,6 @@ func renderChart(a chartArgs) ([]byte, error) {
 	theme := charts.GetTheme(charts.ThemeLight)
 	format := chartValueFormatter(a.Unit)
 
-	title := charts.TitleOption{
-		Text:             a.Title,
-		Subtext:          a.Subtitle,
-		Offset:           charts.OffsetCenter,
-		FontStyle:        charts.FontStyle{FontSize: 22},
-		SubtextFontStyle: charts.FontStyle{FontSize: 14},
-	}
 	names := make([]string, len(a.Series))
 	values := make([][]float64, len(a.Series))
 	colors := make([]charts.Color, len(a.Series))
@@ -225,7 +221,10 @@ func renderChart(a chartArgs) ([]byte, error) {
 		Height:       ChartHeight,
 		Theme:        theme,
 	})
-	padding := charts.NewBoxEqual(24)
+	padding := charts.NewBoxEqual(chartPadding)
+	padding.Top = layoutChartTitle(p, a.Title, a.Subtitle, theme, false)
+	labelStyle := charts.FontStyle{FontSize: 14}
+	labelCount, labelRotation := categoryLabelLayout(p, a.Labels, labelStyle)
 
 	var err error
 	switch a.Type {
@@ -234,7 +233,6 @@ func renderChart(a chartArgs) ([]byte, error) {
 		opt := charts.NewPieChartOptionWithData(a.Series[0].Values)
 		opt.Theme = theme.WithSeriesColors(perLabel)
 		opt.Padding = padding
-		opt.Title = title
 		opt.Legend = charts.LegendOption{Show: new(false)}
 		for i := range opt.SeriesList {
 			opt.SeriesList[i].Name = a.Labels[i]
@@ -249,10 +247,11 @@ func renderChart(a chartArgs) ([]byte, error) {
 		opt := charts.NewLineChartOptionWithData(values)
 		opt.Theme = theme.WithSeriesColors(colors)
 		opt.Padding = padding
-		opt.Title = title
 		opt.Legend = legend
 		opt.XAxis.Labels = a.Labels
-		opt.XAxis.LabelFontStyle = charts.FontStyle{FontSize: 14}
+		opt.XAxis.LabelFontStyle = labelStyle
+		opt.XAxis.LabelCount = labelCount
+		opt.XAxis.LabelRotation = labelRotation
 		opt.YAxis = []charts.YAxisOption{{ValueFormatter: format, LabelFontStyle: charts.FontStyle{FontSize: 14}}}
 		for i := range opt.SeriesList {
 			opt.SeriesList[i].Name = names[i]
@@ -262,16 +261,67 @@ func renderChart(a chartArgs) ([]byte, error) {
 	default:
 		opt := barChartOption(a, values, names, colors, theme, format)
 		opt.Padding = padding
-		opt.Title = title
+		opt.CategoryAxis.LabelFontStyle = labelStyle
 		if len(a.Colors) == 0 {
 			opt.Legend = legend
+		}
+		if a.Type == "bar" {
+			opt.CategoryAxis.LabelCount = labelCount
+			opt.CategoryAxis.LabelRotation = labelRotation
 		}
 		err = p.BarChart(opt)
 	}
 	if err != nil {
 		return nil, err
 	}
+	layoutChartTitle(p, a.Title, a.Subtitle, theme, true)
 	return p.Bytes()
+}
+
+// The library's title painter stacks title and subtitle without any line gap, so both are drawn here after the chart, which paints its background first.
+func layoutChartTitle(p *charts.Painter, title, subtitle string, theme charts.ColorPalette, draw bool) int {
+	y := chartPadding
+	for _, line := range []struct {
+		text string
+		size float64
+	}{{title, 22}, {subtitle, 15}} {
+		if line.text == "" {
+			continue
+		}
+		style := charts.FontStyle{FontSize: line.size, FontColor: theme.GetTitleTextColor()}
+		box := p.MeasureText(line.text, 0, style)
+		if y > chartPadding {
+			y += 10
+		}
+		y += box.Height()
+		if draw {
+			p.Text(line.text, (ChartWidth-box.Width())/2, y, 0, style)
+		}
+	}
+	if y == chartPadding {
+		return chartPadding
+	}
+	return y + 24
+}
+
+// The library reserves twice the widest label per category and hides every other label when that does not fit, so the fit is computed here.
+func categoryLabelLayout(p *charts.Painter, labels []string, style charts.FontStyle) (int, float64) {
+	style.FontColor = charts.ColorBlack
+	slot := float64(ChartWidth-2*chartPadding-chartValueAxisWidth) / float64(len(labels))
+	var width, height int
+	for _, l := range labels {
+		box := p.MeasureText(l, 0, style)
+		width = max(width, box.Width())
+		height = max(height, box.Height())
+	}
+	if float64(width+8) <= slot {
+		return len(labels), 0
+	}
+	rotation := charts.DegreesToRadians(45)
+	if slot*math.Sin(rotation) >= float64(height+6) {
+		return len(labels), rotation
+	}
+	return 0, rotation
 }
 
 // A single series cannot color bars individually, so per-label colors become one stacked series per label.
@@ -328,7 +378,6 @@ func barChartOption(a chartArgs, values [][]float64, names []string, colors []ch
 		}
 	}
 	opt.CategoryAxis.Labels = labels
-	opt.CategoryAxis.LabelFontStyle = charts.FontStyle{FontSize: 14}
 	valueAxis := charts.ValueAxisOption{LabelFontStyle: charts.FontStyle{FontSize: 14}}
 	if nonNegative {
 		valueAxis.Min = new(0.0)
