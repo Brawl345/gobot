@@ -154,7 +154,11 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	if result.Typename == "TweetUnavailable" || result.Typename == "TweetTombstone" {
 		if result.Reason == "NsfwLoggedOut" || result.Reason == "NsfwViewerHasNoStatedAge" || result.Tombstone.Typename == "BlurredMediaTombstone" {
-			_, err = c.EffectiveMessage.ReplyMessage(b,
+			// Link previews can't be spoilered.
+			if isNsfw {
+				return nil
+			}
+			_, err =c.EffectiveMessage.ReplyMessage(b,
 				fmt.Sprintf("https://vxtwitter.com/_/status/%s", tweetID),
 				&gotgbot.SendMessageOpts{
 					ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
