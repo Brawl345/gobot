@@ -87,11 +87,11 @@ func (p *Plugin) onGetHome(b *gotgbot.Bot, c plugin.GobotContext) error {
 		return err
 	}
 
-	receiverUserId, replyParameters := tgUtils.EphemeralReplyTo(c.EffectiveMessage)
+	ephemeralParameters, replyParameters := tgUtils.EphemeralReplyTo(c.EffectiveMessage)
 	_, err = b.SendVenue(c.EffectiveChat.Id, venue.Location.Latitude, venue.Location.Longitude, venue.Title, venue.Address, &gotgbot.SendVenueOpts{
-		ReceiverUserId:      receiverUserId,
-		ReplyParameters:     replyParameters,
-		DisableNotification: true,
+		EphemeralMessageParameters: ephemeralParameters,
+		ReplyParameters:            replyParameters,
+		DisableNotification:        true,
 	})
 	return err
 }
@@ -130,11 +130,11 @@ func (p *Plugin) onHomeSet(b *gotgbot.Bot, c plugin.GobotContext) error {
 	}
 	venue.Title = "✅ Wohnort festgelegt"
 
-	receiverUserId, replyParameters := tgUtils.EphemeralReplyTo(c.EffectiveMessage)
+	ephemeralParameters, replyParameters := tgUtils.EphemeralReplyTo(c.EffectiveMessage)
 	_, err = b.SendVenue(c.EffectiveChat.Id, venue.Location.Latitude, venue.Location.Longitude, venue.Title, venue.Address, &gotgbot.SendVenueOpts{
-		ReceiverUserId:      receiverUserId,
-		ReplyParameters:     replyParameters,
-		DisableNotification: true,
+		EphemeralMessageParameters: ephemeralParameters,
+		ReplyParameters:            replyParameters,
+		DisableNotification:        true,
 	})
 	return err
 }

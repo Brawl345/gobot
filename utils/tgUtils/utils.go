@@ -90,18 +90,19 @@ func GetBestResolution(photo []gotgbot.PhotoSize) *gotgbot.PhotoSize {
 }
 
 // EphemeralReplyTo builds the addressing for an answer that only the sender of message and the bot can see.
-// The returned receiverUserId is 0 outside of groups, which makes the answer a regular one. An incoming
+// The returned ephemeralParameters are nil outside of groups, which makes the answer a regular one. An incoming
 // ephemeral message carries no message ID, so it is replied to via its ephemeral ID instead.
-func EphemeralReplyTo(message *gotgbot.Message) (receiverUserId int64, replyParameters *gotgbot.ReplyParameters) {
+func EphemeralReplyTo(message *gotgbot.Message) (ephemeralParameters *gotgbot.EphemeralMessageParameters, replyParameters *gotgbot.ReplyParameters) {
 	if !FromGroup(message) || message.From == nil {
-		return 0, &gotgbot.ReplyParameters{MessageId: message.MessageId, AllowSendingWithoutReply: true}
+		return nil, &gotgbot.ReplyParameters{MessageId: message.MessageId, AllowSendingWithoutReply: true}
 	}
 
+	ephemeralParameters = &gotgbot.EphemeralMessageParameters{ReceiverUserId: message.From.Id}
 	if message.EphemeralMessageId != 0 {
-		return message.From.Id, &gotgbot.ReplyParameters{EphemeralMessageId: message.EphemeralMessageId}
+		return ephemeralParameters, &gotgbot.ReplyParameters{EphemeralMessageId: message.EphemeralMessageId}
 	}
 
-	return message.From.Id, &gotgbot.ReplyParameters{MessageId: message.MessageId}
+	return ephemeralParameters, &gotgbot.ReplyParameters{MessageId: message.MessageId}
 }
 
 // ReplyEphemeral replies to a message in a group so that only its sender and the bot can see the answer.
@@ -112,7 +113,7 @@ func ReplyEphemeral(b *gotgbot.Bot, message *gotgbot.Message, text string, opts 
 	}
 
 	ephemeralOpts := *opts
-	ephemeralOpts.ReceiverUserId, ephemeralOpts.ReplyParameters = EphemeralReplyTo(message)
+	ephemeralOpts.EphemeralMessageParameters, ephemeralOpts.ReplyParameters = EphemeralReplyTo(message)
 
 	return b.SendMessage(message.Chat.Id, text, &ephemeralOpts)
 }

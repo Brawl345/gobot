@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	codeberg.org/readeck/go-readability/v2 v2.1.2
-	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.36
+	github.com/PaulSonOfLars/gotgbot/v2 v2.0.0-rc.37
 	github.com/go-analyze/charts v0.6.4
 	github.com/go-sql-driver/mysql v1.10.0
 	github.com/jmoiron/sqlx v1.4.0
