@@ -26,14 +26,15 @@ import (
 
 const (
 	MaxRetries               = 3
-	MaxOutputTokens          = 2000
+	MaxOutputTokens          = 8000
 	MaxToolCallRounds        = 8
+	ReasoningEffort          = "low"
 	DefaultSystemInstruction = "Du befindest dich in einer Telegram-Gruppenkonversation mit mehreren Nutzern. Nachrichten sind mit dem jeweiligen Nutzernamen vorangestellt. Antworte nur auf Deutsch. Bilder-Analyse ist AKTIVIERT."
 )
 
 var (
 	log        = logger.New("gpt")
-	httpClient = httpUtils.NewHTTPClientWithTimeout(30 * time.Second)
+	httpClient = httpUtils.NewHTTPClientWithTimeout(60 * time.Second)
 )
 
 type (
@@ -323,7 +324,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		MaxOutputTokens:    MaxOutputTokens,
 		PreviousResponseID: previousResponseID,
 		Tools:              toolDefs,
-		Reasoning:          Reasoning{Effort: "none"},
+		Reasoning:          Reasoning{Effort: ReasoningEffort},
 	}
 
 	apiResponse, err := p.sendWithRetry(req, apiKey)
@@ -410,7 +411,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Store:              true,
 			MaxOutputTokens:    MaxOutputTokens,
 			PreviousResponseID: apiResponse.ID,
-			Reasoning:          Reasoning{Effort: "none"},
+			Reasoning:          Reasoning{Effort: ReasoningEffort},
 		}
 		if round < MaxToolCallRounds-1 {
 			for _, def := range toolDefs {
