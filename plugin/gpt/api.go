@@ -12,6 +12,7 @@ const (
 	TypeMessage            = "message"
 	TypeOutputText         = "output_text"
 	TypeRefusal            = "refusal"
+	TypeReasoning          = "reasoning"
 	TypeFunctionCall       = "function_call"
 	TypeFunctionCallOutput = "function_call_output"
 
@@ -82,7 +83,8 @@ type (
 	}
 
 	Reasoning struct {
-		Effort string `json:"effort"`
+		Effort  string `json:"effort"`
+		Summary string `json:"summary,omitempty"`
 	}
 
 	Request struct {
@@ -109,6 +111,8 @@ type (
 		Role    string          `json:"role,omitempty"`
 		Phase   string          `json:"phase,omitempty"`
 		Content []OutputContent `json:"content,omitempty"`
+		// "reasoning" fields
+		Summary []OutputContent `json:"summary,omitempty"`
 		// "function_call" fields
 		CallID    string `json:"call_id,omitempty"`
 		Name      string `json:"name,omitempty"`
@@ -138,6 +142,21 @@ func (r Response) Text() (text, refusal string) {
 		}
 	}
 	return textSB.String(), refusalSB.String()
+}
+
+func (r Response) ReasoningSummary() string {
+	var parts []string
+	for _, out := range r.Output {
+		if out.Type != TypeReasoning {
+			continue
+		}
+		for _, part := range out.Summary {
+			if text := strings.TrimSpace(part.Text); text != "" {
+				parts = append(parts, text)
+			}
+		}
+	}
+	return strings.Join(parts, "\n\n")
 }
 
 func (r Response) IsEmptyFinalAnswer() bool {

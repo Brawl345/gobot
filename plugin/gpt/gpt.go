@@ -29,6 +29,7 @@ const (
 	MaxOutputTokens          = 8000
 	MaxToolCallRounds        = 8
 	ReasoningEffort          = "low"
+	DefaultReasoningSummary  = "auto"
 	DefaultSystemInstruction = "Du befindest dich in einer Telegram-Gruppenkonversation mit mehreren Nutzern. Nachrichten sind mit dem jeweiligen Nutzernamen vorangestellt. Antworte nur auf Deutsch. Bilder-Analyse ist AKTIVIERT."
 )
 
@@ -195,6 +196,13 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 	systemInstruction += "\n\n" + CitationInstruction
 	braveKey := p.credentialService.GetKey("brave_search_api_key")
 	gptModel := cmp.Or(p.credentialService.GetKey("openai_model"), DefaultModel)
+	reasoning := Reasoning{
+		Effort:  ReasoningEffort,
+		Summary: cmp.Or(p.credentialService.GetKey("openai_reasoning_summary"), DefaultReasoningSummary),
+	}
+	if reasoning.Summary == "off" {
+		reasoning.Summary = ""
+	}
 
 	citations := NewCitations()
 	registeredTools := []Tool{
@@ -324,7 +332,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		MaxOutputTokens:    MaxOutputTokens,
 		PreviousResponseID: previousResponseID,
 		Tools:              toolDefs,
-		Reasoning:          Reasoning{Effort: ReasoningEffort},
+		Reasoning:          reasoning,
 	}
 
 	apiResponse, err := p.sendWithRetry(req, apiKey)
@@ -334,6 +342,13 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 
 	callCounts := make(map[string]int)
 	var earlierText strings.Builder
+	var thoughts []string
+	addThoughts := func(r Response) {
+		if s := r.ReasoningSummary(); s != "" {
+			thoughts = append(thoughts, s)
+		}
+	}
+	addThoughts(apiResponse)
 
 	for round := range MaxToolCallRounds {
 		var calls []OutputItem
@@ -411,7 +426,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 			Store:              true,
 			MaxOutputTokens:    MaxOutputTokens,
 			PreviousResponseID: apiResponse.ID,
-			Reasoning:          Reasoning{Effort: ReasoningEffort},
+			Reasoning:          reasoning,
 		}
 		if round < MaxToolCallRounds-1 {
 			for _, def := range toolDefs {
@@ -425,6 +440,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		if err != nil {
 			return p.handleAPIError(b, c, err)
 		}
+		addThoughts(apiResponse)
 	}
 
 	outputText, refusal := apiResponse.Text()
@@ -498,7 +514,7 @@ func (p *Plugin) onGPT(b *gotgbot.Bot, c plugin.GobotContext) error {
 		links = searchLinks(allSearchResults)
 	}
 
-	if sendRich(b, c, segments, toolPrefix, links, richMedia) {
+	if sendRich(b, c, segments, strings.Join(thoughts, "\n\n"), toolPrefix, links, richMedia) {
 		return nil
 	}
 	for i := range segments {

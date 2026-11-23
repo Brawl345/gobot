@@ -16,7 +16,10 @@ import (
 	"github.com/PaulSonOfLars/gotgbot/v2"
 )
 
-const MaxRichMessageLength = 32768
+const (
+	MaxRichMessageLength = 32768
+	MaxReasoningLength   = 4000
+)
 
 var (
 	richImageURL   = regexp.MustCompile(`(!\[[^\]\n]*\]\(\s*<?)([^\s)>]+)`)
@@ -122,6 +125,19 @@ func buildRichMarkdown(segs []citedSegment, toolPrefix, links string) string {
 	return sb.String()
 }
 
+var reasoningEscaper = strings.NewReplacer("$", `\$`, "<", "&lt;", "|", `\|`)
+
+func reasoningBlock(summary string) string {
+	summary = strings.TrimSpace(summary)
+	if summary == "" {
+		return ""
+	}
+	if utf8.RuneCountInString(summary) > MaxReasoningLength {
+		summary = utils.TruncateText(summary, MaxReasoningLength-1) + "…"
+	}
+	return "<details><summary>💭 Gedankengang</summary>\n\n" + reasoningEscaper.Replace(summary) + "\n\n</details>\n\n"
+}
+
 func embedRichMedia(markdown string, media map[string]fetchedImage) (string, []gotgbot.InputRichMessageMedia) {
 	var files []gotgbot.InputRichMessageMedia
 	ids := make(map[string]string)
@@ -165,22 +181,32 @@ func (r richMessageUpload) Attach(_ string, w *multipart.Writer) error {
 	return nil
 }
 
-func sendRich(b *gotgbot.Bot, c plugin.GobotContext, segs []citedSegment, toolPrefix, links string, media map[string]fetchedImage) bool {
-	markdown := buildRichMarkdown(segs, toolPrefix, links)
-	if utf8.RuneCountInString(markdown) > MaxRichMessageLength {
-		log.Warn().Int("length", utf8.RuneCountInString(markdown)).Msg("Rich message too long")
+func sendRich(b *gotgbot.Bot, c plugin.GobotContext, segs []citedSegment, reasoning, toolPrefix, links string, media map[string]fetchedImage) bool {
+	body := buildRichMarkdown(segs, toolPrefix, links)
+	thoughts := reasoningBlock(reasoning)
+	if utf8.RuneCountInString(thoughts+body) > MaxRichMessageLength {
+		thoughts = ""
+	}
+	if utf8.RuneCountInString(body) > MaxRichMessageLength {
+		log.Warn().Int("length", utf8.RuneCountInString(body)).Msg("Rich message too long")
 		return false
 	}
 
 	attempts := []func() gotgbot.InputRichMessage{
 		func() gotgbot.InputRichMessage {
-			md, files := embedRichMedia(markdown, media)
+			md, files := embedRichMedia(thoughts+body, media)
 			return gotgbot.InputRichMessage{Markdown: md, Media: files}
 		},
 	}
-	if stripped := stripRichMedia(markdown); stripped != markdown && hasRichContent(stripped, toolPrefix) {
+	if stripped := stripRichMedia(body); stripped != body && hasRichContent(stripped, toolPrefix) {
 		attempts = append(attempts, func() gotgbot.InputRichMessage {
-			return gotgbot.InputRichMessage{Markdown: stripped}
+			return gotgbot.InputRichMessage{Markdown: thoughts + stripped}
+		})
+	}
+	if thoughts != "" {
+		attempts = append(attempts, func() gotgbot.InputRichMessage {
+			md, files := embedRichMedia(body, media)
+			return gotgbot.InputRichMessage{Markdown: md, Media: files}
 		})
 	}
 
