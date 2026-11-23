@@ -32,6 +32,21 @@ jobs:
       - name: Test
         run: go test -race ./...
 
+  nix:
+    name: nix
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+
+      - name: Install Nix
+        uses: cachix/install-nix-action@3dc140bfc76c49fbd4dd958429132e3746bcb086 # v31.11.5
+
+      - name: Build
+        run: nix build -L
+
   build:
     name: build
     runs-on: ubuntu-latest
