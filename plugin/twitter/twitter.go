@@ -158,7 +158,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 			if isNsfw {
 				return nil
 			}
-			_, err =c.EffectiveMessage.ReplyMessage(b,
+			_, err = c.EffectiveMessage.ReplyMessage(b,
 				fmt.Sprintf("https://vxtwitter.com/_/status/%s", tweetID),
 				&gotgbot.SendMessageOpts{
 					ReplyParameters:     &gotgbot.ReplyParameters{AllowSendingWithoutReply: true},
@@ -192,7 +192,7 @@ func (p *Plugin) OnStatus(b *gotgbot.Bot, c plugin.GobotContext) error {
 }
 
 func sendTweet(b *gotgbot.Bot, c plugin.GobotContext, result Result, spoiler bool) error {
-	prepared := prepareMedia(result.Legacy.ExtendedEntities.Media)
+	prepared := prepareMedia(tweetMedia(result.Legacy, result.Card))
 
 	msg := renderTweet(result, prepared, true, spoiler)
 	err := sendRichMessage(b, c, msg)

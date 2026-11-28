@@ -36,6 +36,9 @@ func renderTweet(result Result, prepared []*preparedMedium, withMedia, spoiler b
 	if withMedia {
 		msg.addMedia(prepared, spoiler)
 	}
+	if link := cardLink(result.Card); link != "" {
+		msg.html.WriteString("<p>" + link + "</p>")
+	}
 	msg.html.WriteString(pollTable(result.Card))
 	msg.html.WriteString(communityNote(result.BirdwatchPivot))
 	msg.html.WriteString(quote(result))
@@ -80,7 +83,7 @@ func tweetText(note NoteTweet, legacy Legacy, articleTitle string) string {
 	urls := make(map[string]Url)
 	if text != "" {
 		for _, e := range note.NoteTweetResults.Result.EntitySet.Urls {
-			urls[e.Url] = Url{DisplayUrl: e.DisplayUrl, ExpandedUrl: e.ExpandedUrl, Url: e.Url}
+			urls[e.Url] = Url{ExpandedUrl: e.ExpandedUrl, Url: e.Url}
 		}
 	} else {
 		text = legacy.FullText
@@ -108,17 +111,18 @@ func tweetText(note NoteTweet, legacy Legacy, articleTitle string) string {
 		if media[tco] {
 			continue
 		}
-		u, ok := urls[tco]
-		if !ok {
-			u = Url{DisplayUrl: tco, ExpandedUrl: tco}
+		href := tco
+		if u, ok := urls[tco]; ok {
+			href = cmp.Or(u.ExpandedUrl, tco)
 		}
-		if articleTitle != "" && strings.Contains(u.ExpandedUrl, "/i/article/") {
-			u.DisplayUrl = "📰 " + articleTitle
+		label := href
+		if articleTitle != "" && strings.Contains(href, "/i/article/") {
+			label = "📰 " + articleTitle
 		}
 		sb.WriteString(fmt.Sprintf(
 			`<a href="%s">%s</a>`,
-			utils.Escape(u.ExpandedUrl),
-			utils.Escape(cmp.Or(u.DisplayUrl, u.ExpandedUrl)),
+			utils.Escape(href),
+			utils.Escape(label),
 		))
 	}
 	sb.WriteString(escapeText(text[last:]))
@@ -223,6 +227,18 @@ func footer(legacy Legacy, link string) string {
 		date = createdAt.In(utils.GermanTimezone()).Format("02.01.2006, 15:04:05 Uhr")
 	}
 	return fmt.Sprintf(`📅 <a href="%s">%s</a>%s`, utils.Escape(link), date, legacy.Metrics())
+}
+
+func cardLink(card Card) string {
+	unified, ok := card.UnifiedCard()
+	if !ok {
+		return ""
+	}
+	link, ok := unified.Link()
+	if !ok {
+		return ""
+	}
+	return fmt.Sprintf(`🔗 <a href="%s">%s</a>`, utils.Escape(link.Url), utils.Escape(cmp.Or(link.Title, link.Url)))
 }
 
 func pollTable(card Card) string {
@@ -357,8 +373,11 @@ func quote(result Result) string {
 		if text := tweetText(qs.NoteTweet, qs.Legacy, ""); text != "" {
 			body = append(body, text)
 		}
-		if hint := mediaHint(qs.Legacy.ExtendedEntities.Media, link); hint != "" {
+		if hint := mediaHint(tweetMedia(qs.Legacy, qs.Card), link); hint != "" {
 			body = append(body, hint)
+		}
+		if cl := cardLink(qs.Card); cl != "" {
+			body = append(body, cl)
 		}
 		if qs.Card.HasPoll() {
 			poll, err := qs.Card.Poll()

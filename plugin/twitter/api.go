@@ -1,7 +1,9 @@
 package twitter
 
 import (
+	"encoding/json"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -349,6 +351,36 @@ type (
 		} `json:"legacy"`
 	}
 
+	UnifiedCard struct {
+		Components       []string `json:"components"`
+		ComponentObjects map[string]struct {
+			Type string `json:"type"`
+			Data struct {
+				Title struct {
+					Content string `json:"content"`
+				} `json:"title"`
+				Destination string `json:"destination"`
+				Id          string `json:"id"`
+				MediaList   []struct {
+					Id string `json:"id"`
+				} `json:"media_list"`
+			} `json:"data"`
+		} `json:"component_objects"`
+		DestinationObjects map[string]struct {
+			Data struct {
+				UrlData struct {
+					Url string `json:"url"`
+				} `json:"url_data"`
+			} `json:"data"`
+		} `json:"destination_objects"`
+		MediaEntities map[string]Medium `json:"media_entities"`
+	}
+
+	CardLink struct {
+		Url   string
+		Title string
+	}
+
 	TweetResponse struct {
 		Data struct {
 			TweetResult struct {
@@ -491,6 +523,67 @@ func (c *Card) Poll() (Poll, error) {
 	}
 
 	return poll, nil
+}
+
+func (c *Card) UnifiedCard() (UnifiedCard, bool) {
+	var card UnifiedCard
+	if c.Legacy.Name != "unified_card" {
+		return card, false
+	}
+	for _, bindingValue := range c.Legacy.BindingValues {
+		if bindingValue.Key != "unified_card" {
+			continue
+		}
+		if err := json.Unmarshal([]byte(bindingValue.Value.StringValue), &card); err != nil {
+			log.Err(err).Str("card", c.Legacy.Url).Msg("Failed to parse unified card")
+			return card, false
+		}
+		return card, true
+	}
+	return card, false
+}
+
+func tweetMedia(legacy Legacy, card Card) []Medium {
+	unified, ok := card.UnifiedCard()
+	if !ok {
+		return legacy.ExtendedEntities.Media
+	}
+	return slices.Concat(legacy.ExtendedEntities.Media, unified.Media())
+}
+
+func (u *UnifiedCard) Media() []Medium {
+	var media []Medium
+	add := func(id string) {
+		if m, ok := u.MediaEntities[id]; ok {
+			media = append(media, m)
+		}
+	}
+	for _, name := range u.Components {
+		component := u.ComponentObjects[name]
+		add(component.Data.Id)
+		for _, item := range component.Data.MediaList {
+			add(item.Id)
+		}
+	}
+	return media
+}
+
+func (u *UnifiedCard) Link() (CardLink, bool) {
+	var link CardLink
+	for _, name := range u.Components {
+		component := u.ComponentObjects[name]
+		urlData := u.DestinationObjects[component.Data.Destination].Data.UrlData
+		if urlData.Url == "" {
+			continue
+		}
+		if component.Type == "details" {
+			return CardLink{Url: urlData.Url, Title: component.Data.Title.Content}, true
+		}
+		if link.Url == "" {
+			link = CardLink{Url: urlData.Url}
+		}
+	}
+	return link, link.Url != ""
 }
 
 func (p *Poll) Closed() bool {
